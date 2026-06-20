@@ -1,0 +1,12 @@
+{
+  "name": "habitflow",
+  "version": "1.0.0",
+  "description": "HabitFlow MVP - rastreador de hábitos com Firebase",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
