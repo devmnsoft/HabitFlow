@@ -10,7 +10,7 @@
   <link rel="icon" type="image/svg+xml" href="assets/icons/icon.svg">
   <meta name="theme-color" content="#10B981">
   <title>HabitFlow | Rastreador de Hábitos</title>
-  <meta name="description" content="HabitFlow é um rastreador simples de hábitos com streak, histórico visual e sincronização na nuvem pelo Firebase.">
+  <meta name="description" content="Construa hábitos melhores, mantenha streaks e visualize seu progresso com o HabitFlow.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -22,21 +22,16 @@
   <div id="appShell" class="app-shell">
     <nav class="navbar navbar-expand-lg fixed-top glass-nav">
       <div class="container">
-        <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="#home" aria-label="HabitFlow">
-          <span class="brand-mark"><i class="bi bi-check2"></i></span>
-          <span>HabitFlow</span>
-        </a>
-        <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#mainMenu" aria-controls="mainMenu" aria-expanded="false" aria-label="Abrir menu">
-          <span class="navbar-toggler-icon"></span>
-        </button>
+        <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="#home" aria-label="HabitFlow início"><span class="brand-mark"><i class="bi bi-check2"></i></span><span>HabitFlow</span></a>
+        <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#mainMenu" aria-controls="mainMenu" aria-expanded="false" aria-label="Abrir menu"><span class="navbar-toggler-icon"></span></button>
         <div class="collapse navbar-collapse" id="mainMenu">
           <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-2">
             <li class="nav-item public-only"><a class="nav-link" href="#beneficios">Benefícios</a></li>
             <li class="nav-item public-only"><a class="nav-link" href="#como-funciona">Como funciona</a></li>
-            <li class="nav-item public-only"><a class="nav-link" href="#preco">Plano</a></li>
-            <li class="nav-item auth-only d-none"><a class="nav-link" href="#dashboard">Dashboard</a></li>
-            <li class="nav-item auth-only d-none"><button id="btnLogout" class="btn btn-outline-danger btn-sm rounded-pill px-3"><i class="bi bi-box-arrow-right me-1"></i>Sair</button></li>
-            <li class="nav-item public-only"><button class="btn btn-success rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#authModal"><i class="bi bi-person-check me-1"></i>Entrar</button></li>
+            <li class="nav-item public-only"><a class="nav-link" href="#planos">Planos</a></li>
+            <li class="nav-item auth-only d-none"><a class="nav-link" href="#dashboard">App</a></li>
+            <li class="nav-item auth-only d-none"><button id="btnLogout" class="btn btn-outline-danger btn-sm rounded-pill px-3" aria-label="Sair da conta"><i class="bi bi-box-arrow-right me-1"></i>Sair</button></li>
+            <li class="nav-item public-only"><button class="btn btn-success rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#authModal" aria-label="Entrar ou criar conta"><i class="bi bi-person-check me-1"></i>Entrar</button></li>
           </ul>
         </div>
       </div>
@@ -44,178 +39,35 @@
 
     <main>
       <section id="home" class="hero-section public-only">
-        <div class="container">
-          <div class="row align-items-center g-5">
-            <div class="col-lg-6">
-              <span class="eyebrow"><i class="bi bi-stars me-1"></i>Construa consistência sem complicação</span>
-              <h1 class="display-4 fw-extrabold mt-3 mb-3">Transforme pequenas ações em hábitos fortes.</h1>
-              <p class="lead text-secondary mb-4">O HabitFlow ajuda você a acompanhar hábitos diários, manter streaks e visualizar seu progresso dos últimos 30 dias em uma interface simples, bonita e rápida.</p>
-              <div class="d-flex flex-column flex-sm-row gap-3">
-                <button class="btn btn-success btn-lg rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#authModal"><i class="bi bi-lightning-charge me-2"></i>Começar grátis</button>
-                <a class="btn btn-outline-dark btn-lg rounded-pill px-4" href="#beneficios"><i class="bi bi-arrow-down-circle me-2"></i>Ver benefícios</a>
-              </div>
-              <div class="hero-proof mt-4">
-                <div><strong>5</strong><span>hábitos grátis</span></div>
-                <div><strong>30</strong><span>dias de histórico</span></div>
-                <div><strong>0</strong><span>complexidade</span></div>
-              </div>
-            </div>
-            <div class="col-lg-6">
-              <div class="hero-card shadow-soft">
-                <div class="phone-card">
-                  <div class="phone-top"><span></span><span></span><span></span></div>
-                  <div class="habit-preview">
-                    <div class="preview-header">
-                      <div>
-                        <small>Hoje</small>
-                        <h5 class="mb-0">Meu progresso</h5>
-                      </div>
-                      <span class="badge rounded-pill text-bg-success">4/5</span>
-                    </div>
-                    <div class="preview-item done"><i class="bi bi-check-circle-fill"></i><span>Beber água</span><b>12 dias</b></div>
-                    <div class="preview-item done"><i class="bi bi-check-circle-fill"></i><span>Ler 10 páginas</span><b>8 dias</b></div>
-                    <div class="preview-item"><i class="bi bi-circle"></i><span>Caminhada</span><b>3 dias</b></div>
-                    <div class="mini-calendar" aria-hidden="true">
-                      <span class="active"></span><span class="active"></span><span class="active"></span><span></span><span class="active"></span><span class="active"></span><span></span><span class="active"></span><span></span><span class="active"></span><span class="active"></span><span></span><span class="active"></span><span class="active"></span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <div class="container"><div class="row align-items-center g-5"><div class="col-lg-6">
+          <span class="eyebrow"><i class="bi bi-stars me-1"></i>Rotina simples, progresso real</span>
+          <h1 class="display-4 fw-extrabold mt-3 mb-3">Construa hábitos melhores, um dia de cada vez.</h1>
+          <p class="lead text-secondary mb-4">O HabitFlow ajuda você a acompanhar sua rotina, manter sua sequência e visualizar seu progresso sem complicação.</p>
+          <div class="d-flex flex-column flex-sm-row gap-3"><button class="btn btn-success btn-lg rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#authModal" aria-label="Começar grátis"><i class="bi bi-lightning-charge me-2"></i>Começar grátis</button><button id="btnHeroGoogle" class="btn btn-outline-dark btn-lg rounded-pill px-4" aria-label="Entrar com Google"><i class="bi bi-google me-2"></i>Entrar com Google</button></div>
+          <div class="hero-proof mt-4"><div><strong>5</strong><span>hábitos grátis</span></div><div><strong>30</strong><span>dias de histórico</span></div><div><strong>PWA</strong><span>instalável</span></div></div>
+        </div><div class="col-lg-6"><div class="hero-card shadow-soft"><div class="phone-card"><div class="phone-top"><span></span><span></span><span></span></div><div class="habit-preview"><div class="preview-header"><div><small>Hoje</small><h5 class="mb-0">Meu progresso</h5></div><span class="badge rounded-pill text-bg-success">4/5</span></div><div class="preview-item done"><i class="bi bi-check-circle-fill"></i><span>Beber água</span><b>12 dias</b></div><div class="preview-item done"><i class="bi bi-check-circle-fill"></i><span>Ler 10 páginas</span><b>8 dias</b></div><div class="preview-item"><i class="bi bi-circle"></i><span>Caminhada</span><b>3 dias</b></div><div class="mini-calendar" aria-hidden="true"><span class="active"></span><span class="active"></span><span></span><span class="active"></span><span class="active"></span><span></span><span class="active"></span><span></span><span class="active"></span><span class="active"></span><span></span><span class="active"></span><span class="active"></span><span></span></div></div></div></div></div></div></div>
       </section>
 
-      <section id="beneficios" class="section public-only">
-        <div class="container">
-          <div class="section-title text-center mx-auto">
-            <span class="eyebrow">Por que funciona</span>
-            <h2 class="fw-bold mt-2">Simplicidade para manter o foco no que importa.</h2>
-            <p class="text-secondary">Sem telas confusas, sem excesso de configurações. Apenas hábitos, conclusão diária, streak e progresso visual.</p>
-          </div>
-          <div class="row g-4 mt-2">
-            <div class="col-md-4"><div class="feature-card h-100"><i class="bi bi-plus-circle"></i><h5>Crie hábitos sem complicação</h5><p>Cadastre um hábito em segundos, escolha uma cor e mantenha o foco na rotina.</p></div></div>
-            <div class="col-md-4"><div class="feature-card h-100"><i class="bi bi-fire"></i><h5>Acompanhe sua sequência</h5><p>Veja seu streak atual e sua melhor marca para reforçar a recompensa diária.</p></div></div>
-            <div class="col-md-4"><div class="feature-card h-100"><i class="bi bi-calendar3"></i><h5>Veja seu progresso diário</h5><p>Use o mini calendário de 30 dias para entender sua consistência recente.</p></div></div>
-          </div>
-        </div>
-      </section>
+      <section id="beneficios" class="section public-only"><div class="container"><div class="section-title text-center mx-auto"><span class="eyebrow">Benefícios</span><h2 class="fw-bold mt-2">Feito para manter consistência sem distrações.</h2></div><div class="row g-4 mt-2" id="benefitsGrid"></div></div></section>
+      <section id="como-funciona" class="section section-muted public-only"><div class="container"><div class="section-title text-center mx-auto"><span class="eyebrow">Como funciona</span><h2 class="fw-bold mt-2">Quatro passos para evoluir todos os dias.</h2></div><div class="steps-grid mt-4"><div class="step-card"><b>1</b><h6>Crie seus hábitos</h6><p>Escolha nome, categoria e cor.</p></div><div class="step-card"><b>2</b><h6>Marque o que concluiu hoje</h6><p>Registre sua vitória diária.</p></div><div class="step-card"><b>3</b><h6>Acompanhe sua sequência</h6><p>Veja streak atual e melhor marca.</p></div><div class="step-card"><b>4</b><h6>Evolua todos os dias</h6><p>Use insights para continuar.</p></div></div></div></section>
+      <section class="section public-only"><div class="container"><div class="validation-grid"><div>“Ideal para quem quer criar rotina sem usar apps complicados.”</div><div>“Perfeito para estudos, saúde, produtividade e finanças pessoais.”</div><div>“Comece pequeno e mantenha constância.”</div></div></div></section>
+      <section id="planos" class="section section-muted public-only"><div class="container"><div class="section-title text-center mx-auto"><span class="eyebrow">Planos</span><h2 class="fw-bold mt-2">Comece grátis. Evolua quando precisar.</h2></div><div class="row g-4 mt-2 plans-public"></div></div></section>
 
-      <section id="como-funciona" class="section section-muted public-only">
-        <div class="container">
-          <div class="row align-items-center g-4">
-            <div class="col-lg-5">
-              <span class="eyebrow">Fluxo do MVP</span>
-              <h2 class="fw-bold mt-2">Três passos para começar.</h2>
-              <p class="text-secondary">Crie sua conta, cadastre até 5 hábitos gratuitos e marque diariamente o que concluiu.</p>
-            </div>
-            <div class="col-lg-7">
-              <div class="steps-grid">
-                <div class="step-card"><b>1</b><h6>Entrar</h6><p>Google ou email/senha.</p></div>
-                <div class="step-card"><b>2</b><h6>Criar hábito</h6><p>Nome, cor e pronto.</p></div>
-                <div class="step-card"><b>3</b><h6>Marcar feito</h6><p>Acompanhe streaks.</p></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section id="preco" class="section public-only">
-        <div class="container">
-          <div class="pricing-card mx-auto shadow-soft">
-            <span class="eyebrow">MVP gratuito</span>
-            <h2 class="fw-bold mt-2">Comece sem custo.</h2>
-            <p class="text-secondary">A versão atual permite até 5 hábitos, histórico visual dos últimos 30 dias e cálculo de streak básico. A versão premium pode ser adicionada depois.</p>
-            <div class="price-line"><strong>R$ 0</strong><span>/ MVP</span></div>
-            <button class="btn btn-success btn-lg rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#authModal">Criar minha conta</button>
-          </div>
-        </div>
-      </section>
-
-      <section id="dashboard" class="dashboard-section auth-only d-none">
-        <div class="container">
-          <div class="dashboard-header">
-            <div>
-              <span class="eyebrow">Painel pessoal</span>
-              <h1 class="fw-bold mb-1">Meus hábitos</h1>
-              <p class="text-secondary mb-0" id="userGreeting">Acompanhe sua consistência de hoje.</p>
-            </div>
-            <button class="btn btn-success rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#habitModal"><i class="bi bi-plus-lg me-1"></i>Novo hábito</button>
-          </div>
-
-          <div class="row g-3 mb-4">
-            <div class="col-6 col-lg-3"><div class="kpi-card"><span>Total de hábitos</span><strong id="kpiTotal">0</strong></div></div>
-            <div class="col-6 col-lg-3"><div class="kpi-card"><span>Feitos hoje</span><strong id="kpiDoneToday">0</strong></div></div>
-            <div class="col-6 col-lg-3"><div class="kpi-card"><span>Melhor streak geral</span><strong id="kpiBestStreak">0</strong></div></div>
-            <div class="col-6 col-lg-3"><div class="kpi-card"><span>Conclusão do dia</span><strong id="kpiCompletion">0%</strong></div></div>
-          </div>
-
-          <div id="limitAlert" class="alert alert-warning rounded-4 d-none" role="alert"><i class="bi bi-exclamation-triangle me-2"></i>Limite gratuito atingido: o MVP permite até 5 hábitos.</div>
-          <div id="loadingState" class="text-center py-5"><div class="spinner-border text-success" role="status"></div><p class="text-secondary mt-3">Carregando seus hábitos...</p></div>
-          <div id="emptyState" class="empty-state d-none"><i class="bi bi-seedling"></i><h4>Comece com um hábito simples hoje.</h4><p>Escolha uma sugestão rápida ou crie seu próprio hábito para começar sua sequência.</p><div id="quickHabits" class="quick-habits" aria-label="Sugestões de hábitos rápidos"></div><button class="btn btn-success rounded-pill px-4 mt-3" data-bs-toggle="modal" data-bs-target="#habitModal">Criar hábito personalizado</button></div>
-          <div id="habitsList" class="habits-list"></div>
-        </div>
-      </section>
+      <section id="dashboard" class="dashboard-section auth-only d-none"><div class="container">
+        <div class="dashboard-header"><div><span class="eyebrow">Painel pessoal</span><h1 class="fw-bold mb-1">Meus hábitos</h1><p class="text-secondary mb-0" id="userGreeting">Acompanhe sua consistência de hoje.</p></div><button class="btn btn-success rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#habitModal" aria-label="Criar novo hábito"><i class="bi bi-plus-lg me-1"></i>Novo hábito</button></div>
+        <ul class="nav nav-pills app-tabs mb-4" id="appTabs" role="tablist"><li class="nav-item"><button class="nav-link active" data-bs-toggle="pill" data-bs-target="#tabHoje" type="button">Hoje</button></li><li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tabProgresso" type="button">Progresso</button></li><li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tabPerfil" type="button">Perfil</button></li><li class="nav-item d-none" id="adminTabItem"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tabAdmin" type="button">Admin</button></li></ul>
+        <div class="tab-content"><div class="tab-pane fade show active" id="tabHoje"><div class="row g-3 mb-4"><div class="col-6 col-lg-3"><div class="kpi-card"><span>Total de hábitos</span><strong id="kpiTotal">0</strong></div></div><div class="col-6 col-lg-3"><div class="kpi-card"><span>Feitos hoje</span><strong id="kpiDoneToday">0</strong></div></div><div class="col-6 col-lg-3"><div class="kpi-card"><span>Melhor streak geral</span><strong id="kpiBestStreak">0</strong></div></div><div class="col-6 col-lg-3"><div class="kpi-card"><span>Conclusão do dia</span><strong id="kpiCompletion">0%</strong></div></div></div><div id="limitAlert" class="alert alert-warning rounded-4 d-none" role="alert"><i class="bi bi-exclamation-triangle me-2"></i>Limite gratuito atingido: o plano grátis permite até 5 hábitos.</div><div id="loadingState" class="text-center py-5"><div class="spinner-border text-success" role="status"></div><p class="text-secondary mt-3">Carregando seus hábitos...</p></div><div id="emptyState" class="empty-state d-none"><i class="bi bi-seedling"></i><h4>Comece com um hábito simples hoje.</h4><p>Escolha uma sugestão rápida ou crie seu próprio hábito.</p><div id="quickHabits" class="quick-habits" aria-label="Sugestões de hábitos rápidos"></div><button class="btn btn-success rounded-pill px-4 mt-3" data-bs-toggle="modal" data-bs-target="#habitModal">Criar hábito personalizado</button></div><div id="habitsList" class="habits-list"></div></div>
+        <div class="tab-pane fade" id="tabProgresso"><div class="row g-4"><div class="col-lg-5"><div class="panel-card"><h2 class="h5 fw-bold">Insights</h2><div id="insightsList" class="insights-list"></div></div></div><div class="col-lg-7"><div class="panel-card"><h2 class="h5 fw-bold">Ranking de hábitos</h2><div id="rankingList" class="ranking-list"></div></div></div></div></div>
+        <div class="tab-pane fade" id="tabPerfil"><div class="row g-4"><div class="col-lg-6"><div class="panel-card"><h2 class="h5 fw-bold">Perfil</h2><dl class="profile-list"><dt>Nome</dt><dd id="profileName">-</dd><dt>E-mail</dt><dd id="profileEmail">-</dd><dt>Plano atual</dt><dd id="profilePlan">Gratuito</dd><dt>Conta criada</dt><dd id="profileCreatedAt">-</dd><dt>Último login</dt><dd id="profileLastLoginAt">-</dd><dt>Total de hábitos</dt><dd id="profileTotalHabits">0</dd><dt>Total de conclusões</dt><dd id="profileTotalCompletions">0</dd></dl><button id="btnLogoutProfile" class="btn btn-outline-danger rounded-pill" aria-label="Sair da conta">Sair</button></div></div><div class="col-lg-6"><div id="profilePlans" class="d-grid gap-3"></div><div class="panel-card mt-3"><h2 class="h5 fw-bold">Seus dados são seus</h2><p class="text-secondary mb-0">Seus hábitos ficam vinculados à sua conta e não são compartilhados com outros usuários.</p></div></div></div></div>
+        <div class="tab-pane fade" id="tabAdmin"><div class="panel-card"><h2 class="h5 fw-bold">Admin</h2><p class="text-secondary">Painel administrativo inicial. Métricas globais serão adicionadas futuramente.</p><dl class="profile-list"><dt>Hábitos do usuário atual</dt><dd id="adminHabits">0</dd><dt>Eventos de uso do usuário atual</dt><dd id="adminEvents">0</dd><dt>Plano</dt><dd id="adminPlan">free</dd><dt>Interesse no Premium</dt><dd id="adminPremium">Não</dd></dl></div></div></div>
+      </div></section>
     </main>
-
-    <footer class="footer public-only">
-      <div class="container d-flex flex-column flex-md-row justify-content-between gap-2">
-        <span>© 2026 HabitFlow</span>
-        <span>Construído com Bootstrap, JavaScript Vanilla e Firebase.</span>
-      </div>
-    </footer>
+    <footer class="footer public-only"><div class="container d-flex flex-column flex-md-row justify-content-between gap-2"><span>© 2026 HabitFlow</span><span>Construído com Bootstrap, JavaScript Vanilla e Firebase.</span></div></footer>
   </div>
 
-  <div class="toast-container position-fixed bottom-0 end-0 p-3">
-    <div id="appToast" class="toast rounded-4" role="alert" aria-live="assertive" aria-atomic="true">
-      <div class="toast-header">
-        <strong class="me-auto" id="toastTitle">HabitFlow</strong>
-        <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Fechar"></button>
-      </div>
-      <div class="toast-body" id="toastBody">Mensagem</div>
-    </div>
-  </div>
-
-  <div class="modal fade" id="authModal" tabindex="-1" aria-labelledby="authModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content rounded-5 border-0 shadow-soft">
-        <div class="modal-header border-0 pb-0">
-          <div><h5 class="modal-title fw-bold" id="authModalLabel">Entrar no HabitFlow</h5><p class="text-secondary mb-0 small">Acesse sua conta para sincronizar seus hábitos.</p></div>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
-        </div>
-        <div class="modal-body p-4">
-          <button id="btnGoogle" class="btn btn-outline-dark w-100 rounded-pill py-2 mb-3"><i class="bi bi-google me-2"></i>Continuar com Google</button>
-          <div class="divider"><span>ou</span></div>
-          <form id="authForm" class="mt-3">
-            <div class="mb-3"><label for="authEmail" class="form-label">Email</label><input id="authEmail" type="email" class="form-control form-control-lg rounded-4" required placeholder="seu@email.com"></div>
-            <div class="mb-3"><label for="authPassword" class="form-label">Senha</label><input id="authPassword" type="password" class="form-control form-control-lg rounded-4" required minlength="6" placeholder="mínimo 6 caracteres"></div>
-            <button id="btnEmailLogin" class="btn btn-success w-100 rounded-pill py-2" type="submit">Entrar ou criar conta</button>
-          </form>
-          <p class="small text-secondary mb-0 mt-3">Ao informar email e senha, o sistema tenta entrar. Se não existir conta, ela será criada automaticamente.</p>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal fade" id="habitModal" tabindex="-1" aria-labelledby="habitModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content rounded-5 border-0 shadow-soft">
-        <div class="modal-header border-0 pb-0">
-          <div><h5 class="modal-title fw-bold" id="habitModalLabel">Novo hábito</h5><p class="text-secondary mb-0 small">Cadastre um hábito simples para acompanhar diariamente.</p></div>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
-        </div>
-        <div class="modal-body p-4">
-          <form id="habitForm">
-            <input type="hidden" id="habitId">
-            <div class="mb-3"><label for="habitName" class="form-label">Nome do hábito</label><input id="habitName" class="form-control form-control-lg rounded-4" required maxlength="45" placeholder="Ex.: Ler 10 páginas"><div class="form-text">Use até 45 caracteres.</div></div>
-            <div class="mb-4"><label for="habitColor" class="form-label">Cor</label><input id="habitColor" type="color" class="form-control form-control-color rounded-4" value="#10B981" title="Escolha uma cor"></div>
-            <div class="d-grid gap-2"><button id="btnSaveHabit" class="btn btn-success rounded-pill py-2" type="submit">Salvar hábito</button><button id="btnCancelEdit" class="btn btn-link text-secondary d-none" type="button">Cancelar edição</button></div>
-          </form>
-        </div>
-      </div>
-    </div>
-  </div>
-
+  <div class="toast-container position-fixed bottom-0 end-0 p-3"><div id="appToast" class="toast rounded-4" role="alert" aria-live="assertive" aria-atomic="true"><div class="toast-header"><strong class="me-auto" id="toastTitle">HabitFlow</strong><button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Fechar"></button></div><div class="toast-body" id="toastBody">Mensagem</div></div></div>
+  <div class="modal fade" id="authModal" tabindex="-1" aria-labelledby="authModalLabel" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content rounded-5 border-0 shadow-soft"><div class="modal-header border-0 pb-0"><div><h5 class="modal-title fw-bold" id="authModalLabel">Entrar no HabitFlow</h5><p class="text-secondary mb-0 small">Acesse sua conta para sincronizar seus hábitos.</p></div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button></div><div class="modal-body p-4"><button id="btnGoogle" class="btn btn-outline-dark w-100 rounded-pill py-2 mb-3"><i class="bi bi-google me-2"></i>Continuar com Google</button><div class="divider"><span>ou</span></div><form id="authForm" class="mt-3"><div class="mb-3"><label for="authEmail" class="form-label">Email</label><input id="authEmail" type="email" class="form-control form-control-lg rounded-4" required placeholder="seu@email.com"></div><div class="mb-3"><label for="authPassword" class="form-label">Senha</label><input id="authPassword" type="password" class="form-control form-control-lg rounded-4" required minlength="6" placeholder="mínimo 6 caracteres"></div><button id="btnEmailLogin" class="btn btn-success w-100 rounded-pill py-2" type="submit">Entrar ou criar conta</button></form><p class="small text-secondary mb-0 mt-3">Se a conta não existir, ela será criada automaticamente.</p></div></div></div></div>
+  <div class="modal fade" id="habitModal" tabindex="-1" aria-labelledby="habitModalLabel" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content rounded-5 border-0 shadow-soft"><div class="modal-header border-0 pb-0"><div><h5 class="modal-title fw-bold" id="habitModalLabel">Novo hábito</h5><p class="text-secondary mb-0 small">Cadastre um hábito simples para acompanhar diariamente.</p></div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button></div><div class="modal-body p-4"><form id="habitForm"><input type="hidden" id="habitId"><div class="mb-3"><label for="habitName" class="form-label">Nome do hábito</label><input id="habitName" class="form-control form-control-lg rounded-4" required maxlength="45" placeholder="Ex.: Ler 10 páginas"><div class="form-text">Use até 45 caracteres.</div></div><div class="mb-3"><label for="habitCategory" class="form-label">Categoria</label><select id="habitCategory" class="form-select form-select-lg rounded-4"><option>Saúde</option><option>Estudos</option><option>Produtividade</option><option>Finanças</option><option>Bem-estar</option><option>Outro</option></select></div><div class="mb-4"><label for="habitColor" class="form-label">Cor</label><input id="habitColor" type="color" class="form-control form-control-color rounded-4" value="#10B981" title="Escolha uma cor" aria-label="Escolha uma cor para o hábito"></div><div class="d-grid gap-2"><button id="btnSaveHabit" class="btn btn-success rounded-pill py-2" type="submit">Salvar hábito</button><button id="btnCancelEdit" class="btn btn-link text-secondary d-none" type="button">Cancelar edição</button></div></form></div></div></div></div>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script type="module" src="assets/js/app.js"></script>
   <script>if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("/service-worker.js").catch(() => {}));</script>
