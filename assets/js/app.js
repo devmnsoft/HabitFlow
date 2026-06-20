@@ -1,6 +1,14 @@
 import { auth, db, googleProvider, firebaseApi } from "./firebase.js";
 
-const MAX_FREE_HABITS = 5;
+const PLAN_LIMITS = {
+  free: 5,
+  // Futuro Premium: usar Infinity quando pagamentos/assinaturas forem implementados.
+  premium: Infinity
+};
+const CURRENT_PLAN = "free";
+const MAX_HABIT_NAME_LENGTH = 45;
+const QUICK_HABITS = ["Beber água", "Ler 10 minutos", "Caminhar", "Meditar", "Estudar"];
+const MAX_FREE_HABITS = PLAN_LIMITS[CURRENT_PLAN];
 let currentUser = null;
 let habits = [];
 let unsubscribeHabits = null;
@@ -12,11 +20,18 @@ const authModal = new bootstrap.Modal($("#authModal"));
 const habitModal = new bootstrap.Modal($("#habitModal"));
 const toast = new bootstrap.Toast($("#appToast"));
 
-const todayKey = () => new Date().toISOString().slice(0, 10);
+const toDateKey = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+const todayKey = () => toDateKey(new Date());
 
-function showToast(title, message) {
+function showToast(title, message, variant = "success") {
   $("#toastTitle").textContent = title;
   $("#toastBody").textContent = message;
+  $("#appToast").className = `toast rounded-4 border-0 toast-${variant}`;
   toast.show();
 }
 
@@ -24,6 +39,11 @@ function setLoading(button, isLoading, originalText) {
   if (!button) return;
   button.disabled = isLoading;
   button.innerHTML = isLoading ? '<span class="spinner-border spinner-border-sm me-2"></span>Aguarde...' : originalText;
+}
+
+function friendlyFirebaseError(error, fallback = "Não foi possível concluir a ação. Tente novamente.") {
+  console.error(error);
+  return fallback;
 }
 
 function setAuthUi(user) {
@@ -53,7 +73,7 @@ function listenHabits() {
     renderHabits();
   }, (error) => {
     console.error(error);
-    showToast("Erro", "Não foi possível carregar os hábitos. Confira as regras do Firestore.");
+    showToast("Erro", "Não foi possível carregar seus hábitos agora. Tente novamente em instantes.", "danger");
     $("#loadingState").classList.add("d-none");
   });
 }
@@ -66,9 +86,12 @@ function renderHabits() {
   const today = todayKey();
   const doneToday = habits.filter(h => (h.completedDates || []).includes(today)).length;
   const best = habits.reduce((max, h) => Math.max(max, getBestStreak(h.completedDates || [])), 0);
+  const completion = habits.length ? Math.round((doneToday / habits.length) * 100) : 0;
   $("#kpiTotal").textContent = habits.length;
   $("#kpiDoneToday").textContent = doneToday;
   $("#kpiBestStreak").textContent = best;
+  $("#kpiCompletion").textContent = `${completion}%`;
+  renderQuickHabits();
 
   $("#habitsList").innerHTML = habits.map(habitCardHtml).join("");
   bindHabitCardEvents();
@@ -81,7 +104,7 @@ function habitCardHtml(habit) {
   const bestStreak = getBestStreak(completedDates);
   const history = getLastDays(30).map(day => {
     const isDone = completedDates.includes(day.key);
-    return `<span class="history-day ${isDone ? "done" : ""} ${day.key === todayKey() ? "today" : ""}" title="${day.label}: ${isDone ? "feito" : "pendente"}"></span>`;
+    return `<span class="history-day ${isDone ? "done" : ""} ${day.key === todayKey() ? "today" : ""}" title="${day.label}: ${isDone ? "feito" : "pendente"}" aria-label="${day.label}: ${isDone ? "feito" : "pendente"}"></span>`;
   }).join("");
 
   return `
@@ -116,6 +139,27 @@ function bindHabitCardEvents() {
   $$(".btn-delete").forEach(button => button.addEventListener("click", () => deleteHabit(button.dataset.id)));
 }
 
+function renderQuickHabits() {
+  const container = $("#quickHabits");
+  if (!container) return;
+  container.innerHTML = QUICK_HABITS.map(name => `<button class="btn btn-outline-success rounded-pill quick-habit-btn" type="button" data-name="${escapeHtml(name)}"><i class="bi bi-plus-lg me-1"></i>${escapeHtml(name)}</button>`).join("");
+  $$(".quick-habit-btn").forEach(button => button.addEventListener("click", () => createQuickHabit(button.dataset.name)));
+}
+
+async function createQuickHabit(name) {
+  if (!currentUser) return;
+  if (habits.length >= MAX_FREE_HABITS) {
+    showToast("Limite gratuito", "Você atingiu 5 hábitos no plano gratuito.", "warning");
+    return;
+  }
+  try {
+    await firebaseApi.addDoc(userHabitsCollection(), { name, color: "#10B981", createdAt: firebaseApi.serverTimestamp(), completedDates: [] });
+    showToast("Hábito criado", `“${name}” foi adicionado à sua rotina.`);
+  } catch (error) {
+    showToast("Erro ao criar", friendlyFirebaseError(error, "Não foi possível criar a sugestão agora."), "danger");
+  }
+}
+
 async function toggleToday(id) {
   const habit = habits.find(h => h.id === id);
   if (!habit) return;
@@ -124,7 +168,12 @@ async function toggleToday(id) {
   const wasDone = set.has(today);
   wasDone ? set.delete(today) : set.add(today);
   const completedDates = Array.from(set).sort();
-  await firebaseApi.updateDoc(habitDocument(id), { completedDates });
+  try {
+    await firebaseApi.updateDoc(habitDocument(id), { completedDates });
+  } catch (error) {
+    showToast("Erro ao atualizar", friendlyFirebaseError(error, "Não foi possível atualizar o progresso."), "danger");
+    return;
+  }
   showToast("Progresso atualizado", wasDone ? "Conclusão de hoje removida." : "Parabéns! Hábito marcado como feito hoje.");
 }
 
@@ -153,7 +202,12 @@ async function deleteHabit(id) {
   const habit = habits.find(h => h.id === id);
   if (!habit) return;
   if (!confirm(`Excluir o hábito "${habit.name}"? Essa ação não pode ser desfeita.`)) return;
-  await firebaseApi.deleteDoc(habitDocument(id));
+  try {
+    await firebaseApi.deleteDoc(habitDocument(id));
+  } catch (error) {
+    showToast("Erro ao excluir", friendlyFirebaseError(error, "Não foi possível excluir o hábito."), "danger");
+    return;
+  }
   showToast("Hábito excluído", "O hábito foi removido com sucesso.");
 }
 
@@ -162,7 +216,7 @@ function getLastDays(total) {
   return Array.from({ length: total }, (_, index) => {
     const date = new Date();
     date.setDate(date.getDate() - (total - 1 - index));
-    const key = date.toISOString().slice(0, 10);
+    const key = toDateKey(date);
     return { key, label: formatter.format(date) };
   });
 }
@@ -171,7 +225,7 @@ function getCurrentStreak(dates) {
   const set = new Set(dates);
   let streak = 0;
   const cursor = new Date();
-  while (set.has(cursor.toISOString().slice(0, 10))) {
+  while (set.has(toDateKey(cursor))) {
     streak++;
     cursor.setDate(cursor.getDate() - 1);
   }
@@ -188,7 +242,7 @@ function getBestStreak(dates) {
     else {
       const prevDate = new Date(previous);
       prevDate.setDate(prevDate.getDate() + 1);
-      current = prevDate.toISOString().slice(0, 10) === dateKey ? current + 1 : 1;
+      current = toDateKey(prevDate) === dateKey ? current + 1 : 1;
     }
     best = Math.max(best, current);
     previous = dateKey;
@@ -209,7 +263,7 @@ $("#btnGoogle").addEventListener("click", async () => {
     authModal.hide();
   } catch (error) {
     console.error(error);
-    showToast("Falha no login", "Não foi possível entrar com Google. Verifique se o provedor está habilitado no Firebase.");
+    showToast("Falha no login", "Não foi possível entrar com Google. Verifique se o provedor está habilitado no Firebase.", "danger");
   } finally {
     setLoading(btn, false, original);
   }
@@ -236,7 +290,7 @@ $("#authForm").addEventListener("submit", async (event) => {
     $("#authForm").reset();
   } catch (error) {
     console.error(error);
-    showToast("Falha no acesso", firebaseErrorMessage(error));
+    showToast("Falha no acesso", firebaseErrorMessage(error), "danger");
   } finally {
     setLoading(btn, false, original);
   }
@@ -253,9 +307,16 @@ $("#habitForm").addEventListener("submit", async (event) => {
   const id = $("#habitId").value;
   const name = $("#habitName").value.trim();
   const color = $("#habitColor").value;
-  if (!name) return;
+  if (!name) {
+    showToast("Nome obrigatório", "Informe um nome para o hábito antes de salvar.", "warning");
+    return;
+  }
+  if (name.length > MAX_HABIT_NAME_LENGTH) {
+    showToast("Nome muito longo", `Use no máximo ${MAX_HABIT_NAME_LENGTH} caracteres.`, "warning");
+    return;
+  }
   if (!id && habits.length >= MAX_FREE_HABITS) {
-    showToast("Limite gratuito", "O MVP permite até 5 hábitos. Exclua um hábito para criar outro.");
+    showToast("Limite gratuito", "Você atingiu 5 hábitos no plano gratuito. Exclua um hábito ou aguarde o futuro Premium para hábitos ilimitados.", "warning");
     return;
   }
   const btn = $("#btnSaveHabit");
@@ -273,7 +334,7 @@ $("#habitForm").addEventListener("submit", async (event) => {
     resetHabitForm();
   } catch (error) {
     console.error(error);
-    showToast("Erro", "Não foi possível salvar o hábito.");
+    showToast("Erro ao salvar", friendlyFirebaseError(error, "Não foi possível salvar o hábito. Verifique sua conexão e tente novamente."), "danger");
   } finally {
     setLoading(btn, false, original);
   }

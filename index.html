@@ -2,7 +2,12 @@
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="HabitFlow">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="assets/icons/icon.svg">
   <meta name="theme-color" content="#10B981">
   <title>HabitFlow | Rastreador de Hábitos</title>
   <meta name="description" content="HabitFlow é um rastreador simples de hábitos com streak, histórico visual e sincronização na nuvem pelo Firebase.">
@@ -89,9 +94,9 @@
             <p class="text-secondary">Sem telas confusas, sem excesso de configurações. Apenas hábitos, conclusão diária, streak e progresso visual.</p>
           </div>
           <div class="row g-4 mt-2">
-            <div class="col-md-4"><div class="feature-card h-100"><i class="bi bi-fire"></i><h5>Streak motivador</h5><p>Veja quantos dias consecutivos você conseguiu manter cada hábito.</p></div></div>
-            <div class="col-md-4"><div class="feature-card h-100"><i class="bi bi-calendar3"></i><h5>Histórico de 30 dias</h5><p>Mini calendário para entender rapidamente sua consistência recente.</p></div></div>
-            <div class="col-md-4"><div class="feature-card h-100"><i class="bi bi-cloud-check"></i><h5>Salvo na nuvem</h5><p>Seus hábitos ficam vinculados à sua conta pelo Firebase Authentication e Firestore.</p></div></div>
+            <div class="col-md-4"><div class="feature-card h-100"><i class="bi bi-plus-circle"></i><h5>Crie hábitos sem complicação</h5><p>Cadastre um hábito em segundos, escolha uma cor e mantenha o foco na rotina.</p></div></div>
+            <div class="col-md-4"><div class="feature-card h-100"><i class="bi bi-fire"></i><h5>Acompanhe sua sequência</h5><p>Veja seu streak atual e sua melhor marca para reforçar a recompensa diária.</p></div></div>
+            <div class="col-md-4"><div class="feature-card h-100"><i class="bi bi-calendar3"></i><h5>Veja seu progresso diário</h5><p>Use o mini calendário de 30 dias para entender sua consistência recente.</p></div></div>
           </div>
         </div>
       </section>
@@ -139,14 +144,15 @@
           </div>
 
           <div class="row g-3 mb-4">
-            <div class="col-md-4"><div class="kpi-card"><span>Total de hábitos</span><strong id="kpiTotal">0</strong></div></div>
-            <div class="col-md-4"><div class="kpi-card"><span>Concluídos hoje</span><strong id="kpiDoneToday">0</strong></div></div>
-            <div class="col-md-4"><div class="kpi-card"><span>Melhor streak</span><strong id="kpiBestStreak">0</strong></div></div>
+            <div class="col-6 col-lg-3"><div class="kpi-card"><span>Total de hábitos</span><strong id="kpiTotal">0</strong></div></div>
+            <div class="col-6 col-lg-3"><div class="kpi-card"><span>Feitos hoje</span><strong id="kpiDoneToday">0</strong></div></div>
+            <div class="col-6 col-lg-3"><div class="kpi-card"><span>Melhor streak geral</span><strong id="kpiBestStreak">0</strong></div></div>
+            <div class="col-6 col-lg-3"><div class="kpi-card"><span>Conclusão do dia</span><strong id="kpiCompletion">0%</strong></div></div>
           </div>
 
           <div id="limitAlert" class="alert alert-warning rounded-4 d-none" role="alert"><i class="bi bi-exclamation-triangle me-2"></i>Limite gratuito atingido: o MVP permite até 5 hábitos.</div>
           <div id="loadingState" class="text-center py-5"><div class="spinner-border text-success" role="status"></div><p class="text-secondary mt-3">Carregando seus hábitos...</p></div>
-          <div id="emptyState" class="empty-state d-none"><i class="bi bi-seedling"></i><h4>Nenhum hábito criado ainda</h4><p>Crie seu primeiro hábito para começar a acompanhar sua evolução.</p><button class="btn btn-success rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#habitModal">Criar hábito</button></div>
+          <div id="emptyState" class="empty-state d-none"><i class="bi bi-seedling"></i><h4>Comece com um hábito simples hoje.</h4><p>Escolha uma sugestão rápida ou crie seu próprio hábito para começar sua sequência.</p><div id="quickHabits" class="quick-habits" aria-label="Sugestões de hábitos rápidos"></div><button class="btn btn-success rounded-pill px-4 mt-3" data-bs-toggle="modal" data-bs-target="#habitModal">Criar hábito personalizado</button></div>
           <div id="habitsList" class="habits-list"></div>
         </div>
       </section>
@@ -201,7 +207,7 @@
         <div class="modal-body p-4">
           <form id="habitForm">
             <input type="hidden" id="habitId">
-            <div class="mb-3"><label for="habitName" class="form-label">Nome do hábito</label><input id="habitName" class="form-control form-control-lg rounded-4" required maxlength="60" placeholder="Ex.: Ler 10 páginas"></div>
+            <div class="mb-3"><label for="habitName" class="form-label">Nome do hábito</label><input id="habitName" class="form-control form-control-lg rounded-4" required maxlength="45" placeholder="Ex.: Ler 10 páginas"><div class="form-text">Use até 45 caracteres.</div></div>
             <div class="mb-4"><label for="habitColor" class="form-label">Cor</label><input id="habitColor" type="color" class="form-control form-control-color rounded-4" value="#10B981" title="Escolha uma cor"></div>
             <div class="d-grid gap-2"><button id="btnSaveHabit" class="btn btn-success rounded-pill py-2" type="submit">Salvar hábito</button><button id="btnCancelEdit" class="btn btn-link text-secondary d-none" type="button">Cancelar edição</button></div>
           </form>
@@ -212,5 +218,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script type="module" src="assets/js/app.js"></script>
+  <script>if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("/service-worker.js").catch(() => {}));</script>
 </body>
 </html>
