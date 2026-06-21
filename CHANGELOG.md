@@ -19,6 +19,15 @@
 
 # Changelog
 
+## v1.7 Telegram real
+- Bot @hablitflowmns_bot configurado
+- Chat ID administrativo configurado
+- Function sendTelegramAlert preparada
+- Function sendTestTelegramAlert criada
+- Painel Admin Geral mostra status do Telegram
+- Alertas de erro e eventos importantes enviados para o Telegram
+- Documentação de segurança adicionada
+
 ## v1.5
 
 - Refatoração de arquitetura JavaScript.

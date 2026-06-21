@@ -1,71 +1,118 @@
-# Monitoramento via Telegram no HabitFlow
+# Telegram do HabitFlow
 
-A integração de Telegram da versão 1.7 envia alertas administrativos do backend/Firebase Functions para o dono do sistema, sem expor token no frontend.
+Dados do bot:
+- Bot: @hablitflowmns_bot
+- Chat ID admin: 7535235489
 
-## Objetivo
+A integração envia alertas reais do HabitFlow para o Administrador Geral usando somente Firebase Functions. O token do bot nunca deve ser colocado no frontend, no Firestore, no README, no CHANGELOG, no DEPLOY ou em qualquer arquivo público.
 
-- Avisar rapidamente sobre erros `error` e `critical`.
-- Notificar eventos relevantes como novo cadastro, interesse Premium, falha de checkout, erro de webhook e tentativa admin indevida.
-- Manter mensagens curtas, sanitizadas e sem dados sensíveis.
+## Como configurar o token com segurança
 
-## Criar bot com BotFather
+1. Crie ou acesse o bot no `@BotFather`.
+2. Copie o token do bot apenas para um ambiente seguro.
+3. Configure `TELEGRAM_BOT_TOKEN` somente nas Firebase Functions.
+4. Não imprima o token em logs, respostas HTTP/callable, telas do Admin Geral ou documentação.
 
-1. Abra o Telegram e procure `@BotFather`.
-2. Use `/newbot`.
-3. Defina nome e username do bot.
-4. Copie o token retornado para `TELEGRAM_BOT_TOKEN` nas variáveis de ambiente das Functions.
+## Como configurar TELEGRAM_ADMIN_CHAT_ID
 
-## Obter TELEGRAM_ADMIN_CHAT_ID
+Configure o Chat ID administrativo nas Functions:
 
-1. Envie uma mensagem para o bot criado.
-2. Consulte `https://api.telegram.org/bot<TELEGRAM_BOT_TOKEN>/getUpdates` em ambiente seguro.
-3. Copie o `chat.id` do seu usuário/grupo para `TELEGRAM_ADMIN_CHAT_ID`.
-4. Nunca coloque esse valor no frontend.
+```env
+TELEGRAM_ADMIN_CHAT_ID=7535235489
+```
 
-## Variáveis de ambiente
+O Chat ID pode aparecer em exemplos porque não permite controlar o bot sem o token. Mesmo assim, não coloque o token real junto dele em arquivos versionados.
+
+## Como usar .env local
+
+1. Copie `functions/.env.example` para `functions/.env`.
+2. Preencha o token real somente no arquivo local:
 
 ```env
 TELEGRAM_ENABLED=true
-TELEGRAM_BOT_TOKEN=coloque_o_token_aqui
-TELEGRAM_ADMIN_CHAT_ID=coloque_o_chat_id_aqui
+TELEGRAM_BOT_TOKEN=COLOQUE_AQUI_O_TOKEN_REAL
+TELEGRAM_ADMIN_CHAT_ID=7535235489
 TELEGRAM_MIN_SEVERITY=warning
-TELEGRAM_NOTIFY_EVENTS=critical,error,checkout_failed,webhook_error,premium_interest,user_signup
+TELEGRAM_NOTIFY_EVENTS=critical,error,checkout_failed,webhook_error,premium_interest,user_signup,frontend_error,backend_error,unauthorized_admin_attempt
 ```
 
-## Como testar
+3. Confirme que `functions/.gitignore` contém `.env` e `.env.local`.
 
-1. Configure `ADMIN_EMAILS` com seu e-mail.
-2. Publique ou rode as Functions no emulador.
-3. Entre no app em `http://localhost:5177` com e-mail admin.
+## Como usar Firebase Secrets em produção
+
+Em produção, prefira Firebase Functions secrets ou uma configuração segura equivalente. Exemplo operacional:
+
+```bash
+firebase functions:secrets:set TELEGRAM_BOT_TOKEN
+firebase functions:secrets:set TELEGRAM_ADMIN_CHAT_ID
+```
+
+Depois associe os secrets às Functions conforme a configuração do projeto e faça deploy. Variáveis não sensíveis como `TELEGRAM_ENABLED`, `TELEGRAM_MIN_SEVERITY` e `TELEGRAM_NOTIFY_EVENTS` também podem ser configuradas pelo ambiente seguro das Functions.
+
+## Como testar pelo Admin Geral
+
+1. Configure `ADMIN_EMAILS` com o e-mail do Administrador Geral.
+2. Rode as Functions localmente ou publique em produção.
+3. Faça login no HabitFlow como Administrador Geral.
 4. Abra a aba **Admin Geral**.
-5. Clique em **Testar Telegram**.
-6. Simule um erro frontend ou um interesse Premium e confira a mensagem.
+5. Na seção **Telegram**, clique em **Testar Telegram**.
+6. Confirme a chegada da mensagem no Telegram.
 
-## Eventos enviados
+A mensagem de teste esperada é:
 
-- Erro crítico, backend, frontend, Firebase Auth, Firestore e PWA.
-- Falha checkout e webhook.
-- Novo cadastro.
-- Interesse Premium.
-- Tentativa de acesso admin não autorizada.
-- Alteração manual de plano.
-- Eventos futuros de pagamento confirmado e cancelamento.
+```text
+✅ HabitFlow Telegram configurado com sucesso.
 
-## O que nunca deve ser enviado
+Bot: @hablitflowmns_bot
+Ambiente: development/production
+Versão: 1.7
+Data: data/hora
+```
 
-- Senha, token, accessToken, refreshToken, authorization, apiKey ou secrets.
-- Cartão, CVV, CPF, documento ou payload bruto de pagamento.
-- Payload completo de webhook.
+## Quais eventos são enviados
 
-## Desativar e reduzir ruído
+- `critical`
+- `error`
+- `frontend_error`
+- `backend_error`
+- `firebase_error`
+- `checkout_failed`
+- `webhook_error`
+- `unauthorized_admin_attempt`
+- `premium_interest`
+- `user_signup`
+- `admin_set_user_plan`
+- `payment_confirmed` futuramente
+- `payment_failed` futuramente
 
-- Defina `TELEGRAM_ENABLED=false` para desligar.
-- Aumente `TELEGRAM_MIN_SEVERITY=error` para reduzir alertas.
-- Remova eventos informativos de `TELEGRAM_NOTIFY_EVENTS`.
+## Como evitar vazamento de token
 
-## Recomendações de produção
+- Nunca use `TELEGRAM_BOT_TOKEN` em `assets/js/firebase.js`, `assets/js/app.js`, HTML, service worker ou qualquer arquivo público.
+- Nunca salve o token no Firestore.
+- Nunca retorne o token em callable functions.
+- Nunca registre o token no console ou em logs das Functions.
+- Nunca coloque o token real em README, CHANGELOG, DEPLOY ou documentação.
+- Mantenha `functions/.env` fora do Git.
 
-- Use secrets/variáveis seguras das Firebase Functions.
-- Restrinja `ADMIN_EMAILS` a contas reais do dono do SaaS.
-- Revogue o token no BotFather em caso de suspeita de vazamento.
-- Revise periodicamente os alertas para evitar excesso de mensagens.
+## Como revogar e gerar novo token no BotFather
+
+1. Abra conversa com `@BotFather`.
+2. Use `/mybots`.
+3. Selecione `@hablitflowmns_bot`.
+4. Acesse **API Token**.
+5. Use **Revoke current token** para invalidar o token antigo.
+6. Copie o novo token apenas para o ambiente seguro das Functions.
+7. Faça novo deploy/restart das Functions.
+
+## Checklist de segurança
+
+- [ ] Token não está no frontend.
+- [ ] Token não está no GitHub.
+- [ ] Token não aparece no console.
+- [ ] Token não aparece no Firestore.
+- [ ] Token não aparece nas respostas de Functions.
+- [ ] `.env` está no `functions/.gitignore`.
+- [ ] Produção usa Firebase Secrets ou configuração segura equivalente.
+- [ ] Teste pelo Admin Geral funcionou.
+- [ ] Erro simulado chegou no Telegram.
+- [ ] Interesse Premium chegou no Telegram.

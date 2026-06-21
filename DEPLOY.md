@@ -130,3 +130,29 @@ firebase deploy
 - Conferir domínio autorizado no Firebase Auth.
 - Conferir se Functions não expõem secrets.
 - Conferir se regras bloqueiam `billingEvents` e `adminAuditLogs`.
+
+## Configurar Telegram nas Firebase Functions
+
+Local:
+1. Criar arquivo `functions/.env`.
+2. Adicionar:
+
+```env
+TELEGRAM_ENABLED=true
+TELEGRAM_BOT_TOKEN=seu_token_real_aqui
+TELEGRAM_ADMIN_CHAT_ID=7535235489
+TELEGRAM_MIN_SEVERITY=warning
+```
+
+Produção:
+Usar Firebase Functions secrets ou configuração segura equivalente.
+
+Checklist:
+- Token não está no frontend
+- Token não está no GitHub
+- Token não aparece no console
+- Token não aparece no Firestore
+- `.env` está no `.gitignore`
+- Teste pelo Admin Geral funcionou
+- Erro simulado chegou no Telegram
+- Interesse Premium chegou no Telegram

@@ -19,9 +19,9 @@ Copie `functions/.env.example` e configure:
 - `ADMIN_EMAILS=admin@habitflow.app,marcelo@mnsoft.com.br`
 - `TELEGRAM_ENABLED=true`
 - `TELEGRAM_BOT_TOKEN=`
-- `TELEGRAM_ADMIN_CHAT_ID=`
+- `TELEGRAM_ADMIN_CHAT_ID=7535235489`
 - `TELEGRAM_MIN_SEVERITY=warning`
-- `TELEGRAM_NOTIFY_EVENTS=critical,error,checkout_failed,webhook_error,premium_interest,user_signup`
+- `TELEGRAM_NOTIFY_EVENTS=critical,error,checkout_failed,webhook_error,premium_interest,user_signup,frontend_error,backend_error,unauthorized_admin_attempt`
 
 ### Testes manuais
 

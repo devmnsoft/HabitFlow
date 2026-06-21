@@ -18,7 +18,8 @@ const PREMIUM_YEARLY_PRICE = 99.00;
 const VALID_PLAN_TYPES = ["monthly", "yearly"];
 const VALID_PLANS = ["free", "premium"];
 const VALID_STATUSES = ["active", "trial", "past_due", "canceled", "inactive"];
-const BLOCKED_KEY = /password|senha|token|accessToken|refreshToken|authorization|apiKey|secret|card|cvv|cpf|document|payloadCompleto|rawPayload|payer/i;
+const BLOCKED_KEY = /password|senha|token|accessToken|refreshToken|authorization|apiKey|secret|card|cvv|cpf|document|payloadCompleto|rawPayload|payer|stack|raw|payload/i;
+const DEFAULT_TELEGRAM_EVENTS = "critical,error,checkout_failed,webhook_error,premium_interest,user_signup,frontend_error,backend_error,firebase_error,unauthorized_admin_attempt,admin_set_user_plan,payment_confirmed,payment_failed";
 
 function env(name, fallback = "") { return process.env[name] || fallback; }
 function environment() { return env("APP_ENV", env("FUNCTIONS_EMULATOR") ? "development" : "production"); }
@@ -35,6 +36,7 @@ async function requireAdmin(request) {
   }
 }
 function truncate(value, max = 500) { return String(value ?? "").slice(0, max); }
+function safeTelegramValue(value, max = 160) { return truncate(value || "-", max).replace(/[\r\n]+/g, " "); }
 function sanitizeMetadata(input = {}, depth = 0) {
   if (depth > 3 || input == null) return null;
   if (["string", "number", "boolean"].includes(typeof input)) return typeof input === "string" ? truncate(input) : input;
@@ -71,19 +73,28 @@ async function writeSystemAuditLog(event) {
 function shouldNotifyTelegram(event) {
   if (env("TELEGRAM_ENABLED", "false") !== "true") return false;
   const min = env("TELEGRAM_MIN_SEVERITY", "warning");
-  const notifyEvents = env("TELEGRAM_NOTIFY_EVENTS", "critical,error,checkout_failed,webhook_error,premium_interest,user_signup").split(",").map((v) => v.trim());
+  const notifyEvents = env("TELEGRAM_NOTIFY_EVENTS", DEFAULT_TELEGRAM_EVENTS).split(",").map((v) => v.trim()).filter(Boolean);
   return SEVERITY_RANK[event.severity] >= SEVERITY_RANK[min] || notifyEvents.includes(event.type) || notifyEvents.includes(event.action);
+}
+function telegramMessage(event) {
+  if (event.type === "telegram_test") {
+    return `✅ HabitFlow Telegram configurado com sucesso.\n\nBot: @hablitflowmns_bot\nAmbiente: ${environment()}\nVersão: ${APP_VERSION}\nData: ${new Date().toISOString()}`;
+  }
+  const meta = sanitizeMetadata(event.metadata || {}) || {};
+  const user = `${safeTelegramValue(event.userName, 80)} / ${safeTelegramValue(event.userEmail, 120)}`;
+  if (["error", "critical"].includes(event.severity) || String(event.type).includes("error")) {
+    return `🚨 HabitFlow Alerta\n\nSeveridade: ${String(event.severity).toUpperCase()}\nTipo: ${safeTelegramValue(event.type)}\nAção: ${safeTelegramValue(event.action)}\nUsuário: ${user}\nAmbiente: ${safeTelegramValue(event.environment)}\nVersão: ${APP_VERSION}\nMensagem: ${safeTelegramValue(event.message, 240)}\nData: ${new Date().toISOString()}\n\nDetalhes:\n- Código: ${safeTelegramValue(meta.errorCode || meta.code, 80)}\n- Origem: ${safeTelegramValue(event.source, 80)}\n- Página: ${safeTelegramValue(meta.page || meta.path, 120)}`;
+  }
+  return `📌 HabitFlow Evento\n\nTipo: ${safeTelegramValue(event.type)}\nUsuário: ${user}\nPlano atual: ${safeTelegramValue(meta.currentPlan || meta.plan || "-")}\nAmbiente: ${safeTelegramValue(event.environment)}\nMensagem: ${safeTelegramValue(event.message, 240)}\nData: ${new Date().toISOString()}`;
 }
 async function sendTelegramAlert(event) {
   if (!shouldNotifyTelegram(event)) return false;
   const token = env("TELEGRAM_BOT_TOKEN");
   const chatId = env("TELEGRAM_ADMIN_CHAT_ID");
-  if (!token || !chatId) return false;
-  const icon = ["error", "critical"].includes(event.severity) ? "🚨 HabitFlow Alerta" : "📌 HabitFlow Evento";
-  const meta = event.metadata || {};
-  const text = `${icon}\n\nSeveridade: ${String(event.severity).toUpperCase()}\nTipo: ${event.type}\nAção: ${event.action}\nUsuário: ${event.userName || "-"} / ${event.userEmail || "-"}\nAmbiente: ${event.environment}\nVersão: ${APP_VERSION}\nMensagem: ${event.message}\nData: ${new Date().toISOString()}\n\nDetalhes:\n- Código: ${meta.errorCode || "-"}\n- Origem: ${event.source}\n- Página: ${meta.page || "-"}`;
+  if (!token || !chatId) { logger.warn("telegram_not_configured", { tokenConfigured: Boolean(token), chatConfigured: Boolean(chatId) }); return false; }
   try {
-    const response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ chat_id: chatId, text: text.slice(0, 3500) }) });
+    const response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ chat_id: chatId, text: telegramMessage(event).slice(0, 3500), disable_web_page_preview: true }) });
+    if (!response.ok) logger.error("telegram_api_error", { status: response.status });
     return response.ok;
   } catch (error) { logger.error("telegram_error", { message: error.message }); return false; }
 }
@@ -95,8 +106,8 @@ async function createMercadoPagoCheckout(userId, planType) { if (!env("MERCADOPA
 async function createStripeCheckout(userId, planType) { if (!env("STRIPE_SECRET_KEY")) return { checkoutUrl: mockCheckoutUrl(planType), mode: "mock" }; return { checkoutUrl: mockCheckoutUrl(planType), mode: "sandbox" }; }
 
 exports.logSystemEvent = onCall(async (request) => { try { requireAuth(request); const d = request.data || {}; const ref = await writeSystemAuditLog({ ...d, userId: request.auth.uid, userEmail: request.auth.token.email || "", userName: request.auth.token.name || "", severity: VALID_SEVERITIES.includes(d.severity) ? d.severity : "info" }); return { success: true, logId: ref.id }; } catch (error) { logger.error("logSystemEvent_failed", { message: error.message }); if (error instanceof HttpsError) throw error; throw new HttpsError("internal", "Erro interno registrado para análise."); } });
-exports.sendTestTelegramAlert = onCall(async (request) => { await requireAdmin(request); const ok = await sendTelegramAlert({ type: "telegram_test", severity: "warning", source: "backend", action: "send_test", userEmail: request.auth.token.email || "", environment: environment(), message: `✅ HabitFlow Telegram configurado com sucesso.\nAmbiente: ${environment()}\nVersão: ${APP_VERSION}\nData: ${new Date().toISOString()}`, metadata: {} }); await audit("send_test_telegram_alert", { uid: request.auth.uid, email: request.auth.token.email }); return { success: ok, message: ok ? "Telegram testado com sucesso." : "Telegram não configurado ou indisponível." }; });
-exports.getAdminDashboardSummary = onCall(async (request) => { await requireAdmin(request); const logs = await db.collection("systemAuditLogs").orderBy("createdAt", "desc").limit(200).get(); const rows = logs.docs.map((d) => ({ id: d.id, ...d.data() })); await audit("get_admin_dashboard_summary", { uid: request.auth.uid, email: request.auth.token.email }); return { totalEvents: rows.length, totalErrors: rows.filter((r) => r.severity === "error").length, totalCritical: rows.filter((r) => r.severity === "critical").length, totalPremiumInterest: rows.filter((r) => r.type === "premium_interest").length, totalSignupsRecent: rows.filter((r) => r.type === "user_signup" || r.action === "signup").length, totalLoginsRecent: rows.filter((r) => r.type === "user_login" || r.action === "login").length, telegramEnabled: env("TELEGRAM_ENABLED", "false") === "true", telegramChatConfigured: Boolean(env("TELEGRAM_ADMIN_CHAT_ID")), telegramMinSeverity: env("TELEGRAM_MIN_SEVERITY", "warning"), latestErrors: rows.filter((r) => ["error", "critical"].includes(r.severity)).slice(0, 5).map(publicLog) }; });
+exports.sendTestTelegramAlert = onCall(async (request) => { await requireAdmin(request); const ok = await sendTelegramAlert({ type: "telegram_test", severity: "warning", source: "backend", action: "send_test", userEmail: request.auth.token.email || "", environment: environment(), message: "Teste de configuração do Telegram.", metadata: {} }); await audit("send_test_telegram_alert", { uid: request.auth.uid, email: request.auth.token.email }); return { success: ok, message: ok ? "Mensagem de teste enviada para o Telegram." : "Não foi possível enviar o teste do Telegram. Verifique as configurações das Functions." }; });
+exports.getAdminDashboardSummary = onCall(async (request) => { await requireAdmin(request); const logs = await db.collection("systemAuditLogs").orderBy("createdAt", "desc").limit(200).get(); const rows = logs.docs.map((d) => ({ id: d.id, ...d.data() })); await audit("get_admin_dashboard_summary", { uid: request.auth.uid, email: request.auth.token.email }); return { totalEvents: rows.length, totalErrors: rows.filter((r) => r.severity === "error").length, totalCritical: rows.filter((r) => r.severity === "critical").length, totalPremiumInterest: rows.filter((r) => r.type === "premium_interest").length, totalSignupsRecent: rows.filter((r) => r.type === "user_signup" || r.action === "signup").length, totalLoginsRecent: rows.filter((r) => r.type === "user_login" || r.action === "login").length, telegramEnabled: env("TELEGRAM_ENABLED", "false") === "true", telegramChatConfigured: Boolean(env("TELEGRAM_ADMIN_CHAT_ID")), telegramTokenConfigured: Boolean(env("TELEGRAM_BOT_TOKEN")), telegramMinSeverity: env("TELEGRAM_MIN_SEVERITY", "warning"), telegramNotifyEvents: env("TELEGRAM_NOTIFY_EVENTS", DEFAULT_TELEGRAM_EVENTS), latestErrors: rows.filter((r) => ["error", "critical"].includes(r.severity)).slice(0, 5).map(publicLog) }; });
 exports.getAdminRecentLogs = onCall(async (request) => { await requireAdmin(request); const d = request.data || {}; let q = db.collection("systemAuditLogs").orderBy("createdAt", "desc").limit(Math.min(Number(d.limit) || 50, 100)); const snap = await q.get(); let rows = snap.docs.map((doc) => publicLog({ id: doc.id, ...doc.data() })); if (d.severity) rows = rows.filter((r) => r.severity === d.severity); if (d.type) rows = rows.filter((r) => r.type === d.type); if (d.userEmail) rows = rows.filter((r) => String(r.userEmail || "").includes(String(d.userEmail).toLowerCase())); if (d.environment) rows = rows.filter((r) => r.environment === d.environment); await audit("get_admin_recent_logs", { uid: request.auth.uid, email: request.auth.token.email }, sanitizeMetadata(d)); return { logs: rows }; });
 exports.getAdminErrorLogs = onCall(async (request) => { await requireAdmin(request); const snap = await db.collection("systemAuditLogs").orderBy("createdAt", "desc").limit(100).get(); await audit("get_admin_error_logs", { uid: request.auth.uid, email: request.auth.token.email }); return { logs: snap.docs.map((d) => publicLog({ id: d.id, ...d.data() })).filter((r) => ["error", "critical"].includes(r.severity)) }; });
 exports.getAdminUserActivitySummary = onCall(async (request) => { await requireAdmin(request); const snap = await db.collection("systemAuditLogs").orderBy("createdAt", "desc").limit(100).get(); await audit("get_admin_user_activity_summary", { uid: request.auth.uid, email: request.auth.token.email }); return { activities: snap.docs.map((d) => publicLog({ id: d.id, ...d.data() })).filter((r) => ["user_login", "user_signup", "habit_created", "premium_interest", "checkout_started", "terms_accepted", "login", "signup"].includes(r.type) || ["login", "signup", "habit_created", "premium_interest", "premium_checkout_clicked", "terms_accepted"].includes(r.action)).slice(0, 50) }; });
