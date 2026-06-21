@@ -111,6 +111,23 @@
 - Tratamento de retorno pós-pagamento.
 - Documentação PAGAMENTOS.md.
 
+## v1.9
+- Arquitetura segura para chatbot com IA via backend.
+- Function askHabitFlowAssistant.
+- Base de conhecimento completa do HabitFlow.
+- Intents do assistente.
+- Detecção de conteúdo sensível.
+- Histórico controlado de conversas.
+- Tickets de suporte.
+- Reporte de bug pelo chatbot.
+- Central de Suporte no Perfil.
+- Aba Suporte no Admin Geral.
+- Integração do chatbot com Telegram.
+- Integração do chatbot com WhatsApp/e-mail MNSOFT.
+- Métricas do chatbot.
+- Documentação IA_SEGURA.md e SUPORTE.md.
+- Reforço de logger e try/catch nos fluxos do assistente.
+
 ## v1.8
 - Try/catch aplicado em fluxos críticos.
 - Logger centralizado no frontend com `safeAsync`.

@@ -119,3 +119,6 @@ Data: data/hora
 
 ## v1.8
 Erros, críticos, relatos de bug e alterações de configuração de atendimento podem acionar alertas Telegram via backend. O token permanece em variáveis/secrets das Functions e nunca é exposto no frontend.
+
+## v1.9 — Alertas do assistente
+O Telegram administrativo pode receber alertas para novo ticket, bug, solicitação sensível crítica, erro do chatbot e eventos comerciais/premium do assistente. Tokens continuam restritos às variáveis de ambiente das Functions.

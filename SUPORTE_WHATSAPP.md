@@ -17,3 +17,6 @@ Landing page, rodapé, contato, Perfil/Suporte e chatbot, apenas quando `whatsap
 
 ## Logs e segurança
 Cliques geram `whatsapp_clicked` com origem. Usuário comum não altera WhatsApp. Campos são sanitizados e renderizados com escaping/textContent sempre que possível.
+
+## v1.9 — Chatbot e Central de Suporte
+O chatbot oferece WhatsApp quando habilitado no Admin Geral e usa e-mail comercial como fallback. Cliques vindos do chatbot devem registrar origem `chatbot` sem expor dados sensíveis.

@@ -197,3 +197,7 @@ A v1.8 adiciona logger centralizado, `safeAsync`, painel administrativo com bugs
 Dados institucionais públicos: MNSOFT — MNSOLUÇÕES TECNOLÓGICAS & CONSULTORIA LTDA — CNPJ 18.160.057/0001-13 — comercial@mnsoft.com.br.
 
 Documentação nova: `LOGGER.md`, `CHATBOT.md` e `SUPORTE_WHATSAPP.md`.
+
+
+## v1.9
+Chatbot híbrido seguro, Functions de suporte, tickets, Central de Suporte, Admin Suporte e documentação de IA segura. Porta local: 5177.

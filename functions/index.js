@@ -2,12 +2,14 @@ const { onCall, HttpsError, onRequest } = require("firebase-functions/v2/https")
 const logger = require("firebase-functions/logger");
 const admin = require("firebase-admin");
 const crypto = require("node:crypto");
+const { answerByRules, detectSensitiveContent, sanitizeText } = require("./knowledgeBase");
+const { buildAssistantSystemPrompt } = require("./assistantPrompt");
 
 admin.initializeApp();
 const db = admin.firestore();
 const FieldValue = admin.firestore.FieldValue;
 
-const APP_VERSION = "1.8";
+const APP_VERSION = "1.9";
 const LOG_RETENTION_DAYS = 90;
 const ERROR_LOG_RETENTION_DAYS = 180;
 const VALID_SEVERITIES = ["info", "warning", "error", "critical"];
@@ -19,7 +21,7 @@ const VALID_PLAN_TYPES = ["monthly", "yearly"];
 const VALID_PLANS = ["free", "premium"];
 const VALID_STATUSES = ["active", "trial", "past_due", "canceled", "inactive"];
 const BLOCKED_KEY = /password|senha|token|accessToken|refreshToken|authorization|apiKey|secret|card|cvv|cpf|document|payloadCompleto|rawPayload|payer|stack|raw|payload/i;
-const DEFAULT_TELEGRAM_EVENTS = "critical,error,checkout_failed,webhook_error,premium_interest,user_signup,frontend_error,backend_error,firebase_error,unauthorized_admin_attempt,admin_set_user_plan,payment_confirmed,payment_failed";
+const DEFAULT_TELEGRAM_EVENTS = "critical,error,checkout_failed,webhook_error,premium_interest,user_signup,frontend_error,backend_error,firebase_error,unauthorized_admin_attempt,admin_set_user_plan,payment_confirmed,payment_failed,chatbot_sensitive_request_blocked,support_ticket_created,chatbot_commercial_request";
 
 function env(name, fallback = "") { return process.env[name] || fallback; }
 function environment() { return env("APP_ENV", env("FUNCTIONS_EMULATOR") ? "development" : "production"); }
@@ -108,6 +110,51 @@ async function setSubscription(userId, data) { const subRef = db.doc(`users/${us
 function mockCheckoutUrl(planType) { return `${appBaseUrl()}?payment=pending&mode=mock&plan=${encodeURIComponent(planType)}`; }
 async function createMercadoPagoCheckout(userId, planType) { if (!env("MERCADOPAGO_ACCESS_TOKEN")) return { checkoutUrl: mockCheckoutUrl(planType), mode: "mock" }; return { checkoutUrl: mockCheckoutUrl(planType), mode: "sandbox" }; }
 async function createStripeCheckout(userId, planType) { if (!env("STRIPE_SECRET_KEY")) return { checkoutUrl: mockCheckoutUrl(planType), mode: "mock" }; return { checkoutUrl: mockCheckoutUrl(planType), mode: "sandbox" }; }
+
+
+
+const VALID_TICKET_TYPES = ["bug", "support", "commercial", "premium", "other"];
+const VALID_TICKET_PRIORITIES = ["low", "medium", "high", "critical"];
+const VALID_TICKET_STATUSES = ["open", "in_progress", "resolved", "closed"];
+function aiEnabled() { return env("AI_ENABLED", "false") === "true" && Boolean(env("AI_API_KEY")); }
+function supportProtocol() { const d = new Date(); const ymd = d.toISOString().slice(0, 10).replace(/-/g, ""); return `HF-${ymd}-${Math.floor(1000 + Math.random() * 9000)}`; }
+function publicTicket(doc) { const d = doc.data ? doc.data() : doc; return { id: doc.id || d.id || d.protocol, protocol: d.protocol, type: d.type, status: d.status, priority: d.priority, title: d.title, description: d.description, screen: d.screen, source: d.source, userEmail: d.userEmail || "", userName: d.userName || "", createdAt: d.createdAt, updatedAt: d.updatedAt, resolvedAt: d.resolvedAt || null, telegramSent: d.telegramSent === true }; }
+async function saveConversationMessage(uid, authToken, message, result, context = {}) {
+  const convRef = db.collection("users").doc(uid).collection("supportConversations").doc("chatbot-main");
+  const safeUserText = result.safetyBlocked ? "[mensagem bloqueada por segurança]" : sanitizeText(message, 600);
+  await convRef.set({ createdAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp(), status: "open", source: "chatbot", lastIntent: result.intent, lastMessagePreview: safeUserText.slice(0, 140), messageCount: FieldValue.increment(2), screen: sanitizeText(context.screen || "", 80) }, { merge: true });
+  await convRef.collection("messages").add({ role: "user", text: safeUserText, intent: result.intent, createdAt: FieldValue.serverTimestamp(), safetyBlocked: result.safetyBlocked === true, source: result.source });
+  await convRef.collection("messages").add({ role: "assistant", text: sanitizeText(result.answer, 1200), intent: result.intent, createdAt: FieldValue.serverTimestamp(), safetyBlocked: result.safetyBlocked === true, source: result.source });
+}
+async function createTicketRecord({ request, type = "support", priority = "medium", title, description, screen = "", source = "chatbot" }) {
+  requireAuth(request);
+  const safeType = VALID_TICKET_TYPES.includes(type) ? type : "other";
+  const safePriority = VALID_TICKET_PRIORITIES.includes(priority) ? priority : "medium";
+  const protocol = supportProtocol();
+  const ref = db.collection("supportTickets").doc(protocol);
+  const payload = { protocol, userId: request.auth.uid, userEmail: sanitizeText(request.auth.token.email || "", 160), userName: sanitizeText(request.auth.token.name || "", 160), type: safeType, status: "open", priority: safePriority, title: sanitizeText(title || "Chamado HabitFlow", 120), description: sanitizeText(description || "", 1000), screen: sanitizeText(screen || "", 80), createdAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp(), resolvedAt: null, assignedTo: null, source, telegramSent: false };
+  await ref.set(payload);
+  await writeSystemAuditLog({ type: "support_ticket_created", severity: safePriority === "critical" ? "critical" : (safeType === "bug" ? "warning" : "info"), source: "chatbot", userId: request.auth.uid, userEmail: request.auth.token.email || "", userName: request.auth.token.name || "", action: "create_support_ticket", message: `Chamado criado. Protocolo: ${protocol}`, metadata: { protocol, ticketType: safeType, priority: safePriority, screen } });
+  return { id: ref.id, ...payload };
+}
+exports.askHabitFlowAssistant = onCall(async (request) => { try {
+  requireAuth(request); const d = request.data || {}; const message = sanitizeText(d.message || "", 1000); const context = d.context || {};
+  if (!message) throw new HttpsError("invalid-argument", "Envie uma mensagem para o assistente.");
+  if (String(d.message || "").length > 1000) throw new HttpsError("invalid-argument", "Mensagem muito longa. Use até 1000 caracteres.");
+  const sensitive = detectSensitiveContent(message); let result = answerByRules(message);
+  if (aiEnabled()) { result = { ...result, source: "backend_ai", answer: result.answer }; /* Provider futuro: usar buildAssistantSystemPrompt() + base controlada. */ }
+  if (env("AI_ENABLED", "false") === "true" && !env("AI_API_KEY")) result.source = "fallback";
+  await writeSystemAuditLog({ type: "chatbot_message_received", severity: result.severity || "info", source: "chatbot", userId: request.auth.uid, userEmail: request.auth.token.email || "", userName: request.auth.token.name || "", action: "ask_habitflow_assistant", message: result.safetyBlocked ? "Mensagem bloqueada por segurança." : "Mensagem recebida pelo chatbot.", metadata: { intent: result.intent, screen: context.screen, appVersion: context.appVersion, aiEnabled: aiEnabled(), promptReady: Boolean(buildAssistantSystemPrompt()) } });
+  if (sensitive.blocked) await writeSystemAuditLog({ type: "chatbot_sensitive_request_blocked", severity: sensitive.critical ? "critical" : "warning", source: "chatbot", userId: request.auth.uid, userEmail: request.auth.token.email || "", action: "safety_block", message: "Solicitação sensível bloqueada pelo chatbot.", metadata: { intent: result.intent, screen: context.screen } });
+  await saveConversationMessage(request.auth.uid, request.auth.token, message, result, context);
+  await writeSystemAuditLog({ type: "chatbot_response_generated", severity: "info", source: "chatbot", userId: request.auth.uid, userEmail: request.auth.token.email || "", action: "chatbot_response", message: "Resposta segura gerada pelo assistente.", metadata: { intent: result.intent, source: result.source } });
+  return { answer: result.answer, intent: result.intent, source: result.source, confidence: result.confidence, suggestedActions: result.suggestedActions || [], safetyBlocked: result.safetyBlocked === true };
+} catch (error) { logger.error("askHabitFlowAssistant error", { message: error.message }); if (error instanceof HttpsError) throw error; await writeSystemAuditLog({ type: "chatbot_error", severity: "error", source: "chatbot", userId: request.auth?.uid, userEmail: request.auth?.token?.email || "", action: "ask_habitflow_assistant", message: "Erro na Function askHabitFlowAssistant.", metadata: { errorName: error.name } }); throw new HttpsError("internal", "Não foi possível responder agora. Tente novamente ou fale com o suporte da MNSOFT."); } });
+exports.createSupportTicket = onCall(async (request) => { try { const d = request.data || {}; const ticket = await createTicketRecord({ request, type: d.type, priority: d.priority, title: d.title, description: d.description, screen: d.screen, source: d.source || "chatbot" }); return { success: true, ticket: publicTicket(ticket) }; } catch (error) { logger.error("createSupportTicket error", { message: error.message }); if (error instanceof HttpsError) throw error; throw new HttpsError("internal", "Não foi possível criar o chamado agora."); } });
+exports.getMySupportTickets = onCall(async (request) => { requireAuth(request); const snap = await db.collection("supportTickets").where("userId", "==", request.auth.uid).orderBy("createdAt", "desc").limit(50).get(); return { tickets: snap.docs.map(publicTicket) }; });
+exports.getAdminSupportTickets = onCall(async (request) => { await requireAdmin(request); const snap = await db.collection("supportTickets").orderBy("createdAt", "desc").limit(100).get(); await audit("get_admin_support_tickets", { uid: request.auth.uid, email: request.auth.token.email }); return { tickets: snap.docs.map(publicTicket) }; });
+exports.updateSupportTicketStatus = onCall(async (request) => { await requireAdmin(request); const { ticketId, status } = request.data || {}; if (!ticketId || !VALID_TICKET_STATUSES.includes(status)) throw new HttpsError("invalid-argument", "Status inválido."); const update = { status, updatedAt: FieldValue.serverTimestamp() }; if (["resolved", "closed"].includes(status)) update.resolvedAt = FieldValue.serverTimestamp(); await db.collection("supportTickets").doc(ticketId).set(update, { merge: true }); await audit("update_support_ticket_status", { uid: request.auth.uid, email: request.auth.token.email }, { ticketId, status }); return { success: true }; });
+exports.getAdminSupportSummary = onCall(async (request) => { await requireAdmin(request); const snap = await db.collection("supportTickets").orderBy("createdAt", "desc").limit(200).get(); const rows = snap.docs.map(publicTicket); return { totalOpen: rows.filter(t=>t.status==="open").length, bugsOpen: rows.filter(t=>t.type==="bug" && !["resolved","closed"].includes(t.status)).length, criticalOpen: rows.filter(t=>t.priority==="critical" && !["resolved","closed"].includes(t.status)).length, resolved: rows.filter(t=>t.status==="resolved").length, latest: rows.slice(0, 10) }; });
 
 exports.logSystemEvent = onCall(async (request) => { try { requireAuth(request); const d = request.data || {}; const ref = await writeSystemAuditLog({ ...d, userId: request.auth.uid, userEmail: request.auth.token.email || "", userName: request.auth.token.name || "", severity: VALID_SEVERITIES.includes(d.severity) ? d.severity : "info" }); return { success: true, logId: ref.id }; } catch (error) { logger.error("logSystemEvent_failed", { message: error.message }); if (error instanceof HttpsError) throw error; throw new HttpsError("internal", "Erro interno registrado para análise."); } });
 exports.sendTestTelegramAlert = onCall(async (request) => { await requireAdmin(request); const ok = await sendTelegramAlert({ type: "telegram_test", severity: "warning", source: "backend", action: "send_test", userEmail: request.auth.token.email || "", environment: environment(), message: "Teste de configuração do Telegram.", metadata: {} }); await audit("send_test_telegram_alert", { uid: request.auth.uid, email: request.auth.token.email }); return { success: ok, message: ok ? "Mensagem de teste enviada para o Telegram." : "Não foi possível enviar o teste do Telegram. Verifique as configurações das Functions." }; });

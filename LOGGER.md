@@ -17,3 +17,6 @@ Logs de erro recebem `bugStatus`: `new`, `read`, `resolved` ou `ignored`. Admins
 
 ## Não logar
 Nunca registrar senha, token, CPF, cartão, CVV, secrets, payload bruto de pagamento ou stack completa para usuário comum.
+
+## v1.9 — Eventos do chatbot e suporte
+Novos fluxos registram `chatbot_opened`, `chatbot_closed`, `chatbot_message_sent`, `chatbot_response_generated`, `chatbot_fallback_used`, `chatbot_unknown_question`, `chatbot_sensitive_request_blocked`, `chatbot_ticket_created`, `chatbot_support_clicked`, `chatbot_whatsapp_clicked`, `chatbot_email_clicked`, `chatbot_premium_interest` e `chatbot_error`. Mensagens sensíveis não devem ser persistidas completas.
