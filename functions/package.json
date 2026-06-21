@@ -1,6 +1,6 @@
 {
   "name": "habitflow-functions",
-  "version": "1.9.0",
+  "version": "1.9.1",
   "private": true,
   "description": "Firebase Functions backend do HabitFlow para checkout Premium, webhooks, observabilidade, Telegram e administração segura.",
   "main": "index.js",

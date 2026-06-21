@@ -170,3 +170,7 @@ Antes do deploy, configure `ADMIN_EMAILS`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_ADMIN
 
 ## v1.9 — Deploy do chatbot seguro
 Antes do deploy, configure as variáveis futuras de IA com `AI_ENABLED=false` quando não houver provedor real. Publique Functions novas (`askHabitFlowAssistant`, `createSupportTicket`, `getMySupportTickets`, `getAdminSupportTickets`, `updateSupportTicketStatus`, `getAdminSupportSummary`) e as regras que bloqueiam leitura direta de `supportTickets`.
+
+## v1.9.1 — variáveis e deploy
+
+Configure `APP_ALLOWED_ORIGINS` nas Functions quando houver domínio próprio. Mantenha secrets como Telegram apenas no backend. Após deploy, teste `healthCheck`, `getPublicSystemSettings`, `logSystemEvent` e `sendTestTelegramAlert` pelo Admin Geral.

@@ -201,3 +201,7 @@ Documentação nova: `LOGGER.md`, `CHATBOT.md` e `SUPORTE_WHATSAPP.md`.
 
 ## v1.9
 Chatbot híbrido seguro, Functions de suporte, tickets, Central de Suporte, Admin Suporte e documentação de IA segura. Porta local: 5177.
+
+## v1.9.1 — estabilidade de Functions e PWA
+
+Esta versão usa `httpsCallable` para Functions internas, fallback local para configurações públicas da MNSOFT, logger remoto com fila local anti-loop e diagnóstico de Functions no Admin Geral. O servidor local permanece em `http://localhost:5177` via `npm start`.
