@@ -1,18 +1,16 @@
-# CHATBOT.md — Assistente HabitFlow v1.8
+# CHATBOT.md — Assistente HabitFlow v1.9
 
-O Assistente HabitFlow é um chatbot local baseado em regras, intents e respostas pré-configuradas. Nesta versão ele não usa API externa de IA e não possui chave no frontend.
+O Assistente HabitFlow usa arquitetura híbrida:
 
-## Objetivo
-Responder dúvidas sobre uso do HabitFlow: criação/edição/arquivamento de hábitos, streak, histórico de 30 dias, plano gratuito, Premium futuro, privacidade, suporte e dados comerciais públicos da MNSOFT.
+- **rules**: base local de intents e conhecimento.
+- **backend_ai**: preparado para IA futura via Firebase Functions.
+- **hybrid**: modo padrão; tenta backend autenticado e mantém fallback por regras.
 
-## Base de conhecimento e intents
-A base fica em `assets/js/chatbot-knowledge.js` e cobre: `greeting`, `create_habit_help`, `streak_help`, `plan_help`, `premium_help`, `privacy_help`, `support_help`, `whatsapp_help`, `bug_report`, `mnsoft_info` e `unknown`.
+## Function principal
+`askHabitFlowAssistant` recebe mensagem e contexto, exige autenticação, sanitiza entrada, limita 1000 caracteres, bloqueia conteúdo sensível, salva histórico controlado em `users/{uid}/supportConversations` e retorna resposta segura.
 
-## Segurança
-O assistente bloqueia pedidos sobre tokens, chaves, logs internos, burlar segurança, dados de outros usuários, CPF, cartão, senhas e stack traces. A resposta padrão é segura e orienta o usuário para suporte oficial.
+## Intents
+Inclui: greeting, product_overview, create_habit_help, edit_habit_help, archive_habit_help, restore_habit_help, complete_habit_help, streak_help, progress_help, plan_free_help, premium_help, payment_help, login_help, privacy_help, lgpd_help, support_help, whatsapp_help, email_help, mnsoft_info, bug_report, technical_problem, pwa_help, sensitive_request, security_attack_request e unknown.
 
-## Logs
-Não salva conversas completas por padrão. Registra apenas intent, tamanho da mensagem, bloqueio e status. Relatos de bug podem salvar uma descrição sanitizada quando o usuário confirma.
-
-## Evolução futura
-Na v1.9, a IA poderá ser integrada somente via backend seguro, com prompt versionado, moderação, limite de tokens, logs de segurança e fallback humano.
+## Base de conhecimento
+Cobre produto, hábitos, progresso, planos, conta, suporte MNSOFT, segurança/LGPD e problemas comuns.

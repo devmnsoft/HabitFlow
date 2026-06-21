@@ -167,3 +167,6 @@ Checklist:
 
 ## v1.8
 Antes do deploy, configure `ADMIN_EMAILS`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_ADMIN_CHAT_ID` e flags de ambiente das Functions. A porta local permanece `5177` via `npm start`.
+
+## v1.9 — Deploy do chatbot seguro
+Antes do deploy, configure as variáveis futuras de IA com `AI_ENABLED=false` quando não houver provedor real. Publique Functions novas (`askHabitFlowAssistant`, `createSupportTicket`, `getMySupportTickets`, `getAdminSupportTickets`, `updateSupportTicketStatus`, `getAdminSupportSummary`) e as regras que bloqueiam leitura direta de `supportTickets`.

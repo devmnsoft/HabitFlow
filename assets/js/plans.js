@@ -1,4 +1,4 @@
-export const APP_VERSION = "1.8";
+export const APP_VERSION = "1.9";
 export const APP_ENV = location.hostname === "localhost" || location.hostname === "127.0.0.1" ? "development" : "production";
 export const ENABLE_DEV_PLAN_TOGGLE = APP_ENV === "development";
 export const ENABLE_GLOBAL_METRICS = false;

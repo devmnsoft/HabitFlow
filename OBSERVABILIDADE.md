@@ -83,3 +83,6 @@ Erros globais e eventos administrativos continuam protegidos em `systemAuditLogs
 - `assets/js/logger.js` padroniza logs frontend e `safeAsync`.
 - `systemAuditLogs` inclui `bugStatus`, `resolvedAt`, `resolvedBy`, `errorCode`, `errorName`, `errorMessage` e `errorFingerprint`.
 - O Admin Geral pode marcar bugs como lidos, resolvidos ou ignorados por Functions seguras.
+
+## v1.9 — Observabilidade do atendimento
+O Admin Geral passa a exibir resumo de suporte por Functions, com chamados abertos, bugs abertos, críticos e resolvidos. Eventos relevantes do chatbot e tickets são gravados em `systemAuditLogs` de forma sanitizada.

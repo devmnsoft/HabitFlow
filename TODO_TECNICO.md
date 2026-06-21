@@ -27,3 +27,9 @@
 - Expandir cobertura automatizada de fluxos UI do chatbot.
 - Criar testes unitários para normalização de WhatsApp nas Functions.
 - Evoluir Admin Geral com paginação e exportação segura.
+
+## v1.9 concluída / próximos refinamentos
+- Conectar provedor real de IA somente no backend.
+- Evoluir rate limit por minuto em `users/{uid}/rateLimits/chatbot`.
+- Criar tela dedicada para detalhes e respostas de tickets.
+- Adicionar testes automatizados de callable Functions com Firebase Emulator.
