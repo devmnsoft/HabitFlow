@@ -1,3 +1,27 @@
+## HabitFlow v1.7 — Observabilidade, Admin Geral e Telegram
+
+A versão 1.7 adiciona observabilidade de produção com logs globais protegidos, painel **Admin Geral**, monitoramento de bugs, captura global de erros frontend, auditoria administrativa e alertas via Telegram enviados exclusivamente pelo backend/Firebase Functions.
+
+### Admin Geral
+
+- A aba é exibida apenas para e-mails configurados no frontend como ajuda visual.
+- A autorização real acontece nas Functions com `ADMIN_EMAILS`.
+- O painel mostra resumo, eventos recentes, bugs, atividades, status do Telegram e botão **Testar Telegram**.
+
+### Segurança e LGPD
+
+- `systemAuditLogs`, `adminAuditLogs`, `billingEvents` e `appMetrics` são bloqueados no cliente.
+- Tokens, senhas, CPF, cartão, CVV, secrets e payloads brutos são removidos dos metadados.
+- Usuários comuns acessam apenas `users/{uid}/...`.
+
+### Telegram
+
+Configure `TELEGRAM_ENABLED`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_ADMIN_CHAT_ID`, `TELEGRAM_MIN_SEVERITY` e `TELEGRAM_NOTIFY_EVENTS` nas Functions. Consulte `TELEGRAM_MONITORAMENTO.md`.
+
+### Observabilidade
+
+Consulte `OBSERVABILIDADE.md` para eventos monitorados, retenção, sanitização e próximos passos.
+
 # HabitFlow v1.5
 
 HabitFlow é um micro SaaS de rastreamento de hábitos com foco em simplicidade extrema, consistência diária, streaks e experiência mobile first.

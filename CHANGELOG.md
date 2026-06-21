@@ -1,3 +1,22 @@
+## v1.7
+
+- Painel Admin Geral.
+- Perfil de Administrador Geral.
+- Logs globais em systemAuditLogs.
+- Captura global de erros frontend.
+- Monitoramento de actions dos usuários.
+- Integração com Telegram via Firebase Functions.
+- Alertas Telegram para erros, bugs e eventos importantes.
+- Função de teste do Telegram.
+- Dashboard administrativo com eventos recentes.
+- Painel de bugs e erros.
+- Filtros de logs por severidade/tipo/usuário/ambiente.
+- Sanitização de metadata.
+- Firestore Rules reforçadas.
+- Documentação TELEGRAM_MONITORAMENTO.md.
+- Documentação OBSERVABILIDADE.md.
+- Preparação para retenção de logs.
+
 # Changelog
 
 ## v1.5

@@ -1,3 +1,33 @@
+## v1.8 — Admin Global Avançado
+
+- Listagem segura de usuários.
+- Busca por usuário.
+- Histórico por usuário.
+- Métricas agregadas.
+- Gráficos de conversão.
+- Exportação CSV.
+- Gestão de planos pelo admin.
+- Bloqueio/desbloqueio de usuários.
+
+## v1.9 — Retenção e Notificações
+
+- Notificações de hábitos.
+- E-mails semanais.
+- Telegram opcional para usuário final.
+- Relatórios semanais.
+- Desafios reais.
+- Ranking pessoal avançado.
+
+## v2.0 — Produção Comercial
+
+- Pagamento real em produção.
+- Domínio próprio.
+- Política LGPD completa.
+- Exclusão/exportação de dados.
+- Suporte.
+- Painel financeiro.
+- Métricas de receita.
+
 # Roadmap HabitFlow
 
 ## Fase 1 — Produto publicável

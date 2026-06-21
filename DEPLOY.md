@@ -1,3 +1,27 @@
+## Checklist v1.7 — Telegram e observabilidade
+
+- Criar bot no BotFather.
+- Obter `TELEGRAM_BOT_TOKEN`.
+- Obter `TELEGRAM_ADMIN_CHAT_ID`.
+- Configurar secrets/env das Functions.
+- Publicar functions.
+- Acessar Admin Geral.
+- Clicar em **Testar Telegram**.
+- Simular erro frontend.
+- Simular evento `premium_interest`.
+- Conferir Telegram.
+- Conferir `systemAuditLogs`.
+- Conferir Firestore Rules.
+
+### Checklist de segurança
+
+- Token Telegram não aparece no frontend.
+- `systemAuditLogs` bloqueado no client.
+- `adminAuditLogs` bloqueado no client.
+- Apenas admin acessa functions administrativas.
+- Metadata sanitizada.
+- Nenhum dado sensível salvo.
+
 # Deploy do HabitFlow
 
 ## Rodar localmente
