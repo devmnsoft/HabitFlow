@@ -86,3 +86,30 @@
 - Relatórios semanais.
 - E-mails motivacionais.
 - Exportação PDF.
+
+## v1.9 — Chatbot com IA segura via backend
+- Integrar IA somente no backend.
+- Criar prompt seguro do assistente.
+- Criar base de conhecimento versionada.
+- Criar moderação de entrada.
+- Criar limite de tokens.
+- Criar logs de segurança.
+- Criar fallback para atendimento humano.
+
+## v2.0 — Admin Global Avançado
+- Listagem segura de usuários.
+- Busca por e-mail.
+- Histórico por usuário.
+- Bloqueio/desbloqueio de conta.
+- Gestão de planos.
+- Exportação CSV.
+- Métricas de conversão.
+- Painel financeiro.
+
+## v2.1 — Produção Comercial
+- Pagamento real em produção.
+- Domínio próprio.
+- Política LGPD completa.
+- Exclusão/exportação de dados.
+- E-mails transacionais.
+- Suporte estruturado.

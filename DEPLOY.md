@@ -164,3 +164,6 @@ Checklist:
 - Adicionar `localhost`.
 - Adicionar `habitflow-5f945.web.app`.
 - Adicionar domínio próprio futuro, se existir.
+
+## v1.8
+Antes do deploy, configure `ADMIN_EMAILS`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_ADMIN_CHAT_ID` e flags de ambiente das Functions. A porta local permanece `5177` via `npm start`.

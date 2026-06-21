@@ -116,3 +116,6 @@ Data: data/hora
 - [ ] Teste pelo Admin Geral funcionou.
 - [ ] Erro simulado chegou no Telegram.
 - [ ] Interesse Premium chegou no Telegram.
+
+## v1.8
+Erros, críticos, relatos de bug e alterações de configuração de atendimento podem acionar alertas Telegram via backend. O token permanece em variáveis/secrets das Functions e nunca é exposto no frontend.
