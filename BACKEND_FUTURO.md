@@ -24,3 +24,19 @@ A versão atual do HabitFlow 1.5 é frontend-only e usa Firebase Authentication 
 ## Segurança
 
 O frontend não deve gravar métricas globais nem alterar planos pagos em produção. Essas ações devem ser feitas por backend confiável para evitar abuso, fraude e exposição indevida de dados.
+
+## Versão 1.6 — Implementado parcialmente
+- Firebase Functions adicionadas em `functions/`.
+- Checkout Premium preparado via `createCheckoutSession`.
+- Webhook de pagamento preparado via `paymentWebhook`.
+- Modelo de assinatura em `users/{userId}/billing/subscription`.
+- Atualização de plano pelo backend em `profile/main`.
+- Audit logs administrativos em `adminAuditLogs`.
+
+## Ainda pendente
+- Pagamento real em produção com credenciais Mercado Pago.
+- Cancelamento automático completo.
+- Portal de assinatura.
+- Fluxo de reembolso.
+- E-mails transacionais.
+- Painel admin global completo.

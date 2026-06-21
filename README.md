@@ -101,3 +101,45 @@ A aba Admin aparece apenas para e-mails em `ADMIN_EMAILS` e mostra somente dados
 - Plano Premium real.
 - Métricas agregadas seguras.
 - Notificações, e-mails e relatórios PDF.
+
+## HabitFlow v1.6 — Backend de pagamentos
+
+A versão 1.6 adiciona Firebase Functions para preparar monetização Premium com Mercado Pago como gateway principal e Stripe como alternativa futura.
+
+### Rodar frontend
+
+```bash
+npm start
+```
+
+Abra `http://localhost:5177`. A porta 5177 permanece obrigatória.
+
+### Rodar Functions localmente
+
+```bash
+cd functions
+npm install
+npm run lint
+npm run serve
+```
+
+### Ambiente
+Copie `functions/.env.example` para a configuração local/em secrets. Não versione tokens reais. Sem credenciais, o checkout retorna `mode: mock` e mostra mensagem controlada.
+
+### Checkout mock
+No app, clique em Assinar mensal/anual. A callable `createCheckoutSession` retorna mock quando não há `MERCADOPAGO_ACCESS_TOKEN` ou `STRIPE_SECRET_KEY` configurado.
+
+### Publicação
+- Hosting: `firebase deploy --only hosting`.
+- Functions: `firebase deploy --only functions`.
+- Firestore rules: `firebase deploy --only firestore:rules`.
+- Completo: `firebase deploy`.
+
+### Mercado Pago e webhook
+Configure `PAYMENT_PROVIDER=mercadopago`, `MERCADOPAGO_ACCESS_TOKEN` e `MERCADOPAGO_WEBHOOK_SECRET` em secrets. Configure o gateway para chamar `paymentWebhook`. Valide assinatura conforme documentação oficial antes de ativar cobrança real.
+
+### Validação Premium
+O plano efetivo considera `profile/main.plan`, `profile/main.planStatus` e `billing/subscription.status`. O frontend não altera plano real; apenas o backend atualiza Premium via webhook ou admin.
+
+### Segurança
+Não há secrets no frontend. `billingEvents`, `adminAuditLogs` e `appMetrics` ficam bloqueados para clientes pelas regras do Firestore.

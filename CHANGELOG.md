@@ -53,3 +53,17 @@
 - Criar hábito.
 - Marcar e desmarcar hábito feito hoje.
 - Streak atual, maior streak e histórico visual dos últimos 30 dias.
+
+## v1.6
+- Estrutura Firebase Functions.
+- Checkout Premium preparado.
+- Mercado Pago como gateway principal.
+- Stripe preparado como alternativa futura.
+- Webhook de pagamento preparado.
+- Modelo de assinatura no Firestore.
+- Atualização automática de plano via backend.
+- Audit logs administrativos.
+- Regras Firestore reforçadas.
+- Frontend integrado ao checkout.
+- Tratamento de retorno pós-pagamento.
+- Documentação PAGAMENTOS.md.
