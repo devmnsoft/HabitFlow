@@ -1,33 +1,55 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /users/{userId}/{document=**} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+    function signedIn() { return request.auth != null; }
+    function isOwner(userId) { return signedIn() && request.auth.uid == userId; }
+    function noForbiddenProfileFields() {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(['plan','planStatus','role','isAdmin','billing','appVersion','admin','claims']);
+    }
+    function validHabit() {
+      return request.resource.data.keys().hasOnly(['name','category','color','completedDates','createdAt','updatedAt','isArchived'])
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 45
+        && (!('completedDates' in request.resource.data) || request.resource.data.completedDates is list);
     }
 
-    match /systemAuditLogs/{document=**} {
-      allow read, write: if false;
+    match /users/{userId}/profile/main {
+      allow read, create: if isOwner(userId);
+      allow update: if isOwner(userId) && noForbiddenProfileFields();
+      allow delete: if false;
     }
 
-    match /billingEvents/{document=**} {
-      allow read, write: if false;
+    match /users/{userId}/habits/{habitId} {
+      allow read, delete: if isOwner(userId);
+      allow create, update: if isOwner(userId) && validHabit();
     }
 
-    match /adminAuditLogs/{document=**} {
-      allow read, write: if false;
+    match /users/{userId}/usageEvents/{eventId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId)
+        && request.resource.data.keys().hasOnly(['userId','userEmail','createdAt','type','action','source','severity','message','metadata','appVersion','environment'])
+        && request.resource.data.type is string;
+      allow update, delete: if false;
     }
 
-    match /appMetrics/{document=**} {
-      allow read, write: if false;
+    match /users/{userId}/supportConversations/{document=**} {
+      allow read: if isOwner(userId);
+      allow write: if false;
     }
 
-    match /supportTickets/{document=**} {
-      allow read, write: if false;
+    match /users/{userId}/billing/{document=**} {
+      allow read: if isOwner(userId);
+      allow write: if false;
     }
 
-    match /systemSettings/{document=**} {
-      // v1.9.1: leitura/escrita direta bloqueada; use getPublicSystemSettings/updateSystemSettings via Functions.
-      allow read, write: if false;
-    }
+    match /users/{userId}/rateLimits/{document=**} { allow read, write: if false; }
+    match /systemAuditLogs/{document=**} { allow read, write: if false; }
+    match /billingEvents/{document=**} { allow read, write: if false; }
+    match /adminAuditLogs/{document=**} { allow read, write: if false; }
+    match /appMetrics/{document=**} { allow read, write: if false; }
+    match /supportTickets/{document=**} { allow read, write: if false; }
+    match /systemSettings/{document=**} { allow read, write: if false; }
+    match /{document=**} { allow read, write: if false; }
   }
 }

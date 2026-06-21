@@ -1,3 +1,14 @@
+## Deploy 2.0-Security
+
+1. Configure secrets somente em Firebase Functions/env.
+2. Execute `npm run security:scan`.
+3. Execute `npm run build`.
+4. Valide `dist/` sem `.map`, `sourceMappingURL` ou secrets.
+5. Execute `npm run preview` na porta 5177.
+6. Execute `npm run deploy`.
+
+Firebase Hosting publica somente `dist/`.
+
 ## Checklist v1.7 — Telegram e observabilidade
 
 - Criar bot no BotFather.

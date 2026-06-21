@@ -1,3 +1,10 @@
+## TODO técnico — pós 2.0-Security
+
+- Executar build quando dependências estiverem disponíveis no registry.
+- Testar Google Login, Firestore, Functions, Admin, Chatbot e PWA no preview.
+- Criar scripts seguros para set/revoke custom claims.
+- Revisar CSP em navegador real e ajustar domínios mínimos.
+
 # TODO Técnico do HabitFlow
 
 - Implementar backend com Firebase Functions.

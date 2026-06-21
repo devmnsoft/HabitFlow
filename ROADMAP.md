@@ -1,3 +1,10 @@
+## Segurança futura
+
+- Migrar Admin Geral para custom claims.
+- Ativar App Check enforcement para Firestore e Functions após teste completo.
+- Validar assinaturas reais de webhooks Stripe/Mercado Pago.
+- Adicionar testes automatizados para Firestore Rules e Functions sensíveis.
+
 ## v1.8 — Admin Global Avançado
 
 - Listagem segura de usuários.

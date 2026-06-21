@@ -1,3 +1,24 @@
+## v2.0-security
+- Auditoria de segurança inicial
+- Build de produção com dist/
+- Minificação de HTML/CSS/JS
+- Ofuscação leve/moderada pós-build
+- Source maps desativados em produção
+- Firebase Hosting publicando apenas dist/
+- Scanner básico de secrets
+- Separação APP_ENV development/production
+- App Check preparado
+- Firestore Rules reforçadas
+- Lógica sensível validada em Functions
+- Admin Geral protegido por backend
+- Chatbot com regras de segurança reforçadas
+- Logger com sanitização reforçada
+- Headers de segurança e CSP
+- Service worker revisado
+- localStorage revisado
+- .gitignore e .firebaseignore reforçados
+- Documentação SECURITY.md, SECURITY_CHECKLIST.md, APP_CHECK.md, CSP.md e BUILD_PRODUCTION.md
+
 ## v1.7
 
 ## v1.7.1

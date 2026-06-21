@@ -1,6 +1,6 @@
-export const APP_VERSION = "1.9.1";
-export const APP_ENV = location.hostname === "localhost" || location.hostname === "127.0.0.1" ? "development" : "production";
-export const ENABLE_DEV_PLAN_TOGGLE = APP_ENV === "development";
+import { APP_VERSION, APP_ENV, IS_DEVELOPMENT, IS_PRODUCTION } from "./env.js";
+export { APP_VERSION, APP_ENV, IS_DEVELOPMENT, IS_PRODUCTION };
+export const ENABLE_DEV_PLAN_TOGGLE = IS_DEVELOPMENT;
 export const ENABLE_GLOBAL_METRICS = false;
 // Métricas globais e billing real devem ser gravados por backend/Firebase Functions para evitar abuso.
 export const PAYMENT_PROVIDER = "mercadopago";

@@ -1,0 +1,15 @@
+node_modules
+functions/node_modules
+.env
+.env.local
+.env.production
+.git
+.github
+SECURITY_AUDIT.md
+TODO_TECNICO.md
+scripts
+src
+assets/js
+*.map
+serviceAccount*.json
+firebase-adminsdk*.json
