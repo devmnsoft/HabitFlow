@@ -1,4 +1,4 @@
-const CACHE_VERSION = "habitflow-v1.5-static";
+const CACHE_VERSION = "habitflow-v1.7-static";
 const STATIC_ASSETS = [
   "/",
   "/index.html",
@@ -7,6 +7,7 @@ const STATIC_ASSETS = [
   "/assets/js/firebase.js",
   "/assets/js/plans.js",
   "/assets/js/utils.js",
+  "/assets/js/error-monitor.js",
   "/assets/icons/icon.svg",
   "/manifest.json"
 ];

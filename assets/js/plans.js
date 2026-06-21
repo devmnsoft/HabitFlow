@@ -1,4 +1,4 @@
-export const APP_VERSION = "1.6";
+export const APP_VERSION = "1.7";
 export const APP_ENV = location.hostname === "localhost" || location.hostname === "127.0.0.1" ? "development" : "production";
 export const ENABLE_DEV_PLAN_TOGGLE = APP_ENV === "development";
 export const ENABLE_GLOBAL_METRICS = false;
@@ -8,7 +8,7 @@ export const PREMIUM_MONTHLY_PRICE = 14.90;
 export const PREMIUM_YEARLY_PRICE = 99.00;
 export const PREMIUM_MONTHLY_LABEL = "R$ 14,90/mês";
 export const PREMIUM_YEARLY_LABEL = "R$ 99/ano";
-export const ADMIN_EMAILS = ["coloque-aqui-o-email-admin@exemplo.com"];
+export const ADMIN_EMAILS = ["admin@habitflow.app", "marcelo@mnsoft.com.br", "coloque-aqui-o-email-admin@exemplo.com"];
 export const PLAN_LIMITS = { free: 5, premium: Infinity };
 
 export function getUserPlan(profile = {}, subscription = {}) {
