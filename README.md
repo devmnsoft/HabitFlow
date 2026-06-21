@@ -2,6 +2,11 @@
 
 A versão 1.7 adiciona observabilidade de produção com logs globais protegidos, painel **Admin Geral**, monitoramento de bugs, captura global de erros frontend, auditoria administrativa e alertas via Telegram enviados exclusivamente pelo backend/Firebase Functions.
 
+
+### Monitoramento via Telegram
+
+O HabitFlow possui monitoramento via Telegram para o Administrador Geral usando Firebase Functions. Alertas de erros, eventos críticos, interesse Premium, cadastros e tentativas suspeitas são enviados pelo backend para o bot `@hablitflowmns_bot`, sem expor tokens no frontend ou em arquivos públicos.
+
 ### Admin Geral
 
 - A aba é exibida apenas para e-mails configurados no frontend como ajuda visual.
