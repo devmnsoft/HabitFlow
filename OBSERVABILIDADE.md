@@ -24,7 +24,7 @@ A versão 1.7 adiciona uma camada profissional de observabilidade, auditoria, mo
 
 Coleção global protegida escrita por Functions. Contém tipo, severidade, origem, usuário, ação, mensagem, metadados sanitizados, versão, ambiente, leitura admin, status Telegram e `errorFingerprint`.
 
-## users/{uid}/usage/events
+## users/{uid}/usageEvents
 
 Registro pessoal do usuário, lido e escrito apenas pelo próprio usuário conforme Firestore Rules. Serve para histórico de uso pessoal e diagnósticos leves.
 
@@ -38,7 +38,7 @@ A aba **Admin Geral** aparece apenas para e-mails listados no frontend para fins
 
 ## Logs pessoais vs logs globais
 
-- Logs pessoais: ficam em `users/{uid}/usage/events` e pertencem ao usuário.
+- Logs pessoais: ficam em `users/{uid}/usageEvents` e pertencem ao usuário.
 - Logs globais: ficam em `systemAuditLogs`, são protegidos e acessados apenas por Functions administrativas.
 
 ## Cuidados LGPD e sanitização
@@ -62,3 +62,19 @@ A versão atual não apaga automaticamente. Uma scheduled function futura deve e
 - Exportação CSV.
 - Integração futura com Sentry.
 - Métricas agregadas de conversão.
+
+## v1.7.1 — Eventos pessoais e erros frontend
+
+A coleção pessoal de eventos é `users/{uid}/usageEvents/{eventId}`. Ela registra eventos do próprio usuário e erros frontend sanitizados com o modelo:
+
+```json
+{
+  "type": "string",
+  "createdAt": "Timestamp",
+  "metadata": {},
+  "appVersion": "string",
+  "environment": "development | production"
+}
+```
+
+Erros globais e eventos administrativos continuam protegidos em `systemAuditLogs/{logId}` e são lidos apenas por Firebase Functions administrativas no Admin Geral.

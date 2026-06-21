@@ -7,7 +7,7 @@ admin.initializeApp();
 const db = admin.firestore();
 const FieldValue = admin.firestore.FieldValue;
 
-const APP_VERSION = "1.7";
+const APP_VERSION = "1.7.1";
 const LOG_RETENTION_DAYS = 90;
 const ERROR_LOG_RETENTION_DAYS = 180;
 const VALID_SEVERITIES = ["info", "warning", "error", "critical"];

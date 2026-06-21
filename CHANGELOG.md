@@ -1,5 +1,20 @@
 ## v1.7
 
+## v1.7.1
+- Correção do erro Firestore em users/{uid}/usage/events
+- Nova coleção users/{uid}/usageEvents
+- Correção de meta tag mobile-web-app-capable
+- Tratamento amigável para erros Firebase Auth/identitytoolkit
+- Correção de promises sem catch
+- handleAppError centralizado
+- Captura global de erros frontend
+- Reporte de bugs para Admin Geral
+- Telegram real preparado para @hablitflowmns_bot
+- sendTestTelegramAlert
+- Reforço de Firestore Rules
+- Documentação de correções e monitoramento
+
+
 - Painel Admin Geral.
 - Perfil de Administrador Geral.
 - Logs globais em systemAuditLogs.

@@ -84,7 +84,7 @@ Perfil: `users/{userId}/profile/main`.
 
 Hábitos: `users/{userId}/habits/{habitId}`.
 
-Eventos pessoais: `users/{userId}/usage/events/{eventId}`.
+Eventos pessoais: `users/{userId}/usageEvents/{eventId}`.
 
 `appMetrics` fica bloqueado nas regras. Métricas globais devem ser gravadas futuramente por backend/Firebase Functions.
 
@@ -172,3 +172,20 @@ O plano efetivo considera `profile/main.plan`, `profile/main.planStatus` e `bill
 
 ### Segurança
 Não há secrets no frontend. `billingEvents`, `adminAuditLogs` e `appMetrics` ficam bloqueados para clientes pelas regras do Firestore.
+
+## v1.7.1 — Correção identitytoolkit 400 e eventos pessoais
+
+Eventos pessoais agora são gravados em `users/{userId}/usageEvents/{eventId}`. A coleção registra ações e erros pessoais do usuário com o modelo `{ type, createdAt, metadata, appVersion, environment }`.
+
+### Correção de erro identitytoolkit 400
+- Ativar Google em Firebase Console > Authentication > Sign-in method.
+- Ativar Email/Senha em Firebase Console > Authentication > Sign-in method.
+- Conferir Firebase Console > Authentication > Settings > Authorized domains.
+- Adicionar `localhost`.
+- Adicionar `habitflow-5f945.web.app`.
+- Adicionar domínio próprio futuro, se existir.
+
+### Correção de collection reference inválida
+- Não usar `users/{uid}/usage/events` como coleção.
+- Usar `users/{uid}/usageEvents` para logs pessoais.
+- Logs globais ficam em `systemAuditLogs` e só são acessados por Functions administrativas.
