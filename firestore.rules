@@ -26,8 +26,8 @@ service cloud.firestore {
     }
 
     match /systemSettings/{document=**} {
-      allow read: if request.auth != null;
-      allow write: if false;
+      // v1.9.1: leitura/escrita direta bloqueada; use getPublicSystemSettings/updateSystemSettings via Functions.
+      allow read, write: if false;
     }
   }
 }

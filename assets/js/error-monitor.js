@@ -1,7 +1,13 @@
 import { auth, db, firebaseApi } from "./firebase.js";
 import { APP_VERSION, APP_ENV } from "./plans.js";
+import { callFunction } from "./functions-client.js";
+import { enqueuePendingLog } from "./log-queue.js";
 
-const BLOCKED_KEY = /password|senha|token|accessToken|refreshToken|authorization|apiKey|secret|card|cvv|cpf|document|payloadCompleto|rawPayload/i;
+const BLOCKED_KEY = /password|senha|token|accessToken|refreshToken|authorization|apiKey|secret|card|cvv|cpf|document|payloadCompleto|rawPayload|stack/i;
+const recentErrorFingerprints = new Map();
+function shouldSkipRemoteLogging(error, context = {}) { return context.source === "logger" || context.action === "logSystemEvent_failed" || error?.code === "functions/internal" && context.action === "logSystemEvent"; }
+function fingerprint(error, context = {}) { return [context.action || "unknown", error?.name || "Error", error?.code || "", String(error?.message || "").slice(0, 120), location.pathname].join("|"); }
+function shouldDedupe(error, context = {}) { const fp = fingerprint(error, context); const t = Date.now(); const current = recentErrorFingerprints.get(fp) || { count: 0, firstAt: t, lastReportedAt: 0 }; if (t - current.firstAt > 30000) { recentErrorFingerprints.set(fp, { count: 1, firstAt: t, lastReportedAt: t }); return false; } current.count += 1; recentErrorFingerprints.set(fp, current); return current.count > 5; }
 
 export function sanitizeMetadata(input = {}, depth = 0) {
   if (depth > 3 || input == null) return null;
@@ -65,15 +71,18 @@ export async function reportFrontendError(error, context = {}) {
     metadata
   };
   await registerUsageEvent(auth.currentUser, "frontend_error", payload);
+  if (shouldSkipRemoteLogging(error, context) || shouldDedupe(error, context)) return;
   await logSystemEvent(payload);
 }
 
 export async function logSystemEvent({ type, severity = "info", source = "frontend", action, message, metadata = {} }) {
   try {
-    const callable = firebaseApi.httpsCallable(firebaseApi.functions, "logSystemEvent");
-    return await callable({ type, severity, source, action: action || type, message: String(message || "Evento registrado.").slice(0, 500), metadata: sanitizeMetadata(metadata) });
+    const payload = { type, severity, source, action: action || type, message: String(message || "Evento registrado.").slice(0, 500), metadata: sanitizeMetadata(metadata) };
+    const result = await callFunction("logSystemEvent", payload, { silent: true });
+    if (!result.ok) { enqueuePendingLog(payload); throw result.error || new Error(result.message); }
+    return result.data;
   } catch (error) {
-    if (APP_ENV === "development") console.warn("[HabitFlow] logSystemEvent falhou", error?.code || error?.message || error);
+    if (APP_ENV === "development") console.warn("[HabitFlow] logSystemEvent falhou; evento salvo localmente", error?.code || error?.message || error);
     return null;
   }
 }

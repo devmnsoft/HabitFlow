@@ -141,3 +141,15 @@
 - Configuração de WhatsApp pelo Admin Geral.
 - Botões de atendimento MNSOFT e dados institucionais públicos.
 - Documentação `CHATBOT.md`, `SUPORTE_WHATSAPP.md` e `LOGGER.md`.
+
+## v1.9.1
+- Correção de CORS nas Firebase Functions HTTP com utilitário compartilhado.
+- Substituição/centralização de chamadas internas por `httpsCallable` via `functions-client.js`.
+- Fallback local para system settings com defaults MNSOFT.
+- Proteção anti-loop no logger remoto.
+- Fila local de logs pendentes com sanitização e flush.
+- Deduplicação de erros repetidos no monitoramento frontend.
+- Correção do fluxo `beforeinstallprompt` do PWA.
+- `healthCheck` callable para diagnóstico de Functions.
+- Diagnóstico de Functions no Admin Geral.
+- Documentação `FUNCTIONS_CORS.md` e `PWA.md`.

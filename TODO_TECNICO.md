@@ -33,3 +33,9 @@
 - Evoluir rate limit por minuto em `users/{uid}/rateLimits/chatbot`.
 - Criar tela dedicada para detalhes e respostas de tickets.
 - Adicionar testes automatizados de callable Functions com Firebase Emulator.
+
+## Pós v1.9.1
+
+- Automatizar testes end-to-end de queda/restauração de Functions.
+- Validar domínio próprio em `APP_ALLOWED_ORIGINS` antes do go-live.
+- Criar painel histórico para taxa de flush da fila local.

@@ -20,3 +20,12 @@ Nunca registrar senha, token, CPF, cartão, CVV, secrets, payload bruto de pagam
 
 ## v1.9 — Eventos do chatbot e suporte
 Novos fluxos registram `chatbot_opened`, `chatbot_closed`, `chatbot_message_sent`, `chatbot_response_generated`, `chatbot_fallback_used`, `chatbot_unknown_question`, `chatbot_sensitive_request_blocked`, `chatbot_ticket_created`, `chatbot_support_clicked`, `chatbot_whatsapp_clicked`, `chatbot_email_clicked`, `chatbot_premium_interest` e `chatbot_error`. Mensagens sensíveis não devem ser persistidas completas.
+
+## v1.9.1 — logger resiliente
+
+- `logSystemEvent` é chamado via `httpsCallable` pelo helper `functions-client.js`.
+- Falhas do logger remoto não exibem toast para usuários comuns.
+- Após 3 falhas consecutivas, o envio remoto é pausado por 60 segundos.
+- Logs pendentes são sanitizados e salvos em `localStorage` (`habitflow_pending_logs`) com limite de 100 itens.
+- A fila local pode ser reenviada por `flushPendingLogs()` ao voltar online, após login e pelo diagnóstico do Admin Geral.
+- `error-monitor.js` ignora falhas causadas pelo próprio logger e deduplica erros repetidos para evitar loop/spam.

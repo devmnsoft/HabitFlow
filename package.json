@@ -1,7 +1,7 @@
 {
   "name": "habitflow",
-  "version": "1.9.0",
-  "description": "HabitFlow v1.9 - rastreador de hábitos com checkout Premium preparado e Firebase Functions",
+  "version": "1.9.1",
+  "description": "HabitFlow v1.9.1 - rastreador de hábitos com Firebase Functions, logger resiliente e PWA estável",
   "type": "module",
   "scripts": {
     "start": "node server.js"

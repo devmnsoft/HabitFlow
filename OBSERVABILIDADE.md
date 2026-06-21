@@ -86,3 +86,7 @@ Erros globais e eventos administrativos continuam protegidos em `systemAuditLogs
 
 ## v1.9 — Observabilidade do atendimento
 O Admin Geral passa a exibir resumo de suporte por Functions, com chamados abertos, bugs abertos, críticos e resolvidos. Eventos relevantes do chatbot e tickets são gravados em `systemAuditLogs` de forma sanitizada.
+
+## v1.9.1 — diagnóstico operacional
+
+O Admin Geral possui card de Status das Functions com healthCheck, teste de settings, teste de logger, teste de Telegram, quantidade de logs pendentes locais, última falha remota e status do logger remoto.
