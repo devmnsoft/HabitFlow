@@ -33,3 +33,26 @@
 - Domínio próprio.
 - Analytics de produto.
 - Programa de afiliados.
+
+## v1.7 — Pagamento real em produção
+- Configurar credenciais Mercado Pago.
+- Testar sandbox.
+- Validar webhook real.
+- Ativar checkout real.
+- Criar rotina de cancelamento.
+- Criar e-mails transacionais.
+
+## v1.8 — Admin global
+- Listar usuários.
+- Ver planos.
+- Ver eventos agregados.
+- Ver interesse Premium.
+- Exportar leads Premium.
+- Métricas de conversão.
+
+## v1.9 — Retenção
+- Notificações.
+- Desafios reais.
+- Relatórios semanais.
+- E-mails motivacionais.
+- Exportação PDF.

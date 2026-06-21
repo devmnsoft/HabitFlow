@@ -60,3 +60,49 @@ Se usuários receberem versão antiga:
 - Modal de consentimento aparece para usuários sem aceite.
 - Plano gratuito limita 5 hábitos ativos.
 - Premium simulado está desativado se o ambiente for produção real.
+
+## Firebase Functions (v1.6)
+
+Instalar dependências:
+
+```bash
+cd functions
+npm install
+```
+
+Rodar local:
+
+```bash
+firebase emulators:start
+```
+
+Deploy functions:
+
+```bash
+firebase deploy --only functions
+```
+
+Deploy rules:
+
+```bash
+firebase deploy --only firestore:rules
+```
+
+Deploy hosting:
+
+```bash
+firebase deploy --only hosting
+```
+
+Deploy completo:
+
+```bash
+firebase deploy
+```
+
+### Checklist de segurança
+- Conferir `.env`/secrets e não versionar credenciais reais.
+- Conferir webhook no gateway.
+- Conferir domínio autorizado no Firebase Auth.
+- Conferir se Functions não expõem secrets.
+- Conferir se regras bloqueiam `billingEvents` e `adminAuditLogs`.

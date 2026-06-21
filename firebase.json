@@ -7,7 +7,8 @@
       "**/node_modules/**",
       "server.js",
       "package.json",
-      "package-lock.json"
+      "package-lock.json",
+      "functions/**"
     ],
     "rewrites": [
       {
@@ -18,5 +19,11 @@
   },
   "firestore": {
     "rules": "firestore.rules"
-  }
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default"
+    }
+  ]
 }
