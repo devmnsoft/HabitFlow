@@ -189,3 +189,11 @@ Eventos pessoais agora são gravados em `users/{userId}/usageEvents/{eventId}`. 
 - Não usar `users/{uid}/usage/events` como coleção.
 - Usar `users/{uid}/usageEvents` para logs pessoais.
 - Logs globais ficam em `systemAuditLogs` e só são acessados por Functions administrativas.
+
+## HabitFlow v1.8 — robustez, suporte e atendimento
+
+A v1.8 adiciona logger centralizado, `safeAsync`, painel administrativo com bugs/status, Assistente HabitFlow seguro baseado em regras, suporte MNSOFT e configuração administrativa de WhatsApp.
+
+Dados institucionais públicos: MNSOFT — MNSOLUÇÕES TECNOLÓGICAS & CONSULTORIA LTDA — CNPJ 18.160.057/0001-13 — comercial@mnsoft.com.br.
+
+Documentação nova: `LOGGER.md`, `CHATBOT.md` e `SUPORTE_WHATSAPP.md`.

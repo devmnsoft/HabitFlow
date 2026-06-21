@@ -110,3 +110,17 @@
 - Frontend integrado ao checkout.
 - Tratamento de retorno pós-pagamento.
 - Documentação PAGAMENTOS.md.
+
+## v1.8
+- Try/catch aplicado em fluxos críticos.
+- Logger centralizado no frontend com `safeAsync`.
+- Logger/backend auditável com status de bugs e fingerprint.
+- Logs mais claros para ações, erros e bugs.
+- Painel Admin Geral com saúde do sistema, bugs e ações.
+- Status de bugs: novo, lido, resolvido e ignorado.
+- Chatbot Assistente HabitFlow baseado em conhecimento local.
+- Regras de segurança do chatbot e bloqueio de dados sensíveis.
+- Reporte de bug pelo chatbot.
+- Configuração de WhatsApp pelo Admin Geral.
+- Botões de atendimento MNSOFT e dados institucionais públicos.
+- Documentação `CHATBOT.md`, `SUPORTE_WHATSAPP.md` e `LOGGER.md`.

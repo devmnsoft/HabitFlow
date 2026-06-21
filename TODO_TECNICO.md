@@ -22,3 +22,8 @@
 - Testar erro `auth/unauthorized-domain` em domínio não autorizado e confirmar mensagem amigável.
 - Testar `sendTestTelegramAlert` pelo Admin Geral após configurar `functions/.env` sem versionar token.
 - Simular `frontend_error` e conferir visibilidade em Admin Geral via `systemAuditLogs`.
+
+## v1.8 concluída / próximos refinamentos
+- Expandir cobertura automatizada de fluxos UI do chatbot.
+- Criar testes unitários para normalização de WhatsApp nas Functions.
+- Evoluir Admin Geral com paginação e exportação segura.

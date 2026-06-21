@@ -78,3 +78,8 @@ A coleção pessoal de eventos é `users/{uid}/usageEvents/{eventId}`. Ela regis
 ```
 
 Erros globais e eventos administrativos continuam protegidos em `systemAuditLogs/{logId}` e são lidos apenas por Firebase Functions administrativas no Admin Geral.
+
+## v1.8
+- `assets/js/logger.js` padroniza logs frontend e `safeAsync`.
+- `systemAuditLogs` inclui `bugStatus`, `resolvedAt`, `resolvedBy`, `errorCode`, `errorName`, `errorMessage` e `errorFingerprint`.
+- O Admin Geral pode marcar bugs como lidos, resolvidos ou ignorados por Functions seguras.
