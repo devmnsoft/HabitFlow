@@ -1,3 +1,11 @@
+## HabitFlow 2.0-Security
+
+Esta versão adiciona hardening de produção: build em `dist/`, CSP/headers, Firestore Rules restritivas, App Check opcional, scanner de secrets e documentação de segurança.
+
+> Por limitação natural da web, qualquer JavaScript executado no navegador pode ser inspecionado. O HabitFlow reduz exposição usando build de produção, minificação, ofuscação, remoção de source maps e, principalmente, movendo lógica sensível para Firebase Functions com validações de segurança no backend.
+
+Comandos principais: `npm start`, `npm run dev`, `npm run build`, `npm run preview`, `npm run security:scan` e `npm run deploy`.
+
 ## HabitFlow v1.7 — Observabilidade, Admin Geral e Telegram
 
 A versão 1.7 adiciona observabilidade de produção com logs globais protegidos, painel **Admin Geral**, monitoramento de bugs, captura global de erros frontend, auditoria administrativa e alertas via Telegram enviados exclusivamente pelo backend/Firebase Functions.

@@ -1,12 +1,23 @@
 {
   "name": "habitflow",
-  "version": "1.9.1",
-  "description": "HabitFlow v1.9.1 - rastreador de hábitos com Firebase Functions, logger resiliente e PWA estável",
+  "version": "2.0.0-security",
+  "description": "HabitFlow v2.0-security - SaaS de hábitos com hardening de segurança, build de produção e Firebase protegido",
   "type": "module",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "dev": "vite --host 0.0.0.0 --port 5177",
+    "build": "vite build && node scripts/postbuild-obfuscate.js && node scripts/security-scan.js --dist-only",
+    "preview": "vite preview --host 0.0.0.0 --port 5177",
+    "security:scan": "node scripts/security-scan.js",
+    "deploy": "npm run build && firebase deploy"
   },
   "engines": {
     "node": ">=18"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-legacy": "latest",
+    "vite": "latest",
+    "terser": "latest",
+    "javascript-obfuscator": "latest"
   }
 }

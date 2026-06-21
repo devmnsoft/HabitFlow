@@ -1,0 +1,18 @@
+# Segurança do HabitFlow 2.0-Security
+
+Por limitação natural da web, qualquer JavaScript executado no navegador pode ser inspecionado. O HabitFlow reduz exposição usando build de produção, minificação, ofuscação leve, remoção de source maps e, principalmente, movendo lógica sensível para Firebase Functions com validações de segurança no backend.
+
+## Frontend
+- Contém apenas configuração pública do Firebase client.
+- Não deve conter tokens de Telegram, chaves de IA, credenciais de pagamento ou service accounts.
+- Usa `APP_ENV` para reduzir logs técnicos e botões de diagnóstico em produção.
+
+## Backend e Firestore
+- Coleções globais (`systemAuditLogs`, `adminAuditLogs`, `billingEvents`, `supportTickets`, `systemSettings`) são bloqueadas para o client.
+- Ações sensíveis usam Firebase Functions com autenticação, admin backend e rate limit básico.
+
+## App Check
+Consulte `APP_CHECK.md`. Ative enforcement somente após validar localhost, Hosting, Auth, Firestore e Functions.
+
+## LGPD e logs
+Logs são sanitizados para remover senha, token, secret, CPF, cartão, payload bruto e chaves privadas. Reporte vulnerabilidades para comercial@mnsoft.com.br.
