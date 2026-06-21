@@ -1,0 +1,22 @@
+# Checklist Pós-Deploy HabitFlow
+
+- [ ] Abrir URL produção
+- [ ] Login Google
+- [ ] Login e-mail/senha
+- [ ] Criar hábito
+- [ ] Marcar hábito
+- [ ] Ver progresso
+- [ ] Abrir chatbot
+- [ ] Reportar bug teste
+- [ ] Ver Telegram
+- [ ] Abrir Admin Geral
+- [ ] Ver logs
+- [ ] Ver status de produção
+- [ ] Testar e-mail simulado/real
+- [ ] Testar LGPD request
+- [ ] Testar PWA/mobile
+- [ ] Console sem erro crítico
+- [ ] CSP sem bloqueio indevido
+- [ ] App Check monitorado
+- [ ] Functions health ok
+- [ ] Firestore Rules ok

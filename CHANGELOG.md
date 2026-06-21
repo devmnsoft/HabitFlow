@@ -185,3 +185,21 @@
 - Documentação de backup, recuperação e resposta a incidentes.
 - Proteção contra prompt injection, enumeração de usuários e XSS revisado.
 - Headers anti-clickjacking e limpeza segura de sessão.
+
+## v2.2-Production
+- Ambientes local/staging/production documentados.
+- Preparação para domínio próprio.
+- App Check em modo controlado.
+- Backup Firestore operacional documentado.
+- Registro de status de backups.
+- LGPD operacional com exportação/exclusão controlada.
+- E-mails transacionais preparados.
+- E-mail de boas-vindas simulado/real.
+- Monitoramento de produção no Admin Geral.
+- Production readiness score.
+- Pagamento Mercado Pago sandbox preparado.
+- Go-live checklist.
+- Post-deploy checklist.
+- Páginas legais refinadas.
+- Deploy controlado documentado.
+- Registro de deploys.

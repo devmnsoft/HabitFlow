@@ -18,6 +18,9 @@ export function setupAppCheck(app) {
     });
   } catch (error) {
     if (IS_DEVELOPMENT) console.warn("[HabitFlow] Falha ao inicializar App Check", error?.message || error);
+    if (typeof document !== "undefined") {
+      document.dispatchEvent(new CustomEvent("habitflow:app-check-error", { detail: { message: "Não foi possível validar a segurança desta sessão. Atualize a página ou tente novamente." } }));
+    }
     return null;
   }
 }

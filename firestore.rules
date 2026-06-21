@@ -63,3 +63,4 @@ service cloud.firestore {
     match /{document=**} { allow read, write: if false; }
   }
 }
+// v2.2 operational collections are backend-only.

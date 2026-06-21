@@ -38,3 +38,12 @@ Frontend (`assets/js`), `firebase.js`, logger, error monitor, chatbot, admin, pl
 | Incidentes | Falta de workflow | Alta | Criadas Functions e documentação de resposta | Concluído | Runbooks por tipo de incidente |
 | Chatbot | Prompt injection e pedidos internos | Alta | Intent `prompt_injection_attempt` e resposta segura | Concluído | Moderação externa quando IA real for ativada |
 | Sessão | Estado local sensível após logout | Média | `clearUserSessionState()` limpa listeners e caches locais | Concluído | Revogação de sessão via custom claims futura |
+
+## Auditoria v2.2-Production
+
+- Ambientes local/staging/production documentados em `ENVIRONMENTS.md`.
+- App Check em fases controladas documentado em `APP_CHECK.md`.
+- Coleções operacionais (`lgpdRequests`, `systemBackups`, `deployments`, `transactionalEmails`) são backend-only pelas Firestore Rules globais deny-by-default.
+- Admin Geral usa Functions protegidas por `ADMIN_EMAILS` e rate limit.
+- Telegram, e-mail e pagamento permanecem com secrets somente em Functions.
+- Build continua sem source maps publicados e com scan de `dist/`.

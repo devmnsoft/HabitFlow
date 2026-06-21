@@ -1,7 +1,7 @@
 {
   "name": "habitflow",
-  "version": "2.1.0-securityops",
-  "description": "HabitFlow v2.1-SecurityOps - SaaS de hábitos com segurança operacional para produção",
+  "version": "2.2.0-production",
+  "description": "HabitFlow v2.2-Production - SaaS de hábitos com segurança operacional para produção",
   "type": "module",
   "scripts": {
     "start": "node server.js",

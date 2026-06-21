@@ -34,3 +34,17 @@ A versão 1.6 não possui portal de assinatura nem cancelamento automático comp
 - Checkout real ainda depende de credenciais e validação sandbox.
 - Webhook não busca detalhes reais no gateway.
 - Reembolso, portal de assinatura e e-mails transacionais ainda pendentes.
+
+## v2.2 — Mercado Pago sandbox
+
+Configuração backend:
+- `PAYMENT_PROVIDER=mercadopago`
+- `PAYMENT_MODE=sandbox`
+- `MERCADOPAGO_ACCESS_TOKEN=`
+- `MERCADOPAGO_WEBHOOK_SECRET=`
+
+Regras:
+- Checkout sempre via Function.
+- Token nunca no frontend.
+- Webhook valida assinatura quando `MERCADOPAGO_WEBHOOK_SECRET` estiver configurado.
+- Em production com `PAYMENT_MODE=sandbox`, exibir pagamento em preparação e não cobrar real.

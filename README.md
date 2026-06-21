@@ -220,3 +220,17 @@ Esta versão usa `httpsCallable` para Functions internas, fallback local para co
 - Functions críticas usam rate limit e auditoria administrativa backend; dados globais continuam protegidos por Rules e acessados via Functions.
 - Produção deve usar `npm run build`, `npm run security:scan`, `npm run security:dist`, `npm run security:rules`, `npm run security:firebase` e `npm test` antes de publicar.
 - Source maps, `.env`, Functions, `node_modules` e documentação interna não devem ser publicados no Hosting.
+
+## v2.2-Production
+
+Esta versão prepara o HabitFlow para produção comercial controlada com ambientes documentados, App Check progressivo, backup Firestore operacional, LGPD operacional, e-mails transacionais simuláveis, Admin Geral com visão de produção, score de prontidão, deploy controlado e pagamentos Mercado Pago em sandbox.
+
+Arquivos principais:
+- `ENVIRONMENTS.md`
+- `DOMAIN_SETUP.md`
+- `APP_CHECK.md`
+- `BACKUP_RECOVERY.md`
+- `EMAILS.md`
+- `LGPD.md`
+- `GO_LIVE_CHECKLIST.md`
+- `POST_DEPLOY_CHECKLIST.md`
