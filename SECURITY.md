@@ -23,3 +23,10 @@ Logs são sanitizados para remover senha, token, secret, CPF, cartão, payload b
 - Functions críticas usam rate limit e auditoria administrativa backend; dados globais continuam protegidos por Rules e acessados via Functions.
 - Produção deve usar `npm run build`, `npm run security:scan`, `npm run security:dist`, `npm run security:rules`, `npm run security:firebase` e `npm test` antes de publicar.
 - Source maps, `.env`, Functions, `node_modules` e documentação interna não devem ser publicados no Hosting.
+
+## v2.2-Production
+
+- Secrets de Telegram, e-mail e pagamento devem existir somente em Firebase Functions.
+- App Check deve iniciar em monitoramento e avançar para enforcement parcial/total após validação.
+- LGPD, backups e deploys são manipulados por Functions administrativas.
+- Excluir dados de usuário exige simulação (`dryRun`) e confirmação explícita `CONFIRMAR_EXCLUSAO`.

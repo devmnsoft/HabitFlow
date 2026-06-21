@@ -1,9 +1,10 @@
 import { APP_VERSION, APP_ENV, IS_DEVELOPMENT, IS_PRODUCTION } from "./env.js";
 export { APP_VERSION, APP_ENV, IS_DEVELOPMENT, IS_PRODUCTION };
-export const ENABLE_DEV_PLAN_TOGGLE = IS_DEVELOPMENT;
+export const ENABLE_DEV_PLAN_TOGGLE = IS_DEVELOPMENT && APP_ENV !== "production";
 export const ENABLE_GLOBAL_METRICS = false;
 // Métricas globais e billing real devem ser gravados por backend/Firebase Functions para evitar abuso.
 export const PAYMENT_PROVIDER = "mercadopago";
+export const PAYMENT_MODE = import.meta.env?.VITE_PAYMENT_MODE || "sandbox";
 export const PREMIUM_MONTHLY_PRICE = 14.90;
 export const PREMIUM_YEARLY_PRICE = 99.00;
 export const PREMIUM_MONTHLY_LABEL = "R$ 14,90/mês";

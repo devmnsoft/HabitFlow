@@ -12,3 +12,22 @@
 - Functions críticas usam rate limit e auditoria administrativa backend; dados globais continuam protegidos por Rules e acessados via Functions.
 - Produção deve usar `npm run build`, `npm run security:scan`, `npm run security:dist`, `npm run security:rules`, `npm run security:firebase` e `npm test` antes de publicar.
 - Source maps, `.env`, Functions, `node_modules` e documentação interna não devem ser publicados no Hosting.
+
+## v2.2 — Modo controlado
+
+Mensagem amigável em falha de validação: "Não foi possível validar a segurança desta sessão. Atualize a página ou tente novamente."
+
+### Fase 1 — Monitoramento
+- Criar site key reCAPTCHA no Firebase App Check.
+- Configurar `VITE_APP_CHECK_SITE_KEY` no frontend.
+- Usar debug token local em `localhost:5177`.
+- Manter enforcement desativado enquanto mede tráfego válido no Console.
+
+### Fase 2 — Enforcement parcial
+- Ativar enforcement primeiro em Cloud Functions.
+- Monitorar erros, logs e suporte.
+- Reverter enforcement se autenticação, chatbot ou LGPD quebrarem.
+
+### Fase 3 — Enforcement total
+- Ativar Firestore após validação.
+- Storage somente quando for usado futuramente.

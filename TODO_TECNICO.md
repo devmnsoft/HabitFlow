@@ -53,3 +53,10 @@
 - Functions críticas usam rate limit e auditoria administrativa backend; dados globais continuam protegidos por Rules e acessados via Functions.
 - Produção deve usar `npm run build`, `npm run security:scan`, `npm run security:dist`, `npm run security:rules`, `npm run security:firebase` e `npm test` antes de publicar.
 - Source maps, `.env`, Functions, `node_modules` e documentação interna não devem ser publicados no Hosting.
+
+## v2.2-Production — Pendências operacionais externas
+- Definir domínio final e configurar DNS/SSL.
+- Criar bucket Cloud Storage de backup.
+- Escolher provedor de e-mail e configurar secret backend.
+- Validar App Check em monitoramento antes de enforcement.
+- Configurar Mercado Pago sandbox e webhook.

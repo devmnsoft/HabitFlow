@@ -141,3 +141,14 @@
 - RAG/base de conhecimento versionada.
 - Moderação, limite de custo e métricas de qualidade.
 - Revisão humana.
+
+## Próximas fases após v2.2
+
+### v2.3 — Admin Global Avançado
+- Listagem segura de usuários, busca por e-mail, perfil administrativo, bloqueio/desbloqueio, gestão de plano, CSV, métricas de conversão e painel financeiro inicial.
+
+### v2.4 — Pagamento real
+- Mercado Pago produção, webhook validado, ativação automática Premium, cancelamento, recibos/e-mails e relatório financeiro.
+
+### v2.5 — IA real segura
+- Provedor IA backend, RAG/base de conhecimento, limite de custo, moderação e avaliação de respostas.

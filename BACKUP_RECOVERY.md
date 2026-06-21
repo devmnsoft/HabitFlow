@@ -23,3 +23,19 @@
 ## Operação
 - Último backup pode ser refletido manualmente em `LAST_BACKUP_AT` nas Functions.
 - Incidentes de restauração devem ser documentados em `securityIncidents`.
+
+## v2.2 — Backup Firestore operacional
+
+Use Google Cloud Firestore export para um bucket Cloud Storage dedicado.
+
+Exemplo:
+```bash
+gcloud firestore export gs://SEU_BUCKET/backups/firestore/$(date +%Y%m%d-%H%M%S)
+```
+
+Recomendações:
+- Frequência: diária.
+- Retenção: 30/60/90 dias conforme custo e risco.
+- Teste restauração sempre em projeto separado.
+- Nunca importe backup diretamente sobre produção sem plano de rollback.
+- Registre o resultado no Admin Geral via `registerBackupStatus`.

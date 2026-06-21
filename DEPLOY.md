@@ -192,3 +192,18 @@ Configure `APP_ALLOWED_ORIGINS` nas Functions quando houver domínio próprio. M
 - Functions críticas usam rate limit e auditoria administrativa backend; dados globais continuam protegidos por Rules e acessados via Functions.
 - Produção deve usar `npm run build`, `npm run security:scan`, `npm run security:dist`, `npm run security:rules`, `npm run security:firebase` e `npm test` antes de publicar.
 - Source maps, `.env`, Functions, `node_modules` e documentação interna não devem ser publicados no Hosting.
+
+## Fluxo controlado v2.2
+
+1. Rodar local em `http://localhost:5177`.
+2. Rodar testes e validações.
+3. `npm run security:scan`.
+4. `npm run build`.
+5. `npm run preview` na porta 5177.
+6. Deploy em canal preview Firebase Hosting.
+7. Testar preview.
+8. Publicar Functions.
+9. Publicar Rules.
+10. Publicar Hosting produção.
+11. Validar pós-deploy.
+12. Registrar deploy no Admin Geral com `registerDeployment`.
