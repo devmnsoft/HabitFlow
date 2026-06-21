@@ -1,34 +1,35 @@
-# Roadmap interno HabitFlow
+# Roadmap HabitFlow
 
-## Fase 1 — Validação
+## Fase 1 — Produto publicável
 
-- Publicar MVP.
-- Testar com 10 usuários.
-- Coletar feedback.
-- Melhorar onboarding.
-- Ajustar bugs.
+- Deploy Firebase Hosting.
+- Teste com 10 usuários reais.
+- Correção de bugs.
+- Ajustes de UX mobile.
+- Validação de interesse Premium.
 
-## Fase 2 — Monetização
+## Fase 2 — Monetização real
 
-- Criar plano Premium.
-- Integrar Stripe ou Mercado Pago.
-- Criar controle real de assinatura.
-- Liberar hábitos ilimitados.
-- Criar histórico completo.
+- Escolher gateway: Mercado Pago ou Stripe.
+- Criar Firebase Functions.
+- Criar checkout real.
+- Criar webhook de pagamento.
+- Atualizar `plan` automaticamente.
+- Criar recibos/e-mails.
 
 ## Fase 3 — Retenção
 
 - Notificações.
-- Desafios de 30 dias.
+- E-mails semanais.
+- Desafios reais.
 - Relatórios semanais.
-- E-mails motivacionais.
 - Exportação PDF.
 
-## Fase 4 — Escala
+## Fase 4 — Gestão e escala
 
-- Painel admin global.
+- Admin global seguro.
 - Métricas agregadas.
-- Landing page separada.
-- Domínio próprio.
 - Suporte.
+- Domínio próprio.
+- Analytics de produto.
 - Programa de afiliados.
