@@ -30,7 +30,7 @@ O Chat ID pode aparecer em exemplos porque não permite controlar o bot sem o to
 
 ```env
 TELEGRAM_ENABLED=true
-TELEGRAM_BOT_TOKEN=COLOQUE_AQUI_O_TOKEN_REAL
+TELEGRAM_BOT_TOKEN=
 TELEGRAM_ADMIN_CHAT_ID=7535235489
 TELEGRAM_MIN_SEVERITY=warning
 TELEGRAM_NOTIFY_EVENTS=critical,error,checkout_failed,webhook_error,premium_interest,user_signup,frontend_error,backend_error,unauthorized_admin_attempt
@@ -65,7 +65,7 @@ A mensagem de teste esperada é:
 
 Bot: @hablitflowmns_bot
 Ambiente: development/production
-Versão: 1.7
+Versão: 1.7.1
 Data: data/hora
 ```
 

@@ -3,21 +3,22 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="HabitFlow">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/svg+xml" href="assets/icons/icon.svg">
   <meta name="theme-color" content="#10B981">
-  <title>HabitFlow 1.7 — Rastreador de hábitos simples</title>
+  <title>HabitFlow 1.7.1 — Rastreador de hábitos simples</title>
   <meta name="description" content="HabitFlow ajuda você a criar hábitos, acompanhar sua sequência diária e visualizar seu progresso sem complicação.">
   <meta name="keywords" content="hábitos, rastreador de hábitos, produtividade, rotina, streak, organização pessoal">
-  <meta property="og:title" content="HabitFlow 1.7 — Rastreador de hábitos simples">
+  <meta property="og:title" content="HabitFlow 1.7.1 — Rastreador de hábitos simples">
   <meta property="og:description" content="HabitFlow ajuda você a criar hábitos, acompanhar sua sequência diária e visualizar seu progresso sem complicação.">
   <meta property="og:type" content="website">
   <meta property="og:image" content="assets/icons/icon.svg">
   <meta name="twitter:card" content="summary">
-  <meta name="twitter:title" content="HabitFlow 1.7 — Rastreador de hábitos simples">
+  <meta name="twitter:title" content="HabitFlow 1.7.1 — Rastreador de hábitos simples">
   <meta name="twitter:description" content="HabitFlow ajuda você a criar hábitos, acompanhar sua sequência diária e visualizar seu progresso sem complicação.">
   <meta name="twitter:image" content="assets/icons/icon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -94,6 +95,6 @@
   <div class="modal fade" id="upgradeModal" tabindex="-1" aria-labelledby="upgradeModalLabel" aria-hidden="true"><div class="modal-dialog modal-dialog-centered modal-lg"><div class="modal-content rounded-5 border-0 shadow-soft"><div class="modal-header border-0"><div><h5 class="modal-title fw-bold" id="upgradeModalLabel">Desbloqueie o HabitFlow Premium</h5><p class="text-secondary mb-0">Leve sua consistência para o próximo nível</p></div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button></div><div class="modal-body pt-0"><p>Com o Premium, você poderá acompanhar mais hábitos, acessar relatórios completos e participar de desafios de evolução.</p><div class="row g-3"><div class="col-md-7"><ul class="premium-benefits"><li>Hábitos ilimitados</li><li>Histórico completo</li><li>Relatórios avançados</li><li>Desafios de 30 e 90 dias</li><li>Temas personalizados</li><li>Exportação futura</li><li>Prioridade em novidades</li></ul></div><div class="col-md-5"><div class="plan-card"><h3>Premium futuro</h3><p><strong>R$ 14,90/mês</strong></p><p><strong>R$ 99/ano</strong></p><div class="d-grid gap-2"><button class="btn btn-success rounded-pill btn-premium-interest" type="button">Quero ser avisado</button><button class="btn btn-outline-success rounded-pill btn-checkout-monthly" type="button">Escolher mensal</button><button class="btn btn-outline-success rounded-pill btn-checkout-yearly" type="button">Escolher anual</button><button class="btn btn-outline-secondary rounded-pill" id="btnDevPremiumModal" onclick="document.getElementById('btnDevPremium')?.click()" type="button">Simular Premium em desenvolvimento</button></div></div></div></div></div></div></div></div>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script type="module" src="assets/js/app.js"></script>
-  <script>if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("/service-worker.js").catch(() => {}));</script>
+  <script>if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("/service-worker.js").catch((error) => console.warn("Falha ao registrar service worker", error?.message || error)));</script>
 </body>
 </html>

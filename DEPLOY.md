@@ -139,7 +139,7 @@ Local:
 
 ```env
 TELEGRAM_ENABLED=true
-TELEGRAM_BOT_TOKEN=seu_token_real_aqui
+TELEGRAM_BOT_TOKEN=
 TELEGRAM_ADMIN_CHAT_ID=7535235489
 TELEGRAM_MIN_SEVERITY=warning
 ```
@@ -156,3 +156,11 @@ Checklist:
 - Teste pelo Admin Geral funcionou
 - Erro simulado chegou no Telegram
 - Interesse Premium chegou no Telegram
+
+## v1.7.1 — Correção de erro identitytoolkit 400
+- Ativar Google em Authentication > Sign-in method.
+- Ativar Email/Senha em Authentication > Sign-in method.
+- Conferir Authorized domains.
+- Adicionar `localhost`.
+- Adicionar `habitflow-5f945.web.app`.
+- Adicionar domínio próprio futuro, se existir.

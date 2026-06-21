@@ -16,3 +16,9 @@
 - Implementar limpeza automática de logs antigos via scheduled function respeitando `LOG_RETENTION_DAYS = 90` e `ERROR_LOG_RETENTION_DAYS = 180`.
 - Implementar exportação de logs administrativos.
 - Implementar agrupamento de bugs por assinatura de erro (`errorFingerprint`).
+
+## v1.7.1 — Estabilização pós-console
+- Validar em produção a migração completa para `users/{uid}/usageEvents/{eventId}`.
+- Testar erro `auth/unauthorized-domain` em domínio não autorizado e confirmar mensagem amigável.
+- Testar `sendTestTelegramAlert` pelo Admin Geral após configurar `functions/.env` sem versionar token.
+- Simular `frontend_error` e conferir visibilidade em Admin Geral via `systemAuditLogs`.

@@ -35,12 +35,45 @@ export function errorMetadata(error, extra = {}) {
   });
 }
 
+export async function registerUsageEvent(user, type, metadata = {}) {
+  if (!user || !user.uid) return;
+  try {
+    const eventsRef = firebaseApi.collection(db, "users", user.uid, "usageEvents");
+    await firebaseApi.addDoc(eventsRef, {
+      type,
+      metadata: sanitizeMetadata(metadata),
+      createdAt: firebaseApi.serverTimestamp(),
+      appVersion: APP_VERSION,
+      environment: APP_ENV
+    });
+  } catch (error) {
+    if (APP_ENV === "development") console.warn("[HabitFlow] registerUsageEvent falhou", error?.code || error?.message || error);
+  }
+}
+
+export async function reportFrontendError(error, context = {}) {
+  const metadata = errorMetadata(error, {
+    ...(context.metadata || {}),
+    action: context.action || "unknown"
+  });
+  const payload = {
+    type: "frontend_error",
+    severity: context.severity || "error",
+    source: context.source || "frontend",
+    action: context.action || "unknown",
+    message: String(context.message || error?.message || "Erro frontend capturado.").slice(0, 500),
+    metadata
+  };
+  await registerUsageEvent(auth.currentUser, "frontend_error", payload);
+  await logSystemEvent(payload);
+}
+
 export async function logSystemEvent({ type, severity = "info", source = "frontend", action, message, metadata = {} }) {
   try {
     const callable = firebaseApi.httpsCallable(firebaseApi.functions, "logSystemEvent");
     return await callable({ type, severity, source, action: action || type, message: String(message || "Evento registrado.").slice(0, 500), metadata: sanitizeMetadata(metadata) });
   } catch (error) {
-    console.warn("[HabitFlow] logSystemEvent falhou", error?.code || error?.message || error);
+    if (APP_ENV === "development") console.warn("[HabitFlow] logSystemEvent falhou", error?.code || error?.message || error);
     return null;
   }
 }
@@ -50,16 +83,19 @@ export async function trackUserAction(action, metadata = {}, options = {}) {
   if (!user) return;
   const safeMetadata = sanitizeMetadata(metadata);
   try {
-    await firebaseApi.addDoc(firebaseApi.collection(db, "users", user.uid, "usage", "events"), {
+    await firebaseApi.addDoc(firebaseApi.collection(db, "users", user.uid, "usageEvents"), {
       userId: user.uid,
       userEmail: user.email || "",
       createdAt: firebaseApi.serverTimestamp(),
+      type: action,
       action,
       source: "frontend",
-      metadata: safeMetadata
+      metadata: safeMetadata,
+      appVersion: APP_VERSION,
+      environment: APP_ENV
     });
   } catch (error) {
-    console.warn("[HabitFlow] usage event falhou", error?.code || error?.message || error);
+    if (APP_ENV === "development") console.warn("[HabitFlow] usage event falhou", error?.code || error?.message || error);
   }
   const globalActions = new Set(["login", "signup", "logout", "terms_accepted", "habit_created", "habit_updated", "habit_archived", "habit_restored", "habit_completed", "habit_uncompleted", "premium_interest", "premium_checkout_clicked", "checkout_success_return", "checkout_pending_return", "checkout_failure_return", "admin_panel_opened", "app_loaded", "dashboard_loaded", "habits_loaded"]);
   if (options.global !== false && globalActions.has(action)) {
@@ -70,14 +106,14 @@ export async function trackUserAction(action, metadata = {}, options = {}) {
 
 export function setupErrorMonitoring(showFriendlyError = () => {}) {
   window.addEventListener("error", (event) => {
-    logSystemEvent({ type: "frontend_error", severity: "error", source: "frontend", action: "window_error", message: "Erro JavaScript inesperado.", metadata: errorMetadata(event.error || new Error(event.message)) });
+    reportFrontendError(event.error || new Error(event.message), { action: "window_error", message: "Erro JavaScript inesperado." }).catch((error) => APP_ENV === "development" && console.warn("Falha no logger global", error));
     showFriendlyError("Ops", "Encontramos um erro inesperado. Nossa equipe foi notificada.", "danger");
   });
   window.addEventListener("unhandledrejection", (event) => {
     const reason = event.reason instanceof Error ? event.reason : new Error(String(event.reason || "Promise rejeitada"));
-    logSystemEvent({ type: "frontend_error", severity: "error", source: "frontend", action: "unhandledrejection", message: "Falha assíncrona inesperada.", metadata: errorMetadata(reason) });
+    reportFrontendError(reason, { action: "unhandledrejection", message: "Falha assíncrona inesperada." }).catch((error) => APP_ENV === "development" && console.warn("Falha no logger global", error));
   });
   if ("serviceWorker" in navigator) {
-    navigator.serviceWorker?.addEventListener?.("error", (event) => logSystemEvent({ type: "pwa_error", severity: "warning", source: "pwa", action: "service_worker_error", message: "Falha no service worker.", metadata: sanitizeMetadata({ message: event.message, page: location.pathname }) }));
+    navigator.serviceWorker?.addEventListener?.("error", (event) => logSystemEvent({ type: "pwa_error", severity: "warning", source: "pwa", action: "service_worker_error", message: "Falha no service worker.", metadata: sanitizeMetadata({ message: event.message, page: location.pathname }) }).catch(() => {}));
   }
 }
