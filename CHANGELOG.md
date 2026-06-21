@@ -174,3 +174,14 @@
 - `healthCheck` callable para diagnóstico de Functions.
 - Diagnóstico de Functions no Admin Geral.
 - Documentação `FUNCTIONS_CORS.md` e `PWA.md`.
+
+## v2.1-SecurityOps
+- Pipeline GitHub Actions de segurança.
+- `security:scan`, `security:dist`, validação de `firestore.rules` e `firebase.json`.
+- Testes básicos de segurança.
+- Rate limit em Functions críticas e registro de eventos suspeitos.
+- Painel de risco no Admin Geral.
+- Controle de incidentes e solicitações LGPD de exportação/exclusão.
+- Documentação de backup, recuperação e resposta a incidentes.
+- Proteção contra prompt injection, enumeração de usuários e XSS revisado.
+- Headers anti-clickjacking e limpeza segura de sessão.

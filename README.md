@@ -213,3 +213,10 @@ Chatbot híbrido seguro, Functions de suporte, tickets, Central de Suporte, Admi
 ## v1.9.1 — estabilidade de Functions e PWA
 
 Esta versão usa `httpsCallable` para Functions internas, fallback local para configurações públicas da MNSOFT, logger remoto com fila local anti-loop e diagnóstico de Functions no Admin Geral. O servidor local permanece em `http://localhost:5177` via `npm start`.
+
+## v2.1-SecurityOps
+- Adicionada camada operacional de segurança com CI, scanners de secrets/dist, validação de Firebase config e Firestore Rules.
+- Admin Geral passa a ter painel de Segurança, eventos suspeitos, incidentes e solicitações LGPD.
+- Functions críticas usam rate limit e auditoria administrativa backend; dados globais continuam protegidos por Rules e acessados via Functions.
+- Produção deve usar `npm run build`, `npm run security:scan`, `npm run security:dist`, `npm run security:rules`, `npm run security:firebase` e `npm test` antes de publicar.
+- Source maps, `.env`, Functions, `node_modules` e documentação interna não devem ser publicados no Hosting.

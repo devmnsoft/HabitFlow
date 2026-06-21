@@ -1,15 +1,19 @@
 {
   "name": "habitflow",
-  "version": "2.0.0-security",
-  "description": "HabitFlow v2.0-security - SaaS de hábitos com hardening de segurança, build de produção e Firebase protegido",
+  "version": "2.1.0-securityops",
+  "description": "HabitFlow v2.1-SecurityOps - SaaS de hábitos com segurança operacional para produção",
   "type": "module",
   "scripts": {
     "start": "node server.js",
     "dev": "vite --host 0.0.0.0 --port 5177",
-    "build": "vite build && node scripts/postbuild-obfuscate.js && node scripts/security-scan.js --dist-only",
+    "build": "vite build && node scripts/postbuild-obfuscate.js && npm run security:dist",
     "preview": "vite preview --host 0.0.0.0 --port 5177",
     "security:scan": "node scripts/security-scan.js",
-    "deploy": "npm run build && firebase deploy"
+    "deploy": "npm run build && firebase deploy",
+    "security:dist": "node scripts/security-dist-scan.js",
+    "security:rules": "node scripts/validate-firestore-rules.js",
+    "security:firebase": "node scripts/validate-firebase-config.js",
+    "test": "node tests/security/run-security-tests.js"
   },
   "engines": {
     "node": ">=18"

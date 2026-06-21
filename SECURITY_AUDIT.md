@@ -22,3 +22,19 @@ Frontend (`assets/js`), `firebase.js`, logger, error monitor, chatbot, admin, pl
 - Migrar admin para custom claims.
 - Validar CSP em navegador real.
 - Implementar validação criptográfica real dos webhooks de pagamento.
+
+## Auditoria v2.1-SecurityOps
+
+| Item analisado | Risco encontrado | Severidade | Correção aplicada | Status | Pendência |
+|---|---|---:|---|---|---|
+| CI/CD | Ausência de gate automatizado de segurança | Alta | Criado `.github/workflows/security-ci.yml` com scans, build e validações | Concluído | Configurar branch protection no GitHub |
+| Secrets | Risco de secrets versionados | Crítica | Reforçado `scripts/security-scan.js` | Concluído | Rotacionar qualquer secret que já tenha sido exposto antes |
+| Dist | Risco de source maps e artefatos internos | Alta | Criado `scripts/security-dist-scan.js` | Concluído | Manter obfuscação/bundle em releases comerciais |
+| Firestore Rules | Erro grosseiro pode expor dados | Crítica | Criado `scripts/validate-firestore-rules.js` e bloqueio client para coleções operacionais | Concluído | Testes em emulador na v2.2 |
+| firebase.json | Risco de publicar raiz | Alta | Criado `scripts/validate-firebase-config.js` | Concluído | Revisar headers após mudanças de Auth |
+| Functions | Abuso por chamadas repetidas | Alta | Rate limit em Functions críticas e eventos `rate_limit_exceeded` | Concluído | App Check enforcement em produção |
+| Admin Geral | Falta de visão de risco | Média | Adicionado painel Segurança com eventos suspeitos | Concluído | Métricas persistentes de pipeline |
+| LGPD | Falta de fluxo formal | Alta | Criadas solicitações de exportação/exclusão | Concluído | Implementar processamento automatizado seguro |
+| Incidentes | Falta de workflow | Alta | Criadas Functions e documentação de resposta | Concluído | Runbooks por tipo de incidente |
+| Chatbot | Prompt injection e pedidos internos | Alta | Intent `prompt_injection_attempt` e resposta segura | Concluído | Moderação externa quando IA real for ativada |
+| Sessão | Estado local sensível após logout | Média | `clearUserSessionState()` limpa listeners e caches locais | Concluído | Revogação de sessão via custom claims futura |

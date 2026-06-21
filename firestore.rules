@@ -43,12 +43,22 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    match /users/{userId}/dataRequests/{requestId} {
+      allow read: if isOwner(userId);
+      allow write: if false;
+    }
+
+    match /users/{userId}/{document=**} {
+      allow read, write: if isOwner(userId) && false;
+    }
+
     match /users/{userId}/rateLimits/{document=**} { allow read, write: if false; }
     match /systemAuditLogs/{document=**} { allow read, write: if false; }
     match /billingEvents/{document=**} { allow read, write: if false; }
     match /adminAuditLogs/{document=**} { allow read, write: if false; }
     match /appMetrics/{document=**} { allow read, write: if false; }
     match /supportTickets/{document=**} { allow read, write: if false; }
+    match /securityIncidents/{document=**} { allow read, write: if false; }
     match /systemSettings/{document=**} { allow read, write: if false; }
     match /{document=**} { allow read, write: if false; }
   }

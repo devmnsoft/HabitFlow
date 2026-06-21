@@ -10,7 +10,7 @@ admin.initializeApp();
 const db = admin.firestore();
 const FieldValue = admin.firestore.FieldValue;
 
-const APP_VERSION = "2.0-security";
+const APP_VERSION = "2.1-SecurityOps";
 const LOG_RETENTION_DAYS = 90;
 const ERROR_LOG_RETENTION_DAYS = 180;
 const VALID_SEVERITIES = ["info", "warning", "error", "critical"];
@@ -22,7 +22,7 @@ const VALID_PLAN_TYPES = ["monthly", "yearly"];
 const VALID_PLANS = ["free", "premium"];
 const VALID_STATUSES = ["active", "trial", "past_due", "canceled", "inactive"];
 const BLOCKED_KEY = /password|senha|token|accessToken|refreshToken|authorization|apiKey|secret|card|cvv|cpf|document|payloadCompleto|rawPayload|payer|stack|raw|payload/i;
-const DEFAULT_TELEGRAM_EVENTS = "critical,error,checkout_failed,webhook_error,premium_interest,user_signup,frontend_error,backend_error,firebase_error,unauthorized_admin_attempt,admin_set_user_plan,payment_confirmed,payment_failed,chatbot_sensitive_request_blocked,support_ticket_created,chatbot_commercial_request";
+const DEFAULT_TELEGRAM_EVENTS = "critical,error,checkout_failed,webhook_error,premium_interest,user_signup,frontend_error,backend_error,firebase_error,unauthorized_admin_attempt,admin_set_user_plan,payment_confirmed,payment_failed,chatbot_sensitive_request_blocked,chatbot_security_block,prompt_injection_attempt,rate_limit_exceeded,suspicious_activity,support_ticket_created,chatbot_commercial_request,security_incident_created,lgpd_data_deletion_requested";
 
 function env(name, fallback = "") { return process.env[name] || fallback; }
 function environment() { return env("APP_ENV", env("FUNCTIONS_EMULATOR") ? "development" : "production"); }
@@ -35,15 +35,23 @@ async function checkRateLimit(uid, functionName, limitCount, windowMs) {
   if (!uid) throw new HttpsError("unauthenticated", "Você precisa estar autenticado.");
   const ref = db.doc(`users/${uid}/rateLimits/${functionName}`);
   const nowMs = Date.now();
-  await db.runTransaction(async (tx) => {
-    const snap = await tx.get(ref);
-    const data = snap.exists ? snap.data() : {};
-    const windowStartMs = data.windowStart?.toMillis ? data.windowStart.toMillis() : 0;
-    const expired = !windowStartMs || nowMs - windowStartMs >= windowMs;
-    const nextCount = expired ? 1 : Number(data.count || 0) + 1;
-    if (nextCount > limitCount) throw new HttpsError("resource-exhausted", "Muitas solicitações. Aguarde alguns instantes e tente novamente.");
-    tx.set(ref, { count: nextCount, windowStart: expired ? FieldValue.serverTimestamp() : data.windowStart, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
-  });
+  try {
+    await db.runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      const data = snap.exists ? snap.data() : {};
+      const windowStartMs = data.windowStart?.toMillis ? data.windowStart.toMillis() : 0;
+      const expired = !windowStartMs || nowMs - windowStartMs >= windowMs;
+      const nextCount = expired ? 1 : Number(data.count || 0) + 1;
+      if (nextCount > limitCount) throw new HttpsError("resource-exhausted", "Muitas solicitações. Aguarde alguns instantes e tente novamente.");
+      tx.set(ref, { count: nextCount, windowStart: expired ? FieldValue.serverTimestamp() : data.windowStart, updatedAt: FieldValue.serverTimestamp(), action: functionName }, { merge: true });
+    });
+  } catch (error) {
+    if (error instanceof HttpsError && error.code === "resource-exhausted") {
+      logger.warn("rate_limit_exceeded", { uid, action: functionName });
+      writeSystemAuditLog({ type: "rate_limit_exceeded", severity: "warning", source: "backend", userId: uid, action: functionName, message: "Rate limit excedido em Function crítica.", metadata: { limit: limitCount, windowMs } }).catch(() => {});
+    }
+    throw error;
+  }
 }
 function validatePayload(allowedFields, data = {}) {
   const extra = Object.keys(data || {}).filter((key) => !allowedFields.includes(key));
@@ -75,6 +83,9 @@ function sanitizeMetadata(input = {}, depth = 0) {
 function errorFingerprint(metadata = {}, message = "") {
   const raw = [metadata.errorName, metadata.errorCode, metadata.functionName, truncate(message, 120)].filter(Boolean).join("|");
   return raw ? crypto.createHash("sha256").update(raw).digest("hex").slice(0, 16) : null;
+}
+async function recordSecurityEvent(event) {
+  return writeSystemAuditLog({ type: event.type || "suspicious_activity", severity: event.severity || "warning", source: event.source || "backend", action: event.action || event.type || "security_event", message: event.message || "Evento de segurança registrado.", ...event });
 }
 async function writeSystemAuditLog(event) {
   const metadata = sanitizeMetadata(event.metadata || {});
@@ -212,6 +223,30 @@ exports.healthCheck = onCall(async (request) => {
     throw new HttpsError("internal", "HealthCheck indisponível.");
   }
 });
+
+const VALID_INCIDENT_SEVERITIES = ["low", "medium", "high", "critical"];
+const VALID_INCIDENT_STATUSES = ["open", "investigating", "resolved", "closed"];
+function publicIncident(doc) { const d = doc.data ? doc.data() : doc; return { id: doc.id || d.id, title: d.title, description: d.description, severity: d.severity, status: d.status, createdAt: d.createdAt, updatedAt: d.updatedAt, resolvedAt: d.resolvedAt || null, createdBy: d.createdBy || null, assignedTo: d.assignedTo || null, relatedLogIds: d.relatedLogIds || [], actionsTaken: d.actionsTaken || [], impact: d.impact || "", rootCause: d.rootCause || "", resolution: d.resolution || "" }; }
+exports.getAdminSecuritySummary = onCall(async (request) => {
+  await requireAdmin(request);
+  const logs = await db.collection("systemAuditLogs").orderBy("createdAt", "desc").limit(300).get();
+  const rows = logs.docs.map((d) => ({ id: d.id, ...d.data() }));
+  const suspiciousTypes = ["suspicious_activity","rate_limit_exceeded","unauthorized_admin_attempt","chatbot_security_block","prompt_injection_attempt","invalid_payload_detected","possible_scraping_detected"];
+  const suspicious = rows.filter((r) => suspiciousTypes.includes(r.type));
+  const critical = rows.filter((r) => r.severity === "critical");
+  const riskLevel = critical.length ? "Crítico" : suspicious.length > 10 ? "Alto" : suspicious.length > 3 ? "Médio" : "Baixo";
+  await audit("get_admin_security_summary", { uid: request.auth.uid, email: request.auth.token.email });
+  return { riskLevel, suspicious24h: suspicious.length, deniedAdmin: rows.filter((r) => r.type === "unauthorized_admin_attempt").length, rateLimitExceeded: rows.filter((r) => r.type === "rate_limit_exceeded").length, criticalErrors: critical.length, pendingLogs: rows.filter((r) => r.readByAdmin !== true).length, latestCritical: publicLog(critical[0] || {}), appCheckStatus: env("APP_CHECK_ENFORCED", "false") === "true" ? "configurado" : "pendente", lastBackup: env("LAST_BACKUP_AT", "pendente"), pipelineStatus: env("PIPELINE_STATUS", "validado manualmente"), events: suspicious.slice(0, 100).map(publicLog) };
+});
+exports.createSecurityIncident = onCall(async (request) => { await requireAdmin(request); const d = validatePayload(["title","description","severity","assignedTo","relatedLogIds","impact"], request.data || {}); if (!d.title || !VALID_INCIDENT_SEVERITIES.includes(d.severity)) throw new HttpsError("invalid-argument", "Incidente inválido."); const ref = await db.collection("securityIncidents").add({ title: truncate(d.title, 160), description: truncate(d.description, 1000), severity: d.severity, status: "open", createdAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp(), resolvedAt: null, createdBy: { uid: request.auth.uid, email: request.auth.token.email || "" }, assignedTo: truncate(d.assignedTo || "", 160), relatedLogIds: Array.isArray(d.relatedLogIds) ? d.relatedLogIds.slice(0, 20) : [], actionsTaken: [], impact: truncate(d.impact || "", 1000), rootCause: "", resolution: "" }); await audit("create_security_incident", { uid: request.auth.uid, email: request.auth.token.email }, { incidentId: ref.id, severity: d.severity }); await recordSecurityEvent({ type: "security_incident_created", severity: ["high","critical"].includes(d.severity) ? "critical" : "warning", source: "backend", userId: request.auth.uid, userEmail: request.auth.token.email || "", action: "create_security_incident", message: "Incidente de segurança criado.", metadata: { incidentId: ref.id, incidentSeverity: d.severity } }); return { success: true, incidentId: ref.id }; });
+exports.getSecurityIncidents = onCall(async (request) => { await requireAdmin(request); const snap = await db.collection("securityIncidents").orderBy("updatedAt", "desc").limit(100).get(); await audit("get_security_incidents", { uid: request.auth.uid, email: request.auth.token.email }); return { incidents: snap.docs.map(publicIncident) }; });
+exports.updateSecurityIncident = onCall(async (request) => { await requireAdmin(request); const d = validatePayload(["incidentId","status","assignedTo","actionsTaken","impact","rootCause","resolution"], request.data || {}); if (!d.incidentId || (d.status && !VALID_INCIDENT_STATUSES.includes(d.status))) throw new HttpsError("invalid-argument", "Incidente inválido."); const update = { updatedAt: FieldValue.serverTimestamp() }; for (const k of ["status","assignedTo","impact","rootCause","resolution"]) if (d[k] !== undefined) update[k] = typeof d[k] === "string" ? truncate(d[k], 1000) : d[k]; if (Array.isArray(d.actionsTaken)) update.actionsTaken = d.actionsTaken.slice(0, 50).map((v) => truncate(v, 300)); await db.collection("securityIncidents").doc(d.incidentId).set(update, { merge: true }); await audit("update_security_incident", { uid: request.auth.uid, email: request.auth.token.email }, { incidentId: d.incidentId, status: d.status }); return { success: true }; });
+exports.closeSecurityIncident = onCall(async (request) => { await requireAdmin(request); const { incidentId, resolution } = request.data || {}; if (!incidentId || !resolution) throw new HttpsError("invalid-argument", "Incidente inválido."); await db.collection("securityIncidents").doc(incidentId).set({ status: "closed", resolution: truncate(resolution, 1000), resolvedAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() }, { merge: true }); await audit("close_security_incident", { uid: request.auth.uid, email: request.auth.token.email }, { incidentId }); return { success: true }; });
+async function createDataRequest(request, type) { requireAuth(request); await checkRateLimit(request.auth.uid, `dataRequest_${type}`, 3, 24 * 60 * 60 * 1000); const ref = await db.collection("users").doc(request.auth.uid).collection("dataRequests").add({ type, status: "requested", createdAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp(), userEmail: request.auth.token.email || "" }); await recordSecurityEvent({ type: type === "delete" ? "lgpd_data_deletion_requested" : "lgpd_data_export_requested", severity: type === "delete" ? "critical" : "warning", source: "backend", userId: request.auth.uid, userEmail: request.auth.token.email || "", action: `request_user_data_${type}`, message: type === "delete" ? "Solicitação LGPD de exclusão criada." : "Solicitação LGPD de exportação criada.", metadata: { requestId: ref.id } }); return { success: true, requestId: ref.id, protocol: `LGPD-${ref.id.slice(0, 8).toUpperCase()}` }; }
+exports.requestUserDataExport = onCall((request) => createDataRequest(request, "export"));
+exports.requestUserDataDeletion = onCall((request) => createDataRequest(request, "delete"));
+exports.getAdminDataRequests = onCall(async (request) => { await requireAdmin(request); const users = await db.collectionGroup("dataRequests").orderBy("createdAt", "desc").limit(100).get(); await audit("get_admin_data_requests", { uid: request.auth.uid, email: request.auth.token.email }); return { requests: users.docs.map((doc) => ({ id: doc.id, path: doc.ref.path, ...doc.data() })) }; });
+exports.updateDataRequestStatus = onCall(async (request) => { await requireAdmin(request); const { path, status } = request.data || {}; if (!path || !["requested","reviewing","completed"].includes(status)) throw new HttpsError("invalid-argument", "Solicitação inválida."); await db.doc(path).set({ status, updatedAt: FieldValue.serverTimestamp(), updatedBy: { uid: request.auth.uid, email: request.auth.token.email || "" } }, { merge: true }); await audit("update_data_request_status", { uid: request.auth.uid, email: request.auth.token.email }, { path, status }); return { success: true }; });
 
 exports.LOG_RETENTION_DAYS = LOG_RETENTION_DAYS;
 exports.ERROR_LOG_RETENTION_DAYS = ERROR_LOG_RETENTION_DAYS;
