@@ -1,7 +1,7 @@
 {
   "name": "habitflow",
-  "version": "1.0.0",
-  "description": "HabitFlow MVP - rastreador de hábitos com Firebase",
+  "version": "1.4.0",
+  "description": "HabitFlow v1.4 - rastreador de hábitos com Firebase pronto para Hosting",
   "type": "module",
   "scripts": {
     "start": "node server.js"
