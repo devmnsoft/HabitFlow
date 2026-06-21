@@ -1,6 +1,9 @@
 import { auth, db, googleProvider, firebaseApi } from "./firebase.js";
 
-const APP_VERSION = "1.3";
+const APP_VERSION = "1.4";
+const PAYMENT_PROVIDER = "future";
+const PREMIUM_MONTHLY_PRICE = 14.90;
+const PREMIUM_YEARLY_PRICE = 99.00;
 const ADMIN_EMAILS = [""];
 const PLAN_LIMITS = { free: 5, premium: Infinity };
 const MAX_HABIT_NAME_LENGTH = 45;
@@ -25,7 +28,10 @@ const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => Array.from(document.querySelectorAll(selector));
 const authModal = new bootstrap.Modal($("#authModal"));
 const habitModal = new bootstrap.Modal($("#habitModal"));
+const confirmDeleteModal = new bootstrap.Modal($("#confirmDeleteModal"));
 const toast = new bootstrap.Toast($("#appToast"));
+let pendingDeleteId = null;
+let deferredInstallPrompt = null;
 
 function userPath(...parts) { return ["users", currentUser.uid, ...parts]; }
 function profileDoc(userId = currentUser.uid) { return firebaseApi.doc(db, "users", userId, "profile", "main"); }
@@ -36,6 +42,11 @@ function usageCollection() { return firebaseApi.collection(db, ...userPath("usag
 const toDateKey = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 const todayKey = () => toDateKey(new Date());
 const totalCompletions = () => habits.reduce((sum, h) => sum + (h.completedDates || []).length, 0);
+
+function handleAppError(error, friendlyMessage = "Não foi possível concluir a ação agora.") {
+  console.error("[HabitFlow]", error);
+  showToast("Ops", friendlyMessage, "danger");
+}
 
 function showToast(title, message, variant = "success") {
   $("#toastTitle").textContent = title;
@@ -59,7 +70,7 @@ function renderMarketing() {
   $$(".plans-public").forEach(el => el.innerHTML = planCardsHtml(false));
 }
 function planCardsHtml(authenticated) {
-  return `<div class="col-lg-6"><div class="plan-card h-100"><span class="badge text-bg-success rounded-pill">Atual</span><h3>Plano Gratuito</h3><div class="price-line"><strong>R$ 0</strong></div><ul><li>Até 5 hábitos</li><li>Histórico de 30 dias</li><li>Streak básico</li><li>Categorias</li><li>PWA instalável</li></ul></div></div><div class="col-lg-6"><div class="plan-card plan-premium h-100"><span class="badge text-bg-dark rounded-pill">Futuro</span><h3>Plano Premium</h3><div class="price-line"><strong>R$ 14,90</strong><span>/mês</span></div><ul><li>Hábitos ilimitados</li><li>Histórico completo</li><li>Relatórios avançados</li><li>Desafios de 30 e 90 dias</li><li>Exportação futura</li><li>Temas personalizados</li></ul><button class="btn btn-success rounded-pill btn-premium-interest" type="button">${authenticated ? "Quero ser avisado" : "Premium em breve"}</button></div></div>`;
+  return `<div class="col-lg-6"><div class="plan-card h-100"><span class="badge text-bg-success rounded-pill">Atual</span><h3>Plano Gratuito</h3><div class="price-line"><strong>R$ 0</strong></div><ul><li>Até 5 hábitos</li><li>Histórico de 30 dias</li><li>Streak básico</li><li>Categorias</li><li>PWA instalável</li></ul></div></div><div class="col-lg-6"><div class="plan-card plan-premium h-100"><span class="badge text-bg-dark rounded-pill">Em breve</span><h3>Plano Premium</h3><div class="price-line"><strong>R$ 14,90</strong><span>/mês</span></div><ul><li>Hábitos ilimitados</li><li>Histórico completo</li><li>Relatórios avançados</li><li>Desafios de 30 e 90 dias</li><li>Exportação futura</li><li>Temas</li></ul><button class="btn btn-success rounded-pill btn-premium-interest" type="button">Quero ser avisado</button></div></div>`;
 }
 
 async function ensureUserProfile(user) {
@@ -81,9 +92,13 @@ async function getUserPlan(userId) {
 }
 async function trackEvent(type, metadata = {}) {
   if (!currentUser) return;
-  await firebaseApi.addDoc(usageCollection(), { type, createdAt: firebaseApi.serverTimestamp(), metadata });
-  usageEventsCount += 1;
-  renderAdmin();
+  try {
+    await firebaseApi.addDoc(usageCollection(), { type, createdAt: firebaseApi.serverTimestamp(), metadata });
+    usageEventsCount += 1;
+    renderAdmin();
+  } catch (error) {
+    handleAppError(error, "Não foi possível registrar o evento de uso.");
+  }
 }
 function isAdminUser(user) { return Boolean(user?.email && ADMIN_EMAILS.includes(user.email)); }
 
@@ -102,12 +117,16 @@ function listenHabits() {
   if (unsubscribeHabits) unsubscribeHabits();
   $("#loadingState").classList.remove("d-none");
   const q = firebaseApi.query(habitsCollection(), firebaseApi.orderBy("createdAt", "desc"));
-  unsubscribeHabits = firebaseApi.onSnapshot(q, (snapshot) => { habits = snapshot.docs.map(d => ({ id: d.id, ...d.data() })); renderAll(); }, () => showToast("Erro", "Não foi possível carregar seus hábitos agora.", "danger"));
+  unsubscribeHabits = firebaseApi.onSnapshot(q, (snapshot) => { habits = snapshot.docs.map(d => ({ id: d.id, ...d.data() })); renderAll(); }, (error) => handleAppError(error, "Não foi possível carregar seus hábitos agora."));
 }
 async function loadUsageEventsCount() {
-  const snap = await firebaseApi.getDocs(firebaseApi.query(usageCollection(), firebaseApi.limit(200)));
-  usageEventsCount = snap.size;
-  renderAdmin();
+  try {
+    const snap = await firebaseApi.getDocs(firebaseApi.query(usageCollection(), firebaseApi.limit(200)));
+    usageEventsCount = snap.size;
+    renderAdmin();
+  } catch (error) {
+    handleAppError(error, "Não foi possível carregar eventos administrativos.");
+  }
 }
 
 function renderAll() { renderHabits(); renderProgress(); renderProfile(); renderAdmin(); }
@@ -137,55 +156,85 @@ function renderProgress() {
   const messages = [];
   if (!habits.length) messages.push("Comece com um hábito simples hoje."); else if (doneToday === habits.length) messages.push("Excelente! Você concluiu todos os hábitos de hoje."); else if (doneToday > 0) messages.push("Boa! Você já deu um passo hoje."); else messages.push("Ainda dá tempo de marcar seu primeiro hábito hoje.");
   if (habits.some(h => getCurrentStreak(h.completedDates || []) >= 7)) messages.push("Você está criando uma sequência forte. Continue assim.");
-  $("#insightsList").innerHTML = messages.map(m => `<div class="insight-item"><i class="bi bi-lightbulb"></i><span>${m}</span></div>`).join("");
+  $("#insightsList").innerHTML = habits.length ? messages.map(m => `<div class="insight-item"><i class="bi bi-lightbulb"></i><span>${m}</span></div>`).join("") : emptyStateHtml("bi-graph-up-arrow", "Progresso sem dados", "Crie e conclua hábitos para receber insights pessoais.", "Criar primeiro hábito");
   const ranking = [...habits].sort((a, b) => getCurrentStreak(b.completedDates || []) - getCurrentStreak(a.completedDates || []) || (b.completedDates || []).length - (a.completedDates || []).length);
-  $("#rankingList").innerHTML = ranking.length ? ranking.map((h, i) => `<div class="ranking-item"><b>#${i + 1}</b><div><strong>${escapeHtml(h.name || "Hábito")}</strong><span>${escapeHtml(h.category || "Outro")} • ${ (h.completedDates || []).length } conclusões • streak ${getCurrentStreak(h.completedDates || [])} • maior ${getBestStreak(h.completedDates || [])}</span></div></div>`).join("") : `<p class="text-secondary mb-0">Crie hábitos para ver seu ranking.</p>`;
+  $("#rankingList").innerHTML = ranking.length ? ranking.map((h, i) => `<div class="ranking-item"><b>#${i + 1}</b><div><strong>${escapeHtml(h.name || "Hábito")}</strong><span>${escapeHtml(h.category || "Outro")} • ${ (h.completedDates || []).length } conclusões • streak ${getCurrentStreak(h.completedDates || [])} • maior ${getBestStreak(h.completedDates || [])}</span></div></div>`).join("") : emptyStateHtml("bi-trophy", "Ranking vazio", "Seu ranking aparece quando você criar hábitos.", "Criar primeiro hábito");
+  bindEmptyStateActions();
 }
 function renderProfile() {
   $("#profilePlans").innerHTML = `<div class="row g-3">${planCardsHtml(true)}</div>`;
   bindPremiumButtons();
   $("#profileName").textContent = currentProfile?.name || currentUser?.displayName || "-"; $("#profileEmail").textContent = currentProfile?.email || currentUser?.email || "-"; $("#profilePlan").textContent = currentPlan === "premium" ? "Premium" : "Gratuito"; $("#profileCreatedAt").textContent = formatTimestamp(currentProfile?.createdAt); $("#profileLastLoginAt").textContent = formatTimestamp(currentProfile?.lastLoginAt); $("#profileTotalHabits").textContent = habits.length; $("#profileTotalCompletions").textContent = totalCompletions();
 }
-function renderAdmin() { $("#adminHabits").textContent = habits.length; $("#adminEvents").textContent = usageEventsCount; $("#adminPlan").textContent = currentPlan; $("#adminPremium").textContent = currentProfile?.wantsPremiumNotice ? "Sim" : "Não"; }
+function renderAdmin() {
+  $("#adminHabits").textContent = habits.length;
+  $("#adminEvents").textContent = usageEventsCount;
+  $("#adminPlan").textContent = currentPlan;
+  $("#adminPremium").textContent = currentProfile?.wantsPremiumNotice ? "Sim" : "Não";
+  const existing = $("#adminEmptyState");
+  if (existing) existing.remove();
+  const adminPanel = $("#tabAdmin .panel-card");
+  if (adminPanel && usageEventsCount === 0) adminPanel.insertAdjacentHTML("beforeend", `<div id="adminEmptyState" class="mt-3">${emptyStateHtml("bi-clipboard-data", "Nenhum evento ainda", "Os eventos de uso aparecerão aqui após interações no app.", "Criar hábito")}</div>`);
+}
+function emptyStateHtml(icon, title, text, action) { return `<div class="empty-state empty-state-compact"><i class="bi ${icon}"></i><h4>${title}</h4><p>${text}</p><button class="btn btn-success rounded-pill px-4 btn-empty-create" type="button" data-bs-toggle="modal" data-bs-target="#habitModal">${action}</button></div>`; }
+function bindEmptyStateActions() { $$(".btn-empty-create").forEach(btn => btn.addEventListener("click", () => habitModal.show())); }
 
 async function createHabit(data) {
-  if (!currentUser) return;
-  if ((await getUserPlan(currentUser.uid)) === "free" && habits.length >= PLAN_LIMITS.free) return showToast("Limite gratuito", "Você atingiu 5 hábitos no plano gratuito.", "warning");
-  await firebaseApi.addDoc(habitsCollection(), { name: data.name, category: data.category || "Outro", color: data.color || "#10B981", createdAt: firebaseApi.serverTimestamp(), completedDates: [] });
-  await trackEvent("habit_created", { category: data.category || "Outro" });
-  showToast("Hábito criado", "Agora é só marcar diariamente.");
+  try {
+    if (!currentUser) return;
+    if ((await getUserPlan(currentUser.uid)) === "free" && habits.length >= PLAN_LIMITS.free) return showToast("Limite gratuito", "Você atingiu 5 hábitos no plano gratuito.", "warning");
+    await firebaseApi.addDoc(habitsCollection(), { name: data.name, category: data.category || "Outro", color: data.color || "#10B981", createdAt: firebaseApi.serverTimestamp(), completedDates: [] });
+    await trackEvent("habit_created", { category: data.category || "Outro" });
+    showToast("Hábito criado", "Agora é só marcar diariamente.");
+  } catch (error) { handleAppError(error, "Não foi possível criar o hábito."); }
 }
 async function toggleToday(id) {
-  const habit = habits.find(h => h.id === id); if (!habit) return;
-  const set = new Set(habit.completedDates || []), wasDone = set.has(todayKey()); wasDone ? set.delete(todayKey()) : set.add(todayKey());
-  await firebaseApi.updateDoc(habitDocument(id), { completedDates: Array.from(set).sort() });
-  await trackEvent(wasDone ? "habit_uncompleted" : "habit_completed", { habitId: id });
-  showToast("Progresso atualizado", wasDone ? "Conclusão de hoje removida." : "Parabéns! Hábito marcado como feito hoje.");
+  try {
+    const habit = habits.find(h => h.id === id); if (!habit) return;
+    const set = new Set(habit.completedDates || []), wasDone = set.has(todayKey()); wasDone ? set.delete(todayKey()) : set.add(todayKey());
+    await firebaseApi.updateDoc(habitDocument(id), { completedDates: Array.from(set).sort() });
+    await trackEvent(wasDone ? "habit_uncompleted" : "habit_completed", { habitId: id });
+    showToast("Progresso atualizado", wasDone ? "Conclusão de hoje removida." : "Parabéns! Hábito marcado como feito hoje.");
+  } catch (error) { handleAppError(error, "Não foi possível atualizar o progresso."); }
 }
 function openEdit(id) { const h = habits.find(x => x.id === id); if (!h) return; $("#habitModalLabel").textContent = "Editar hábito"; $("#habitId").value = h.id; $("#habitName").value = h.name || ""; $("#habitCategory").value = h.category || "Outro"; $("#habitColor").value = h.color || "#10B981"; $("#btnSaveHabit").textContent = "Salvar alterações"; $("#btnCancelEdit").classList.remove("d-none"); habitModal.show(); }
 function resetHabitForm() { $("#habitModalLabel").textContent = "Novo hábito"; $("#habitId").value = ""; $("#habitForm").reset(); $("#habitColor").value = "#10B981"; $("#btnSaveHabit").textContent = "Salvar hábito"; $("#btnCancelEdit").classList.add("d-none"); }
-async function deleteHabit(id) { const h = habits.find(x => x.id === id); if (!h || !confirm(`Excluir o hábito "${h.name}"? Essa ação não pode ser desfeita.`)) return; await firebaseApi.deleteDoc(habitDocument(id)); await trackEvent("habit_deleted", { habitId: id }); showToast("Hábito excluído", "O hábito foi removido com sucesso."); }
-async function savePremiumInterest() { try { await firebaseApi.setDoc(profileDoc(), { wantsPremiumNotice: true }, { merge: true }); currentProfile = { ...currentProfile, wantsPremiumNotice: true }; await trackEvent("premium_interest"); showToast("Premium", "Pronto! Vamos te avisar quando o Premium estiver disponível."); renderProfile(); } catch { showToast("Erro", "Não foi possível salvar seu interesse agora. Tente novamente.", "danger"); } }
-function bindPremiumButtons() { $$(".btn-premium-interest").forEach(btn => btn.addEventListener("click", () => currentUser ? savePremiumInterest() : showToast("Premium em breve", "Premium em breve. Você será avisado quando estiver disponível."))); }
+function deleteHabit(id) { pendingDeleteId = id; confirmDeleteModal.show(); }
+async function confirmDeleteHabit() { try { if (!pendingDeleteId) return; const id = pendingDeleteId; await firebaseApi.deleteDoc(habitDocument(id)); await trackEvent("habit_deleted", { habitId: id }); showToast("Hábito excluído", "O hábito foi removido com sucesso."); } catch (error) { handleAppError(error, "Não foi possível excluir o hábito."); } finally { pendingDeleteId = null; confirmDeleteModal.hide(); } }
+async function startPremiumCheckout() {
+  try {
+    await trackEvent("premium_checkout_clicked", { provider: PAYMENT_PROVIDER, monthly: PREMIUM_MONTHLY_PRICE, yearly: PREMIUM_YEARLY_PRICE });
+    if (currentUser) await firebaseApi.setDoc(profileDoc(), { wantsPremiumNotice: true }, { merge: true });
+    currentProfile = { ...currentProfile, wantsPremiumNotice: true };
+    showToast("Premium", "O Premium ainda não está disponível. Vamos te avisar assim que for lançado.");
+    renderProfile();
+  } catch (error) { handleAppError(error, "Não foi possível registrar seu interesse no Premium."); }
+}
+function bindPremiumButtons() { $$(".btn-premium-interest").forEach(btn => btn.addEventListener("click", () => currentUser ? startPremiumCheckout() : showToast("Premium em breve", "Crie sua conta grátis para registrar interesse no Premium."))); }
 
 function getLastDays(total) { const formatter = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit" }); return Array.from({ length: total }, (_, index) => { const date = new Date(); date.setDate(date.getDate() - (total - 1 - index)); return { key: toDateKey(date), label: formatter.format(date) }; }); }
 function getCurrentStreak(dates) { const set = new Set(dates); let streak = 0, cursor = new Date(); while (set.has(toDateKey(cursor))) { streak++; cursor.setDate(cursor.getDate() - 1); } return streak; }
 function getBestStreak(dates) { const sorted = [...new Set(dates)].sort(); let best = 0, current = 0, previous = null; for (const dateKey of sorted) { if (!previous) current = 1; else { const prevDate = new Date(previous); prevDate.setDate(prevDate.getDate() + 1); current = toDateKey(prevDate) === dateKey ? current + 1 : 1; } best = Math.max(best, current); previous = dateKey; } return best; }
 
-async function signInWithGoogle(button) { const original = button.innerHTML; setLoading(button, true, original); try { await firebaseApi.signInWithPopup(auth, googleProvider); authModal.hide(); } catch { showToast("Falha no login", "Não foi possível entrar com Google. Verifique se o provedor está habilitado no Firebase.", "danger"); } finally { setLoading(button, false, original); } }
+async function signInWithGoogle(button) { const original = button.innerHTML; setLoading(button, true, original); try { await firebaseApi.signInWithPopup(auth, googleProvider); authModal.hide(); } catch (error) { handleAppError(error, "Não foi possível entrar com Google. Verifique se o provedor está habilitado no Firebase."); } finally { setLoading(button, false, original); } }
 $("#btnGoogle").addEventListener("click", () => signInWithGoogle($("#btnGoogle")));
 $("#btnHeroGoogle").addEventListener("click", () => signInWithGoogle($("#btnHeroGoogle")));
-$("#authForm").addEventListener("submit", async (event) => { event.preventDefault(); const btn = $("#btnEmailLogin"), original = btn.innerHTML; setLoading(btn, true, original); try { try { await firebaseApi.signInWithEmailAndPassword(auth, $("#authEmail").value.trim(), $("#authPassword").value); } catch (e) { if (["auth/invalid-credential", "auth/user-not-found"].includes(e.code)) await firebaseApi.createUserWithEmailAndPassword(auth, $("#authEmail").value.trim(), $("#authPassword").value); else throw e; } authModal.hide(); $("#authForm").reset(); } catch (e) { showToast("Falha no acesso", firebaseErrorMessage(e), "danger"); } finally { setLoading(btn, false, original); } });
-async function logout() { await firebaseApi.signOut(auth); location.hash = "home"; }
+$("#authForm").addEventListener("submit", async (event) => { event.preventDefault(); const btn = $("#btnEmailLogin"), original = btn.innerHTML; setLoading(btn, true, original); try { try { await firebaseApi.signInWithEmailAndPassword(auth, $("#authEmail").value.trim(), $("#authPassword").value); } catch (e) { if (["auth/invalid-credential", "auth/user-not-found"].includes(e.code)) await firebaseApi.createUserWithEmailAndPassword(auth, $("#authEmail").value.trim(), $("#authPassword").value); else throw e; } authModal.hide(); $("#authForm").reset(); } catch (e) { handleAppError(e, firebaseErrorMessage(e)); } finally { setLoading(btn, false, original); } });
+async function logout() { try { await firebaseApi.signOut(auth); location.hash = "home"; } catch (error) { handleAppError(error, "Não foi possível sair da conta."); } }
 $("#btnLogout").addEventListener("click", logout); $("#btnLogoutProfile").addEventListener("click", logout);
-$("#habitForm").addEventListener("submit", async (event) => { event.preventDefault(); if (!currentUser) return; const id = $("#habitId").value, name = $("#habitName").value.trim(), category = $("#habitCategory").value, color = $("#habitColor").value; if (!name) return showToast("Nome obrigatório", "Informe um nome para o hábito.", "warning"); if (name.length > MAX_HABIT_NAME_LENGTH) return showToast("Nome muito longo", `Use no máximo ${MAX_HABIT_NAME_LENGTH} caracteres.`, "warning"); const btn = $("#btnSaveHabit"), original = btn.innerHTML; setLoading(btn, true, original); try { if (id) { await firebaseApi.updateDoc(habitDocument(id), { name, category, color }); showToast("Hábito atualizado", "As alterações foram salvas."); } else await createHabit({ name, category, color }); habitModal.hide(); resetHabitForm(); } catch { showToast("Erro ao salvar", "Não foi possível salvar o hábito.", "danger"); } finally { setLoading(btn, false, original); } });
+$("#habitForm").addEventListener("submit", async (event) => { event.preventDefault(); if (!currentUser) return; const id = $("#habitId").value, name = $("#habitName").value.trim(), category = $("#habitCategory").value, color = $("#habitColor").value; if (!name) return showToast("Nome obrigatório", "Informe um nome para o hábito.", "warning"); if (name.length > MAX_HABIT_NAME_LENGTH) return showToast("Nome muito longo", `Use no máximo ${MAX_HABIT_NAME_LENGTH} caracteres.`, "warning"); const btn = $("#btnSaveHabit"), original = btn.innerHTML; setLoading(btn, true, original); try { if (id) { await firebaseApi.updateDoc(habitDocument(id), { name, category, color }); showToast("Hábito atualizado", "As alterações foram salvas."); } else await createHabit({ name, category, color }); habitModal.hide(); resetHabitForm(); } catch (error) { handleAppError(error, "Não foi possível salvar o hábito."); } finally { setLoading(btn, false, original); } });
 $("#btnCancelEdit").addEventListener("click", resetHabitForm); $("#habitModal").addEventListener("hidden.bs.modal", resetHabitForm);
 
 firebaseApi.onAuthStateChanged(auth, async (user) => {
   currentUser = user; setAuthUi(user);
-  if (user) { await ensureUserProfile(user); currentPlan = await getUserPlan(user.uid); await trackEvent("login"); listenHabits(); loadUsageEventsCount(); }
+  if (user) { try { await ensureUserProfile(user); currentPlan = await getUserPlan(user.uid); await trackEvent("login"); listenHabits(); loadUsageEventsCount(); } catch (error) { handleAppError(error, "Não foi possível atualizar seu perfil."); } }
   else { if (unsubscribeHabits) unsubscribeHabits(); currentProfile = null; currentPlan = "free"; habits = []; renderAll(); }
 });
 function firebaseErrorMessage(error) { return ({ "auth/email-already-in-use": "Este email já está em uso.", "auth/invalid-email": "Email inválido.", "auth/weak-password": "A senha precisa ter pelo menos 6 caracteres.", "auth/wrong-password": "Senha incorreta.", "auth/popup-closed-by-user": "Login cancelado antes da conclusão." }[error.code] || "Verifique os dados e tente novamente."); }
 
 renderMarketing(); bindPremiumButtons();
+
+$("#btnConfirmDelete").addEventListener("click", confirmDeleteHabit);
+window.addEventListener("beforeinstallprompt", (event) => { event.preventDefault(); deferredInstallPrompt = event; $("#installCard")?.classList.remove("d-none"); });
+$("#btnInstallApp")?.addEventListener("click", async () => { if (!deferredInstallPrompt) return; deferredInstallPrompt.prompt(); await deferredInstallPrompt.userChoice; deferredInstallPrompt = null; $("#installCard")?.classList.add("d-none"); });
+window.addEventListener("appinstalled", () => { deferredInstallPrompt = null; $("#installCard")?.classList.add("d-none"); });

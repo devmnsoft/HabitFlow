@@ -1,5 +1,16 @@
 # HabitFlow Changelog
 
+## v1.4
+- Preparação para Firebase Hosting.
+- SEO básico.
+- Seções institucionais.
+- Privacidade e LGPD básica.
+- Tratamento centralizado de erros.
+- Estados vazios refinados.
+- Modal de confirmação para exclusão.
+- Melhorias PWA.
+- Checklist de deploy.
+
 ## v1.3
 - Landing page refinada.
 - Seção de planos.
