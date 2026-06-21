@@ -120,3 +120,24 @@
 - Exclusão/exportação de dados.
 - E-mails transacionais.
 - Suporte estruturado.
+
+## v2.2 — Produção Comercial Controlada
+- Deploy Firebase Hosting com domínio próprio.
+- App Check enforcement.
+- Backup Firestore real agendado.
+- Monitoramento de custos.
+- Pagamento real sandbox.
+- E-mails transacionais.
+- Política LGPD final.
+- Termos finais.
+
+## v2.3 — Admin Global Avançado
+- Listar usuários, buscar por e-mail e ver perfil administrativo.
+- Bloquear/desbloquear usuário e gerenciar plano.
+- Exportar CSV, métricas de conversão e painel financeiro inicial.
+
+## v2.4 — IA real segura
+- Integrar provedor de IA no backend.
+- RAG/base de conhecimento versionada.
+- Moderação, limite de custo e métricas de qualidade.
+- Revisão humana.
