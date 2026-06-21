@@ -1,98 +1,62 @@
-# Deploy HabitFlow v1.4
+# Deploy do HabitFlow
 
-## Testar localmente antes do deploy
-
-1. Instale dependências do Node.js, se necessário.
-2. Rode o servidor local estático:
+## Rodar localmente
 
 ```bash
+npm install
 npm start
 ```
 
-3. Acesse `http://localhost:5177`.
-4. Abra o console do navegador e confirme que não há erros críticos.
-5. Valide landing, autenticação, CRUD de hábitos, PWA e regras de privacidade.
+Acesse <http://localhost:5177>.
 
-## Firebase CLI
+## Testar antes do deploy
 
-### 1. Instalar Firebase CLI
+- Abrir o app localmente.
+- Verificar console do navegador.
+- Testar login Google e e-mail/senha.
+- Criar, editar, arquivar, restaurar e concluir hábitos.
+- Testar consentimento LGPD.
+- Testar Premium simulado e interesse Premium.
+- Testar layout mobile em 360px.
+- Testar PWA/manifest/service worker.
 
-```bash
-npm install -g firebase-tools
-```
-
-### 2. Fazer login
+## Publicar Hosting
 
 ```bash
 firebase login
+firebase use <project-id>
+firebase deploy --only hosting
 ```
 
-### 3. Conferir projeto
-
-```bash
-firebase projects:list
-```
-
-Confirme que o projeto correto é `habitflow-5f945`.
-
-### 4. Inicializar, se necessário
-
-```bash
-firebase init hosting firestore
-```
-
-Use a raiz do projeto (`.`) como pasta pública e mantenha o fallback para `index.html`.
-
-### 5. Publicar regras
+## Publicar regras Firestore
 
 ```bash
 firebase deploy --only firestore:rules
 ```
 
-### 6. Publicar hosting
+## Domínios autorizados no Firebase Auth
 
-```bash
-firebase deploy --only hosting
-```
+No Firebase Console, acesse Authentication > Settings > Authorized domains e inclua o domínio do Hosting e qualquer domínio próprio futuro.
 
-### 7. Deploy completo
+## Domínio próprio futuramente
 
-```bash
-firebase deploy
-```
+No Firebase Hosting, adicione o domínio personalizado, siga a validação DNS e aguarde emissão do certificado SSL.
 
-### 8. URL final
+## Cache PWA
 
-```text
-https://habitflow-5f945.web.app
-```
+Se usuários receberem versão antiga:
 
-## Validações pós-deploy
+- Atualize o `service-worker.js`.
+- Oriente limpar dados do site quando necessário.
+- Faça hard reload durante validação interna.
 
-### Login Google
+## Checklist pós-deploy
 
-- Em Firebase Console > Authentication > Sign-in method, confirme o provedor Google habilitado.
-- Em Authentication > Settings > Authorized domains, adicione `habitflow-5f945.web.app` e qualquer domínio próprio futuro.
-- Teste login, logout e retorno ao dashboard.
-
-### Firestore
-
-- Verifique criação de `users/{uid}/profile/main`.
-- Crie, edite, marque/desmarque e exclua hábitos.
-- Confirme eventos em `users/{uid}/usage/events`.
-- Publique `firestore.rules` antes de abrir para usuários reais.
-
-### PWA
-
-- Abra DevTools > Application.
-- Valide `manifest.json`, service worker ativo e cache estático.
-- Confirme que o service worker não intercepta APIs do Firebase de forma destrutiva.
-
-## Correção de domínio autorizado no Firebase Auth
-
-Se o login Google falhar em produção:
-
-1. Abra Firebase Console.
-2. Vá em Authentication > Settings > Authorized domains.
-3. Adicione o domínio do Hosting ou domínio próprio.
-4. Aguarde alguns minutos e teste novamente em janela anônima.
+- Hosting abre sem erro.
+- Auth funciona no domínio publicado.
+- Firestore respeita isolamento por usuário.
+- `appMetrics` permanece bloqueado.
+- PWA instala quando o navegador permitir.
+- Modal de consentimento aparece para usuários sem aceite.
+- Plano gratuito limita 5 hábitos ativos.
+- Premium simulado está desativado se o ambiente for produção real.
