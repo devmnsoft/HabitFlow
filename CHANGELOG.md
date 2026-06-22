@@ -218,3 +218,22 @@
 - Páginas legais refinadas.
 - Deploy controlado documentado.
 - Registro de deploys.
+
+## v2.3-AdminGlobal
+- Admin Global Avançado.
+- Listagem segura de usuários.
+- Busca por nome/e-mail/UID.
+- Perfil administrativo do usuário.
+- Gestão manual de plano.
+- Bloqueio/desbloqueio/suspensão.
+- Marcação de risco do usuário.
+- Notas administrativas.
+- Métricas globais.
+- Funil comercial.
+- Leads Premium.
+- Painel financeiro inicial.
+- Exportação CSV segura.
+- Auditoria administrativa completa.
+- Telegram para ações críticas.
+- Reforço de Firestore Rules.
+- Documentação ADMIN_GLOBAL.md, ADMIN_AUDIT.md e ADMIN_EXPORTS.md.

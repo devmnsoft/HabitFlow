@@ -152,3 +152,14 @@
 
 ### v2.5 — IA real segura
 - Provedor IA backend, RAG/base de conhecimento, limite de custo, moderação e avaliação de respostas.
+
+## Próximas fases após v2.3
+
+### v2.4 — Pagamento real
+- Mercado Pago produção, webhook validado, ativação automática Premium, cancelamento, recibos/e-mails, painel financeiro real e histórico de cobranças.
+
+### v2.5 — IA real segura
+- Provedor IA backend, RAG/base de conhecimento, limite de custo, moderação e avaliação de respostas.
+
+### v2.6 — Retenção
+- Notificações, e-mails semanais, desafios reais, relatórios semanais, exportação PDF e gamificação.

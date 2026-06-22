@@ -30,3 +30,7 @@ Logs são sanitizados para remover senha, token, secret, CPF, cartão, payload b
 - App Check deve iniciar em monitoramento e avançar para enforcement parcial/total após validação.
 - LGPD, backups e deploys são manipulados por Functions administrativas.
 - Excluir dados de usuário exige simulação (`dryRun`) e confirmação explícita `CONFIRMAR_EXCLUSAO`.
+
+## Admin Global v2.3
+
+Consultas globais e ações administrativas são executadas por Firebase Functions. Firestore Rules bloqueiam `adminAuditLogs`, `systemAuditLogs`, `adminUserNotes`, `billingEvents` e dados globais para clientes comuns.
