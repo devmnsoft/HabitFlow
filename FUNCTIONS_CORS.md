@@ -1,30 +1,39 @@
-# HabitFlow v1.9.1 — Functions, CORS e chamadas seguras
+# HabitFlow v2.3.1-Hotfix — Functions e CORS
 
-## onCall/httpsCallable vs onRequest
+## onCall x onRequest
 
-- Use `onCall` + `httpsCallable` para funções internas do app com Firebase Auth, como `getPublicSystemSettings`, `logSystemEvent`, suporte, chatbot, admin e `healthCheck`.
-- Não chame callable functions com `fetch`, porque o protocolo callable do Firebase inclui envelope, autenticação e tratamento de erros próprios.
-- Use `onRequest` para webhooks e endpoints HTTP públicos, como `paymentWebhook`.
+- **Callable Functions (`onCall`)** são chamadas pelo frontend com `httpsCallable` via `assets/js/functions-client.js`. Elas carregam automaticamente o contexto do Firebase Auth/App Check e evitam `fetch` direto para `cloudfunctions.net`.
+- **HTTP Functions (`onRequest`)** ficam reservadas para integrações externas, como webhooks de pagamento. Quando uma HTTP Function for chamada pelo navegador, ela deve aplicar `functions/cors.js`.
 
-## CORS em onRequest
+## Por que o CORS ocorria
 
-O utilitário `functions/cors.js` aplica CORS para endpoints HTTP chamados por navegador:
+`getPublicSystemSettings` e `logSystemEvent` estavam sendo acessadas como endpoints HTTP diretos em versões anteriores. Isso fazia o navegador enviar preflight `OPTIONS` e bloquear a resposta sem `Access-Control-Allow-Origin`.
 
-- `Access-Control-Allow-Origin` somente para origem permitida.
-- `Access-Control-Allow-Methods: GET,POST,OPTIONS`.
-- `Access-Control-Allow-Headers: Content-Type,Authorization`.
-- `Access-Control-Max-Age: 3600`.
-- `OPTIONS` retorna `204`.
+## Correção
 
-Origens padrão:
+- Frontend usa `callFunction(name, payload)`.
+- `getPublicSystemSettings`, `logSystemEvent`, `healthCheck`, `sendTestTelegramAlert`, chatbot, suporte e Admin usam callable/onCall.
+- `paymentWebhook` continua HTTP/onRequest e usa CORS apenas quando necessário.
 
-- `http://localhost:5177`
-- `http://127.0.0.1:5177`
-- `https://habitflow-5f945.web.app`
-- `https://habitflow-5f945.firebaseapp.com`
+## Teste em localhost:5177
 
-Adicione domínio próprio com `APP_ALLOWED_ORIGINS`.
+1. Rode `npm run dev` ou `npm start` mantendo a porta `5177`.
+2. Abra `http://localhost:5177`.
+3. No DevTools, confirme que não há erro CORS para `getPublicSystemSettings` ou `logSystemEvent`.
 
-## Diagnóstico
+## Deploy
 
-Teste preflight com `curl -i -X OPTIONS <url> -H "Origin: http://localhost:5177" -H "Access-Control-Request-Method: POST"`.
+```bash
+cd functions
+npm install
+firebase deploy --only functions:getPublicSystemSettings
+firebase deploy --only functions:logSystemEvent
+firebase deploy --only functions:healthCheck
+firebase deploy --only functions:sendTestTelegramAlert
+# ou
+firebase deploy --only functions
+cd ..
+firebase deploy --only hosting
+```
+
+Se o frontend usa `httpsCallable`, a Function precisa ser `onCall`. Se ela continuar `onRequest`, o erro de CORS pode continuar.

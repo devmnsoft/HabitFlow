@@ -1,14 +1,14 @@
-# HabitFlow v1.9.1 — PWA install prompt
+# HabitFlow v2.3.1-Hotfix — PWA install prompt
 
-O evento `beforeinstallprompt` é interceptado somente para guardar o prompt e exibir o botão **Instalar app**. O app não chama `prompt()` automaticamente.
+O evento `beforeinstallprompt` só deve ser interceptado quando houver botão de instalação na UI.
 
-Fluxo correto:
+## Fluxo correto
 
-1. `beforeinstallprompt` chega.
-2. O app chama `preventDefault()` e salva o evento em `deferredInstallPrompt`.
-3. O botão de instalação aparece.
-4. No clique do usuário, o app chama `deferredInstallPrompt.prompt()`.
-5. O resultado `userChoice.outcome` é registrado via logger resiliente.
-6. O evento é limpo e o botão é ocultado.
+1. O navegador dispara `beforeinstallprompt`.
+2. O app chama `preventDefault()` apenas se `#installCard` e `#btnInstallApp` existirem.
+3. O evento é guardado em `deferredInstallPrompt`.
+4. O botão de instalação aparece.
+5. Somente o clique do usuário chama `prompt()`.
+6. `userChoice` é registrado no logger sem exibir erro técnico ao usuário.
 
-Se o navegador não suportar instalação PWA ou não emitir o evento, nenhum erro técnico é exibido ao usuário.
+Isso evita o warning: “Banner not shown: beforeinstallpromptevent.preventDefault() called”.

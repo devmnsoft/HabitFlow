@@ -208,6 +208,22 @@ Configure `APP_ALLOWED_ORIGINS` nas Functions quando houver domínio próprio. M
 11. Validar pós-deploy.
 12. Registrar deploy no Admin Geral com `registerDeployment`.
 
-## v2.3-AdminGlobal
 
-Antes do deploy, validar `npm run build`, `npm run security:scan`, `npm run security:dist` e `npm run security:rules`. O servidor local permanece em `http://localhost:5177`.
+## v2.3.1-Hotfix — Callable Functions
+
+- Use `assets/js/functions-client.js` e `callFunction()` para Functions internas.
+- Não chame `cloudfunctions.net` com `fetch` no frontend para Functions internas.
+- `getPublicSystemSettings`, `logSystemEvent`, `healthCheck` e `sendTestTelegramAlert` precisam estar deployadas como callable/onCall.
+- Deploy recomendado:
+
+```bash
+cd functions
+npm install
+firebase deploy --only functions:getPublicSystemSettings
+firebase deploy --only functions:logSystemEvent
+firebase deploy --only functions:healthCheck
+firebase deploy --only functions:sendTestTelegramAlert
+firebase deploy --only functions
+cd ..
+firebase deploy --only hosting
+```
