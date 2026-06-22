@@ -85,3 +85,11 @@ firebase deploy --only hosting
 - Deployar Functions callable e Hosting juntos.
 - Validar console limpo em `http://localhost:5177` após login, dashboard, suporte, chatbot e Admin Geral.
 - Conferir Diagnóstico Técnico como Admin Geral e confirmar que usuário comum não visualiza a seção.
+
+## v2.3.3-Hotfix — pendência de ambiente de build
+
+- `npm run build` foi executado após a resolução do hotfix callable, mas o ambiente local não possui o binário `vite` instalado em `node_modules`.
+- Erro retornado: `sh: 1: vite: not found`.
+- Pacote afetado: `vite` (devDependency do projeto).
+- Classificação: falha de ambiente/dependências, não falha de código validada por `node --check functions/index.js`, `npm test` e `npm run security:scan`.
+- Não contornar com alteração de código; restaurar dependências pelo registry autorizado antes do próximo build.
