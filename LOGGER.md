@@ -27,3 +27,6 @@ O Admin Geral mostra status do logger remoto, falhas consecutivas, logs pendente
 - Publique Functions callable e Hosting juntos para evitar CORS por desalinhamento entre frontend e backend.
 - Service worker usa cache `habitflow-v2-3-4`; em validação, desregistre o service worker, limpe site data e faça hard reload.
 - Admin Geral > Diagnóstico Técnico inclui ações para limpar cache PWA, desregistrar service worker e recarregar a aplicação.
+
+## v2.3.5 bootstrap remoto
+O logger remoto inicia desabilitado. `bootstrapRemoteLogger()` executa `healthCheck` e um `logSystemEvent` de validação. Antes disso, eventos globais são salvos localmente/enfileirados e `flushPendingLogs()` retorna `remote_logger_not_ready`.

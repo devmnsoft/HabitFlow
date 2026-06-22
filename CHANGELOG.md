@@ -269,3 +269,16 @@
 - Telegram para ações críticas.
 - Reforço de Firestore Rules.
 - Documentação ADMIN_GLOBAL.md, ADMIN_AUDIT.md e ADMIN_EXPORTS.md.
+
+## v2.3.5-Fix-Callable-Deploy-Cache-Logger
+- Verificação do formato real das Functions internas.
+- getPublicSystemSettings/logSystemEvent/getMySupportTickets garantidas como callable no código local.
+- Script `verify:functions` para bloquear Functions internas em `onRequest`.
+- Bootstrap do logger remoto com `healthCheck` antes de `logSystemEvent`.
+- Logger remoto inicia desabilitado até validação.
+- Fallback de settings sem log remoto.
+- Support tickets com falha amigável sem log remoto.
+- `flushPendingLogs` bloqueado antes do logger remoto estar pronto.
+- `trackUserAction` protegido contra logger indisponível.
+- Service worker versionado e sem interceptar Firebase/Functions.
+- Documentação de deploy/cache/callable atualizada.

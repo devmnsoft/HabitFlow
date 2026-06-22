@@ -1,6 +1,6 @@
-const CACHE_NAME = "habitflow-v2-3-4";
+const CACHE_NAME = "habitflow-v2-3-5";
 const STATIC_ASSETS = ["/", "/index.html", "/manifest.json", "/assets/icons/icon.svg", "/assets/css/style.css", "/assets/js/app.js", "/assets/js/functions-client.js"];
-const BLOCKED_HOSTS = ["googleapis.com", "firebaseio.com", "cloudfunctions.net", "identitytoolkit.googleapis.com", "securetoken.googleapis.com", "firestore.googleapis.com"];
+const BLOCKED_HOSTS = ["cloudfunctions.net", "googleapis.com", "firestore.googleapis.com", "identitytoolkit.googleapis.com", "securetoken.googleapis.com", "firebaseio.com", "firebase"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS)));

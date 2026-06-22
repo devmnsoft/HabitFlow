@@ -23,3 +23,6 @@ Isso evita o warning: “Banner not shown: beforeinstallpromptevent.preventDefau
 - Publique Functions callable e Hosting juntos para evitar CORS por desalinhamento entre frontend e backend.
 - Service worker usa cache `habitflow-v2-3-4`; em validação, desregistre o service worker, limpe site data e faça hard reload.
 - Admin Geral > Diagnóstico Técnico inclui ações para limpar cache PWA, desregistrar service worker e recarregar a aplicação.
+
+## v2.3.5 cache
+`service-worker.js` usa `habitflow-v2-3-5`, apaga caches antigos no activate e não intercepta Firebase, Firestore, Auth, Secure Token, Realtime Database ou Cloud Functions. Para diagnóstico manual: DevTools > Application > Service Workers > Unregister; Clear site data; hard reload.
