@@ -104,3 +104,8 @@ firebase deploy --only hosting
 - Executar `firebase functions:list` e registrar evidência em auditoria.
 - Executar `firebase deploy --only functions` e `firebase deploy --only hosting` no ambiente autenticado.
 - Revalidar console em `http://localhost:5177` após limpar service worker/cache.
+
+## v2.4 PRD pendências
+- Configurar domínio final no Firebase Auth, App Check, CSP e APP_ALLOWED_ORIGINS.
+- Executar smoke test PRD e atualizar PRD_DEPLOY_LOG.md.
+- Habilitar Force HTTPS no IIS após certificado válido.

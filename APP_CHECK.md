@@ -46,3 +46,7 @@ Mensagem amigável em falha de validação: "Não foi possível validar a segura
 
 ## v2.3.5
 Em desenvolvimento local pode aparecer apenas `[HabitFlow] App Check desativado em desenvolvimento.`. Esse aviso não deve acionar logger remoto antes do bootstrap.
+
+
+## PRD/IIS
+Autorize o domínio Firebase Hosting e o domínio IIS final no App Check. Enquanto domínio final não existir, use o placeholder `https://SEU-DOMINIO-HABITFLOW.com.br` apenas na documentação/configuração não secreta.

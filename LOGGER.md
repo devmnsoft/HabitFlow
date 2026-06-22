@@ -30,3 +30,7 @@ O Admin Geral mostra status do logger remoto, falhas consecutivas, logs pendente
 
 ## v2.3.5 bootstrap remoto
 O logger remoto inicia desabilitado. `bootstrapRemoteLogger()` executa `healthCheck` e um `logSystemEvent` de validação. Antes disso, eventos globais são salvos localmente/enfileirados e `flushPendingLogs()` retorna `remote_logger_not_ready`.
+
+
+## v2.4 Bootstrap remoto
+O logger remoto fica pausado até o app carregar Auth, obter settings públicas, executar `healthCheck` e validar `logSystemEvent`. Falhas vão para fila local sanitizada e não chamam `logSystemEvent` para reportar a própria falha.

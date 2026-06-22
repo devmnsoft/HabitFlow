@@ -34,3 +34,7 @@ Logs são sanitizados para remover senha, token, secret, CPF, cartão, payload b
 ## Admin Global v2.3
 
 Consultas globais e ações administrativas são executadas por Firebase Functions. Firestore Rules bloqueiam `adminAuditLogs`, `systemAuditLogs`, `adminUserNotes`, `billingEvents` e dados globais para clientes comuns.
+
+
+## v2.4 PRD
+Não publicar source maps, `.env`, `functions/`, `node_modules`, tokens Telegram, chaves IA, Mercado Pago ou service accounts. O `web.config` bloqueia arquivos sensíveis no IIS e `security:dist` valida o pacote de produção.

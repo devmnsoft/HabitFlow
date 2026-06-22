@@ -255,3 +255,13 @@ Frontend e backend precisam estar alinhados: callable publicado com frontend `ht
 4. Se a CLI não aceitar múltiplas Functions, executar uma a uma ou `firebase deploy --only functions`.
 5. Publicar Hosting após build/cache: `firebase deploy --only hosting`.
 6. Limpar PWA em testes: DevTools > Application > Service Workers > Unregister, Clear site data e hard reload.
+
+
+## v2.4 Ordem PRD
+1. `npm run security:scan`
+2. `npm run verify:functions`
+3. `node --check functions/index.js`
+4. `npm run build`
+5. `npm run security:dist`
+6. Firebase: deploy functions, rules e hosting nessa ordem.
+7. IIS: copiar `dist/` e `web.config` para o site estático.

@@ -282,3 +282,23 @@
 - `trackUserAction` protegido contra logger indisponível.
 - Service worker versionado e sem interceptar Firebase/Functions.
 - Documentação de deploy/cache/callable atualizada.
+
+## v2.4-PRD-IIS-Production-Stabilization
+- Ambiente PRD formalizado
+- Build de produção revisado
+- web.config para IIS
+- Documentação IIS_DEPLOY.md
+- Firebase PRD deploy documentado
+- Dados iniciais de produção controlados
+- Seeds PRD para settings, planos e versão
+- Política de dados de teste em PRD
+- Smoke test PRD com prefixo [SMOKE]
+- Cleanup de dados smoke
+- PRD_DEPLOY_LOG.md
+- Service worker versionado para PRD
+- Cache antigo tratado
+- Logger remoto validado antes de uso
+- Functions callable verificadas antes do deploy
+- Diagnóstico PRD/IIS no Admin Geral
+- Revisão de layout e UX
+- Documentação PRD atualizada

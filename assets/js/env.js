@@ -1,4 +1,4 @@
-export const APP_VERSION = "v2.3.4-Audit-Fix-Callable-Cache-Layout";
+export const APP_VERSION = import.meta.env?.VITE_APP_VERSION || "v2.4-prd";
 
 const localHosts = new Set(["localhost", "127.0.0.1", "::1"]);
 const detectedLocal = localHosts.has(location.hostname);
