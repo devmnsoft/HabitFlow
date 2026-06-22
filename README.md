@@ -257,3 +257,9 @@ firebase deploy --only hosting
 
 ## v2.3.2 Hotfix CORS/Callable/App Check/PWA
 O HabitFlow usa `assets/js/functions-client.js` para chamadas internas com Firebase `httpsCallable`, fallback local de configurações públicas da MNSOFT, logger remoto com circuit breaker/fila local, App Check opcional em desenvolvimento e fluxo PWA acionado por clique. Rode localmente em `http://localhost:5177`.
+
+## v2.3.4-Audit-Fix-Callable-Cache-Layout
+- Frontend interno deve usar `callFunction`/`httpsCallable`; não use `fetch` direto para Functions internas.
+- Publique Functions callable e Hosting juntos para evitar CORS por desalinhamento entre frontend e backend.
+- Service worker usa cache `habitflow-v2-3-4`; em validação, desregistre o service worker, limpe site data e faça hard reload.
+- Admin Geral > Diagnóstico Técnico inclui ações para limpar cache PWA, desregistrar service worker e recarregar a aplicação.

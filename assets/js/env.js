@@ -1,4 +1,4 @@
-export const APP_VERSION = "v2.3.2-Hotfix-CORS-Callable-AppCheck-PWA";
+export const APP_VERSION = "v2.3.4-Audit-Fix-Callable-Cache-Layout";
 
 const localHosts = new Set(["localhost", "127.0.0.1", "::1"]);
 const detectedLocal = localHosts.has(location.hostname);

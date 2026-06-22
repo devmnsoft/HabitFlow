@@ -21,3 +21,9 @@ O Admin Geral mostra status do logger remoto, falhas consecutivas, logs pendente
 - Logs sanitizados entram em `habitflow_pending_logs`, limitado a 100 itens, sem senha, token, CPF, cartão, secrets ou chaves.
 - Falhas do próprio logger não são rereportadas para evitar loop; o error-monitor deduplica erros por 30 segundos e suprime repetições.
 - O Admin Geral permite enviar ou limpar logs pendentes e testar `logSystemEvent` com `callFunction`.
+
+## v2.3.4-Audit-Fix-Callable-Cache-Layout
+- Frontend interno deve usar `callFunction`/`httpsCallable`; não use `fetch` direto para Functions internas.
+- Publique Functions callable e Hosting juntos para evitar CORS por desalinhamento entre frontend e backend.
+- Service worker usa cache `habitflow-v2-3-4`; em validação, desregistre o service worker, limpe site data e faça hard reload.
+- Admin Geral > Diagnóstico Técnico inclui ações para limpar cache PWA, desregistrar service worker e recarregar a aplicação.

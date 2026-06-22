@@ -1,3 +1,19 @@
+## v2.3.4-Audit-Fix-Callable-Cache-Layout
+- Auditoria completa do repositório
+- Verificação de chamadas cloudfunctions.net
+- Correção definitiva das chamadas internas para httpsCallable
+- Validação de Functions internas como callable
+- Verificação de deploy das Functions
+- Limpeza e versionamento do service worker
+- Diagnóstico de cache/PWA no Admin Geral
+- Correção final do beforeinstallprompt
+- Reforço do logger anti-loop
+- Fallback MNSOFT preservado
+- Revisão completa de layout e UX
+- Melhorias de responsividade mobile
+- Melhorias de estados vazios, loading e mensagens amigáveis
+- Documentação UX_REVIEW.md
+
 ## v2.3.2-Hotfix-CORS-Callable-AppCheck-PWA
 - Corrigidas chamadas diretas via fetch para Firebase Functions internas
 - Criado helper functions-client.js com httpsCallable

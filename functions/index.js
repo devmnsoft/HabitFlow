@@ -10,7 +10,7 @@ admin.initializeApp();
 const db = admin.firestore();
 const FieldValue = admin.firestore.FieldValue;
 
-const APP_VERSION = "v2.3.2-Hotfix-CORS-Callable-AppCheck-PWA";
+const APP_VERSION = "v2.3.4-Audit-Fix-Callable-Cache-Layout";
 const LOG_RETENTION_DAYS = 90;
 const ERROR_LOG_RETENTION_DAYS = 180;
 const VALID_SEVERITIES = ["info", "warning", "error", "critical"];
@@ -251,7 +251,7 @@ exports.updateDataRequestStatus = onCall(async (request) => { await requireAdmin
 exports.LOG_RETENTION_DAYS = LOG_RETENTION_DAYS;
 exports.ERROR_LOG_RETENTION_DAYS = ERROR_LOG_RETENTION_DAYS;
 
-// HabitFlow v2.3.2-Hotfix-CORS-Callable-AppCheck-PWA operational functions
+// HabitFlow v2.3.4-Audit-Fix-Callable-Cache-Layout operational functions
 const VALID_LGPD_TYPES = ["export", "delete"];
 const VALID_LGPD_STATUSES = ["requested", "in_review", "processing", "completed", "rejected", "canceled"];
 const EMAIL_TEMPLATES = ["welcome","premium_interest","support_ticket_created","support_ticket_updated","lgpd_request_created","lgpd_request_completed","security_alert_admin","payment_success_future","payment_failed_future"];

@@ -43,3 +43,9 @@ Se o frontend usa `httpsCallable`, a Function precisa ser `onCall`. Se ela conti
 - `onCall` inclui protocolo callable, contexto de Auth/App Check e evita o preflight CORS manual que bloqueou localhost:5177.
 - `onRequest` fica reservado para webhooks externos, como pagamento, onde CORS/assinatura são tratados explicitamente.
 - Teste em `http://localhost:5177` validando `getPublicSystemSettings`, `logSystemEvent`, `getMySupportTickets` e `healthCheck` sem erros CORS no console.
+
+## v2.3.4-Audit-Fix-Callable-Cache-Layout
+- Frontend interno deve usar `callFunction`/`httpsCallable`; não use `fetch` direto para Functions internas.
+- Publique Functions callable e Hosting juntos para evitar CORS por desalinhamento entre frontend e backend.
+- Service worker usa cache `habitflow-v2-3-4`; em validação, desregistre o service worker, limpe site data e faça hard reload.
+- Admin Geral > Diagnóstico Técnico inclui ações para limpar cache PWA, desregistrar service worker e recarregar a aplicação.
