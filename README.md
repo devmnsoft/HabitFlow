@@ -263,3 +263,6 @@ O HabitFlow usa `assets/js/functions-client.js` para chamadas internas com Fireb
 - Publique Functions callable e Hosting juntos para evitar CORS por desalinhamento entre frontend e backend.
 - Service worker usa cache `habitflow-v2-3-4`; em validação, desregistre o service worker, limpe site data e faça hard reload.
 - Admin Geral > Diagnóstico Técnico inclui ações para limpar cache PWA, desregistrar service worker e recarregar a aplicação.
+
+### v2.3.5-Fix-Callable-Deploy-Cache-Logger
+Esta versão alinha Functions callable, bootstrap do logger remoto, fallback silencioso de settings, estado amigável de tickets e service worker versionado para evitar JS antigo em cache.

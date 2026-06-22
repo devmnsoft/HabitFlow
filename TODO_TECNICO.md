@@ -99,3 +99,8 @@ firebase deploy --only hosting
 - Publique Functions callable e Hosting juntos para evitar CORS por desalinhamento entre frontend e backend.
 - Service worker usa cache `habitflow-v2-3-4`; em validação, desregistre o service worker, limpe site data e faça hard reload.
 - Admin Geral > Diagnóstico Técnico inclui ações para limpar cache PWA, desregistrar service worker e recarregar a aplicação.
+
+## v2.3.5 pós-deploy
+- Executar `firebase functions:list` e registrar evidência em auditoria.
+- Executar `firebase deploy --only functions` e `firebase deploy --only hosting` no ambiente autenticado.
+- Revalidar console em `http://localhost:5177` após limpar service worker/cache.

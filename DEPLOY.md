@@ -247,3 +247,11 @@ Frontend e backend precisam estar alinhados: callable publicado com frontend `ht
 - Publique Functions callable e Hosting juntos para evitar CORS por desalinhamento entre frontend e backend.
 - Service worker usa cache `habitflow-v2-3-4`; em validação, desregistre o service worker, limpe site data e faça hard reload.
 - Admin Geral > Diagnóstico Técnico inclui ações para limpar cache PWA, desregistrar service worker e recarregar a aplicação.
+
+## v2.3.5 callable deploy checklist
+1. Validar formato local: `npm run verify:functions`.
+2. Conferir publicadas: `firebase functions:list`.
+3. Publicar Functions callable críticas: `firebase deploy --only functions:getPublicSystemSettings,functions:logSystemEvent,functions:getMySupportTickets,functions:healthCheck`.
+4. Se a CLI não aceitar múltiplas Functions, executar uma a uma ou `firebase deploy --only functions`.
+5. Publicar Hosting após build/cache: `firebase deploy --only hosting`.
+6. Limpar PWA em testes: DevTools > Application > Service Workers > Unregister, Clear site data e hard reload.

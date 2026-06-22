@@ -49,3 +49,6 @@ Se o frontend usa `httpsCallable`, a Function precisa ser `onCall`. Se ela conti
 - Publique Functions callable e Hosting juntos para evitar CORS por desalinhamento entre frontend e backend.
 - Service worker usa cache `habitflow-v2-3-4`; em validação, desregistre o service worker, limpe site data e faça hard reload.
 - Admin Geral > Diagnóstico Técnico inclui ações para limpar cache PWA, desregistrar service worker e recarregar a aplicação.
+
+## v2.3.5
+O frontend usa `httpsCallable` via `assets/js/functions-client.js`. Functions internas chamadas pelo app devem ser `onCall`; `paymentWebhook` permanece `onRequest`. Se houver CORS em `getPublicSystemSettings`, `logSystemEvent` ou `getMySupportTickets`, verificar se a versão publicada ainda está HTTP/onRequest e redeployar as Functions.
