@@ -302,3 +302,10 @@
 - Diagnóstico PRD/IIS no Admin Geral
 - Revisão de layout e UX
 - Documentação PRD atualizada
+
+## Correção - Publicador IIS sem artefatos binários
+
+- Adicionado publicador IIS com ZIP opcional e modo `--no-zip`.
+- Configuração padrão evita geração de ZIP em desenvolvimento/Codex.
+- `publish/`, `dist/`, pacotes compactados, source maps e binários permanecem fora do Git.
+- Documentação reforça que artefatos de publicação são apenas locais.

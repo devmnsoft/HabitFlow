@@ -270,3 +270,15 @@ Esta versão alinha Functions callable, bootstrap do logger remoto, fallback sil
 
 ## v2.4 PRD/IIS
 HabitFlow v2.4 formaliza produção com build em `dist/`, Firebase Hosting, IIS estático via `web.config`, service worker `habitflow-v2-4-prd`, logger remoto liberado apenas após health check e seeds PRD controlados. Consulte `DEPLOY.md`, `IIS_DEPLOY.md`, `FIREBASE_PRD_DEPLOY.md`, `PRD_SMOKE_TEST.md` e `PRD_TEST_DATA.md`.
+
+## Publicador IIS
+
+O HabitFlow possui um publicador local para Windows/IIS:
+
+```bash
+npm run publish:iis:nozip
+```
+
+Use `npm run publish:iis:zip` somente no computador/servidor do usuário quando precisar gerar um pacote ZIP local.
+
+Atenção: os arquivos gerados em `publish/` e os pacotes `.zip` são artefatos locais de publicação. Eles não devem ser enviados ao GitHub. O repositório deve conter apenas o código-fonte, scripts, `web.config` e documentação.
