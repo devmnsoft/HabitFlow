@@ -31,3 +31,9 @@ Mensagem amigável em falha de validação: "Não foi possível validar a segura
 ### Fase 3 — Enforcement total
 - Ativar Firestore após validação.
 - Storage somente quando for usado futuramente.
+
+## v2.3.2 Desenvolvimento local
+- Em localhost, `VITE_APP_CHECK_ENABLED=false` é válido e gera apenas `console.info`.
+- Para ativar, configure `VITE_APP_CHECK_ENABLED=true` e `VITE_APP_CHECK_SITE_KEY` com a chave reCAPTCHA v3.
+- Em debug local, use `VITE_APP_CHECK_DEBUG_TOKEN` e registre o token no Firebase Console antes de aplicar enforcement.
+- Ative enforcement somente depois de validar Auth, Firestore, Hosting e callable Functions.

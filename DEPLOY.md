@@ -227,3 +227,17 @@ firebase deploy --only functions
 cd ..
 firebase deploy --only hosting
 ```
+
+## Deploy v2.3.2 callable Functions
+```bash
+cd functions
+npm install
+firebase deploy --only functions:getPublicSystemSettings
+firebase deploy --only functions:logSystemEvent
+firebase deploy --only functions:getMySupportTickets
+firebase deploy --only functions:healthCheck
+# ou
+firebase deploy --only functions
+firebase deploy --only hosting
+```
+Frontend e backend precisam estar alinhados: callable publicado com frontend `httpsCallable`; `onRequest` permanece apenas para webhooks externos.

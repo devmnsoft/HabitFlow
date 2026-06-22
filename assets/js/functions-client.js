@@ -2,7 +2,7 @@ import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/
 import { app } from "./firebase.js";
 import { APP_ENV } from "./plans.js";
 
-const functions = getFunctions(app, "us-central1");
+export const functions = getFunctions(app, "us-central1");
 
 export async function callFunction(name, payload = {}, options = {}) {
   try {
@@ -11,7 +11,10 @@ export async function callFunction(name, payload = {}, options = {}) {
     return { ok: true, data: result.data };
   } catch (error) {
     if (APP_ENV === "development" && options.silent !== true) {
-      console.warn(`[HabitFlow] Function ${name} falhou`, error?.code || error?.message || error);
+      console.warn(`[HabitFlow] Function ${name} falhou`, {
+        code: error?.code || null,
+        message: error?.message || null
+      });
     }
 
     return {
