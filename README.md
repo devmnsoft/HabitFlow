@@ -266,3 +266,7 @@ O HabitFlow usa `assets/js/functions-client.js` para chamadas internas com Fireb
 
 ### v2.3.5-Fix-Callable-Deploy-Cache-Logger
 Esta versão alinha Functions callable, bootstrap do logger remoto, fallback silencioso de settings, estado amigável de tickets e service worker versionado para evitar JS antigo em cache.
+
+
+## v2.4 PRD/IIS
+HabitFlow v2.4 formaliza produção com build em `dist/`, Firebase Hosting, IIS estático via `web.config`, service worker `habitflow-v2-4-prd`, logger remoto liberado apenas após health check e seeds PRD controlados. Consulte `DEPLOY.md`, `IIS_DEPLOY.md`, `FIREBASE_PRD_DEPLOY.md`, `PRD_SMOKE_TEST.md` e `PRD_TEST_DATA.md`.

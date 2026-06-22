@@ -1,7 +1,7 @@
 {
   "name": "habitflow",
-  "version": "2.3.5-fix-callable-deploy-cache-logger",
-  "description": "HabitFlow v2.3.4-Audit-Fix-Callable-Cache-Layout - SaaS de hábitos com segurança operacional para produção",
+  "version": "2.4.0-prd-iis-production-stabilization",
+  "description": "HabitFlow v2.4-PRD-IIS-Production-Stabilization - SaaS de hábitos com PRD, IIS, Firebase Hosting e dados controlados",
   "type": "module",
   "scripts": {
     "start": "node server.js",

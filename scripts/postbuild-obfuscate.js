@@ -1,4 +1,5 @@
-import { readdir, readFile, writeFile } from "node:fs/promises";
+import { readdir, readFile, writeFile, copyFile } from "node:fs/promises";
+import { existsSync } from "node:fs";
 import { join } from "node:path";
 
 async function walk(dir) {
@@ -12,8 +13,7 @@ async function walk(dir) {
 }
 
 function lightObfuscate(source) {
-  // Camada leve e segura: Vite/Terser já minifica/mangle; aqui removemos comentários residuais e sourceMappingURL.
-  return source.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/#[#]?\s*sourceMappingURL=.*/g, "");
+  return source.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/#?[#]?\s*sourceMappingURL=.*/g, "");
 }
 
 const files = (await walk("dist")).filter((file) => file.endsWith(".js"));
@@ -21,4 +21,5 @@ for (const file of files) {
   const source = await readFile(file, "utf8");
   await writeFile(file, lightObfuscate(source));
 }
-console.log(`Hardening pós-build aplicado em ${files.length} bundle(s) JS.`);
+if (existsSync("web.config")) await copyFile("web.config", "dist/web.config");
+console.log(`Hardening pós-build aplicado em ${files.length} bundle(s) JS e web.config copiado quando disponível.`);

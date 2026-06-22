@@ -26,3 +26,7 @@ Isso evita o warning: “Banner not shown: beforeinstallpromptevent.preventDefau
 
 ## v2.3.5 cache
 `service-worker.js` usa `habitflow-v2-3-5`, apaga caches antigos no activate e não intercepta Firebase, Firestore, Auth, Secure Token, Realtime Database ou Cloud Functions. Para diagnóstico manual: DevTools > Application > Service Workers > Unregister; Clear site data; hard reload.
+
+
+## v2.4 Cache PRD
+O service worker usa `habitflow-v2-4-prd`, apaga caches antigos no activate e não intercepta Firebase Auth, Firestore, Cloud Functions, googleapis, firebaseio/firebaseapp ou source maps. O Admin Geral possui ações para limpar cache PWA, desregistrar SW e recarregar.
