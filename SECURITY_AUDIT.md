@@ -47,3 +47,11 @@ Frontend (`assets/js`), `firebase.js`, logger, error monitor, chatbot, admin, pl
 - Admin Geral usa Functions protegidas por `ADMIN_EMAILS` e rate limit.
 - Telegram, e-mail e pagamento permanecem com secrets somente em Functions.
 - Build continua sem source maps publicados e com scan de `dist/`.
+
+## Auditoria v2.3-AdminGlobal
+
+- Admin Global passa por Firebase Functions com validação de autenticação, Admin Geral, rate limit e payload.
+- `adminAuditLogs`, `systemAuditLogs`, `adminUserNotes` e `billingEvents` seguem bloqueados para leitura/escrita direta por client.
+- Alterações de plano, conta e risco exigem motivo e registram auditoria administrativa.
+- Exportações CSV sanitizam células contra CSV injection e não exportam secrets/tokens.
+- Painel financeiro informa receita real R$ 0,00 enquanto pagamento real não estiver ativo.

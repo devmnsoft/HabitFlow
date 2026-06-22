@@ -207,3 +207,7 @@ Configure `APP_ALLOWED_ORIGINS` nas Functions quando houver domínio próprio. M
 10. Publicar Hosting produção.
 11. Validar pós-deploy.
 12. Registrar deploy no Admin Geral com `registerDeployment`.
+
+## v2.3-AdminGlobal
+
+Antes do deploy, validar `npm run build`, `npm run security:scan`, `npm run security:dist` e `npm run security:rules`. O servidor local permanece em `http://localhost:5177`.

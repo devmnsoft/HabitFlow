@@ -60,3 +60,10 @@
 - Escolher provedor de e-mail e configurar secret backend.
 - Validar App Check em monitoramento antes de enforcement.
 - Configurar Mercado Pago sandbox e webhook.
+
+## v2.3-AdminGlobal — próximos refinamentos
+
+- Migrar métricas globais para agregações incrementais quando a base crescer.
+- Criar índices Firestore compostos conforme ADMIN_GLOBAL_PERFORMANCE.md.
+- Adicionar confirmação textual para auto-bloqueio de admin.
+- Expandir UI de filtros por período, usuários sem atividade e tickets abertos.

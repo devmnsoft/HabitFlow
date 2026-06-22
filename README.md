@@ -234,3 +234,7 @@ Arquivos principais:
 - `LGPD.md`
 - `GO_LIVE_CHECKLIST.md`
 - `POST_DEPLOY_CHECKLIST.md`
+
+## v2.3-AdminGlobal
+
+O HabitFlow inclui Admin Global operacional para listagem segura de usuários, busca, perfil administrativo, planos, bloqueio, risco, leads Premium, métricas, financeiro inicial, exportações CSV e auditoria. Consulte `ADMIN_GLOBAL.md`, `ADMIN_AUDIT.md`, `ADMIN_EXPORTS.md` e `ADMIN_GLOBAL_PERFORMANCE.md`.

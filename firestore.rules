@@ -4,7 +4,7 @@ service cloud.firestore {
     function signedIn() { return request.auth != null; }
     function isOwner(userId) { return signedIn() && request.auth.uid == userId; }
     function noForbiddenProfileFields() {
-      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(['plan','planStatus','role','isAdmin','billing','appVersion','admin','claims']);
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(['plan','planStatus','role','isAdmin','billing','appVersion','admin','claims','accountStatus','riskStatus','adminNotesCount','supportTicketsCount','habitsCount','activeHabitsCount','archivedHabitsCount','totalCompletions']);
     }
     function validHabit() {
       return request.resource.data.keys().hasOnly(['name','category','color','completedDates','createdAt','updatedAt','isArchived'])
@@ -56,6 +56,7 @@ service cloud.firestore {
     match /systemAuditLogs/{document=**} { allow read, write: if false; }
     match /billingEvents/{document=**} { allow read, write: if false; }
     match /adminAuditLogs/{document=**} { allow read, write: if false; }
+    match /adminUserNotes/{document=**} { allow read, write: if false; }
     match /appMetrics/{document=**} { allow read, write: if false; }
     match /supportTickets/{document=**} { allow read, write: if false; }
     match /securityIncidents/{document=**} { allow read, write: if false; }
