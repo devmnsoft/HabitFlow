@@ -1,6 +1,6 @@
 {
   "name": "habitflow",
-  "version": "2.4.0-prd-iis-production-stabilization",
+  "version": "2.4.2-IIS-Publisher-Pro",
   "description": "HabitFlow v2.4-PRD-IIS-Production-Stabilization - SaaS de hábitos com PRD, IIS, Firebase Hosting e dados controlados",
   "type": "module",
   "scripts": {
@@ -17,7 +17,9 @@
     "verify:functions": "node scripts/verify-functions-shape.js",
     "publish:iis": "node scripts/publisher/publish-iis.js",
     "publish:iis:nozip": "node scripts/publisher/publish-iis.js --no-zip",
-    "publish:iis:zip": "node scripts/publisher/publish-iis.js --zip"
+    "publish:iis:zip": "node scripts/publisher/publish-iis.js --zip",
+    "publish:iis:check": "node scripts/publisher/publish-iis.js --check",
+    "publish:iis:copy": "node scripts/publisher/publish-iis.js --copy-to-iis"
   },
   "engines": {
     "node": ">=18"

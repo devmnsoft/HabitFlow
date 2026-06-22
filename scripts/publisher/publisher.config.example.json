@@ -1,5 +1,35 @@
 {
-  "generateZip": false,
+  "appName": "HabitFlow",
+  "version": "2.4.2",
+  "environment": "production",
+  "buildCommand": "npm run build",
+  "distDir": "dist",
+  "publishRoot": "publish",
+  "iisPackageDir": "publish/iis/HabitFlow-IIS",
+  "zipOutput": "publish/HabitFlow-IIS-v2.4.2.zip",
+  "iisTargetDir": "C:\\\\inetpub\\\\wwwroot\\\\habitflow",
   "copyToIis": false,
-  "iisPath": "C:\\inetpub\\wwwroot\\HabitFlow"
+  "cleanBeforePublish": true,
+  "includeWebConfig": true,
+  "generateZip": false,
+  "openOutputFolder": true,
+  "forbiddenPatterns": [
+    ".env",
+    ".env.local",
+    ".env.production",
+    "node_modules",
+    "functions",
+    ".git",
+    ".github",
+    "firebase-adminsdk",
+    "serviceAccount",
+    ".map",
+    "sourceMappingURL",
+    "TELEGRAM_BOT_TOKEN",
+    "MERCADOPAGO_ACCESS_TOKEN",
+    "STRIPE_SECRET_KEY",
+    "AI_API_KEY",
+    "BEGIN PRIVATE KEY",
+    "PRIVATE_KEY"
+  ]
 }

@@ -309,3 +309,19 @@
 - Configuração padrão evita geração de ZIP em desenvolvimento/Codex.
 - `publish/`, `dist/`, pacotes compactados, source maps e binários permanecem fora do Git.
 - Documentação reforça que artefatos de publicação são apenas locais.
+
+## v2.4.2-IIS-Publisher-Pro
+- Publicador IIS profissional
+- Geração local de pacote sem versionar binários
+- ZIP opcional e desabilitado por padrão
+- .gitignore reforçado para publish/dist/binários
+- publisher.config.example.json
+- publish-iis.js com validação de segurança
+- publish-iis.bat de um clique
+- publish-iis.ps1 com parâmetros
+- web.config incluído no pacote
+- README_PUBLICACAO_IIS.txt gerado automaticamente
+- RELATORIO_PUBLICACAO_IIS.md gerado automaticamente
+- Scripts npm publish:iis
+- Seção Publicação IIS no Admin Geral
+- Documentação IIS_PUBLISHER.md e PUBLICACAO_IIS.md

@@ -109,3 +109,9 @@ firebase deploy --only hosting
 - Configurar domínio final no Firebase Auth, App Check, CSP e APP_ALLOWED_ORIGINS.
 - Executar smoke test PRD e atualizar PRD_DEPLOY_LOG.md.
 - Habilitar Force HTTPS no IIS após certificado válido.
+
+## v2.4.2-IIS-Publisher-Pro
+
+- Validar publicação real em Windows Server com IIS URL Rewrite instalado.
+- Autorizar domínio final IIS no Firebase Auth e App Check.
+- Manter `publisher.config.json`, `publish/`, `dist/` e ZIPs fora do Git.

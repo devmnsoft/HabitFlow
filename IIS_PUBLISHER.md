@@ -1,35 +1,43 @@
-# Publicador IIS do HabitFlow
+# HabitFlow IIS Publisher Pro
 
-O publicador IIS gera localmente uma pasta pronta para publicação no Windows/IIS, contendo o build estático, o `web.config` e um arquivo `README_PUBLICACAO_IIS.txt` com instruções rápidas.
+O Publicador IIS gera localmente uma pasta pronta para copiar para o IIS, sem versionar `publish/`, `dist/`, ZIPs, source maps ou binários. O Firebase Hosting continua preservado e usa o fluxo `firebase deploy`.
 
 ## Comandos
 
 ```bash
-npm run publish:iis
 npm run publish:iis:nozip
 npm run publish:iis:zip
+npm run publish:iis:check
 ```
 
-- `publish:iis` respeita `scripts/publisher/publisher.config.json`, se existir.
-- `publish:iis:nozip` nunca gera pacote binário; gera apenas `publish/iis/HabitFlow-IIS/`.
-- `publish:iis:zip` gera um ZIP local em `publish/` para envio manual ao servidor.
+- `publish:iis:nozip`: build + pacote em `publish/iis/HabitFlow-IIS`, sem ZIP.
+- `publish:iis:zip`: gera ZIP local opcional em `publish/` e avisa para não versionar.
+- `publish:iis:check`: gera/valida pacote sem ZIP e sem cópia para IIS.
 
-## Configuração
+## Windows um clique
 
-Copie `scripts/publisher/publisher.config.example.json` para `scripts/publisher/publisher.config.json` e ajuste conforme o ambiente local.
+Execute `scripts\publisher\publish-iis.bat`. Ele roda `npm run publish:iis:nozip` a partir da raiz e pausa no final.
 
-```json
-{
-  "generateZip": false,
-  "copyToIis": false,
-  "iisPath": "C:\\inetpub\\wwwroot\\HabitFlow"
-}
+## PowerShell
+
+```powershell
+.\scripts\publisher\publish-iis.ps1 -NoZip -Open
+.\scripts\publisher\publish-iis.ps1 -Zip
+.\scripts\publisher\publish-iis.ps1 -NoZip -CopyToIis
 ```
 
-Por padrão, `generateZip` fica desativado para evitar binários no ambiente de desenvolvimento/Codex. Ative com `"generateZip": true` apenas no computador ou servidor do usuário quando quiser gerar o pacote compactado localmente.
+## Configuração local
 
-## Atenção sobre GitHub e PRs
+Copie `scripts/publisher/publisher.config.example.json` para `scripts/publisher/publisher.config.json` e ajuste caminhos locais. O arquivo local fica no `.gitignore` para não expor ambiente do servidor.
 
-Os arquivos gerados em `publish/` e os pacotes `.zip` são artefatos locais de publicação. Eles não devem ser enviados ao GitHub. O repositório deve conter apenas o código-fonte, scripts, `web.config` e documentação.
+## Segurança
 
-A pasta `publish/`, a pasta `dist/`, pacotes compactados, source maps e binários são ignorados pelo Git.
+O pacote bloqueia a publicação se encontrar `.env`, `node_modules`, `functions`, `.git`, `.github`, source maps, chaves privadas, tokens, `package.json`, `firebase.json`, `firestore.rules` ou `scripts/` dentro do pacote IIS.
+
+## IIS e erro 500.19
+
+O `web.config` usa IIS URL Rewrite para fallback SPA e bloqueios. Se o IIS retornar 500.19, instale o **IIS URL Rewrite Module**, habilite **Static Content** e revise MIME types duplicados.
+
+## Rollback
+
+Mantenha a pasta anterior do site antes da cópia. Para rollback, restaure o conteúdo anterior em `C:\inetpub\wwwroot\habitflow` e recicle o Application Pool/site se necessário.
