@@ -5,12 +5,15 @@ import { callFunction } from "./functions-client.js";
 import { enqueuePendingLog, getPendingLogs, clearPendingLogs, flushPendingLogs } from "./log-queue.js";
 
 const GLOBAL_ACTIONS = new Set(["frontend_logger_test","chatbot_sensitive_request_blocked","chatbot_unknown_question","chatbot_bug_report_started","user_bug_report","whatsapp_clicked","system_settings_loaded","system_settings_fallback_used"]);
-const REMOTE_DISABLE_MS = 60000;
+const REMOTE_LOG_FAILURE_LIMIT = 3;
+const REMOTE_LOG_DISABLE_MS = 60000;
 let consecutiveRemoteFailures = 0;
 let loggerRemoteDisabledUntil = 0;
 let isReportingLogFailure = false;
 function now(){ return Date.now(); }
-function remoteLoggerStatus(){ return { disabledUntil: loggerRemoteDisabledUntil, paused: now() < loggerRemoteDisabledUntil, consecutiveFailures: consecutiveRemoteFailures }; }
+function isRemoteLoggingAvailable(){ return now() >= loggerRemoteDisabledUntil; }
+function disableRemoteLoggingTemporarily(){ loggerRemoteDisabledUntil=now()+REMOTE_LOG_DISABLE_MS; }
+function remoteLoggerStatus(){ return { disabledUntil: loggerRemoteDisabledUntil, paused: isRemoteLoggingAvailable() === false, consecutiveFailures: consecutiveRemoteFailures }; }
 export function getLoggerDiagnostics(){ return { ...remoteLoggerStatus(), pendingLogs:getPendingLogs().length, lastRemoteFailure: localStorage.getItem("habitflow_last_log_failure") || "" }; }
 export { getPendingLogs, clearPendingLogs, flushPendingLogs };
 window.addEventListener("online",()=>flushPendingLogs().catch(()=>{}));
@@ -21,13 +24,13 @@ async function writeUsage(action, severity, message, metadata){ const u=auth.cur
 async function writeGlobal(action,severity,message,metadata){
   const payload={type:action,severity,source:"frontend",action,message:String(message||"Evento registrado.").slice(0,500),metadata:sanitizeMetadata(metadata)};
   if(!auth.currentUser || (severity==="info" && !GLOBAL_ACTIONS.has(action))) return null;
-  if(now() < loggerRemoteDisabledUntil){ enqueuePendingLog(payload); return null; }
+  if(isRemoteLoggingAvailable() === false){ enqueuePendingLog(payload); return null; }
   const result=await callFunction("logSystemEvent", payload, { silent:true });
   if(result.ok){ consecutiveRemoteFailures=0; flushPendingLogs().catch(()=>{}); return result.data; }
   enqueuePendingLog(payload);
   consecutiveRemoteFailures++;
   localStorage.setItem("habitflow_last_log_failure", JSON.stringify({ at:new Date().toISOString(), code:result.code, action }));
-  if(consecutiveRemoteFailures>=3) loggerRemoteDisabledUntil=now()+REMOTE_DISABLE_MS;
+  if(consecutiveRemoteFailures>=REMOTE_LOG_FAILURE_LIMIT) disableRemoteLoggingTemporarily();
   if(!isReportingLogFailure && APP_ENV==="development"){ isReportingLogFailure=true; console.warn("[HabitFlow] logSystemEvent falhou; log salvo localmente", result.code); isReportingLogFailure=false; }
   return null;
 }

@@ -37,3 +37,9 @@ firebase deploy --only hosting
 ```
 
 Se o frontend usa `httpsCallable`, a Function precisa ser `onCall`. Se ela continuar `onRequest`, o erro de CORS pode continuar.
+
+## v2.3.2 Hotfix callable
+- O frontend deve chamar Functions internas exclusivamente por `callFunction`/`httpsCallable`; não use URLs `cloudfunctions.net` nem `fetch` direto.
+- `onCall` inclui protocolo callable, contexto de Auth/App Check e evita o preflight CORS manual que bloqueou localhost:5177.
+- `onRequest` fica reservado para webhooks externos, como pagamento, onde CORS/assinatura são tratados explicitamente.
+- Teste em `http://localhost:5177` validando `getPublicSystemSettings`, `logSystemEvent`, `getMySupportTickets` e `healthCheck` sem erros CORS no console.

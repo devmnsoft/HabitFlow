@@ -12,3 +12,8 @@ O evento `beforeinstallprompt` só deve ser interceptado quando houver botão de
 6. `userChoice` é registrado no logger sem exibir erro técnico ao usuário.
 
 Isso evita o warning: “Banner not shown: beforeinstallpromptevent.preventDefault() called”.
+
+## v2.3.2 beforeinstallprompt
+- `preventDefault()` só é chamado quando existe botão real `[data-pwa-install]`.
+- O evento fica guardado em `deferredInstallPrompt` e `prompt()` é chamado somente após clique do usuário.
+- Após `userChoice`, o evento é limpo e o botão é ocultado, sem prompt automático.

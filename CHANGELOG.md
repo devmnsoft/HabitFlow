@@ -1,3 +1,19 @@
+## v2.3.2-Hotfix-CORS-Callable-AppCheck-PWA
+- Corrigidas chamadas diretas via fetch para Firebase Functions internas
+- Criado helper functions-client.js com httpsCallable
+- getPublicSystemSettings migrado para callable
+- logSystemEvent migrado para callable
+- getMySupportTickets migrado para callable
+- Criado fallback local de configurações públicas da MNSOFT
+- Corrigido logger remoto com circuit breaker
+- Criada fila local de logs pendentes
+- Corrigido error-monitor para não reportar falha do próprio logger
+- Deduplicação de erros repetidos
+- App Check tratado como opcional em desenvolvimento
+- Corrigido fluxo beforeinstallprompt do PWA
+- Adicionado diagnóstico técnico no Admin Geral
+- Atualizada documentação de Functions, Logger, App Check e PWA
+
 
 ## v2.3.1-Hotfix
 - Corrigido uso incorreto de fetch direto para Firebase Functions internas

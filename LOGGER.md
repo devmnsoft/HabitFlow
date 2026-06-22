@@ -15,3 +15,9 @@ O logger remoto envia eventos para `logSystemEvent` via `callFunction`/`httpsCal
 ## Diagnóstico Admin
 
 O Admin Geral mostra status do logger remoto, falhas consecutivas, logs pendentes, última falha, além de botões para enviar/limpar fila e testar `getPublicSystemSettings`, `logSystemEvent` e `healthCheck`.
+
+## v2.3.2 Circuit breaker e fila local
+- Após 3 falhas consecutivas em `logSystemEvent`, o logger remoto pausa por 60 segundos.
+- Logs sanitizados entram em `habitflow_pending_logs`, limitado a 100 itens, sem senha, token, CPF, cartão, secrets ou chaves.
+- Falhas do próprio logger não são rereportadas para evitar loop; o error-monitor deduplica erros por 30 segundos e suprime repetições.
+- O Admin Geral permite enviar ou limpar logs pendentes e testar `logSystemEvent` com `callFunction`.

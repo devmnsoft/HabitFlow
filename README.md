@@ -254,3 +254,6 @@ firebase deploy --only functions
 cd ..
 firebase deploy --only hosting
 ```
+
+## v2.3.2 Hotfix CORS/Callable/App Check/PWA
+O HabitFlow usa `assets/js/functions-client.js` para chamadas internas com Firebase `httpsCallable`, fallback local de configurações públicas da MNSOFT, logger remoto com circuit breaker/fila local, App Check opcional em desenvolvimento e fluxo PWA acionado por clique. Rode localmente em `http://localhost:5177`.

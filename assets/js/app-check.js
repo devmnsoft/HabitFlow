@@ -1,9 +1,19 @@
-import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app-check.js";
 import { APP_CHECK_DEBUG_TOKEN, APP_CHECK_ENABLED, APP_CHECK_SITE_KEY, IS_DEVELOPMENT, IS_PRODUCTION } from "./env.js";
 
-export function setupAppCheck(app) {
-  if (!APP_CHECK_ENABLED || !APP_CHECK_SITE_KEY) {
-    if (IS_DEVELOPMENT) console.info("[HabitFlow] App Check não inicializado: configure VITE_APP_CHECK_ENABLED=true e VITE_APP_CHECK_SITE_KEY.");
+export function getAppCheckDiagnostics() {
+  if (!APP_CHECK_ENABLED) return { status: IS_DEVELOPMENT ? "desativado em desenvolvimento" : "desativado" };
+  if (!APP_CHECK_SITE_KEY) return { status: "configuração ausente" };
+  return { status: "ativo" };
+}
+
+export async function initAppCheckIfEnabled(app) {
+  if (!APP_CHECK_ENABLED) {
+    if (IS_DEVELOPMENT) console.info("[HabitFlow] App Check desativado em desenvolvimento.");
+    return null;
+  }
+
+  if (!APP_CHECK_SITE_KEY) {
+    console.warn("[HabitFlow] App Check habilitado, mas VITE_APP_CHECK_SITE_KEY não foi configurado.");
     return null;
   }
 
@@ -12,15 +22,15 @@ export function setupAppCheck(app) {
   }
 
   try {
+    const { initializeAppCheck, ReCaptchaV3Provider } = await import("https://www.gstatic.com/firebasejs/10.12.5/firebase-app-check.js");
     return initializeAppCheck(app, {
       provider: new ReCaptchaV3Provider(APP_CHECK_SITE_KEY),
       isTokenAutoRefreshEnabled: IS_PRODUCTION
     });
   } catch (error) {
-    if (IS_DEVELOPMENT) console.warn("[HabitFlow] Falha ao inicializar App Check", error?.message || error);
-    if (typeof document !== "undefined") {
-      document.dispatchEvent(new CustomEvent("habitflow:app-check-error", { detail: { message: "Não foi possível validar a segurança desta sessão. Atualize a página ou tente novamente." } }));
-    }
+    console.warn("[HabitFlow] App Check não inicializado.", error?.message || error);
     return null;
   }
 }
+
+export const setupAppCheck = initAppCheckIfEnabled;

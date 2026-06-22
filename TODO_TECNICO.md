@@ -80,3 +80,8 @@ firebase deploy --only functions
 cd ..
 firebase deploy --only hosting
 ```
+
+## v2.3.2 pendências operacionais
+- Deployar Functions callable e Hosting juntos.
+- Validar console limpo em `http://localhost:5177` após login, dashboard, suporte, chatbot e Admin Geral.
+- Conferir Diagnóstico Técnico como Admin Geral e confirmar que usuário comum não visualiza a seção.
