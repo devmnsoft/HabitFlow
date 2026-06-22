@@ -265,3 +265,15 @@ Frontend e backend precisam estar alinhados: callable publicado com frontend `ht
 5. `npm run security:dist`
 6. Firebase: deploy functions, rules e hosting nessa ordem.
 7. IIS: copiar `dist/` e `web.config` para o site estático.
+
+## Publicação IIS local
+
+Para gerar uma pasta local para IIS sem criar ZIP/binário:
+
+```bash
+npm run publish:iis:nozip
+```
+
+A saída é criada em `publish/iis/HabitFlow-IIS/` e inclui o build estático, `web.config` e `README_PUBLICACAO_IIS.txt`.
+
+Atenção: os arquivos gerados em `publish/` e os pacotes `.zip` são artefatos locais de publicação. Eles não devem ser enviados ao GitHub. O repositório deve conter apenas o código-fonte, scripts, `web.config` e documentação.

@@ -14,7 +14,10 @@
     "security:rules": "node scripts/validate-firestore-rules.js",
     "security:firebase": "node scripts/validate-firebase-config.js",
     "test": "node tests/security/run-security-tests.js",
-    "verify:functions": "node scripts/verify-functions-shape.js"
+    "verify:functions": "node scripts/verify-functions-shape.js",
+    "publish:iis": "node scripts/publisher/publish-iis.js",
+    "publish:iis:nozip": "node scripts/publisher/publish-iis.js --no-zip",
+    "publish:iis:zip": "node scripts/publisher/publish-iis.js --zip"
   },
   "engines": {
     "node": ">=18"

@@ -1,0 +1,5 @@
+{
+  "generateZip": false,
+  "copyToIis": false,
+  "iisPath": "C:\\inetpub\\wwwroot\\HabitFlow"
+}
