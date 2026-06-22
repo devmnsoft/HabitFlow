@@ -1,7 +1,7 @@
 {
   "name": "habitflow",
-  "version": "2.3.2-hotfix-cors-callable-appcheck-pwa",
-  "description": "HabitFlow v2.3.2-Hotfix-CORS-Callable-AppCheck-PWA - SaaS de hábitos com segurança operacional para produção",
+  "version": "2.3.4-audit-fix-callable-cache-layout",
+  "description": "HabitFlow v2.3.4-Audit-Fix-Callable-Cache-Layout - SaaS de hábitos com segurança operacional para produção",
   "type": "module",
   "scripts": {
     "start": "node server.js",

@@ -37,3 +37,9 @@ Mensagem amigável em falha de validação: "Não foi possível validar a segura
 - Para ativar, configure `VITE_APP_CHECK_ENABLED=true` e `VITE_APP_CHECK_SITE_KEY` com a chave reCAPTCHA v3.
 - Em debug local, use `VITE_APP_CHECK_DEBUG_TOKEN` e registre o token no Firebase Console antes de aplicar enforcement.
 - Ative enforcement somente depois de validar Auth, Firestore, Hosting e callable Functions.
+
+## v2.3.4-Audit-Fix-Callable-Cache-Layout
+- Frontend interno deve usar `callFunction`/`httpsCallable`; não use `fetch` direto para Functions internas.
+- Publique Functions callable e Hosting juntos para evitar CORS por desalinhamento entre frontend e backend.
+- Service worker usa cache `habitflow-v2-3-4`; em validação, desregistre o service worker, limpe site data e faça hard reload.
+- Admin Geral > Diagnóstico Técnico inclui ações para limpar cache PWA, desregistrar service worker e recarregar a aplicação.

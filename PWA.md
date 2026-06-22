@@ -17,3 +17,9 @@ Isso evita o warning: “Banner not shown: beforeinstallpromptevent.preventDefau
 - `preventDefault()` só é chamado quando existe botão real `[data-pwa-install]`.
 - O evento fica guardado em `deferredInstallPrompt` e `prompt()` é chamado somente após clique do usuário.
 - Após `userChoice`, o evento é limpo e o botão é ocultado, sem prompt automático.
+
+## v2.3.4-Audit-Fix-Callable-Cache-Layout
+- Frontend interno deve usar `callFunction`/`httpsCallable`; não use `fetch` direto para Functions internas.
+- Publique Functions callable e Hosting juntos para evitar CORS por desalinhamento entre frontend e backend.
+- Service worker usa cache `habitflow-v2-3-4`; em validação, desregistre o service worker, limpe site data e faça hard reload.
+- Admin Geral > Diagnóstico Técnico inclui ações para limpar cache PWA, desregistrar service worker e recarregar a aplicação.
