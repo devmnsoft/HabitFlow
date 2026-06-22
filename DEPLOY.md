@@ -277,3 +277,10 @@ npm run publish:iis:nozip
 A saída é criada em `publish/iis/HabitFlow-IIS/` e inclui o build estático, `web.config` e `README_PUBLICACAO_IIS.txt`.
 
 Atenção: os arquivos gerados em `publish/` e os pacotes `.zip` são artefatos locais de publicação. Eles não devem ser enviados ao GitHub. O repositório deve conter apenas o código-fonte, scripts, `web.config` e documentação.
+
+## Firebase Hosting x IIS
+
+- Firebase Hosting continua usando `npm run build` e `firebase deploy`.
+- IIS usa o pacote local gerado pelo Publicador IIS: `npm run publish:iis:nozip`.
+- O IIS hospeda somente frontend estático. Não copie `functions/`, `node_modules/`, `.env`, source maps ou arquivos de configuração Firebase para o IIS.
+- ZIP é opcional e local: `npm run publish:iis:zip`.

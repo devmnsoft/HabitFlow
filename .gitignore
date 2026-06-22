@@ -24,3 +24,4 @@ firebase-adminsdk*.json
 *.key
 
 scripts/publisher/publisher.config.json
+.env.production.local

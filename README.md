@@ -282,3 +282,15 @@ npm run publish:iis:nozip
 Use `npm run publish:iis:zip` somente no computador/servidor do usuário quando precisar gerar um pacote ZIP local.
 
 Atenção: os arquivos gerados em `publish/` e os pacotes `.zip` são artefatos locais de publicação. Eles não devem ser enviados ao GitHub. O repositório deve conter apenas o código-fonte, scripts, `web.config` e documentação.
+
+## v2.4.2-IIS-Publisher-Pro
+
+O HabitFlow inclui um Publicador IIS seguro para gerar pacote local sem versionar binários:
+
+```bash
+npm run publish:iis:nozip
+npm run publish:iis:check
+npm run publish:iis:zip
+```
+
+A saída padrão fica em `publish/iis/HabitFlow-IIS`. ZIPs, `publish/`, `dist/`, source maps, `.env` e binários permanecem fora do Git. Consulte `IIS_PUBLISHER.md` e `PUBLICACAO_IIS.md`.
