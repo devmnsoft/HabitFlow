@@ -9,14 +9,19 @@ const ERROR_DEDUP_WINDOW_MS = 30000;
 const ERROR_DEDUP_MAX_COUNT = 3;
 
 export function shouldIgnoreForRemoteReport(error, context = {}) {
-  const action = context.action || "";
-  const source = context.source || "";
+  const action = String(context.action || "");
+  const source = String(context.source || "");
+  const message = String(error?.message || "");
+  const stack = String(error?.stack || "");
+
   if (action.includes("logSystemEvent")) return true;
   if (source === "logger") return true;
   if (context.isLoggerFailure === true) return true;
-  const message = String(error?.message || "");
   if (message.includes("logSystemEvent")) return true;
+  if (message.includes("cloudfunctions.net/" + "logSystemEvent")) return true;
+  if (stack.includes("logger.js")) return true;
   if (error?.code === "functions/internal" && action.includes("log")) return true;
+
   return false;
 }
 function fingerprint(error, context = {}) { return [error?.name || "Error", error?.code || "", context.action || "unknown", String(error?.message || "").slice(0, 120), location.pathname].join("|"); }

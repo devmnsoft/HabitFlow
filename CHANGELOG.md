@@ -1,3 +1,19 @@
+## v2.3.3-Hotfix-Functions-Callable-Logger-Stability
+- Removidas chamadas fetch diretas para Cloud Functions internas
+- Criado cliente único functions-client.js com httpsCallable
+- getPublicSystemSettings convertido para callable
+- logSystemEvent convertido para callable
+- getMySupportTickets convertido para callable
+- Fallback local de configurações públicas da MNSOFT
+- Logger remoto com circuit breaker
+- Fila local de logs pendentes
+- Proteção anti-loop no error-monitor
+- Deduplicação de erros repetidos
+- App Check tratado como opcional em development
+- PWA beforeinstallprompt corrigido
+- Diagnóstico Técnico adicionado ao Admin Geral
+- Documentação atualizada
+
 
 ## v2.3.1-Hotfix
 - Corrigido uso incorreto de fetch direto para Firebase Functions internas

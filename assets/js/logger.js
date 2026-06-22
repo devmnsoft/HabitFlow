@@ -5,12 +5,19 @@ import { callFunction } from "./functions-client.js";
 import { enqueuePendingLog, getPendingLogs, clearPendingLogs, flushPendingLogs } from "./log-queue.js";
 
 const GLOBAL_ACTIONS = new Set(["frontend_logger_test","chatbot_sensitive_request_blocked","chatbot_unknown_question","chatbot_bug_report_started","user_bug_report","whatsapp_clicked","system_settings_loaded","system_settings_fallback_used"]);
-const REMOTE_DISABLE_MS = 60000;
-let consecutiveRemoteFailures = 0;
-let loggerRemoteDisabledUntil = 0;
-let isReportingLogFailure = false;
+const REMOTE_LOG_FAILURE_LIMIT = 3;
+const REMOTE_LOG_DISABLE_MS = 60000;
+const LOG_QUEUE_KEY = "habitflow_pending_logs";
+const MAX_LOG_QUEUE_SIZE = 100;
+
+let remoteLogFailureCount = 0;
+let remoteLogDisabledUntil = 0;
+let isFlushingLogs = false;
+let remoteFailureWarningShownUntil = 0;
 function now(){ return Date.now(); }
-function remoteLoggerStatus(){ return { disabledUntil: loggerRemoteDisabledUntil, paused: now() < loggerRemoteDisabledUntil, consecutiveFailures: consecutiveRemoteFailures }; }
+export function isRemoteLoggingAvailable(){ return now() >= remoteLogDisabledUntil; }
+export function disableRemoteLoggingTemporarily(){ remoteLogDisabledUntil=now()+REMOTE_LOG_DISABLE_MS; }
+function remoteLoggerStatus(){ return { disabledUntil: remoteLogDisabledUntil, paused: !isRemoteLoggingAvailable(), consecutiveFailures: remoteLogFailureCount, isFlushingLogs, queueKey: LOG_QUEUE_KEY, maxQueueSize: MAX_LOG_QUEUE_SIZE }; }
 export function getLoggerDiagnostics(){ return { ...remoteLoggerStatus(), pendingLogs:getPendingLogs().length, lastRemoteFailure: localStorage.getItem("habitflow_last_log_failure") || "" }; }
 export { getPendingLogs, clearPendingLogs, flushPendingLogs };
 window.addEventListener("online",()=>flushPendingLogs().catch(()=>{}));
@@ -21,14 +28,14 @@ async function writeUsage(action, severity, message, metadata){ const u=auth.cur
 async function writeGlobal(action,severity,message,metadata){
   const payload={type:action,severity,source:"frontend",action,message:String(message||"Evento registrado.").slice(0,500),metadata:sanitizeMetadata(metadata)};
   if(!auth.currentUser || (severity==="info" && !GLOBAL_ACTIONS.has(action))) return null;
-  if(now() < loggerRemoteDisabledUntil){ enqueuePendingLog(payload); return null; }
+  if(!isRemoteLoggingAvailable()){ enqueuePendingLog(payload); return null; }
   const result=await callFunction("logSystemEvent", payload, { silent:true });
-  if(result.ok){ consecutiveRemoteFailures=0; flushPendingLogs().catch(()=>{}); return result.data; }
+  if(result.ok){ remoteLogFailureCount=0; isFlushingLogs=true; flushPendingLogs().finally(()=>{ isFlushingLogs=false; }).catch(()=>{}); return result.data; }
   enqueuePendingLog(payload);
-  consecutiveRemoteFailures++;
+  remoteLogFailureCount++;
   localStorage.setItem("habitflow_last_log_failure", JSON.stringify({ at:new Date().toISOString(), code:result.code, action }));
-  if(consecutiveRemoteFailures>=3) loggerRemoteDisabledUntil=now()+REMOTE_DISABLE_MS;
-  if(!isReportingLogFailure && APP_ENV==="development"){ isReportingLogFailure=true; console.warn("[HabitFlow] logSystemEvent falhou; log salvo localmente", result.code); isReportingLogFailure=false; }
+  if(remoteLogFailureCount>=REMOTE_LOG_FAILURE_LIMIT) disableRemoteLoggingTemporarily();
+  if(APP_ENV==="development" && now() > remoteFailureWarningShownUntil){ remoteFailureWarningShownUntil = now()+REMOTE_LOG_DISABLE_MS; console.warn("[HabitFlow] logSystemEvent falhou; logs serão mantidos localmente temporariamente", result.code); }
   return null;
 }
 async function log(severity, action, message, error=null, metadata={}){ try{ const payload={...metadata,...userInfo(),errorCode:error?.code||"",errorName:error?.name||"",errorMessage:error?.message||"",page:location.pathname,hash:location.hash}; if(APP_ENV==="development") console[severity==="critical"?"error":severity==="warning"?"warn":severity]("[HabitFlow]", action, message, sanitizeMetadata(payload)); await writeUsage(action,severity,message,payload).catch(()=>{}); await writeGlobal(action,severity,message,payload).catch(()=>{}); }catch(loggerError){ if(APP_ENV==="development") console.warn("[HabitFlow] logger falhou", loggerError?.message||loggerError); } }

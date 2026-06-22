@@ -12,3 +12,6 @@ export const IS_PRODUCTION = APP_ENV === "production";
 export const APP_CHECK_ENABLED = String(import.meta.env?.VITE_APP_CHECK_ENABLED || "false") === "true";
 export const APP_CHECK_SITE_KEY = import.meta.env?.VITE_APP_CHECK_SITE_KEY || "";
 export const APP_CHECK_DEBUG_TOKEN = import.meta.env?.VITE_APP_CHECK_DEBUG_TOKEN || "";
+
+export function getEnvString(name, fallback = "") { return import.meta.env?.[name] ?? fallback; }
+export function getEnvBoolean(name, fallback = false) { const value = import.meta.env?.[name]; if (value == null || value === "") return fallback; return String(value).toLowerCase() === "true"; }

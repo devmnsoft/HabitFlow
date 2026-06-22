@@ -9,8 +9,7 @@ import {
   onAuthStateChanged,
   signOut
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-functions.js";
-import { setupAppCheck } from "./app-check.js";
+import { initAppCheckIfEnabled } from "./app-check.js";
 import {
   getFirestore,
   collection,
@@ -41,10 +40,9 @@ const firebaseConfig = {
 };
 
 export const app = initializeApp(firebaseConfig);
-export const appCheck = setupAppCheck(app);
+export const appCheck = initAppCheckIfEnabled(app);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
-export const functions = getFunctions(app);
 export const googleProvider = new GoogleAuthProvider();
 
 isSupported().then((supported) => {
@@ -69,7 +67,5 @@ export const firebaseApi = {
   serverTimestamp,
   query,
   orderBy,
-  limit,
-  httpsCallable,
-  functions
+  limit
 };
