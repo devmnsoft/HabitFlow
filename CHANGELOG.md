@@ -1,3 +1,18 @@
+
+## v2.3.1-Hotfix
+- Corrigido uso incorreto de fetch direto para Firebase Functions internas
+- getPublicSystemSettings migrado para httpsCallable/onCall
+- logSystemEvent migrado para httpsCallable/onCall
+- Helper functions-client.js criado
+- Fallback local para configurações públicas da MNSOFT
+- Circuit breaker do logger remoto
+- Fila local de logs pendentes
+- Proteção anti-loop no error-monitor
+- Deduplicação de erros repetidos
+- Correção do fluxo PWA beforeinstallprompt
+- Diagnóstico de Functions no Admin Geral
+- Documentação FUNCTIONS_CORS.md, LOGGER.md e PWA.md atualizada
+
 ## v2.0-security
 - Auditoria de segurança inicial
 - Build de produção com dist/

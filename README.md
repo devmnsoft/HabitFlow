@@ -234,3 +234,23 @@ Arquivos principais:
 - `LGPD.md`
 - `GO_LIVE_CHECKLIST.md`
 - `POST_DEPLOY_CHECKLIST.md`
+
+
+## v2.3.1-Hotfix — Callable Functions
+
+- Use `assets/js/functions-client.js` e `callFunction()` para Functions internas.
+- Não chame `cloudfunctions.net` com `fetch` no frontend para Functions internas.
+- `getPublicSystemSettings`, `logSystemEvent`, `healthCheck` e `sendTestTelegramAlert` precisam estar deployadas como callable/onCall.
+- Deploy recomendado:
+
+```bash
+cd functions
+npm install
+firebase deploy --only functions:getPublicSystemSettings
+firebase deploy --only functions:logSystemEvent
+firebase deploy --only functions:healthCheck
+firebase deploy --only functions:sendTestTelegramAlert
+firebase deploy --only functions
+cd ..
+firebase deploy --only hosting
+```

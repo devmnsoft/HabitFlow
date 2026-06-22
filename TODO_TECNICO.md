@@ -60,3 +60,23 @@
 - Escolher provedor de e-mail e configurar secret backend.
 - Validar App Check em monitoramento antes de enforcement.
 - Configurar Mercado Pago sandbox e webhook.
+
+
+## v2.3.1-Hotfix — Callable Functions
+
+- Use `assets/js/functions-client.js` e `callFunction()` para Functions internas.
+- Não chame `cloudfunctions.net` com `fetch` no frontend para Functions internas.
+- `getPublicSystemSettings`, `logSystemEvent`, `healthCheck` e `sendTestTelegramAlert` precisam estar deployadas como callable/onCall.
+- Deploy recomendado:
+
+```bash
+cd functions
+npm install
+firebase deploy --only functions:getPublicSystemSettings
+firebase deploy --only functions:logSystemEvent
+firebase deploy --only functions:healthCheck
+firebase deploy --only functions:sendTestTelegramAlert
+firebase deploy --only functions
+cd ..
+firebase deploy --only hosting
+```
