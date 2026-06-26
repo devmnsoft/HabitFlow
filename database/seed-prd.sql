@@ -1,0 +1,1 @@
+-- Produção: configurar settings e usuários administrativos manualmente, sem secrets versionados.
