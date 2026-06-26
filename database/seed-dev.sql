@@ -1,0 +1,1 @@
+-- Seeds de desenvolvimento devem usar hashes BCrypt gerados localmente. Não incluir senhas reais.

@@ -1,0 +1,3 @@
+using System.Security.Cryptography; using System.Text;
+namespace HabitFlow.Web.Middleware;
+public sealed class GlobalExceptionMiddleware(RequestDelegate next,ILogger<GlobalExceptionMiddleware> logger,IHostEnvironment env){public async Task InvokeAsync(HttpContext ctx){try{await next(ctx);}catch(Exception ex){var fp=Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(ex.GetType().FullName+ex.Message)))[..16]; logger.LogError(ex,"system_error {Fingerprint}",fp); ctx.Response.StatusCode=500; if(ctx.Request.Path.StartsWithSegments("/api")){await ctx.Response.WriteAsJsonAsync(new{error="Erro inesperado.",fingerprint=fp});}else{ctx.Items["Fingerprint"]=fp; await ctx.Response.WriteAsync(env.IsDevelopment()?ex.ToString():$"Erro inesperado. Código: {fp}");}}}}

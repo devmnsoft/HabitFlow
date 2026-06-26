@@ -1,3 +1,24 @@
+## v3.0-AspNetCore-Migration
+- Criada solução ASP.NET Core
+- Arquitetura DDD/Clean Architecture
+- Dapper + PostgreSQL
+- Scripts SQL versionados
+- Autenticação própria com cookies
+- Módulo de hábitos migrado
+- Módulo de progresso
+- Módulo de suporte
+- Chatbot por regras
+- Admin Geral
+- Logger e auditoria
+- Telegram backend
+- WhatsApp configurável
+- LGPD base
+- Dockerfile e docker-compose
+- Deploy Windows sem Docker
+- Deploy IIS ASP.NET Core
+- Documentação de migração Firebase
+- Legado preservado
+
 ## v2.3.4-Audit-Fix-Callable-Cache-Layout
 - Auditoria completa do repositório
 - Verificação de chamadas cloudfunctions.net

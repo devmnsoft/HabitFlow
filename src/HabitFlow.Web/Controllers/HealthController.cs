@@ -1,0 +1,1 @@
+using Microsoft.AspNetCore.Mvc; namespace HabitFlow.Web.Controllers; public class HealthController:Controller{[HttpGet("health/ui")] public IActionResult Index()=>Ok(new{status="Healthy",app="HabitFlow"});}

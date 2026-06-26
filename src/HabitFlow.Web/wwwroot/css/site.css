@@ -1,0 +1,1 @@
+:root{--hf-green:#10B981;--hf-dark:#059669;--hf-bg:#F3F4F6;--hf-text:#111827;--hf-muted:#6B7280}body{background:var(--hf-bg);color:var(--hf-text)}.btn-success{background:var(--hf-green);border-color:var(--hf-green)}.hero{background:#fff;box-shadow:0 10px 30px rgba(17,24,39,.08)}

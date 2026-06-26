@@ -1,0 +1,8 @@
+**/bin
+**/obj
+publish
+node_modules
+.git
+.env
+appsettings.Production.json
+*.zip
