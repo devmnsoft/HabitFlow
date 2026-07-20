@@ -1,0 +1,1 @@
+create table if not exists habitflow.habit_completions(id uuid primary key,habit_id uuid not null references habitflow.habits(id),user_id uuid not null references habitflow.users(id),completed_date date not null,created_at timestamp not null,unique(habit_id, completed_date));

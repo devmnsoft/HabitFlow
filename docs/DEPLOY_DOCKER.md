@@ -1,14 +1,11 @@
-# HabitFlow v3 Migration
+# DEPLOY_DOCKER
 
-Documento da migração HabitFlow v3 para ASP.NET Core + DDD + Dapper + PostgreSQL.
+HabitFlow v4 usa ASP.NET Core 10, DDD, Clean Architecture, Dapper, PostgreSQL, Bootstrap 5 e JavaScript Vanilla.
 
-## Diretrizes
-- Firebase deixa de ser backend principal.
-- PostgreSQL usa schema `habitflow` e scripts SQL versionados.
-- Secrets devem ser configurados por ambiente, nunca versionados.
-- A porta de desenvolvimento da aplicação ASP.NET Core é 5097.
-- Docker publica a aplicação em 5097:8080.
-- Windows/IIS usa `src/HabitFlow.Web/web.config` e `dotnet publish -c Release -o publish/windows`.
-
-## Legado
-O legado Firebase permanece como referência para comparação funcional e futura migração de dados.
+- Código principal: src/.
+- Banco: database/migrations e database/seeds.
+- Docker: porta 5097 para a aplicação e PostgreSQL 16.
+- IIS: publicar em publish/windows com web.config e App Pool No Managed Code.
+- Segurança: sem secrets no Git, sem stack trace em produção, cookies seguros, BCrypt e SQL parametrizado.
+- LGPD: exportação e exclusão são registradas em habitflow.lgpd_requests.
+- Legado Firebase: preservado como referência em legacy-firebase/ quando aplicável e não usado como backend principal.
