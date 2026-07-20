@@ -1,0 +1,1 @@
+create table if not exists habitflow.lgpd_requests(id uuid primary key,user_id uuid not null references habitflow.users(id),protocol varchar(50) unique not null,type varchar(50) not null,status varchar(50) not null,notes text null,rejection_reason text null,handled_by uuid null,created_at timestamp not null,updated_at timestamp not null,completed_at timestamp null);

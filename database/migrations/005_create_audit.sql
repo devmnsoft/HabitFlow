@@ -1,2 +1,0 @@
-create table if not exists habitflow.system_audit_logs(id uuid primary key,user_id uuid null,user_email varchar(200),severity varchar(50),source varchar(50),action varchar(100),message text,metadata jsonb,error_code varchar(100),error_fingerprint varchar(200),created_at timestamp not null,read_by_admin boolean default false);
-create table if not exists habitflow.admin_audit_logs(id uuid primary key,admin_user_id uuid,admin_email varchar(200),action varchar(100),target_user_id uuid null,target_user_email varchar(200),reason text,metadata jsonb,created_at timestamp not null);

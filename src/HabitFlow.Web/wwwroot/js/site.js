@@ -1,1 +1,1 @@
-console.info('HabitFlow ASP.NET Core loaded');
+document.addEventListener('DOMContentLoaded',()=>console.log('HabitFlow ready'));

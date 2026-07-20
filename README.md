@@ -1,21 +1,23 @@
-# HabitFlow
+# HabitFlow v4
+Reescrita limpa do HabitFlow em ASP.NET Core 10, DDD, Clean Architecture, Dapper, PostgreSQL, Bootstrap 5 e JavaScript Vanilla.
 
-HabitFlow v3 inicia a migração do frontend Firebase para uma aplicação ASP.NET Core MVC com DDD/Clean Architecture, Dapper e PostgreSQL. O legado Firebase/HTML/JS foi preservado como referência e a nova aplicação fica em `src/`.
+## Stack
+ASP.NET Core MVC/Razor, Dapper/Npgsql, PostgreSQL 16, Docker, Cookie Authentication, BCrypt, auditoria, LGPD, Telegram backend e WhatsApp configurável.
 
-## Rodar em desenvolvimento
+## Rodar com Docker
+`docker compose up -d --build` e acesse `http://localhost:5097`.
 
-```bash
-dotnet restore
-dotnet build
-dotnet run --project src/HabitFlow.Web/HabitFlow.Web.csproj --urls http://localhost:5097
-```
+## Rodar sem Docker
+Instale .NET 10 SDK e PostgreSQL, execute migrations em `database/migrate.sql`, depois `dotnet run --project src/HabitFlow.Web`.
 
-## Docker
+## IIS / Windows
+Publique com `scripts/publisher/publish-aspnet-windows.ps1`; configure Hosting Bundle, App Pool sem código gerenciado e `appsettings.Production.json` local não versionado.
 
-```bash
-docker compose up -d --build
-```
+## Usuários dev
+`admin@habitflow.local` e `user@habitflow.local`. Senhas documentadas para dev são `Admin@123` e `User@123`; seeds armazenam BCrypt.
 
-## Banco
+## Segurança e LGPD
+Sem EF, sem Firebase como backend principal, SQL parametrizado, cookies HttpOnly/SameSite, secrets fora do Git, logs sanitizados e solicitações LGPD persistidas.
 
-Execute os scripts em `database/migrations` ou `database/migrate.sql` com `psql`.
+## Legado Firebase
+O legado está documentado em `docs/LEGACY_FIREBASE.md` e preservado em `legacy-firebase/` quando aplicável.

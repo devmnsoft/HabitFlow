@@ -1,2 +1,0 @@
-create table if not exists habitflow.system_settings(key varchar(100) primary key,value jsonb not null,updated_at timestamp not null,updated_by uuid null);
-create table if not exists habitflow.lgpd_requests(id uuid primary key,user_id uuid references habitflow.users(id),type varchar(20) not null,status varchar(30) not null,protocol varchar(50) unique not null,notes text,created_at timestamp not null,updated_at timestamp not null,completed_at timestamp null);

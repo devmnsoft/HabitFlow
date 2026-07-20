@@ -1,8 +1,8 @@
 **/bin
 **/obj
 publish
-node_modules
 .git
-.env
-appsettings.Production.json
+.env*
 *.zip
+node_modules
+legacy-firebase/node_modules

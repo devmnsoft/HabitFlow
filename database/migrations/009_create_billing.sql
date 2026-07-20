@@ -1,0 +1,1 @@
+create table if not exists habitflow.billing_events(id uuid primary key,user_id uuid null references habitflow.users(id),provider varchar(50) null,event_type varchar(100) not null,plan varchar(50) null,status varchar(50) null,amount numeric(12,2) null,metadata jsonb null,created_at timestamp not null);
