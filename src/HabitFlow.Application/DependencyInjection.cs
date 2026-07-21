@@ -28,6 +28,7 @@ public static class DependencyInjection
         services.AddScoped<SettingsService>();
         services.AddScoped<SupportService>();
         services.AddScoped<ProfileService>();
+        services.AddScoped<UserUiPreferenceService>();
         services.AddScoped<AdminService>();
         services.AddScoped<AdminDashboardService>();
         services.AddScoped<AdminUserService>();

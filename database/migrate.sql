@@ -21,3 +21,5 @@
 \i database/migrations/016_premium_billing.sql
 
 \i database/migrations/017_habit_templates_guided_journey.sql
+
+\i database/migrations/018_user_ui_preferences_accessibility.sql

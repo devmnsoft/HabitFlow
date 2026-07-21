@@ -44,3 +44,7 @@ begin
  if (select count(*) from habitflow.system_settings where key in ('companyName','companyLegalName','companyCnpj','commercialEmail','supportEmail')) < 5 then errors := array_append(errors,'settings mínimos MNSOFT ausentes'); end if;
  if array_length(errors,1) is not null then raise exception 'Validação HabitFlow falhou: %', array_to_string(errors,'; '); end if;
 end $$;
+
+-- v5 accessibility preferences validation
+select 'habitflow.user_ui_preferences' as required_table, to_regclass('habitflow.user_ui_preferences') is not null as exists;
+select column_name from information_schema.columns where table_schema='habitflow' and table_name='user_ui_preferences' and column_name in ('id','user_id','contrast_mode','font_scale','reduce_motion','created_at','updated_at') order by column_name;

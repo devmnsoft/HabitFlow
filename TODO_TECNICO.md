@@ -145,3 +145,7 @@ firebase deploy --only hosting
 ## v4.9 follow-up
 - Medir uso real de cada template quando a camada analítica estiver ativa.
 - Adicionar edição completa de templates no Admin se houver demanda operacional.
+
+## v5.0 próximos passos
+- Adicionar manualmente a logo oficial MNSOFT no caminho documentado.
+- Executar QA visual em navegadores reais com PostgreSQL disponível.
