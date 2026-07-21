@@ -1,3 +1,7 @@
+## v5.1 Premium Visual QA
+
+Esta versão melhora Home, Dashboard, Central de Ajuda, tour guiado, checklist de primeiros passos, scripts de validação visual e fallback seguro para a marca MNSOFT. A execução sem Docker permanece preservada na porta 5097.
+
 
 ## Banco PostgreSQL v4.5
 

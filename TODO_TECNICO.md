@@ -1,3 +1,8 @@
+## v5.1 Premium Visual QA
+
+- Validar visualmente em Windows/IIS após disponibilização da logo oficial MNSOFT.
+- Avaliar persistência futura do tour guiado no banco para usuários autenticados.
+
 
 ## v4.5 concluído - DatabaseSchemaHardening
 - Validar periodicamente que tabelas HabitFlow não existem em public.
