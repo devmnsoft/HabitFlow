@@ -21,9 +21,14 @@ public sealed class AuthService(IUserRepository users, IPasswordHasher hasher, A
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Erro ao cadastrar {Email}", dto.Email);
-            await audit.LogAsync("register_error", "Erro ao cadastrar usuário.", AuditSeverity.Error, null, dto.Email, new { dto.Email }, ct);
-            return Result<User>.Failure("auth.register_error", "Não foi possível concluir o cadastro agora.");
+            logger.LogError(ex, PostgresErrorHelper.IsDatabaseMissing(ex) ? PostgresErrorHelper.DatabaseMissingLogMessage : "Erro ao cadastrar {Email}", dto.Email);
+            if (!PostgresErrorHelper.IsConnectionFailure(ex))
+            {
+                await audit.LogAsync("register_error", "Erro ao cadastrar usuário.", AuditSeverity.Error, null, dto.Email, new { dto.Email }, ct);
+            }
+            return PostgresErrorHelper.IsConnectionFailure(ex)
+                ? Result<User>.Failure(PostgresErrorHelper.BuildErrorCode(ex), PostgresErrorHelper.BuildFriendlyMessage(ex))
+                : Result<User>.Failure("auth.register_error", "Não foi possível concluir o cadastro agora.");
         }
     }
 
@@ -41,9 +46,14 @@ public sealed class AuthService(IUserRepository users, IPasswordHasher hasher, A
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Erro ao realizar login para {Email}", dto.Email);
-            await audit.LogAsync("login_error", "Erro ao realizar login.", AuditSeverity.Error, null, dto.Email, new { dto.Email }, ct);
-            return Result<User>.Failure("auth.login_error", "Não foi possível realizar o login agora.");
+            logger.LogError(ex, PostgresErrorHelper.IsDatabaseMissing(ex) ? PostgresErrorHelper.DatabaseMissingLogMessage : "Erro ao realizar login para {Email}", dto.Email);
+            if (!PostgresErrorHelper.IsConnectionFailure(ex))
+            {
+                await audit.LogAsync("login_error", "Erro ao realizar login.", AuditSeverity.Error, null, dto.Email, new { dto.Email }, ct);
+            }
+            return PostgresErrorHelper.IsConnectionFailure(ex)
+                ? Result<User>.Failure(PostgresErrorHelper.BuildErrorCode(ex), PostgresErrorHelper.BuildFriendlyMessage(ex))
+                : Result<User>.Failure("auth.login_error", "Não foi possível realizar o login agora.");
         }
     }
 }

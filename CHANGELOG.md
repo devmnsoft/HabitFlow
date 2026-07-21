@@ -1,3 +1,12 @@
+## vNext-DatabaseBootstrap-ResilientPostgres
+- Correção do erro PostgreSQL 3D000 para banco habitflow inexistente.
+- Scripts para criar banco PostgreSQL habitflow, aplicar schema completo, seed dev e validar tabelas obrigatórias.
+- seed_dev.sql com admin local de desenvolvimento.
+- Health check detalhado passa a retornar mensagem amigável quando banco está ausente.
+- Autenticação evita cascata de auditoria quando a conexão com o banco não abre.
+- Auditoria resiliente a falhas de conexão do PostgreSQL.
+- Documentação de diagnóstico do banco ausente.
+
 ## v5.1-PremiumVisualQA-HelpCenter-GuidedExperience
 - Auditoria visual do template
 - Correção de imagens faltantes
