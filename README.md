@@ -1,4 +1,16 @@
 
+## Banco PostgreSQL v4.5
+
+Todas as tabelas do HabitFlow ficam no schema `habitflow` e as queries usam nomes qualificados como `habitflow.users`. Para validar:
+
+```powershell
+scripts/database/check-sql-schema-prefix.ps1
+scripts/database/validate-schema-habitflow.ps1 -Database habitflow
+```
+
+O endpoint `/health/db` retorna status detalhado do banco sem expor secrets. O Admin Operacional possui a página `/admin/database`.
+
+
 ## v4.4-WindowsIIS-Production-NoDocker
 - Operação sem Docker formalizada.
 - Scripts Windows para validação de ambiente, PostgreSQL, backup/restore, publicação IIS, rollback e smoke tests.

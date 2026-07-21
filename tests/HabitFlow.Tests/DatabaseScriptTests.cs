@@ -28,8 +28,38 @@ public sealed class DatabaseScriptTests
     public void Complete_script_is_self_contained_and_contains_key_constraints()
     {
         Assert.DoesNotContain("\\i", Script, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("constraint uq_habit_completions_habit_date unique", Script, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("ix_system_audit_logs_created_at", Script, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("constraint uq_habitflow_habit_completions_habit_date unique", Script, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("ix_habitflow_system_audit_logs_created_at", Script, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("insert into habitflow.system_settings", Script, StringComparison.OrdinalIgnoreCase);
+    }
+}
+
+public sealed class SchemaHardeningTests
+{
+    private static readonly string Root = Path.Combine("..", "..", "..", "..");
+
+    [Fact]
+    public void Complete_script_uses_habitflow_schema_and_not_public_tables()
+    {
+        var script = File.ReadAllText(Path.Combine(Root, "database", "script_completo.sql"));
+        Assert.Contains("create schema if not exists habitflow", script, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("create table if not exists users", script, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("create table " + "public.", script, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("ck_habitflow_users_role", script, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("ix_habitflow_users_email", script, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void Schema_validation_script_exists()
+    {
+        Assert.True(File.Exists(Path.Combine(Root, "database", "validate_schema_habitflow.sql")));
+    }
+
+    [Fact]
+    public void DbNames_exposes_qualified_table_names()
+    {
+        Assert.Equal("habitflow", HabitFlow.Infrastructure.Data.DbNames.Schema);
+        Assert.Equal("habitflow.users", HabitFlow.Infrastructure.Data.DbNames.Tables.Users);
+        Assert.Equal("habitflow.habit_completions", HabitFlow.Infrastructure.Data.DbNames.Tables.HabitCompletions);
     }
 }

@@ -1,0 +1,24 @@
+@model HabitFlow.Shared.Result<HabitFlow.Application.DatabaseDiagnostics>
+@{ ViewData["Title"] = "Banco de Dados"; var d = Model?.Value; }
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div><h1>Banco de Dados</h1><p class="text-muted">Diagnóstico operacional do PostgreSQL e schema oficial habitflow.</p></div>
+    <a class="btn btn-outline-success" href="/admin">Voltar ao dashboard</a>
+  </div>
+  @if (!string.IsNullOrWhiteSpace(d?.ErrorMessage)) { <div class="alert alert-danger">@d.ErrorMessage</div> }
+  <div class="row g-3">
+    <div class="col-md-3"><div class="card"><div class="card-body"><small>Status</small><h4>@d?.Status</h4></div></div></div>
+    <div class="col-md-3"><div class="card"><div class="card-body"><small>Database atual</small><h4>@d?.Database</h4></div></div></div>
+    <div class="col-md-3"><div class="card"><div class="card-body"><small>Schema esperado</small><h4>@d?.ExpectedSchema</h4></div></div></div>
+    <div class="col-md-3"><div class="card"><div class="card-body"><small>Schema existe</small><h4>@(d?.SchemaExists == true ? "Sim" : "Não")</h4></div></div></div>
+    <div class="col-md-3"><div class="card"><div class="card-body"><small>Tabelas habitflow</small><h4>@d?.HabitflowTableCount</h4></div></div></div>
+    <div class="col-md-3"><div class="card"><div class="card-body"><small>Conflitos em public</small><h4>@d?.PublicConflicts</h4></div></div></div>
+    <div class="col-md-3"><div class="card"><div class="card-body"><small>Usuários</small><h4>@d?.UsersCount</h4></div></div></div>
+    <div class="col-md-3"><div class="card"><div class="card-body"><small>Hábitos</small><h4>@d?.HabitsCount</h4></div></div></div>
+    <div class="col-md-3"><div class="card"><div class="card-body"><small>Logs</small><h4>@d?.LogsCount</h4></div></div></div>
+    <div class="col-md-3"><div class="card"><div class="card-body"><small>Tabelas obrigatórias</small><h4>@(d?.RequiredTablesOk == true ? "OK" : "Falha")</h4></div></div></div>
+    <div class="col-md-6"><div class="card"><div class="card-body"><small>Última validação</small><h4>@d?.CheckedAt.ToString("O")</h4></div></div></div>
+  </div>
+  <div class="card mt-3"><div class="card-body"><small>Versão PostgreSQL</small><p class="mb-0">@d?.PostgresVersion</p></div></div>
+  <form method="post" action="/admin/database/validate" class="mt-3">@Html.AntiForgeryToken()<button class="btn btn-success">Validar schema agora</button></form>
+</div>

@@ -1,3 +1,8 @@
+
+## Schema oficial habitflow
+
+O schema oficial é `habitflow`; não crie tabelas do sistema no schema `public`. Rode `database/script_completo.sql` em banco limpo/controlado e depois, apenas em desenvolvimento, `database/script_completo_dev.sql`. Use `database/validate_schema_habitflow.sql` para checar schema, tabelas, índices, constraints, settings MNSOFT e conflitos em `public`.
+
 # BANCO_DE_DADOS
 
 HabitFlow v4 usa ASP.NET Core 10, DDD, Clean Architecture, Dapper, PostgreSQL, Bootstrap 5 e JavaScript Vanilla.

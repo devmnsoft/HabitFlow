@@ -25,3 +25,24 @@ public interface IAdminLgpdRepository { Task<(IReadOnlyList<object> Items, int T
 public interface IAdminAuditQueryRepository { Task<(IReadOnlyList<object> Items, int TotalCount)> SearchSystemLogsAsync(AuditLogFilter filter, CancellationToken ct = default); Task<(IReadOnlyList<object> Items, int TotalCount)> SearchAdminLogsAsync(AuditLogFilter filter, CancellationToken ct = default); Task MarkSystemLogAsReadAsync(Guid logId, CancellationToken ct = default); }
 public interface IAdminExportRepository { Task AddAsync(AdminExport export, CancellationToken ct = default); }
 public interface IAdminBillingRepository { Task<FinancialSummary> GetFinancialSummaryAsync(CancellationToken ct = default); }
+
+public sealed record DatabaseDiagnostics(
+    string Status,
+    string? Database,
+    string ExpectedSchema,
+    bool SchemaExists,
+    int HabitflowTableCount,
+    int PublicConflicts,
+    string? PostgresVersion,
+    DateTime CheckedAt,
+    int UsersCount,
+    int HabitsCount,
+    int LogsCount,
+    bool RequiredTablesOk,
+    string? CurrentSchema,
+    string? ErrorMessage);
+
+public interface IDatabaseDiagnosticsRepository
+{
+    Task<DatabaseDiagnostics> GetAsync(CancellationToken ct = default);
+}

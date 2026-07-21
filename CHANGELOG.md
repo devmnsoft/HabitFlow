@@ -1,4 +1,21 @@
 
+## v4.5-DatabaseSchemaHardening-ProductionEvolution
+- Padronização obrigatória do schema habitflow
+- Todas as queries Dapper revisadas com habitflow.nome_tabela
+- script_completo.sql reforçado para não criar tabelas em public
+- script_completo_dev.sql revisado
+- Migrations revisadas
+- Migration 015_schema_hardening.sql
+- validate_schema_habitflow.sql
+- Scripts Windows/BAT de validação de schema
+- DbNames com constantes de tabelas
+- Diagnóstico de banco no Admin Operacional
+- /health/db detalhado
+- Backup por schema habitflow documentado
+- Testes de schema e SQL
+- Documentação DATABASE_SCHEMA_CONVENTIONS.md
+
+
 ## v4.4-WindowsIIS-Production-NoDocker
 - Operação sem Docker formalizada.
 - Scripts Windows para validação de ambiente, PostgreSQL, backup/restore, publicação IIS, rollback e smoke tests.

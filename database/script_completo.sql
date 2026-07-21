@@ -1,5 +1,8 @@
--- HabitFlow - script completo seguro para produção.
--- Não cria usuários de teste e não depende de arquivos externos.
+-- HabitFlow - Script completo de produção
+-- Schema oficial: habitflow
+-- Este script não cria tabelas no schema public
+-- Este script não cria usuários de teste
+-- Execute em banco PostgreSQL limpo ou controlado
 
 create schema if not exists habitflow;
 
@@ -22,11 +25,11 @@ create table if not exists habitflow.users (
     last_activity_at timestamp null,
     created_at timestamp not null default now(),
     updated_at timestamp not null default now(),
-    constraint ck_users_role check (role in ('User', 'Admin')),
-    constraint ck_users_account_status check (account_status in ('Active', 'Blocked', 'Suspended', 'DeletedPending')),
-    constraint ck_users_risk_status check (risk_status in ('Normal', 'Watchlist', 'Suspicious')),
-    constraint ck_users_plan check (plan in ('Free', 'Premium')),
-    constraint ck_users_plan_status check (plan_status in ('Active', 'Trial', 'Canceled', 'Inactive', 'PastDue'))
+    constraint ck_habitflow_users_role check (role in ('User', 'Admin')),
+    constraint ck_habitflow_users_account_status check (account_status in ('Active', 'Blocked', 'Suspended', 'DeletedPending')),
+    constraint ck_habitflow_users_risk_status check (risk_status in ('Normal', 'Watchlist', 'Suspicious')),
+    constraint ck_habitflow_users_plan check (plan in ('Free', 'Premium')),
+    constraint ck_habitflow_users_plan_status check (plan_status in ('Active', 'Trial', 'Canceled', 'Inactive', 'PastDue'))
 );
 
 create table if not exists habitflow.login_attempts (
@@ -56,7 +59,7 @@ create table if not exists habitflow.habit_completions (
     user_id uuid not null references habitflow.users(id) on delete cascade,
     completed_date date not null,
     created_at timestamp not null default now(),
-    constraint uq_habit_completions_habit_date unique (habit_id, completed_date)
+    constraint uq_habitflow_habit_completions_habit_date unique (habit_id, completed_date)
 );
 
 create table if not exists habitflow.support_tickets (
@@ -72,7 +75,7 @@ create table if not exists habitflow.support_tickets (
     created_at timestamp not null default now(),
     updated_at timestamp not null default now(),
     resolved_at timestamp null,
-    constraint ck_support_tickets_status check (status in ('Open', 'InProgress', 'Resolved', 'Closed'))
+    constraint ck_habitflow_support_tickets_status check (status in ('Open', 'InProgress', 'Resolved', 'Closed'))
 );
 
 create table if not exists habitflow.support_messages (
@@ -132,8 +135,8 @@ create table if not exists habitflow.lgpd_requests (
     created_at timestamp not null default now(),
     updated_at timestamp not null default now(),
     completed_at timestamp null,
-    constraint ck_lgpd_requests_type check (type in ('Export', 'Delete')),
-    constraint ck_lgpd_requests_status check (status in ('Requested', 'InReview', 'Processing', 'Completed', 'Rejected', 'Canceled'))
+    constraint ck_habitflow_lgpd_requests_type check (type in ('Export', 'Delete')),
+    constraint ck_habitflow_lgpd_requests_status check (status in ('Requested', 'InReview', 'Processing', 'Completed', 'Rejected', 'Canceled'))
 );
 
 create table if not exists habitflow.billing_events (
@@ -146,23 +149,23 @@ create table if not exists habitflow.billing_events (
     amount numeric(12,2) null,
     metadata jsonb null,
     created_at timestamp not null default now(),
-    constraint ck_billing_events_plan check (plan is null or plan in ('Free', 'Premium'))
+    constraint ck_habitflow_billing_events_plan check (plan is null or plan in ('Free', 'Premium'))
 );
 
-create index if not exists ix_users_email on habitflow.users(email);
-create index if not exists ix_users_role on habitflow.users(role);
-create index if not exists ix_users_account_status on habitflow.users(account_status);
-create index if not exists ix_users_plan on habitflow.users(plan);
+create index if not exists ix_habitflow_users_email on habitflow.users(email);
+create index if not exists ix_habitflow_users_role on habitflow.users(role);
+create index if not exists ix_habitflow_users_account_status on habitflow.users(account_status);
+create index if not exists ix_habitflow_users_plan on habitflow.users(plan);
 create index if not exists ix_users_created_at on habitflow.users(created_at);
-create index if not exists ix_habits_user_id on habitflow.habits(user_id);
-create index if not exists ix_habit_completions_user_id on habitflow.habit_completions(user_id);
+create index if not exists ix_habitflow_habits_user_id on habitflow.habits(user_id);
+create index if not exists ix_habitflow_habit_completions_user_id on habitflow.habit_completions(user_id);
 create index if not exists ix_habit_completions_habit_id on habitflow.habit_completions(habit_id);
 create index if not exists ix_habit_completions_completed_date on habitflow.habit_completions(completed_date);
-create index if not exists ix_support_tickets_user_id on habitflow.support_tickets(user_id);
-create index if not exists ix_lgpd_requests_user_id on habitflow.lgpd_requests(user_id);
-create index if not exists ix_system_audit_logs_created_at on habitflow.system_audit_logs(created_at);
+create index if not exists ix_habitflow_support_tickets_user_id on habitflow.support_tickets(user_id);
+create index if not exists ix_habitflow_lgpd_requests_user_id on habitflow.lgpd_requests(user_id);
+create index if not exists ix_habitflow_system_audit_logs_created_at on habitflow.system_audit_logs(created_at);
 create index if not exists ix_system_audit_logs_severity on habitflow.system_audit_logs(severity);
-create index if not exists ix_admin_audit_logs_created_at on habitflow.admin_audit_logs(created_at);
+create index if not exists ix_habitflow_admin_audit_logs_created_at on habitflow.admin_audit_logs(created_at);
 
 insert into habitflow.system_settings(key, value, updated_at)
 values
@@ -266,9 +269,9 @@ create table if not exists habitflow.admin_dashboard_snapshots (
     constraint uq_admin_dashboard_snapshots_snapshot_date unique(snapshot_date)
 );
 
-create index if not exists ix_users_account_status on habitflow.users(account_status);
+create index if not exists ix_habitflow_users_account_status on habitflow.users(account_status);
 create index if not exists ix_users_risk_status on habitflow.users(risk_status);
-create index if not exists ix_users_plan on habitflow.users(plan);
+create index if not exists ix_habitflow_users_plan on habitflow.users(plan);
 create index if not exists ix_users_wants_premium_notice on habitflow.users(wants_premium_notice);
 create index if not exists ix_users_last_login_at on habitflow.users(last_login_at);
 create index if not exists ix_admin_user_notes_user_id on habitflow.admin_user_notes(user_id);

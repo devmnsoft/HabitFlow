@@ -1,3 +1,8 @@
+
+## PostgreSQL local/remoto sem Docker
+
+Configure `DefaultConnection` com `Search Path=habitflow`, pooling e timeouts, mas mantenha queries qualificadas. Antes de publicar no IIS, execute `scripts/database/validate-schema-habitflow.ps1 -Database habitflow` e confirme `/health/db`.
+
 # DEPLOY_WINDOWS_SEM_DOCKER
 
 HabitFlow v4.4-WindowsIIS-Production-NoDocker formaliza operação em Windows/IIS sem tornar Docker obrigatório.
