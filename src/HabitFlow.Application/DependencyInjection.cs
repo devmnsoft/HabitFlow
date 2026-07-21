@@ -26,6 +26,15 @@ public static class DependencyInjection
         services.AddScoped<SupportService>();
         services.AddScoped<ProfileService>();
         services.AddScoped<AdminService>();
+        services.AddScoped<AdminDashboardService>();
+        services.AddScoped<AdminUserService>();
+        services.AddScoped<AdminMetricsService>();
+        services.AddScoped<AdminSupportService>();
+        services.AddScoped<AdminLgpdService>();
+        services.AddScoped<AdminAuditQueryService>();
+        services.AddScoped<AdminExportService>();
+        services.AddScoped<AdminBillingService>();
+        services.AddScoped<AdminRiskService>();
         services.AddScoped<WhatsAppService>();
         services.AddScoped<LgpdService>();
         services.AddScoped<BillingService>();

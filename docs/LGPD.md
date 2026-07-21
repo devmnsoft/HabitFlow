@@ -18,3 +18,7 @@ HabitFlow v4 usa ASP.NET Core 10, DDD, Clean Architecture, Dapper, PostgreSQL, B
 - Em Windows/IIS, publique com `dotnet publish src/HabitFlow.Web/HabitFlow.Web.csproj -c Release -o publish/windows`, configure `appsettings.Production.json` fora do Git e use o `web.config` publicado.
 - Nunca use seed dev, `.env` real ou `appsettings.Production.json` real em produção.
 - Valide o banco com `scripts/database/validate-script-completo.ps1` ou `scripts/database/validate-script-completo.bat` quando `psql` estiver disponível.
+
+## v4.3 Fluxo administrativo
+
+A v4.3 adiciona fluxo administrativo para solicitações LGPD. Nesta versão, o admin altera estados de análise/processamento/conclusão/rejeição/cancelamento; exclusão automática de dados não é executada.

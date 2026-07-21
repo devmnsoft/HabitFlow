@@ -119,3 +119,7 @@ firebase deploy --only hosting
 ## v4.2 entregue
 - Validar em ambiente com .NET SDK e PostgreSQL disponíveis.
 - Evoluir badge de notificações para carregar contagem não lida via view component.
+
+## v4.3 follow-up
+- Conectar notificações internas detalhadas para respostas administrativas de suporte.
+- Expandir snapshots periódicos do dashboard via job agendado.

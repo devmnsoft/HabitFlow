@@ -60,3 +60,26 @@
 - Novas migrations
 - script_completo.sql atualizado
 - Testes de recorrência, notificações e relatórios
+
+## v4.3-AdminOperacional-Metrics-LGPD-Support
+- Admin operacional completo
+- Dashboard administrativo executivo
+- Gestão avançada de usuários
+- Bloqueio/desbloqueio/suspensão
+- Gestão de risco
+- Gestão manual de plano
+- Notas administrativas
+- Suporte admin
+- LGPD admin
+- Logs do sistema
+- Auditoria administrativa
+- Métricas globais
+- Funil Premium
+- Leads Premium
+- Financeiro inicial
+- Exportações CSV seguras
+- Telegram para ações críticas
+- AccountStatusMiddleware
+- Migration 013
+- script_completo.sql atualizado
+- Testes administrativos

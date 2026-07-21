@@ -11,3 +11,5 @@
 \i database/migrations/011_seed_initial_settings.sql
 
 \i database/migrations/012_habit_recurrence_reports_notifications.sql
+
+\i database/migrations/013_admin_operacional.sql

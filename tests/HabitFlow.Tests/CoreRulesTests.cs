@@ -107,3 +107,29 @@ public class HabitRecurrenceRulesTests
     [Fact]
     public void Csv_export_sanitizes_formula_injection() => Assert.StartsWith("'", ReportService.SanitizeCsv("=cmd"));
 }
+
+public class AdminOperationalRulesTests
+{
+    [Theory]
+    [InlineData("=cmd")]
+    [InlineData("+cmd")]
+    [InlineData("-cmd")]
+    [InlineData("@cmd")]
+    public void Admin_csv_export_sanitizes_formula_injection(string input)
+    {
+        Assert.StartsWith("'", AdminExportService.SanitizeCsvCell(input));
+    }
+
+    [Fact]
+    public void Blocked_user_cannot_use_dashboard()
+    {
+        var user = new User(Guid.NewGuid(), "U", "u@e.com", "hash", null, UserRole.User, AccountStatus.Blocked, RiskStatus.Normal, UserPlan.Free, PlanStatus.Active, false, false, null, null, null, null, DateTime.UtcNow, DateTime.UtcNow);
+        Assert.False(user.CanUseDashboard);
+    }
+
+    [Fact]
+    public void Suspicious_risk_status_exists_for_admin_review()
+    {
+        Assert.Equal("Suspicious", RiskStatus.Suspicious.ToString());
+    }
+}
