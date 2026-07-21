@@ -30,8 +30,11 @@ public sealed record BackupCommand(string Executable, string Arguments);
 
 public static class BackupCommandBuilder
 {
-    public static BackupCommand BuildPgDump(string databaseName, string host, int port, string user, string outputPath) =>
-        new("pg_dump", $"--format=custom --no-owner --no-privileges --host=\"{host}\" --port={port} --username=\"{user}\" --file=\"{outputPath}\" \"{databaseName}\"");
+    public static BackupCommand BuildPgDump(string databaseName, string host, int port, string user, string outputPath, bool habitflowSchemaOnly = false)
+    {
+        var schemaArgument = habitflowSchemaOnly ? " --schema=habitflow" : string.Empty;
+        return new("pg_dump", $"--format=custom --no-owner --no-privileges{schemaArgument} --host=\"{host}\" --port={port} --username=\"{user}\" --file=\"{outputPath}\" \"{databaseName}\"");
+    }
 }
 
 public sealed record SmokeEndpointExpectation(string Path, int ExpectedStatus);

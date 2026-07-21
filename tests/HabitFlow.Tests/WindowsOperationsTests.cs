@@ -31,6 +31,13 @@ public sealed class WindowsOperationsTests
     }
 
     [Fact]
+    public void Backup_command_builder_can_restrict_dump_to_habitflow_schema()
+    {
+        var cmd = BackupCommandBuilder.BuildPgDump("habitflow", "localhost", 5432, "postgres", "backup.dump", habitflowSchemaOnly: true);
+        Assert.Contains("--schema=habitflow", cmd.Arguments);
+    }
+
+    [Fact]
     public void Deployment_event_sets_required_metadata()
     {
         var ev = DeploymentEvent.Create("v4.4", "Production", "Windows/IIS", "backup", "success");
