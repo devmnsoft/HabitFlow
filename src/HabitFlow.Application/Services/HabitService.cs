@@ -4,19 +4,26 @@ using Microsoft.Extensions.Logging;
 
 namespace HabitFlow.Application;
 
-public sealed class HabitService(IHabitRepository habits, IHabitCompletionRepository completions, HabitPolicy policy, AuditService audit, ILogger<HabitService> logger)
+public sealed class HabitService(IHabitRepository habits, IHabitCompletionRepository completions, IHabitWeekDayRepository weekDays, HabitScheduleService schedule, HabitPolicy policy, AuditService audit, NotificationService notifications, ILogger<HabitService> logger)
 {
-    public async Task<Result<Habit>> CreateAsync(User user, string name, string color, string? category, CancellationToken ct = default)
+    public Task<Result<Habit>> CreateAsync(User user, string name, string color, string? category, CancellationToken ct = default) =>
+        CreateAsync(user, name, color, category, HabitFrequencyType.Daily, null, null, null, Array.Empty<int>(), ct);
+
+    public async Task<Result<Habit>> CreateAsync(User user, string name, string color, string? category, HabitFrequencyType frequencyType, int? targetPerWeek, TimeOnly? reminderTime, string? notes, IReadOnlyCollection<int> selectedDays, CancellationToken ct = default)
     {
         try
         {
+            var validation = schedule.ValidateFrequency(frequencyType, targetPerWeek, selectedDays);
+            if (validation.IsFailure) return Result<Habit>.Failure(validation.Error.Code, validation.Error.Message);
             var active = await habits.CountActiveByUserAsync(user.Id, ct);
             var can = policy.CanCreate(user, active);
             if (can.IsFailure) return Result<Habit>.Failure(can.Error.Code, can.Error.Message);
             var now = DateTime.UtcNow;
-            var habit = new Habit(Guid.NewGuid(), user.Id, name.Trim(), color, category, false, null, now, now);
+            var habit = new Habit(Guid.NewGuid(), user.Id, name.Trim(), color, category, false, null, now, now, frequencyType, targetPerWeek, reminderTime, notes, 0);
             await habits.CreateAsync(habit, ct);
-            await audit.LogAsync("habit_created", "Hábito criado", AuditSeverity.Info, user.Id, user.Email, new { name }, ct);
+            if (frequencyType == HabitFrequencyType.CustomWeekly) await weekDays.ReplaceAsync(habit.Id, selectedDays, ct);
+            await audit.LogAsync("habit_created", "Hábito criado", AuditSeverity.Info, user.Id, user.Email, new { name, frequencyType }, ct);
+            if (active == 0) await notifications.CreateAsync(user.Id, "welcome", "Bem-vindo ao HabitFlow", "Seu primeiro hábito foi criado. Comece pequeno e mantenha consistência.", "habit", habit.Id, ct);
             return Result<Habit>.Success(habit);
         }
         catch (Exception ex)

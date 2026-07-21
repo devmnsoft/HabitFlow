@@ -1,0 +1,4 @@
+@model HabitFlow.Application.PersonalReport
+@{ Layout = "~/Views/Shared/_Layout.cshtml"; }
+<section class="hero-card"><h1>Relatórios pessoais</h1><p>Resumo de @Model.PeriodStart a @Model.PeriodEnd.</p><a class="btn btn-success" href="/reports/export-csv">Exportar CSV</a></section>
+<div class="row g-3 mt-1"><div class="col-6 col-md-3"><div class="card p-3"><span>Conclusões</span><strong>@Model.TotalCompletions</strong></div></div><div class="col-6 col-md-3"><div class="card p-3"><span>Dias ativos</span><strong>@Model.ActiveDays</strong></div></div><div class="col-12 col-md-6"><div class="card p-3"><span>Taxa de conclusão</span><div class="progress"><div class="progress-bar bg-success" style="width:@Model.CompletionRate%">@Model.CompletionRate%</div></div></div></div></div><div class="alert alert-success mt-3">@Model.Insight</div>

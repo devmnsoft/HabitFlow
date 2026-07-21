@@ -1,11 +1,12 @@
 using HabitFlow.Application;
+using HabitFlow.Domain;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HabitFlow.Web.Controllers;
 
 [Authorize]
-public class HabitsController(HabitService habitService, ILogger<HabitsController> logger) : Controller
+public class HabitsController(HabitService habitService, AuditService audit, ILogger<HabitsController> logger) : Controller
 {
     public async Task<IActionResult> Index(CancellationToken ct)
     {
@@ -15,15 +16,25 @@ public class HabitsController(HabitService habitService, ILogger<HabitsControlle
 
     [ValidateAntiForgeryToken]
     [HttpPost]
-    public async Task<IActionResult> Create(string name, string color, string? category, CancellationToken ct)
+    public async Task<IActionResult> Create(string name, string color, string? category, HabitFrequencyType frequencyType = HabitFrequencyType.Daily, int? targetPerWeek = null, TimeOnly? reminderTime = null, string? notes = null, int[]? selectedDays = null, CancellationToken ct = default)
     {
         try
         {
-            var result = await habitService.CreateAsync(this.CurrentUserSnapshot(), name, color, category, ct);
+            var result = await habitService.CreateAsync(this.CurrentUserSnapshot(), name, color, category, frequencyType, targetPerWeek, reminderTime, notes, selectedDays ?? Array.Empty<int>(), ct);
             TempData[result.IsFailure ? "Error" : "Success"] = result.IsFailure ? result.Error.Message : "Hábito criado.";
         }
         catch (Exception ex) { logger.LogError(ex, "Erro inesperado ao criar hábito"); TempData["Error"] = "Não foi possível criar o hábito."; }
         return RedirectToAction(nameof(Index));
+    }
+
+    [HttpGet("habits/{id:guid}")]
+    public async Task<IActionResult> Detail(Guid id, CancellationToken ct)
+    {
+        var habits = await habitService.ListAsync(this.CurrentUserId(), ct);
+        var habit = habits.FirstOrDefault(x => x.Id == id && x.BelongsTo(this.CurrentUserId()));
+        if (habit is null) return NotFound();
+        await audit.LogAsync("habit_detail_viewed", "Detalhe do hábito visualizado", AuditSeverity.Info, this.CurrentUserId(), null, new { habitId = id }, ct);
+        return View(habit);
     }
 
     [ValidateAntiForgeryToken]
@@ -35,7 +46,7 @@ public class HabitsController(HabitService habitService, ILogger<HabitsControlle
         return RedirectToAction(nameof(Index));
     }
 
-    [ValidateAntiForgeryToken]
+        [ValidateAntiForgeryToken]
     [HttpPost]
     public async Task<IActionResult> Uncomplete(Guid id, CancellationToken ct)
     {

@@ -1,0 +1,4 @@
+@model IReadOnlyList<HabitFlow.Domain.Notification>
+@{ Layout = "~/Views/Shared/_Layout.cshtml"; }
+<section class="hero-card"><h1>Notificações</h1><p>Acompanhe lembretes e atualizações internas.</p><form method="post" action="/notifications/read-all">@Html.AntiForgeryToken()<button class="btn btn-outline-success">Marcar todas como lidas</button></form></section>
+<div class="list-group mt-3">@foreach (var n in Model){<div class="list-group-item"><strong>@n.Title</strong><p>@n.Message</p><form method="post" action="/notifications/@n.Id/read">@Html.AntiForgeryToken()<button class="btn btn-sm btn-success">Marcar lida</button></form></div>}@if(!Model.Any()){<div class="alert alert-info">Nenhuma notificação não lida.</div>}</div>

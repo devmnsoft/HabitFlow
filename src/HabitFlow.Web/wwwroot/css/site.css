@@ -1,1 +1,4 @@
 :root{--hf-green:#10B981;--hf-green-dark:#059669;--hf-bg:#F3F4F6;--hf-dark:#111827;--hf-muted:#6B7280;--hf-white:#fff}body{background:var(--hf-bg);color:var(--hf-dark)}.hero-card,.card-modern{background:var(--hf-white);border:0;border-radius:1.5rem;padding:2rem;box-shadow:0 18px 50px rgba(17,24,39,.08)}.btn-success{background:var(--hf-green);border-color:var(--hf-green)}.btn-success:hover{background:var(--hf-green-dark);border-color:var(--hf-green-dark)}
+
+.month-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:.5rem}.day{padding:.75rem;border-radius:.75rem;background:#f1f5f3;text-align:center}.day.today{background:#198754;color:white;font-weight:700}.hero-card{border-radius:1.5rem;background:linear-gradient(135deg,#e8fff3,#ffffff);padding:2rem;box-shadow:0 .5rem 2rem rgba(0,0,0,.06)}
+@media(max-width:576px){.hero-card{padding:1.25rem}.navbar .container{gap:.5rem}.navbar .btn{padding:.35rem .55rem;font-size:.875rem}}
