@@ -13,3 +13,5 @@
 \i database/migrations/012_habit_recurrence_reports_notifications.sql
 
 \i database/migrations/013_admin_operacional.sql
+
+\i database/migrations/014_windows_iis_operations.sql

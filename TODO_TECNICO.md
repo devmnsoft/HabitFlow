@@ -1,3 +1,12 @@
+
+## v4.4-WindowsIIS-Production-NoDocker
+- Operação sem Docker formalizada.
+- Scripts Windows para validação de ambiente, PostgreSQL, backup/restore, publicação IIS, rollback e smoke tests.
+- Health checks /health, /health/db e /health/version.
+- Diagnóstico Admin em Sistema > Ambiente.
+- Migration 014 com habitflow.deployment_events.
+- Documentação Windows/IIS sem Docker ampliada.
+
 ## TODO técnico — pós 2.0-Security
 
 - Executar build quando dependências estiverem disponíveis no registry.

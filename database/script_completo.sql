@@ -274,3 +274,17 @@ create index if not exists ix_users_last_login_at on habitflow.users(last_login_
 create index if not exists ix_admin_user_notes_user_id on habitflow.admin_user_notes(user_id);
 create index if not exists ix_admin_exports_created_at on habitflow.admin_exports(created_at);
 create index if not exists ix_admin_dashboard_snapshots_snapshot_date on habitflow.admin_dashboard_snapshots(snapshot_date);
+
+-- v4.4 Windows/IIS operations
+create table if not exists habitflow.deployment_events (
+    id uuid primary key,
+    version varchar(80) not null,
+    environment varchar(80) not null,
+    hosting_mode varchar(80) null,
+    action varchar(80) not null,
+    status varchar(80) not null,
+    notes text null,
+    created_at timestamp not null default now()
+);
+create index if not exists ix_deployment_events_created_at on habitflow.deployment_events(created_at desc);
+create index if not exists ix_deployment_events_action on habitflow.deployment_events(action);
