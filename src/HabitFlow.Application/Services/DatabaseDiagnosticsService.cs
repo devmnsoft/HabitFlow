@@ -1,0 +1,22 @@
+using HabitFlow.Shared;
+using Microsoft.Extensions.Logging;
+
+namespace HabitFlow.Application;
+
+public sealed class DatabaseDiagnosticsService(IDatabaseDiagnosticsRepository repository, ILogger<DatabaseDiagnosticsService> logger)
+{
+    public async Task<Result<DatabaseDiagnostics>> GetAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            return Result<DatabaseDiagnostics>.Success(await repository.GetAsync(ct));
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Falha no diagnóstico do banco PostgreSQL HabitFlow");
+            return Result<DatabaseDiagnostics>.Success(new DatabaseDiagnostics(
+                "unhealthy", null, "habitflow", false, 0, 0, null, DateTime.UtcNow, 0, 0, 0, false, null,
+                "Não foi possível conectar ou validar o PostgreSQL configurado."));
+        }
+    }
+}

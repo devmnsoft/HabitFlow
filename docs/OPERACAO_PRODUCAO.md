@@ -1,3 +1,8 @@
+
+## Operação v4.5
+
+Monitore `/health/db`: `healthy` indica schema pronto; `warning` indica tabelas indevidas em `public`; `unhealthy` indica falha de conexão/schema/tabelas obrigatórias. Use `/admin/database` para diagnóstico operacional e `scripts/windows/backup-database.ps1 -HabitflowSchemaOnly` para backup restrito ao schema.
+
 # OPERACAO_PRODUCAO
 
 HabitFlow v4.4-WindowsIIS-Production-NoDocker formaliza operação em Windows/IIS sem tornar Docker obrigatório.

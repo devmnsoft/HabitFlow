@@ -1,12 +1,11 @@
-using Dapper;
+using HabitFlow.Application;
 using HabitFlow.Application.Operations;
-using HabitFlow.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 
 namespace HabitFlow.Web.Controllers;
 
-public class HealthController(ILogger<HealthController> logger, DbConnectionFactory db, IConfiguration configuration, IWebHostEnvironment env) : Controller
+public class HealthController(IConfiguration configuration, IWebHostEnvironment env, DatabaseDiagnosticsService diagnostics) : Controller
 {
     [HttpGet("health")]
     [HttpGet("health/ui")]
@@ -15,17 +14,20 @@ public class HealthController(ILogger<HealthController> logger, DbConnectionFact
     [HttpGet("health/db")]
     public async Task<IActionResult> Database(CancellationToken ct)
     {
-        try
+        var result = await diagnostics.GetAsync(ct);
+        var d = result.Value;
+        var payload = new
         {
-            using var connection = await db.OpenAsync(ct);
-            var value = await connection.ExecuteScalarAsync<int>(new CommandDefinition("select 1", cancellationToken: ct));
-            return Ok(new { status = value == 1 ? "Healthy" : "Unhealthy", databaseProvider = "PostgreSQL" });
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Erro no health check do banco");
-            return StatusCode(503, new { status = "Unhealthy", databaseProvider = "PostgreSQL" });
-        }
+            status = d?.Status ?? "unhealthy",
+            database = d?.Database,
+            schemaExists = d?.SchemaExists ?? false,
+            requiredTablesOk = d?.RequiredTablesOk ?? false,
+            publicConflicts = d?.PublicConflicts ?? 0,
+            postgresVersion = d?.PostgresVersion,
+            checkedAt = d?.CheckedAt ?? DateTime.UtcNow,
+            error = d?.ErrorMessage
+        };
+        return payload.status == "unhealthy" ? StatusCode(503, payload) : Ok(payload);
     }
 
     [HttpGet("health/version")]
@@ -34,7 +36,7 @@ public class HealthController(ILogger<HealthController> logger, DbConnectionFact
         var hostingMode = HostingEnvironmentDetector.Detect(configuration["App:HostingMode"], Environment.GetEnvironmentVariable("ASPNETCORE_MODULE_NAME"), Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true", Process.GetCurrentProcess().ProcessName);
         return Ok(new
         {
-            appVersion = configuration["App:Version"] ?? "v4.4-WindowsIIS-Production-NoDocker",
+            appVersion = configuration["App:Version"] ?? "v4.5-DatabaseSchemaHardening-ProductionEvolution",
             environment = env.EnvironmentName,
             buildTime = configuration["App:BuildTime"] ?? "não informado",
             databaseProvider = "PostgreSQL",

@@ -33,6 +33,7 @@ public static class DependencyInjection
         services.AddScoped<IAdminLgpdRepository, AdminLgpdRepository>();
         services.AddScoped<IAdminAuditQueryRepository, AdminAuditQueryRepository>();
         services.AddScoped<IAdminExportRepository, AdminExportRepository>();
+        services.AddScoped<IDatabaseDiagnosticsRepository, DatabaseDiagnosticsRepository>();
         return services;
     }
 }

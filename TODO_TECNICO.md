@@ -1,4 +1,9 @@
 
+## v4.5 concluído - DatabaseSchemaHardening
+- Validar periodicamente que tabelas HabitFlow não existem em public.
+- Antes de migrar bases antigas, revisar manualmente conflitos em public; não mover/apagar sem backup.
+
+
 ## v4.4-WindowsIIS-Production-NoDocker
 - Operação sem Docker formalizada.
 - Scripts Windows para validação de ambiente, PostgreSQL, backup/restore, publicação IIS, rollback e smoke tests.

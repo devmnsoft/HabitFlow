@@ -35,6 +35,7 @@ public static class DependencyInjection
         services.AddScoped<AdminExportService>();
         services.AddScoped<AdminBillingService>();
         services.AddScoped<AdminRiskService>();
+        services.AddScoped<DatabaseDiagnosticsService>();
         services.AddScoped<WhatsAppService>();
         services.AddScoped<LgpdService>();
         services.AddScoped<BillingService>();

@@ -1,3 +1,4 @@
+-- ATENÇÃO: somente desenvolvimento. Não executar em produção.
 -- HabitFlow - complemento de desenvolvimento. Execute após database/script_completo.sql.
 -- Usuários dev: admin@habitflow.local e user@habitflow.local. Senha documentada: Admin@123
 
