@@ -1,1 +1,14 @@
-<Project Sdk="Microsoft.NET.Sdk.Web"><PropertyGroup><TargetFramework>net10.0</TargetFramework><Nullable>enable</Nullable><ImplicitUsings>enable</ImplicitUsings></PropertyGroup><ItemGroup><ProjectReference Include="../HabitFlow.Application/HabitFlow.Application.csproj"/><ProjectReference Include="../HabitFlow.Infrastructure/HabitFlow.Infrastructure.csproj"/><ProjectReference Include="../HabitFlow.Domain/HabitFlow.Domain.csproj"/><ProjectReference Include="../HabitFlow.Shared/HabitFlow.Shared.csproj"/></ItemGroup></Project>
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../HabitFlow.Application/HabitFlow.Application.csproj" />
+    <ProjectReference Include="../HabitFlow.Infrastructure/HabitFlow.Infrastructure.csproj" />
+    <ProjectReference Include="../HabitFlow.Domain/HabitFlow.Domain.csproj" />
+    <ProjectReference Include="../HabitFlow.Shared/HabitFlow.Shared.csproj" />
+  </ItemGroup>
+</Project>

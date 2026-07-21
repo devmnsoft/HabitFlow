@@ -1,3 +1,73 @@
-using HabitFlow.Application; using HabitFlow.Domain; using HabitFlow.Shared; using Xunit;
+using HabitFlow.Application;
+using HabitFlow.Domain;
+using HabitFlow.Shared;
+using Xunit;
+
 namespace HabitFlow.Tests;
-public class CoreRulesTests{[Fact]public void Free_plan_limit_blocks_sixth_active_habit(){var u=User(UserPlan.Free);Assert.False(DomainPolicies.CanCreateHabit(u,5));}[Fact]public void Best_streak_is_calculated(){var s=new ProgressService();Assert.Equal(3,s.BestStreak([new(2026,1,1),new(2026,1,2),new(2026,1,3)]));}[Fact]public void Whatsapp_rejects_script(){var v=new WhatsAppValidator();Assert.True(v.Validate(new(true,"+5511999999999","<script>","Chamar")).IsFailure);}[Fact]public void Sanitizer_masks_secrets(){Assert.DoesNotContain("abc",new LogSanitizer().Sanitize("token=abc"));}[Fact]public void Protocol_has_prefix(){Assert.StartsWith("HF-",new ProtocolGenerator().Generate());}[Fact]public void Result_carries_value(){var r=Result<int>.Success(10);Assert.True(r.IsSuccess);Assert.Equal(10,r.Value);}[Fact]public void Admin_authorization_requires_admin(){Assert.True(new AdminAuthorizationService().EnsureAdmin(User(UserPlan.Free)).IsFailure);}[Fact]public void Password_hash_roundtrip(){var h=new BCryptPasswordHasher();var hash=h.Hash("Admin@123");Assert.True(h.Verify("Admin@123",hash));} static User User(UserPlan p)=>new(Guid.NewGuid(),"U","u@e.com","hash",null,UserRole.User,AccountStatus.Active,RiskStatus.Normal,p,PlanStatus.Active,false,false,null,null,null,null,DateTime.UtcNow,DateTime.UtcNow);}
+
+public class CoreRulesTests
+{
+    [Fact]
+    public void Free_plan_limit_blocks_sixth_active_habit()
+    {
+        var user = User(UserPlan.Free);
+        Assert.False(DomainPolicies.CanCreateHabit(user, 5));
+    }
+
+    [Fact]
+    public void Current_streak_is_calculated()
+    {
+        var service = new ProgressService();
+        Assert.Equal(2, service.CurrentStreak([new DateOnly(2026, 1, 1), new DateOnly(2026, 1, 2)], new DateOnly(2026, 1, 2)));
+    }
+
+    [Fact]
+    public void Best_streak_is_calculated()
+    {
+        var service = new ProgressService();
+        Assert.Equal(3, service.BestStreak([new DateOnly(2026, 1, 1), new DateOnly(2026, 1, 2), new DateOnly(2026, 1, 3)]));
+    }
+
+    [Fact]
+    public void Whatsapp_rejects_script()
+    {
+        var validator = new WhatsAppValidator();
+        Assert.True(validator.Validate(new WhatsAppOptions(true, "+5511999999999", "<script>", "Chamar")).IsFailure);
+    }
+
+    [Fact]
+    public void Sanitizer_masks_secrets()
+    {
+        Assert.DoesNotContain("abc", new LogSanitizer().Sanitize("token=abc"));
+    }
+
+    [Fact]
+    public void Protocol_has_prefix()
+    {
+        Assert.StartsWith("HF-", new ProtocolGenerator().Generate());
+    }
+
+    [Fact]
+    public void Result_carries_value()
+    {
+        var result = Result<int>.Success(10);
+        Assert.True(result.IsSuccess);
+        Assert.Equal(10, result.Value);
+    }
+
+    [Fact]
+    public void Admin_authorization_requires_admin()
+    {
+        Assert.True(new AdminAuthorizationService().EnsureAdmin(User(UserPlan.Free)).IsFailure);
+    }
+
+    [Fact]
+    public void Password_hash_roundtrip()
+    {
+        var hasher = new BCryptPasswordHasher();
+        var hash = hasher.Hash("Admin@123");
+        Assert.True(hasher.Verify("Admin@123", hash));
+    }
+
+    private static User User(UserPlan plan) => new(Guid.NewGuid(), "U", "u@e.com", "hash", null, UserRole.User, AccountStatus.Active, RiskStatus.Normal, plan, PlanStatus.Active, false, false, null, null, null, null, DateTime.UtcNow, DateTime.UtcNow);
+}

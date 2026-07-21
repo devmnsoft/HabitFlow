@@ -23,3 +23,20 @@
 - CI dotnet
 - Documentação completa
 - Legado Firebase preservado
+
+## v4.1-CodeQuality-SqlComplete
+- Revisão completa da solução ASP.NET Core 10
+- Separação de classes em arquivos próprios
+- Reorganização Domain/Application/Infrastructure/Web
+- Program.cs limpo com extension methods
+- Controllers revisados com logger e try/catch
+- Services revisados com logger e Result<T>
+- Repositories Dapper revisados
+- Mapeamento snake_case/PascalCase validado
+- Middleware global de exceções revisado
+- Auditoria reforçada
+- script_completo.sql criado
+- script_completo_dev.sql criado
+- Migrations sincronizadas com script completo
+- Testes ampliados
+- Documentação atualizada
