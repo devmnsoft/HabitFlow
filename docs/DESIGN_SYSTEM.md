@@ -25,3 +25,7 @@ Usar landmarks, aria-label em botões de ícone, foco visível, contraste adequa
 
 ## Exemplos
 Use `.hf-page-header` no topo de telas, `.hf-grid` com colunas utilitárias para métricas e `.hf-card` para blocos de conteúdo.
+
+## v4.9 — Componentes premium
+
+Novas classes: `hf-shell`, `hf-navbar`, `hf-brand`, `hf-hero`, `hf-hero-grid`, `hf-feature-card`, `hf-step-card`, `hf-premium-card`, `hf-mockup-card`, `hf-section`, `hf-section-kicker`, `hf-empty-state`, `hf-guided-card`, `hf-objective-card`, `hf-habit-template-card`, `hf-footer`, `mnsoft-signature` e `mnsoft-wordmark`.

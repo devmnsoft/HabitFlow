@@ -22,3 +22,7 @@ Se a MNSOFT precisar usar a logo oficial em PNG ou JPG, ela pode ser adicionada 
 - Não adicione arquivos pesados ao repositório.
 - Não versione `publish/`, `bin/`, `obj/`, `dist/`, `node_modules/` ou `backups/`.
 - Preserve a evolução visual premium da v4.8 com componentes reutilizáveis e UX mobile first.
+
+## v4.9 — Confiança institucional
+
+A MNSOFT aparece como assinatura discreta de confiança, com CNPJ 18.160.057/0001-13 e comercial@mnsoft.com.br. O produto principal continua sendo HabitFlow.

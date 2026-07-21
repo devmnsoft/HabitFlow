@@ -1,0 +1,12 @@
+@model IReadOnlyList<HabitFlow.Domain.HabitObjective>
+@{ ViewData["Title"] = "Biblioteca de hábitos"; }
+<section class="hf-section hf-guided-card">
+  <p class="hf-section-kicker">Escolha seu objetivo e comece</p>
+  <h1>Escolha um objetivo para começar.</h1>
+  <p class="lead text-muted">Selecione uma área da sua vida e veja hábitos simples que você pode adicionar em poucos segundos.</p>
+</section>
+<section class="row g-3" aria-label="Objetivos disponíveis">
+@foreach (var objective in Model) {
+  <div class="col-md-6 col-xl-4"><article class="hf-objective-card h-100"><div class="hf-card-icon">@objective.Icon</div><h2 class="h4">@objective.Name</h2><p>@objective.Description</p><a class="btn btn-success" href="/habit-library/objective/@objective.Slug">Ver hábitos prontos</a></article></div>
+}
+</section>

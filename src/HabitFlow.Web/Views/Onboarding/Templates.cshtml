@@ -1,0 +1,4 @@
+@model (HabitFlow.Domain.HabitObjective Objective, IReadOnlyList<HabitFlow.Domain.HabitTemplate> Templates)
+@{ ViewData["Title"] = "Escolha um hábito"; }
+<section class="hf-section"><p class="hf-section-kicker">@Model.Objective.Name</p><h1>Escolha um hábito simples para começar.</h1><p class="lead text-muted">Depois de adicionar, seu dashboard já mostra o próximo passo de hoje.</p></section>
+<div class="row g-3">@foreach (var template in Model.Templates) {<div class="col-md-6 col-xl-4"><article class="hf-habit-template-card h-100"><h2 class="h4">@template.Name</h2><p>@template.Description</p><p class="text-muted">@template.BenefitText</p><form method="post" action="/onboarding/add-template">@Html.AntiForgeryToken()<input type="hidden" name="templateId" value="@template.Id" /><button class="btn btn-success w-100">Criar este hábito</button></form></article></div>}</div>
