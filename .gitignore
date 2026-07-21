@@ -1,22 +1,42 @@
+# Build/generated outputs
 bin/
 obj/
 publish/
+backups/
+dist/
+node_modules/
+
+# Archives, dumps, logs and binaries
 *.zip
+*.rar
+*.7z
 *.log
+*.dump
+*.backup
+*.bak
+*.sql.bak
+*.pdb
+*.dll
+*.exe
+
+# Local production/secrets
 appsettings.Production.json
 .env
 .env.local
 .env.production
-node_modules/
-dist/
+
+# imagens binárias devem ser adicionadas manualmente quando necessário
+# evitar no Codex
+*.png
+*.jpg
+*.jpeg
+*.webp
+*.ico
+*.gif
+
 .firebase/
 serviceAccount*.json
 firebase-adminsdk*.json
 *.user
 .vs/
 .idea/
-
-backups/
-*.dump
-*.backup
-*.sql.bak
