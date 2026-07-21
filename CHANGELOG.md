@@ -1,3 +1,21 @@
+## v4.7-PremiumTemplate-UX-ProductExperience
+- Template premium do HabitFlow
+- Novo layout principal responsivo
+- Design system em CSS
+- Componentes Razor reutilizáveis
+- Landing page comercial
+- Login/cadastro refinados
+- Dashboard do usuário redesenhado
+- Cards de hábitos premium
+- Páginas de progresso e relatórios melhoradas
+- Perfil, suporte e LGPD refinados
+- Admin Operacional com visual executivo
+- Microinterações em JavaScript Vanilla
+- Melhorias mobile first
+- Acessibilidade revisada
+- Documentação DESIGN_SYSTEM.md
+- Documentação UX_REVIEW_V4_7.md
+
 
 ## v4.5-DatabaseSchemaHardening-ProductionEvolution
 - Padronização obrigatória do schema habitflow
