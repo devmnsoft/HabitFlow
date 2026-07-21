@@ -47,4 +47,4 @@ end $$;
 
 -- v5 accessibility preferences validation
 select 'habitflow.user_ui_preferences' as required_table, to_regclass('habitflow.user_ui_preferences') is not null as exists;
-select column_name from information_schema.columns where table_schema='habitflow' and table_name='user_ui_preferences' and column_name in ('id','user_id','contrast_mode','font_scale','reduce_motion','created_at','updated_at') order by column_name;
+select column_name from information_schema.columns where table_schema='habitflow' and table_name='user_ui_preferences' and column_name in ('id','user_id','contrast_mode','font_scale','reduce_motion','show_achievement_popups','show_tip_popups','enable_toasts','reduce_popups','created_at','updated_at') order by column_name;

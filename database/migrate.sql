@@ -23,3 +23,6 @@
 \i database/migrations/017_habit_templates_guided_journey.sql
 
 \i database/migrations/018_user_ui_preferences_accessibility.sql
+
+\i database/migrations/019_notifications_feedback_preferences.sql
+\i database/migrations/020_popup_preferences.sql

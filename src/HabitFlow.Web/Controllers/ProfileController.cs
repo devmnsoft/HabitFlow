@@ -19,7 +19,7 @@ public class ProfileController(ProfileService profileService, UserUiPreferenceSe
     public async Task<IActionResult> Accessibility(CancellationToken ct)
     {
         var preference = await uiPreferenceService.GetForUserAsync(this.CurrentUserId(), ct);
-        return View(new UserUiPreferenceViewModel { ContrastMode = preference.ContrastMode, FontScale = preference.FontScale, ReduceMotion = preference.ReduceMotion });
+        return View(new UserUiPreferenceViewModel { ContrastMode = preference.ContrastMode, FontScale = preference.FontScale, ReduceMotion = preference.ReduceMotion, ShowAchievementPopups = preference.ShowAchievementPopups, ShowTipPopups = preference.ShowTipPopups, EnableToasts = preference.EnableToasts, ReducePopups = preference.ReducePopups });
     }
 
     [HttpPost("/profile/accessibility")]
@@ -32,8 +32,8 @@ public class ProfileController(ProfileService profileService, UserUiPreferenceSe
             return View(model);
         }
 
-        await uiPreferenceService.SaveAsync(this.CurrentUserId(), model.ContrastMode, model.FontScale, model.ReduceMotion, ct);
-        TempData["Success"] = "Preferências de visualização salvas.";
+        await uiPreferenceService.SaveAsync(this.CurrentUserId(), model.ContrastMode, model.FontScale, model.ReduceMotion, model.ShowAchievementPopups, model.ShowTipPopups, model.EnableToasts, model.ReducePopups, ct);
+        TempData["Success"] = "Preferências de visualização e pop-ups salvas.";
         return RedirectToAction(nameof(Accessibility));
     }
 }
