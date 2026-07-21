@@ -1,5 +1,18 @@
-using HabitFlow.Application; using HabitFlow.Domain; using HabitFlow.Infrastructure; using Microsoft.AspNetCore.Authentication.Cookies;
-var builder=WebApplication.CreateBuilder(args); builder.WebHost.UseUrls("http://0.0.0.0:5097");
-builder.Services.AddControllersWithViews(); builder.Services.AddHttpClient<TelegramService>(); builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme).AddCookie(o=>{o.LoginPath="/login";o.LogoutPath="/logout";o.Cookie.HttpOnly=true;o.Cookie.SameSite=SameSiteMode.Lax;o.Cookie.SecurePolicy=builder.Environment.IsDevelopment()?CookieSecurePolicy.SameAsRequest:CookieSecurePolicy.Always;o.ExpireTimeSpan=TimeSpan.FromHours(builder.Configuration.GetValue("Authentication:CookieHours",8));}); builder.Services.AddAuthorization();
-builder.Services.AddSingleton<LogSanitizer>(); builder.Services.AddSingleton<ProtocolGenerator>(); builder.Services.AddSingleton<WhatsAppValidator>(); builder.Services.AddScoped<DbConnectionFactory>(); builder.Services.AddScoped<SqlExecutor>(); builder.Services.AddScoped<IPasswordHasher,BCryptPasswordHasher>(); builder.Services.AddScoped<HabitPolicy>(); builder.Services.AddScoped<ProgressService>(); builder.Services.AddScoped<AdminAuthorizationService>(); builder.Services.AddScoped<IUserRepository,UserRepository>(); builder.Services.AddScoped<IHabitRepository,HabitRepository>(); builder.Services.AddScoped<IHabitCompletionRepository,HabitCompletionRepository>(); builder.Services.AddScoped<IAuditRepository,AuditRepository>(); builder.Services.AddScoped<IAdminAuditRepository,AdminAuditRepository>(); builder.Services.AddScoped<ISettingsRepository,SettingsRepository>(); builder.Services.AddScoped<ISupportRepository,SupportRepository>(); builder.Services.AddScoped<ILgpdRepository,LgpdRepository>(); builder.Services.AddScoped<IBillingRepository,BillingRepository>(); builder.Services.AddScoped<AuthService>(); builder.Services.AddScoped<UserService>(); builder.Services.AddScoped<HabitService>(); builder.Services.AddScoped<AuditService>(); builder.Services.AddScoped<AdminAuditService>(); builder.Services.AddScoped<SettingsService>(); builder.Services.AddScoped<SupportService>(); builder.Services.AddScoped<ProfileService>(); builder.Services.AddScoped<AdminService>(); builder.Services.AddScoped<WhatsAppService>(); builder.Services.AddScoped<LgpdService>(); builder.Services.AddScoped<BillingService>();
-var app=builder.Build(); if(!app.Environment.IsDevelopment()){app.UseExceptionHandler("/Home/Error"); app.UseHsts();} app.UseStaticFiles(); app.UseRouting(); app.UseAuthentication(); app.UseAuthorization(); app.MapControllerRoute("login","login",new{controller="Auth",action="Login"}); app.MapControllerRoute("register","register",new{controller="Auth",action="Register"}); app.MapControllerRoute("default","{controller=Home}/{action=Index}/{id?}"); app.MapGet("/health",()=>Results.Ok(new{status="healthy"})); app.Run();
+using HabitFlow.Application;
+using HabitFlow.Infrastructure;
+using HabitFlow.Web.Configuration;
+
+var builder = WebApplication.CreateBuilder(args);
+
+builder.WebHost.UseUrls("http://0.0.0.0:5097");
+
+builder.Services
+    .AddHabitFlowApplication()
+    .AddHabitFlowInfrastructure(builder.Configuration)
+    .AddHabitFlowWeb(builder.Configuration, builder.Environment);
+
+var app = builder.Build();
+
+app.UseHabitFlowPipeline();
+
+app.Run();
