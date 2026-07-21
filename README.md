@@ -63,3 +63,25 @@ O HabitFlow inclui painel administrativo operacional em `/admin`, gestão de usu
 ## v4.6 Premium Payments Billing Automation
 
 O HabitFlow agora possui planos reais Free/Premium, tela `/plans`, área `/billing`, checkout Mercado Pago configurável, webhook `/webhooks/mercadopago`, histórico financeiro e Admin Financeiro. Sem token Mercado Pago configurado, o checkout falha de forma segura e não ativa pagamento real.
+
+## HabitFlow em uma frase
+
+HabitFlow é um sistema simples para criar, acompanhar e manter hábitos no dia a dia. Você cadastra seus hábitos, marca o que concluiu e acompanha sua evolução com sequências, metas e relatórios fáceis de entender.
+
+### Como começar
+
+1. Acesse a Home e clique em **Começar grátis**.
+2. Escolha um objetivo no onboarding: saúde, estudos, produtividade, bem-estar ou organização.
+3. Adicione um hábito pronto e acompanhe o próximo passo no Dashboard.
+
+### Rodar sem Docker
+
+Use `dotnet restore`, `dotnet build` e `dotnet run --project src/HabitFlow.Web`. A porta padrão permanece 5097 e Docker continua opcional.
+
+### Publicar no IIS
+
+Publique com `dotnet publish src/HabitFlow.Web/HabitFlow.Web.csproj -c Release -o publish/windows` e configure o site no IIS apontando para a pasta publicada, sem commitar `publish/`.
+
+### Validar banco
+
+Execute `database/script_completo.sql` em banco limpo e depois `database/validate_schema_habitflow.sql`. Todas as tabelas do produto devem ficar no schema `habitflow`.

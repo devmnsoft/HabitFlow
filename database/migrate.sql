@@ -19,3 +19,5 @@
 \i database/migrations/015_schema_hardening.sql
 
 \i database/migrations/016_premium_billing.sql
+
+\i database/migrations/017_habit_templates_guided_journey.sql

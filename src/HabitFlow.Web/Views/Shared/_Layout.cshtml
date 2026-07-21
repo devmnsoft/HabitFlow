@@ -23,11 +23,11 @@
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#hfNav" aria-controls="hfNav" aria-expanded="false" aria-label="Abrir menu"><span class="navbar-toggler-icon"></span></button>
       <div class="collapse navbar-collapse" id="hfNav">
         <ul class="navbar-nav mx-auto mb-2 mb-lg-0 hf-nav-links">
-          <li class="nav-item"><a class="nav-link" href="/">Início</a></li><li class="nav-item"><a class="nav-link" href="/dashboard">Dashboard</a></li><li class="nav-item"><a class="nav-link" href="/habits">Hábitos</a></li><li class="nav-item"><a class="nav-link" href="/progress">Progresso</a></li><li class="nav-item"><a class="nav-link" href="/reports">Relatórios</a></li><li class="nav-item"><a class="nav-link" href="/support">Suporte</a></li>@if(isAdmin){<li class="nav-item"><a class="nav-link" href="/admin">Admin</a></li>}
+          <li class="nav-item"><a class="nav-link" href="/">Início</a></li><li class="nav-item"><a class="nav-link" href="/habit-library">Biblioteca</a></li><li class="nav-item"><a class="nav-link" href="/dashboard">Dashboard</a></li><li class="nav-item"><a class="nav-link" href="/habits">Hábitos</a></li><li class="nav-item"><a class="nav-link" href="/progress">Progresso</a></li><li class="nav-item"><a class="nav-link" href="/reports">Relatórios</a></li><li class="nav-item"><a class="nav-link" href="/support">Suporte</a></li>@if(isAdmin){<li class="nav-item"><a class="nav-link" href="/admin">Admin</a></li>}
         </ul>
         <div class="hf-user-area">
           @await Html.PartialAsync("~/Views/Shared/Partials/_NotificationBell.cshtml")
-          @if (isAuthenticated) { <div class="hf-user-chip"><span>@userName</span><small>@userEmail</small></div><span class="hf-plan-badge">Free</span><form method="post" action="/logout" class="m-0">@Html.AntiForgeryToken()<button class="btn btn-outline-secondary" data-loading-text="Saindo...">Logout</button></form> } else { <a class="btn btn-outline-success" href="/login">Entrar</a><a class="btn btn-success" href="/register">Começar agora</a> }
+          @if (isAuthenticated) { <div class="hf-user-chip"><span>@userName</span><small>@userEmail</small></div><span class="hf-plan-badge">Free</span><form method="post" action="/logout" class="m-0">@Html.AntiForgeryToken()<button class="btn btn-outline-secondary" data-loading-text="Saindo...">Logout</button></form> } else { <a class="btn btn-outline-success" href="/login">Entrar</a><a class="btn btn-success" href="/register">Começar grátis</a> }
         </div>
       </div>
     </div>
@@ -39,7 +39,7 @@
     @RenderBody()
   </div>
 </main>
-<footer class="hf-footer"><div class="container-fluid hf-shell"><div><strong>MNSOFT</strong><p>CNPJ 18.160.057/0001-13 · <a href="mailto:comercial@mnsoft.com.br">comercial@mnsoft.com.br</a></p></div><nav aria-label="Links legais"><a href="/profile">Privacidade</a><a href="/profile">Termos</a><a href="/support">Suporte</a></nav></div></footer>
+<footer class="hf-footer"><div class="container-fluid hf-shell"><div class="hf-footer-brand">@await Html.PartialAsync("~/Views/Shared/Partials/_MNSOFTSignature.cshtml")</div><nav aria-label="Links legais"><a href="/profile">Privacidade</a><a href="/profile">Termos</a><a href="/support">Suporte</a></nav></div></footer>
 @await Html.PartialAsync("~/Views/Shared/Partials/_ToastHost.cshtml")
 @await Html.PartialAsync("~/Views/Shared/Partials/_ConfirmModal.cshtml")
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script><script src="/js/site.js" asp-append-version="true"></script>@await RenderSectionAsync("Scripts", false)

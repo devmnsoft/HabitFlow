@@ -35,3 +35,7 @@ A migration `013_admin_operacional.sql` adiciona campos operacionais em `habitfl
 ## v4.6 Billing schema
 
 A migration `database/migrations/016_premium_billing.sql` cria `habitflow.plans`, `habitflow.subscriptions`, `habitflow.payment_transactions`, `habitflow.payment_webhook_events` e `habitflow.payment_audit_logs`, todas qualificadas no schema obrigatório `habitflow`.
+
+## v4.9 — Habit Library
+
+A migration `017_habit_templates_guided_journey.sql` cria `habitflow.habit_objectives` e `habitflow.habit_templates`, com seeds idempotentes e índices no schema obrigatório `habitflow`.

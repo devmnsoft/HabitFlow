@@ -63,3 +63,26 @@ public sealed class SchemaHardeningTests
         Assert.Equal("habitflow.habit_completions", HabitFlow.Infrastructure.Data.DbNames.Tables.HabitCompletions);
     }
 }
+
+public sealed class HabitLibraryDatabaseTests
+{
+    private static readonly string Root = Path.Combine("..", "..", "..", "..");
+
+    [Fact]
+    public void Complete_script_includes_habit_library_tables_and_seed()
+    {
+        var script = File.ReadAllText(Path.Combine(Root, "database", "script_completo.sql"));
+        Assert.Contains("create table if not exists habitflow.habit_objectives", script, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("create table if not exists habitflow.habit_templates", script, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("on conflict(slug) do update", script, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("Beber água", script, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void Habit_library_sql_uses_explicit_habitflow_schema()
+    {
+        var repo = File.ReadAllText(Path.Combine(Root, "src", "HabitFlow.Infrastructure", "Repositories", "HabitTemplateRepository.cs"));
+        Assert.Contains("habitflow.habit_templates", repo, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain(" public.", repo, StringComparison.OrdinalIgnoreCase);
+    }
+}
