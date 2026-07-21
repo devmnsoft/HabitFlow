@@ -14,6 +14,11 @@ public class HealthController(IConfiguration configuration, IWebHostEnvironment 
     [HttpGet("health/db")]
     public async Task<IActionResult> Database(CancellationToken ct)
     {
+        if (!env.IsDevelopment() && User?.IsInRole("Admin") != true)
+        {
+            return Ok(new { status = "Unavailable", message = "Estamos enfrentando uma indisponibilidade temporária. Tente novamente em instantes." });
+        }
+
         var result = await diagnostics.GetAsync(ct);
         var d = result.Value;
         var payload = new

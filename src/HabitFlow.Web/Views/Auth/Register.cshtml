@@ -1,14 +1,15 @@
+@model HabitFlow.Web.Models.RegisterViewModel
 @{ Layout = "~/Views/Shared/_Layout.cshtml"; ViewData["Title"] = "Criar conta"; }
 <section class="hf-auth-grid">
   <div class="hf-auth-card">
     <p class="hf-eyebrow">Comece hoje</p><h1>Crie sua conta grátis</h1>
     <p class="lead">Comece com um hábito simples e acompanhe sua evolução todos os dias.</p>
     <form method="post" action="/register" data-register-form novalidate>@Html.AntiForgeryToken()
-      <div class="mb-3"><label class="form-label" for="Name">Nome</label><input id="Name" name="Name" required maxlength="120" autocomplete="name" class="form-control" placeholder="Seu nome"></div>
-      <div class="mb-3"><label class="form-label" for="Email">E-mail</label><input id="Email" name="Email" type="email" required autocomplete="email" class="form-control" placeholder="voce@email.com"></div>
+      <div class="mb-3"><label class="form-label" for="Name">Nome</label><input asp-for="Name" required maxlength="120" autocomplete="name" class="form-control" placeholder="Seu nome"><span asp-validation-for="Name" class="text-danger"></span></div>
+      <div class="mb-3"><label class="form-label" for="Email">E-mail</label><input asp-for="Email" type="email" required autocomplete="email" class="form-control" placeholder="voce@email.com"><span asp-validation-for="Email" class="text-danger"></span></div>
       @await Html.PartialAsync("~/Views/Shared/Partials/_PasswordInput.cshtml", null, new ViewDataDictionary(ViewData){{"Id","Password"},{"Name","Password"},{"Label","Senha"},{"Autocomplete","new-password"},{"Placeholder","Mínimo de 8 caracteres"},{"HelpText","Use uma senha segura. Seus dados são tratados conforme a LGPD."}})
       @await Html.PartialAsync("~/Views/Shared/Partials/_PasswordInput.cshtml", null, new ViewDataDictionary(ViewData){{"Id","ConfirmPassword"},{"Name","ConfirmPassword"},{"Label","Confirmar senha"},{"Autocomplete","new-password"},{"Placeholder","Digite a mesma senha"},{"HelpText","Repita a senha para evitar erros no cadastro."}})
-      <p class="hf-field-error d-none" data-password-match-error role="alert">As senhas ainda não conferem.</p>
+      <span asp-validation-for="Password" class="text-danger"></span><span asp-validation-for="ConfirmPassword" class="text-danger"></span><p class="hf-field-error d-none" data-password-match-error role="alert">As senhas ainda não conferem.</p>
       <button class="btn btn-success btn-lg w-100" data-loading-text="Criando...">Criar minha conta grátis</button>
     </form>
     <p class="mt-3 mb-0 text-muted">Já tem conta? <a href="/login">Entrar</a>.</p>

@@ -1,1 +1,6 @@
-@await Component.InvokeAsync("MNSOFTLogo")
+@{
+    var official = Url.Content("~/brand/mnsoft/logo-mnsoft-oficial.png");
+    var physical = System.IO.Path.Combine(System.IO.Directory.GetCurrentDirectory(), "wwwroot", "brand", "mnsoft", "logo-mnsoft-oficial.png");
+}
+@if (System.IO.File.Exists(physical)) { <img class="mnsoft-official-logo" src="@official" alt="Logo oficial da MNSOFT" loading="lazy" decoding="async" /> }
+else { <span class="mnsoft-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 16V8l4 5 4-5v8M15 16V8l5 8V8"/></svg></span> }
