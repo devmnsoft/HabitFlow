@@ -1,0 +1,4 @@
+param([Parameter(Mandatory=$true)][string]$BackupFile,[string]$DatabaseName='habitflow',[string]$Host='localhost',[int]$Port=5432,[string]$User='postgres',[string]$Confirm)
+. "$PSScriptRoot\_common.ps1"; if($Confirm -ne 'RESTAURAR_BANCO_HABITFLOW'){throw 'Confirmação obrigatória: -Confirm RESTAURAR_BANCO_HABITFLOW'}; $log=New-LogPath 'restore-database'
+if($BackupFile -like '*.dump' -or $BackupFile -like '*.backup'){Require-Command pg_restore 'Adicione pg_restore ao PATH.'; & pg_restore --clean --if-exists --no-owner --host=$Host --port=$Port --username=$User --dbname=$DatabaseName $BackupFile *>&1 | Tee-Object $log}else{Require-Command psql 'Adicione psql ao PATH.'; & psql -h $Host -p $Port -U $User -d $DatabaseName -v ON_ERROR_STOP=1 -f $BackupFile *>&1 | Tee-Object $log}
+if($LASTEXITCODE -ne 0){throw 'Restore falhou'}

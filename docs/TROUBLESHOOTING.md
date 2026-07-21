@@ -1,20 +1,21 @@
 # TROUBLESHOOTING
 
-HabitFlow v4 usa ASP.NET Core 10, DDD, Clean Architecture, Dapper, PostgreSQL, Bootstrap 5 e JavaScript Vanilla.
+HabitFlow v4.4-WindowsIIS-Production-NoDocker formaliza operação em Windows/IIS sem tornar Docker obrigatório.
 
-- Código principal: src/.
-- Banco: database/migrations e database/seeds.
-- Docker: porta 5097 para a aplicação e PostgreSQL 16.
-- IIS: publicar em publish/windows com web.config e App Pool No Managed Code.
-- Segurança: sem secrets no Git, sem stack trace em produção, cookies seguros, BCrypt e SQL parametrizado.
-- LGPD: exportação e exclusão são registradas em habitflow.lgpd_requests.
-- Legado Firebase: preservado como referência em legacy-firebase/ quando aplicável e não usado como backend principal.
+## Fluxo principal
+1. Instale .NET Hosting Bundle, IIS e PostgreSQL 16.
+2. Rode `powershell -ExecutionPolicy Bypass -File scripts/windows/check-environment.ps1`.
+3. Crie o banco com `scripts/windows/setup-postgres-database.ps1 -DatabaseName habitflow`.
+4. Aplique `database/script_completo.sql` com `scripts/windows/apply-database-script.ps1 -DatabaseName habitflow`.
+5. Gere configuração local com `scripts/windows/generate-production-config.ps1` e nunca versione secrets.
+6. Publique no IIS com `scripts/windows/publish-iis.ps1 -Confirm PUBLICAR_HABITFLOW_IIS`.
+7. Valide com `scripts/windows/smoke-test.ps1 -BaseUrl http://localhost:5097` ou URL HTTPS pública.
 
-## Atualização v4.1 - qualidade ASP.NET e SQL completo
-
-- Use `database/script_completo.sql` para criar um banco PostgreSQL limpo de forma completa e sem seeds de usuários de desenvolvimento.
-- Use `database/script_completo_dev.sql` somente em desenvolvimento, após o script completo, para criar `admin@habitflow.local` e `user@habitflow.local` com senha documentada `Admin@123`.
-- Em Docker, execute `docker compose up -d --build`; a aplicação fica em `http://localhost:5097` e o PostgreSQL em `localhost:5432`.
-- Em Windows/IIS, publique com `dotnet publish src/HabitFlow.Web/HabitFlow.Web.csproj -c Release -o publish/windows`, configure `appsettings.Production.json` fora do Git e use o `web.config` publicado.
-- Nunca use seed dev, `.env` real ou `appsettings.Production.json` real em produção.
-- Valide o banco com `scripts/database/validate-script-completo.ps1` ou `scripts/database/validate-script-completo.bat` quando `psql` estiver disponível.
+## Erros comuns
+- 500.30: confirme Hosting Bundle, Event Viewer e habilite stdout temporariamente no web.config apenas para diagnóstico.
+- Connection string inválida: valide Host, Port, Database, Username e Password.
+- psql não encontrado: adicione `C:\Program Files\PostgreSQL\16\bin` ao PATH.
+- Permissão IIS: conceda leitura ao AppPool e escrita somente em pastas necessárias.
+- App pool errado: use No Managed Code para ASP.NET Core hospedado pelo ANCM.
+- Banco não criado: execute setup-postgres-database antes do apply.
+- SSL/cookie secure: habilite HTTPS antes de CookieSecure em produção.

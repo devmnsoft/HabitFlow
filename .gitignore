@@ -15,3 +15,8 @@ firebase-adminsdk*.json
 *.user
 .vs/
 .idea/
+
+backups/
+*.dump
+*.backup
+*.sql.bak

@@ -1,0 +1,5 @@
+param([string]$BackupPath,[string]$TargetPath='C:\inetpub\wwwroot\habitflow',[string]$SiteName,[string]$AppPoolName,[string]$Confirm)
+. "$PSScriptRoot\_common.ps1"; $root=Get-RepoRoot; if(-not $BackupPath){Get-ChildItem (Join-Path $root 'backups\iis') -Directory | Sort-Object LastWriteTime -Descending; throw 'Informe -BackupPath'}; if($Confirm -ne 'ROLLBACK_HABITFLOW_IIS'){throw 'Confirmação obrigatória: -Confirm ROLLBACK_HABITFLOW_IIS'}
+Import-Module WebAdministration -ErrorAction SilentlyContinue; if($SiteName){Stop-Website $SiteName -ErrorAction SilentlyContinue}; if($AppPoolName){Stop-WebAppPool $AppPoolName -ErrorAction SilentlyContinue}
+Remove-Item "$TargetPath\*" -Recurse -Force -ErrorAction SilentlyContinue; Copy-Item "$BackupPath\*" $TargetPath -Recurse -Force
+if($AppPoolName){Start-WebAppPool $AppPoolName -ErrorAction SilentlyContinue}; if($SiteName){Start-Website $SiteName -ErrorAction SilentlyContinue}; ("Rollback de $BackupPath para $TargetPath")|Set-Content (New-LogPath 'rollback-iis')

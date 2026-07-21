@@ -1,4 +1,4 @@
-# DEPLOY_WINDOWS_SEM_DOCKER
+# POSTGRES_WINDOWS
 
 HabitFlow v4.4-WindowsIIS-Production-NoDocker formaliza operação em Windows/IIS sem tornar Docker obrigatório.
 

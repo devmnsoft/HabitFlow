@@ -18,6 +18,7 @@ public sealed class DatabaseScriptTests
     [InlineData("habitflow.login_attempts")]
     [InlineData("habitflow.lgpd_requests")]
     [InlineData("habitflow.billing_events")]
+    [InlineData("habitflow.deployment_events")]
     public void Complete_script_contains_required_tables(string table)
     {
         Assert.Contains($"create table if not exists {table}", Script, StringComparison.OrdinalIgnoreCase);

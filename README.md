@@ -1,3 +1,12 @@
+
+## v4.4-WindowsIIS-Production-NoDocker
+- Operação sem Docker formalizada.
+- Scripts Windows para validação de ambiente, PostgreSQL, backup/restore, publicação IIS, rollback e smoke tests.
+- Health checks /health, /health/db e /health/version.
+- Diagnóstico Admin em Sistema > Ambiente.
+- Migration 014 com habitflow.deployment_events.
+- Documentação Windows/IIS sem Docker ampliada.
+
 # HabitFlow v4
 Reescrita limpa do HabitFlow em ASP.NET Core 10, DDD, Clean Architecture, Dapper, PostgreSQL, Bootstrap 5 e JavaScript Vanilla.
 
