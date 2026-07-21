@@ -1,0 +1,6 @@
+@model HabitFlow.Domain.Habit
+@{ Layout = "~/Views/Shared/_Layout.cshtml"; var today = DateOnly.FromDateTime(DateTime.UtcNow); }
+<section class="hero-card"><h1>@Model.Name</h1><p>@Model.Category · @Model.FrequencyType · criado em @Model.CreatedAt.ToString("dd/MM/yyyy")</p><div class="d-flex gap-2"><form method="post" action="/Habits/Complete/@Model.Id">@Html.AntiForgeryToken()<button class="btn btn-success">Marcar hoje</button></form><a class="btn btn-outline-secondary" href="/Habits">Voltar</a></div></section>
+<div class="row g-3 mt-1"><div class="col-md-4"><div class="card p-3"><span>Streak atual</span><strong>—</strong></div></div><div class="col-md-4"><div class="card p-3"><span>Maior streak</span><strong>—</strong></div></div><div class="col-md-4"><div class="card p-3"><span>Total de conclusões</span><strong>—</strong></div></div></div>
+<div class="card p-3 mt-3"><h2 class="h5">Calendário do mês</h2><div class="month-grid">@for(var i=1;i<=DateTime.DaysInMonth(today.Year,today.Month);i++){var cls=i==today.Day?"today":"";<span class="day @cls">@i</span>}</div></div>
+@if(!string.IsNullOrWhiteSpace(Model.Notes)){<div class="card p-3 mt-3"><h2 class="h5">Observações</h2><p>@Model.Notes</p></div>}

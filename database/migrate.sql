@@ -9,3 +9,5 @@
 \i database/migrations/009_create_billing.sql
 \i database/migrations/010_create_indexes.sql
 \i database/migrations/011_seed_initial_settings.sql
+
+\i database/migrations/012_habit_recurrence_reports_notifications.sql

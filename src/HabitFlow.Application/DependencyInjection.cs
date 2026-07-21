@@ -16,6 +16,10 @@ public static class DependencyInjection
         services.AddScoped<AuthService>();
         services.AddScoped<UserService>();
         services.AddScoped<HabitService>();
+        services.AddScoped<HabitScheduleService>();
+        services.AddScoped<NotificationService>();
+        services.AddScoped<ReportService>();
+        services.AddScoped<OnboardingService>();
         services.AddScoped<AuditService>();
         services.AddScoped<AdminAuditService>();
         services.AddScoped<SettingsService>();

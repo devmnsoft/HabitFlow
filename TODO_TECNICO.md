@@ -115,3 +115,7 @@ firebase deploy --only hosting
 - Validar publicação real em Windows Server com IIS URL Rewrite instalado.
 - Autorizar domínio final IIS no Firebase Auth e App Check.
 - Manter `publisher.config.json`, `publish/`, `dist/` e ZIPs fora do Git.
+
+## v4.2 entregue
+- Validar em ambiente com .NET SDK e PostgreSQL disponíveis.
+- Evoluir badge de notificações para carregar contagem não lida via view component.

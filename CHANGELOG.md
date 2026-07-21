@@ -40,3 +40,23 @@
 - Migrations sincronizadas com script completo
 - Testes ampliados
 - Documentação atualizada
+
+## v4.2-UserExperience-HabitRecurrence-Reports
+- Recorrência de hábitos
+- Dias personalizados da semana
+- Meta semanal
+- Horário de lembrete
+- Observações no hábito
+- Dashboard diário melhorado
+- Onboarding com sugestões rápidas
+- Página de detalhe do hábito
+- Calendário mensal do hábito
+- Notificações internas
+- Relatórios pessoais semanais e mensais
+- Exportação CSV pessoal
+- Progresso melhorado
+- Filtros por categoria/status
+- UX mobile first refinada
+- Novas migrations
+- script_completo.sql atualizado
+- Testes de recorrência, notificações e relatórios

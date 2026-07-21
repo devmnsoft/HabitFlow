@@ -18,3 +18,7 @@ HabitFlow v4 usa ASP.NET Core 10, DDD, Clean Architecture, Dapper, PostgreSQL, B
 - Em Windows/IIS, publique com `dotnet publish src/HabitFlow.Web/HabitFlow.Web.csproj -c Release -o publish/windows`, configure `appsettings.Production.json` fora do Git e use o `web.config` publicado.
 - Nunca use seed dev, `.env` real ou `appsettings.Production.json` real em produção.
 - Valide o banco com `scripts/database/validate-script-completo.ps1` ou `scripts/database/validate-script-completo.bat` quando `psql` estiver disponível.
+
+## v4.2
+
+Inclui a migration `012_habit_recurrence_reports_notifications.sql` com novos campos em `habitflow.habits` e tabelas `habit_week_days`, `notifications` e `user_reports`. Os scripts completos foram atualizados para PostgreSQL limpo.
