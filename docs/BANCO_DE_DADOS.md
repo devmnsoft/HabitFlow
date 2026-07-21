@@ -39,3 +39,7 @@ A migration `database/migrations/016_premium_billing.sql` cria `habitflow.plans`
 ## v4.9 — Habit Library
 
 A migration `017_habit_templates_guided_journey.sql` cria `habitflow.habit_objectives` e `habitflow.habit_templates`, com seeds idempotentes e índices no schema obrigatório `habitflow`.
+
+## v5.6 clientes
+
+A gestão de clientes usa `habitflow.clients`, constraints de plano/status, índices por nome/e-mail/documento/status/criação e vínculo opcional `habitflow.users.client_id`.

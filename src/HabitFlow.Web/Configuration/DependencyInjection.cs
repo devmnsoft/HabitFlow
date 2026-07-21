@@ -9,6 +9,7 @@ public static class DependencyInjection
         services.AddControllersWithViews();
         services.AddSingleton<IBrandAssetService, BrandAssetService>();
         services.AddHabitFlowAuthentication(configuration, environment);
+        services.AddScoped<ApplicationFeedbackService>();
         return services;
     }
 }

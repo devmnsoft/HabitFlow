@@ -147,3 +147,7 @@ Execute `database/script_completo.sql` em banco limpo e depois `database/validat
 
 ### v5.5 Feedback premium
 O HabitFlow agora possui `HabitFlowFeedback` para toasts, modais, confirmações, conquistas, retry de falhas recuperáveis e mensagens seguras de banco, mantendo Bootstrap 5, Razor/MVC, JavaScript Vanilla, Dapper, PostgreSQL e schema `habitflow`.
+
+## v5.6 ClientRegistration ActionMessages MNSOFT Branding
+
+Inclui gestão administrativa de clientes, feedback global por toasts/modais, auditoria de ações de cliente, vínculo opcional cliente-usuário e badge institucional MNSOFT refinado. O projeto continua executando sem Docker na porta 5097.

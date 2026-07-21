@@ -45,10 +45,11 @@
 <main id="conteudo" class="hf-main" tabindex="-1">
   <div class="container-fluid hf-shell">
     @await Html.PartialAsync("~/Views/Shared/Partials/_AppMessages.cshtml")
+    @await Html.PartialAsync("~/Views/Shared/Partials/_FeedbackBridge.cshtml")
     @RenderBody()
   </div>
 </main>
-<footer class="hf-footer"><div class="container-fluid hf-shell hf-footer-premium"><div><div class="hf-footer-brand">@await Html.PartialAsync("~/Views/Shared/Partials/_MNSOFTSignatureCompact.cshtml")</div><p>Tecnologia para produtos simples, seguros e confiáveis.</p></div><div><h2>HabitFlow</h2><p>Rotina, hábitos e progresso em um só lugar.</p></div><nav aria-label="Links institucionais"><h2>Links</h2><ul class="hf-footer-links"><li><a href="/profile">Privacidade</a></li><li><a href="/profile">Termos</a></li><li><a href="/support">Suporte</a></li><li><a href="/help">Central de Ajuda</a></li></ul></nav><div><h2>Contato</h2><p><a href="mailto:comercial@mnsoft.com.br">comercial@mnsoft.com.br</a><br>CNPJ 18.160.057/0001-13</p></div></div></footer>
+<footer class="hf-footer"><div class="container-fluid hf-shell hf-footer-premium"><div>@await Html.PartialAsync("~/Views/Shared/Partials/_MNSOFTBrandBadge.cshtml", null, new ViewDataDictionary(ViewData){{"Compact","true"}})</div><div><h2>HabitFlow</h2><p>Hábitos, rotina e progresso em um só lugar.</p></div><nav aria-label="Produto"><h2>Produto</h2><ul class="hf-footer-links"><li><a href="/">Início</a></li><li><a href="/demo">Demonstração</a></li><li><a href="/habit-library">Biblioteca</a></li><li><a href="/plans">Planos</a></li></ul></nav><nav aria-label="Suporte"><h2>Suporte</h2><ul class="hf-footer-links"><li><a href="/help">Central de Ajuda</a></li><li><a href="/support">Suporte</a></li><li><a href="/help/privacy">Privacidade</a></li><li><a href="/help/privacy">Termos</a></li></ul></nav></div><div class="container-fluid hf-shell hf-footer-bottom">© 2026 MNSOFT — CNPJ 18.160.057/0001-13 — comercial@mnsoft.com.br</div></footer>
 @await Html.PartialAsync("~/Views/Shared/Partials/_ToastHost.cshtml")
 @await Html.PartialAsync("~/Views/Shared/Partials/_FeedbackModal.cshtml")
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script><script src="/js/site.js" asp-append-version="true"></script><script src="/js/guided-tour.js" asp-append-version="true"></script>@await RenderSectionAsync("Scripts", false)
