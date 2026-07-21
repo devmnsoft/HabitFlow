@@ -1,0 +1,3 @@
+$routes=@('/','/demo','/register','/login','/help','/habit-library','/plans','/support','/dashboard','/habits','/progress','/reports','/profile/accessibility')
+$missing=@(); foreach($r in $routes){ $name=($r.Trim('/') -split '/')[0]; if($r -eq '/') { continue }; if(-not (Get-ChildItem src/HabitFlow.Web/Controllers -Filter *.cs | Select-String -SimpleMatch "`"$name`"" -Quiet) -and -not (Test-Path "src/HabitFlow.Web/Views/$((Get-Culture).TextInfo.ToTitleCase($name))/Index.cshtml")){ $missing+=$r }}
+if($missing){ Write-Error "Rotas não confirmadas: $($missing -join ', ')"; exit 1}; Write-Host 'OK: links internos principais documentados.'

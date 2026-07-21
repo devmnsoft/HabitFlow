@@ -17,6 +17,18 @@ public class PostgresResilienceTests
         Assert.Equal(PostgresErrorHelper.FriendlyDatabaseMissingMessage, PostgresErrorHelper.BuildFriendlyMessage(ex));
     }
 
+
+    [Fact]
+    public void PostgresErrorHelper_mapeia_28p01_para_codigo_amigavel()
+    {
+        var ex = new InvalidOperationException("28P01: password authentication failed");
+        ex.Data["SqlState"] = PostgresErrorHelper.InvalidPasswordSqlState;
+
+        Assert.True(PostgresErrorHelper.IsInvalidPassword(ex));
+        Assert.Equal(PostgresErrorHelper.InvalidPasswordCode, PostgresErrorHelper.ToFriendlyCode(ex));
+        Assert.Equal(PostgresErrorHelper.FriendlyInvalidPasswordMessage, PostgresErrorHelper.ToFriendlyMessage(ex));
+    }
+
     [Fact]
     public async Task AuthService_retorna_mensagem_amigavel_e_nao_aciona_auditoria_quando_banco_nao_existe()
     {

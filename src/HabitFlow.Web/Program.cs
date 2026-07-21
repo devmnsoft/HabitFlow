@@ -4,6 +4,11 @@ using HabitFlow.Web.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
 
+if (builder.Environment.IsDevelopment())
+{
+    builder.Configuration.AddJsonFile("appsettings.Development.local.json", optional: true, reloadOnChange: true);
+}
+
 builder.WebHost.UseUrls("http://0.0.0.0:5097");
 
 builder.Services

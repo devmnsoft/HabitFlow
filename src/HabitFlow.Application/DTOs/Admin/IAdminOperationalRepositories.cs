@@ -40,7 +40,8 @@ public sealed record DatabaseDiagnostics(
     int LogsCount,
     bool RequiredTablesOk,
     string? CurrentSchema,
-    string? ErrorMessage);
+    string? ErrorMessage,
+    string? ErrorCode = null);
 
 public interface IDatabaseDiagnosticsRepository
 {

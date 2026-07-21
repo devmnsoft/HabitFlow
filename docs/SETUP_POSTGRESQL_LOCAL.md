@@ -1,4 +1,4 @@
-# BRANDING_MNSOFT
+# SETUP_POSTGRESQL_LOCAL
 
 Documento da versão v5.2-DatabaseConnectionFix-PremiumDemo-UXNavigation.
 

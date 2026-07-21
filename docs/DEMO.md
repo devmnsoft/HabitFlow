@@ -1,4 +1,4 @@
-# BRANDING_MNSOFT
+# DEMO
 
 Documento da versão v5.2-DatabaseConnectionFix-PremiumDemo-UXNavigation.
 
