@@ -1,4 +1,3 @@
+# Jornada UX HabitFlow
 
-## v4.9 — Jornada guiada premium
-
-O usuário entende em até 10 segundos que o HabitFlow cria, acompanha e mantém hábitos. A jornada recomendada é: Home → Começar grátis → Onboarding → Objetivo → Hábito pronto → Dashboard com próximo passo.
+A jornada agora explica o produto na Home, conduz o usuário para cadastro, sugere hábitos prontos, mostra checklist no Dashboard e oferece Central de Ajuda e suporte em pontos de dúvida.

@@ -1,0 +1,12 @@
+@model HabitFlow.Web.ViewComponents.MNSOFTLogoViewModel
+@if (Model.HasOfficialLogo)
+{
+    <img class="mnsoft-official-logo" src="@Model.OfficialLogoPath" alt="Logo oficial da MNSOFT" loading="lazy" decoding="async" />
+}
+else
+{
+    <span class="mnsoft-fallback-logo" role="img" aria-label="Assinatura visual temporária MNSOFT">
+        <strong>MNSOFT</strong>
+        <small>Assinatura visual temporária</small>
+    </span>
+}
