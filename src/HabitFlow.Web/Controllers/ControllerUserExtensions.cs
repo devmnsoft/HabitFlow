@@ -16,7 +16,7 @@ internal static class ControllerUserExtensions
         string.Empty,
         null,
         Enum.TryParse<UserRole>(controller.User.FindFirstValue(ClaimTypes.Role), out var role) ? role : UserRole.User,
-        AccountStatus.Active,
+        Enum.TryParse<AccountStatus>(controller.User.FindFirstValue("account_status"), out var status) ? status : AccountStatus.Active,
         RiskStatus.Normal,
         UserPlan.Free,
         PlanStatus.Active,

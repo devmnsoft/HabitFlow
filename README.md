@@ -34,3 +34,7 @@ O legado está documentado em `docs/LEGACY_FIREBASE.md` e preservado em `legacy-
 ### v4.2 — UserExperience Habit Recurrence Reports
 
 A versão v4.2 adiciona recorrência de hábitos (diária, dias úteis, finais de semana e dias personalizados), meta semanal, lembrete opcional, observações, notificações internas, relatórios pessoais e exportação CSV protegida contra CSV injection.
+
+## v4.3 Admin Operacional
+
+O HabitFlow inclui painel administrativo operacional em `/admin`, gestão de usuários, suporte, LGPD, logs, métricas, leads Premium, financeiro inicial, exportações CSV seguras e migration `013_admin_operacional.sql`. A aplicação continua usando ASP.NET Core, Dapper e PostgreSQL na porta 5097.

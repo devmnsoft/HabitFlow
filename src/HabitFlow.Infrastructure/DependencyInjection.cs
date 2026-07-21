@@ -1,4 +1,5 @@
 using Dapper;
+using HabitFlow.Application;
 using HabitFlow.Domain;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -25,6 +26,13 @@ public static class DependencyInjection
         services.AddScoped<ISupportRepository, SupportRepository>();
         services.AddScoped<ILgpdRepository, LgpdRepository>();
         services.AddScoped<IBillingRepository, BillingRepository>();
+        services.AddScoped<IAdminUserRepository, AdminUserRepository>();
+        services.AddScoped<IAdminMetricsRepository, AdminMetricsRepository>();
+        services.AddScoped<IAdminBillingRepository, AdminMetricsRepository>();
+        services.AddScoped<IAdminSupportRepository, AdminSupportRepository>();
+        services.AddScoped<IAdminLgpdRepository, AdminLgpdRepository>();
+        services.AddScoped<IAdminAuditQueryRepository, AdminAuditQueryRepository>();
+        services.AddScoped<IAdminExportRepository, AdminExportRepository>();
         return services;
     }
 }

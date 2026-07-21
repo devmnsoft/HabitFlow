@@ -5,19 +5,16 @@ using Microsoft.AspNetCore.Mvc;
 namespace HabitFlow.Web.Controllers;
 
 [Authorize(Roles = "Admin")]
-public class AdminController(AdminService adminService, SettingsService settingsService, ILogger<AdminController> logger) : Controller
+public class AdminController(AdminDashboardService dashboard, SettingsService settingsService, ILogger<AdminController> logger) : Controller
 {
-    public IActionResult Index() => View();
-
-    public async Task<IActionResult> Users(string? q, CancellationToken ct)
+    [HttpGet("admin")]
+    public async Task<IActionResult> Index(CancellationToken ct)
     {
-        try { return View(await adminService.SearchUsersAsync(this.CurrentUserSnapshot(), q, ct)); }
-        catch (Exception ex) { logger.LogError(ex, "Erro ao carregar usuários no admin"); TempData["Error"] = "Não foi possível carregar usuários."; return View(); }
+        try { return View(await dashboard.GetDashboardAsync(this.CurrentUserSnapshot(), ct)); }
+        catch (Exception ex) { logger.LogError(ex, "Erro ao carregar dashboard admin"); TempData["Error"] = "Não foi possível carregar o dashboard."; return View(); }
     }
 
-    public IActionResult UserDetail() => View();
-
-    public IActionResult Logs() => View();
+    public IActionResult Logs() => RedirectToAction("System", "AdminLogs");
 
     public async Task<IActionResult> Settings(CancellationToken ct)
     {

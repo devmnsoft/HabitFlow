@@ -22,3 +22,7 @@ HabitFlow v4 usa ASP.NET Core 10, DDD, Clean Architecture, Dapper, PostgreSQL, B
 ## v4.2
 
 Inclui a migration `012_habit_recurrence_reports_notifications.sql` com novos campos em `habitflow.habits` e tabelas `habit_week_days`, `notifications` e `user_reports`. Os scripts completos foram atualizados para PostgreSQL limpo.
+
+## v4.3 Admin Operacional
+
+A migration `013_admin_operacional.sql` adiciona campos operacionais em `habitflow.users`, notas administrativas, histórico de exportações e snapshots de dashboard. O `script_completo.sql` inclui a migration para instalação limpa sem depender de includes externos.
