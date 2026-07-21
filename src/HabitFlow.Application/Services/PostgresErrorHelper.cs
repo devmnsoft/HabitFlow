@@ -56,6 +56,27 @@ public static class PostgresErrorHelper
         : IsConnectionUnavailable(ex) ? FriendlyConnectionUnavailableMessage
         : FriendlyGenericMessage;
 
+
+    public static string ToPublicUserMessage(Exception ex, bool isDevelopment)
+    {
+        if (isDevelopment) return ToDeveloperHint(ex);
+        return IsInvalidPassword(ex) ? "Não foi possível acessar o banco de dados com as credenciais configuradas."
+            : IsDatabaseMissing(ex) ? "O banco de dados configurado não foi encontrado."
+            : IsPermissionDenied(ex) ? "O usuário configurado não possui permissão suficiente no banco."
+            : IsMissingTable(ex) ? "O banco está acessível, mas ainda não possui todas as tabelas necessárias."
+            : IsConnectionUnavailable(ex) ? "Não foi possível conectar ao servidor PostgreSQL."
+            : "Não foi possível concluir sua solicitação porque o sistema não conseguiu acessar o banco de dados.";
+    }
+
+    public static string ToDeveloperHint(Exception ex) => IsInvalidPassword(ex) ? "A senha do PostgreSQL está incorreta. Revise Username e Password em appsettings.Development.local.json."
+        : IsDatabaseMissing(ex) ? "O banco de dados habitflow não existe. Crie o banco e aplique database/script_completo.sql."
+        : IsPermissionDenied(ex) ? "Conceda permissões ao usuário configurado no schema habitflow."
+        : IsMissingTable(ex) ? "Execute database/script_completo.sql e database/validate_schema_habitflow.sql."
+        : IsConnectionUnavailable(ex) ? "Verifique se o PostgreSQL está iniciado e acessível em Host/Port configurados."
+        : "Falha ao conectar ao PostgreSQL. Verifique Host, Database, Username e Password em appsettings.Development.local.json.";
+
+    public static string ToActionLink(Exception ex, bool isDevelopment) => isDevelopment ? "/diagnostics/database" : "/support";
+
     public static string BuildFriendlyMessage(Exception ex) => ToFriendlyMessage(ex);
     public static string BuildErrorCode(Exception ex) => ToFriendlyCode(ex);
 

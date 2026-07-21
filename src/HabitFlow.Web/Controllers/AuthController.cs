@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace HabitFlow.Web.Controllers;
 
-public class AuthController(AuthService authService, ILogger<AuthController> logger) : Controller
+public class AuthController(AuthService authService, IWebHostEnvironment env, ILogger<AuthController> logger) : Controller
 {
     [HttpGet("/login")]
     public IActionResult Login() => View();
@@ -19,7 +19,7 @@ public class AuthController(AuthService authService, ILogger<AuthController> log
         {
             if (!ModelState.IsValid) return View(dto);
             var result = await authService.LoginAsync(dto, HttpContext.Connection.RemoteIpAddress?.ToString(), Request.Headers.UserAgent, ct);
-            if (result.IsFailure) { TempData["Error"] = result.Error.Message; return View(dto); }
+            if (result.IsFailure) { SetFailureMessage(result.Error.Code, result.Error.Message); return View(dto); }
             var user = result.Value!;
             var identity = new ClaimsIdentity(new[]
             {
@@ -51,7 +51,7 @@ public class AuthController(AuthService authService, ILogger<AuthController> log
         {
             if (!ModelState.IsValid) return View(dto);
             var result = await authService.RegisterAsync(dto, ct);
-            if (result.IsFailure) { TempData["Error"] = result.Error.Message; return View(dto); }
+            if (result.IsFailure) { SetFailureMessage(result.Error.Code, result.Error.Message); return View(dto); }
             TempData["Success"] = "Cadastro criado. Faça login para continuar.";
             return RedirectToAction(nameof(Login));
         }
@@ -60,6 +60,24 @@ public class AuthController(AuthService authService, ILogger<AuthController> log
             logger.LogError(ex, "Erro inesperado no POST /register");
             TempData["Error"] = "Não foi possível concluir o cadastro agora.";
             return View(dto);
+        }
+    }
+
+    private void SetFailureMessage(string code, string message)
+    {
+        if (code.StartsWith("postgres.", StringComparison.OrdinalIgnoreCase))
+        {
+            TempData["DatabaseError"] = message;
+            TempData["DatabaseErrorCode"] = code;
+            if (env.IsDevelopment()) TempData["Info"] = "Dica para desenvolvimento: acesse /health/db para ver o diagnóstico.";
+        }
+        else if (code.StartsWith("validation.", StringComparison.OrdinalIgnoreCase))
+        {
+            TempData["ValidationError"] = message;
+        }
+        else
+        {
+            TempData["Error"] = message;
         }
     }
 

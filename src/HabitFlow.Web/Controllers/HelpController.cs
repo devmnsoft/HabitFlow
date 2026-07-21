@@ -28,4 +28,10 @@ public sealed class HelpController : Controller
 
     [HttpGet("support")]
     public IActionResult Support() => View();
+
+    [HttpGet("login")]
+    public IActionResult Login() => View();
+
+    [HttpGet("database-setup")]
+    public IActionResult DatabaseSetup() => View();
 }

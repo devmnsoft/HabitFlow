@@ -41,7 +41,7 @@ public class PostgresResilienceTests
 
         Assert.False(result.IsSuccess);
         Assert.Equal(PostgresErrorHelper.DatabaseMissingCode, result.Error.Code);
-        Assert.Equal(PostgresErrorHelper.FriendlyDatabaseMissingMessage, result.Error.Message);
+        Assert.Equal("O banco de dados configurado não foi encontrado.", result.Error.Message);
         Assert.Equal(0, auditRepo.Count);
     }
 

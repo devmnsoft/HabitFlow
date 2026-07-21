@@ -1,4 +1,23 @@
 
+## v5.3-AuthUX-DatabaseMessages-ContextualPremiumTemplate
+- Cadastro com confirmação de senha
+- Validação backend de senha e confirmação
+- Campos de senha padronizados
+- Botão de mostrar/ocultar senha com olhinho
+- Senha oculta por padrão
+- Mensagens visuais premium com alto contraste
+- Mensagens específicas para erro de banco
+- Separação de mensagem pública e mensagem técnica
+- Diagnóstico PostgreSQL 28P01 melhorado
+- AuthController usando DatabaseError
+- AuditService sem cascata em erro de banco
+- Ilustrações contextuais por página
+- Login e cadastro redesenhados
+- Documentação de mensagens de banco
+- Documentação de UX de senha
+- Testes de autenticação e mensagens
+
+
 ## v5.2-DatabaseConnectionFix-PremiumDemo-UXNavigation
 - Correção amigável para erro PostgreSQL 28P01
 - Suporte a appsettings.Development.local.json

@@ -1,4 +1,10 @@
 
+
+## v5.3 Auth UX e mensagens de banco
+
+O HabitFlow inclui cadastro com confirmação de senha, campos de senha padronizados com olhinho em JavaScript Vanilla, mensagens visuais de alto contraste e diagnóstico PostgreSQL em `/health/db` e `/diagnostics/database` para Development/Admin. O projeto permanece com Dapper, PostgreSQL e schema explícito `habitflow`, sem Docker obrigatório.
+
+
 ## v5.2-DatabaseConnectionFix-PremiumDemo-UXNavigation
 - Correção amigável para erro PostgreSQL 28P01
 - Suporte a appsettings.Development.local.json
