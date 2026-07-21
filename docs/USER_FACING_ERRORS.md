@@ -1,3 +1,3 @@
-# USER_FACING_ERRORS
+# Erros para Usuário Final
 
-Atualização v5.4: separa mensagens públicas de detalhes técnicos, mantém Dapper/PostgreSQL no schema habitflow, evita binários novos e melhora a experiência premium do HabitFlow.
+Erros técnicos são mapeados pelo `FeedbackMapper` e pelo `UserFacingErrorMapper`. PostgreSQL inválido vira modal amigável: “Não conseguimos concluir agora”. Admin/desenvolvimento recebe orientação para diagnóstico, sem stack trace em produção.

@@ -1,1 +1,1 @@
-window.hfToast=(message)=>alert(message);
+window.hfToast = (message) => window.HabitFlowFeedback?.showToast('info', 'Informação', message);

@@ -1,25 +1,33 @@
 @inject IWebHostEnvironment Env
 @{
     var messages = new[] {
-        (Key:"Success", Css:"hf-message-success", Title:"Tudo certo", Icon:"✓"),
-        (Key:"Info", Css:"hf-message-info", Title:"Informação", Icon:"i"),
-        (Key:"Warning", Css:"hf-message-warning", Title:"Atenção", Icon:"!"),
-        (Key:"Error", Css:"hf-message-error", Title:"Não foi possível continuar", Icon:"!"),
-        (Key:"ValidationError", Css:"hf-message-error", Title:"Revise os dados", Icon:"!"),
-        (Key:"DatabaseError", Css:"hf-message-db", Title:"Estamos enfrentando uma indisponibilidade temporária", Icon:"i"),
-        (Key:"Empty", Css:"hf-message-info", Title:"Nada por aqui ainda", Icon:"○"),
-        (Key:"Loading", Css:"hf-message-info", Title:"Carregando", Icon:"…")
+        (Key:"Success", Type:"success", Title:"Tudo certo", Modal:false),
+        (Key:"Info", Type:"info", Title:"Informação", Modal:false),
+        (Key:"Warning", Type:"warning", Title:"Atenção", Modal:false),
+        (Key:"Error", Type:"error", Title:"Não foi possível concluir", Modal:true),
+        (Key:"ValidationError", Type:"warning", Title:"Revise os dados", Modal:false),
+        (Key:"DatabaseError", Type:"database", Title:"Não conseguimos concluir agora", Modal:true),
+        (Key:"Empty", Type:"info", Title:"Nada por aqui ainda", Modal:false)
     };
 }
+<div class="hf-feedback-seed" hidden>
 @foreach (var item in messages)
 {
     if (TempData[item.Key] is not null)
     {
-        <div class="hf-message @item.Css alert-dismissible fade show" role="@(item.Key.Contains("Error") ? "alert" : "status")">
-            <div class="hf-message-icon" aria-hidden="true">@item.Icon</div>
-            <div class="hf-message-content"><strong class="hf-message-title">@item.Title</strong><div class="hf-message-body">@TempData[item.Key]</div>
-            @if (item.Key == "DatabaseError" && (Env.IsDevelopment() || User?.IsInRole("Admin") == true)) { <div class="hf-message-actions"><a href="/diagnostics/database">Painel de diagnóstico</a><a href="/help/database-setup">Guia PostgreSQL</a></div> }
-            </div><button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
-        </div>
+        var message = TempData[item.Key]?.ToString();
+        if (item.Modal)
+        {
+            <span data-hf-modal="@message" data-hf-modal-type="@item.Type" data-hf-modal-title="@item.Title"></span>
+        }
+        else
+        {
+            <span data-hf-toast="@message" data-hf-toast-type="@item.Type" data-hf-toast-title="@item.Title"></span>
+        }
+        if (item.Key == "DatabaseError" && (Env.IsDevelopment() || User?.IsInRole("Admin") == true))
+        {
+            <span data-hf-toast="Verifique o painel de diagnóstico e o guia PostgreSQL." data-hf-toast-type="info" data-hf-toast-title="Diagnóstico disponível"></span>
+        }
     }
 }
+</div>

@@ -200,3 +200,9 @@ firebase deploy --only hosting
 - Ajuda contextual por página
 - CSS reorganizado
 - Testes de segurança visual e funcional
+
+
+## v5.5 pendências técnicas
+- Evoluir dashboard para marcação de hábitos 100% AJAX.
+- Persistir dicas descartadas por usuário no banco.
+- Expandir notificações para pagamentos e relatórios prontos.

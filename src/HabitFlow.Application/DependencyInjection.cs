@@ -11,6 +11,7 @@ public static class DependencyInjection
         services.AddSingleton<ProtocolGenerator>();
         services.AddSingleton<WhatsAppValidator>();
         services.AddSingleton<IUserFacingErrorMapper, UserFacingErrorMapper>();
+        services.AddSingleton<FeedbackMapper>();
         services.AddScoped<IPasswordHasher, BCryptPasswordHasher>();
         services.AddScoped<HabitPolicy>();
         services.AddScoped<ProgressService>();

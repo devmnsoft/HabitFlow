@@ -268,3 +268,21 @@
 - Ajuda contextual por página
 - CSS reorganizado
 - Testes de segurança visual e funcional
+
+## v5.5-PremiumPopups-SmartFeedback-Engagement
+- Sistema premium de toasts
+- Modal global de feedback
+- Modal de confirmação reutilizável
+- Pop-up de erro de banco amigável
+- Pop-up de conquistas
+- Feedback de hábito concluído
+- Feedback de limite Free
+- Habit Library com fallback e retry
+- Central de notificações evoluída
+- Preferências de pop-ups
+- Dicas contextuais
+- Remoção de alert/confirm nativos
+- Mensagens inline para validação de campos
+- FeedbackMapper para erros técnicos
+- Documentação de feedback e notificações
+- Testes de pop-ups, mensagens e notificações

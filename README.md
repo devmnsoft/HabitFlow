@@ -143,3 +143,7 @@ Execute `database/script_completo.sql` em banco limpo e depois `database/validat
 - Ajuda contextual por página
 - CSS reorganizado
 - Testes de segurança visual e funcional
+
+
+### v5.5 Feedback premium
+O HabitFlow agora possui `HabitFlowFeedback` para toasts, modais, confirmações, conquistas, retry de falhas recuperáveis e mensagens seguras de banco, mantendo Bootstrap 5, Razor/MVC, JavaScript Vanilla, Dapper, PostgreSQL e schema `habitflow`.

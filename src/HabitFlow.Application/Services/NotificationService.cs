@@ -10,7 +10,7 @@ public sealed class NotificationService(INotificationRepository notifications, A
     {
         try
         {
-            await notifications.CreateAsync(new Notification(Guid.NewGuid(), userId, type, title, message, false, relatedEntityType, relatedEntityId, DateTime.UtcNow, null), ct);
+            await notifications.CreateAsync(new Notification(Guid.NewGuid(), userId, type, title, message, "Info", false, null, relatedEntityType, relatedEntityId, DateTime.UtcNow, null), ct);
             await audit.LogAsync("notification_created", "Notificação criada", AuditSeverity.Info, userId, null, new { type, relatedEntityType }, ct);
             return Result.Success();
         }

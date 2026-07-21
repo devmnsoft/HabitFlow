@@ -1,60 +1,53 @@
 (() => {
   'use strict';
   const storageKey = 'habitflow.ui.preferences';
+  const maxToasts = 4;
+  let lastFocus = null;
   const ready = (fn) => document.readyState !== 'loading' ? fn() : document.addEventListener('DOMContentLoaded', fn);
-  const normalize = (preferences) => ({ contrastMode: preferences?.contrastMode || preferences?.ContrastMode || 'Default', fontScale: preferences?.fontScale || preferences?.FontScale || 'Normal', reduceMotion: Boolean(preferences?.reduceMotion ?? preferences?.ReduceMotion) });
-  window.applyUiPreferences = (preferences) => {
-    const p = normalize(preferences);
-    document.body.classList.remove('hf-contrast-default', 'hf-contrast-high', 'hf-font-normal', 'hf-font-large', 'hf-reduce-motion');
-    document.body.classList.add(p.contrastMode === 'HighContrast' ? 'hf-contrast-high' : 'hf-contrast-default');
-    document.body.classList.add(p.fontScale === 'Large' ? 'hf-font-large' : 'hf-font-normal');
-    if (p.reduceMotion) document.body.classList.add('hf-reduce-motion');
-  };
-  window.previewContrastMode = (mode) => window.applyUiPreferences({ ...readLocalPreferences(), contrastMode: mode });
-  window.previewFontScale = (scale) => window.applyUiPreferences({ ...readLocalPreferences(), fontScale: scale });
-  window.previewReduceMotion = (enabled) => window.applyUiPreferences({ ...readLocalPreferences(), reduceMotion: enabled });
+  const normalize = (p) => ({ contrastMode: p?.contrastMode || p?.ContrastMode || 'Default', fontScale: p?.fontScale || p?.FontScale || 'Normal', reduceMotion: Boolean(p?.reduceMotion ?? p?.ReduceMotion), showAchievementPopups: p?.showAchievementPopups ?? p?.ShowAchievementPopups ?? true, showTipPopups: p?.showTipPopups ?? p?.ShowTipPopups ?? true, enableToasts: p?.enableToasts ?? p?.EnableToasts ?? true, reducePopups: Boolean(p?.reducePopups ?? p?.ReducePopups) });
   function readLocalPreferences() { try { return JSON.parse(localStorage.getItem(storageKey) || '{}'); } catch { return {}; } }
   function saveLocalPreferences(preferences) { localStorage.setItem(storageKey, JSON.stringify(normalize(preferences))); }
-  function initPasswordToggles() {
-    document.querySelectorAll('[data-password-toggle]').forEach((button) => {
-      const input = document.querySelector(button.getAttribute('data-password-toggle') || '');
-      if (!input) return;
-      input.type = 'password';
-      button.addEventListener('click', () => {
-        const visible = input.type === 'password';
-        input.type = visible ? 'text' : 'password';
-        button.classList.toggle('is-visible', visible);
-        button.setAttribute('aria-label', visible ? 'Ocultar senha' : 'Mostrar senha');
-        button.setAttribute('aria-pressed', String(visible));
-      });
-    });
-  }
-  function initRegisterPasswordValidation() {
-    document.querySelectorAll('[data-register-form]').forEach((form) => form.addEventListener('submit', (ev) => {
-      const password = form.querySelector('#Password'); const confirm = form.querySelector('#ConfirmPassword'); const error = form.querySelector('[data-password-match-error]');
-      if (!password || !confirm || !error) return;
-      const mismatch = password.value !== confirm.value;
-      error.classList.toggle('d-none', !mismatch); confirm.classList.toggle('hf-input-invalid', mismatch);
-      if (mismatch) { ev.preventDefault(); confirm.focus(); }
-    }));
-  }
-  ready(() => {
-    window.applyUiPreferences(readLocalPreferences());
-    initPasswordToggles();
-    initRegisterPasswordValidation();
-    document.querySelectorAll('[data-hf-toast]').forEach((el) => showToast(el.getAttribute('data-hf-toast') || 'Atualizado'));
-    document.querySelectorAll('.alert').forEach((alert) => setTimeout(() => window.bootstrap?.Alert.getOrCreateInstance(alert).close(), 6500));
-    document.querySelectorAll('form').forEach((form) => form.addEventListener('submit', () => { const btn = form.querySelector('button[type="submit"],button:not([type])'); if (btn && !btn.dataset.noLoading) { btn.dataset.originalText = btn.textContent; btn.textContent = btn.dataset.loadingText || 'Processando...'; btn.disabled = true; } }));
-    document.querySelectorAll('[data-confirm]').forEach((el) => el.addEventListener('click', (ev) => { ev.preventDefault(); confirmAction(el.getAttribute('data-confirm') || 'Confirmar ação?', () => el.closest('form') ? el.closest('form').submit() : window.location.assign(el.href)); }));
-    document.querySelectorAll('[data-copy]').forEach((btn) => btn.addEventListener('click', async () => { await navigator.clipboard.writeText(btn.getAttribute('data-copy') || ''); showToast('Copiado com segurança.'); }));
-    document.querySelectorAll('.hf-day-toggle input').forEach((input) => input.addEventListener('change', () => input.closest('.hf-day-toggle').classList.toggle('is-selected', input.checked)));
-    const form = document.querySelector('[data-ui-preferences-form]');
-    if (form) {
-      const contrast = form.querySelector('[data-ui-contrast]'); const font = form.querySelector('[data-ui-font]'); const motion = form.querySelector('[data-ui-motion]');
-      const update = () => { const preferences = { contrastMode: contrast?.value || 'Default', fontScale: font?.value || 'Normal', reduceMotion: Boolean(motion?.checked) }; window.applyUiPreferences(preferences); saveLocalPreferences(preferences); };
-      contrast?.addEventListener('change', update); font?.addEventListener('change', update); motion?.addEventListener('change', update); update();
+  const icons = { success: '✓', info: 'i', warning: '!', error: '!', database: '↻', achievement: '★', confirm: '?' };
+  const safeType = (type) => ['success','info','warning','error','database','achievement','confirm','lgpd','admin'].includes(type) ? type : 'info';
+  function button(label, className, onClick) { const b = document.createElement('button'); b.type = 'button'; b.className = className; b.textContent = label; if (onClick) b.addEventListener('click', onClick); return b; }
+  const feedback = {
+    showToast(type, title, message, options = {}) {
+      const prefs = normalize(readLocalPreferences()); if (prefs.enableToasts === false || prefs.reducePopups) return null;
+      const host = document.getElementById('hfToastHost'); if (!host || !window.bootstrap) return null;
+      while (host.children.length >= maxToasts) host.firstElementChild?.remove();
+      const t = safeType(type); const node = document.createElement('div'); node.className = `toast hf-toast hf-toast-${t}`; node.setAttribute('role', t === 'error' ? 'alert' : 'status'); node.setAttribute('aria-live', t === 'error' ? 'assertive' : 'polite');
+      const icon = document.createElement('span'); icon.className = 'hf-toast-icon'; icon.setAttribute('aria-hidden','true'); icon.textContent = icons[t] || 'i';
+      const content = document.createElement('div'); content.className = 'hf-toast-content'; const h = document.createElement('strong'); h.className = 'hf-toast-title'; h.textContent = title || 'HabitFlow'; const body = document.createElement('div'); body.className = 'hf-toast-body'; body.textContent = message || ''; content.append(h, body);
+      const close = button('×', 'hf-toast-close', () => window.bootstrap.Toast.getOrCreateInstance(node).hide()); close.setAttribute('aria-label','Fechar');
+      node.append(icon, content, close); if (options.showProgress !== false) { const bar = document.createElement('span'); bar.className='hf-toast-progress'; node.appendChild(bar); }
+      host.appendChild(node); node.addEventListener('hidden.bs.toast', () => node.remove()); window.bootstrap.Toast.getOrCreateInstance(node, { delay: options.delay || 5200 }).show(); return node;
+    },
+    showModal(type, title, message, actions = {}) {
+      const modalEl = document.getElementById('hfFeedbackModal'); if (!modalEl || !window.bootstrap) return null; lastFocus = document.activeElement;
+      const t = safeType(type); modalEl.querySelector('.hf-feedback-modal')?.setAttribute('data-hf-feedback-type', t); document.getElementById('hfFeedbackIcon').textContent = actions.icon || icons[t] || 'i'; document.getElementById('hfFeedbackTitle').textContent = title || 'Mensagem do HabitFlow'; document.getElementById('hfFeedbackMessage').textContent = message || '';
+      const details = document.getElementById('hfFeedbackDetails'); details.textContent = actions.details || ''; details.classList.toggle('d-none', !actions.details);
+      const primary = document.getElementById('hfFeedbackPrimary'); const secondary = document.getElementById('hfFeedbackSecondary'); primary.textContent = actions.primaryLabel || (t === 'confirm' ? 'Confirmar' : 'Entendi'); secondary.textContent = actions.secondaryLabel || 'Fechar'; primary.className = actions.primaryClass || (t === 'error' || t === 'database' ? 'btn btn-danger' : 'btn btn-success');
+      const p2 = primary.cloneNode(true); primary.replaceWith(p2); p2.addEventListener('click', () => { window.bootstrap.Modal.getInstance(modalEl)?.hide(); actions.onPrimary?.(); }); secondary.onclick = () => actions.onSecondary?.();
+      modalEl.addEventListener('hidden.bs.modal', () => lastFocus?.focus?.(), { once: true }); window.bootstrap.Modal.getOrCreateInstance(modalEl, { keyboard: actions.keyboard !== false, backdrop: actions.backdrop || true }).show(); return modalEl;
+    },
+    showConfirm(options = {}) { return new Promise((resolve) => feedback.showModal(options.type || 'confirm', options.title || 'Confirmar ação', options.message || 'Deseja continuar?', { primaryLabel: options.confirmLabel || 'Confirmar', secondaryLabel: options.cancelLabel || 'Cancelar', primaryClass: options.primaryClass || 'btn btn-danger', onPrimary: () => { options.onConfirm?.(); resolve(true); }, onSecondary: () => resolve(false) })); },
+    showAchievement(title, message, icon = '★') { const prefs = normalize(readLocalPreferences()); if (prefs.showAchievementPopups === false) return null; return feedback.showModal('achievement', title, message, { icon, primaryLabel: 'Ver progresso', secondaryLabel: 'Fechar', onPrimary: () => window.location.assign('/progress') }); },
+    showRetryError(title, message, retryCallback) { return feedback.showModal('database', title, message, { primaryLabel: 'Tentar novamente', secondaryLabel: 'Ir para suporte', onPrimary: retryCallback || (() => window.location.reload()), onSecondary: () => window.location.assign('/support') }); },
+    closeAll() { document.querySelectorAll('.toast').forEach((n) => window.bootstrap?.Toast.getOrCreateInstance(n).hide()); const m = document.getElementById('hfFeedbackModal'); if (m) window.bootstrap?.Modal.getInstance(m)?.hide(); },
+    init() {
+      document.querySelectorAll('[data-hf-toast]').forEach((el) => feedback.showToast(el.dataset.hfToastType || 'info', el.dataset.hfToastTitle || 'HabitFlow', el.dataset.hfToast || ''));
+      document.querySelectorAll('[data-hf-modal]').forEach((el) => feedback.showModal(el.dataset.hfModalType || 'info', el.dataset.hfModalTitle || 'HabitFlow', el.dataset.hfModal || ''));
+      document.querySelectorAll('[data-confirm]').forEach((el) => el.addEventListener('click', async (ev) => { ev.preventDefault(); const ok = await feedback.showConfirm({ title: el.dataset.confirmTitle || 'Confirmar ação', message: el.getAttribute('data-confirm') || 'Deseja continuar?', confirmLabel: el.dataset.confirmLabel || 'Confirmar' }); if (ok) el.closest('form') ? el.closest('form').submit() : window.location.assign(el.href); }));
+      document.querySelectorAll('[data-achievement="day-complete"]').forEach(() => feedback.showAchievement('Dia concluído!', 'Você completou todos os hábitos planejados para hoje. Continue mantendo sua sequência.'));
+
+      document.querySelectorAll('[data-notification-count]').forEach(async (badge) => { try { const r = await fetch('/notifications/unread-count', { headers: { 'Accept': 'application/json' } }); if (!r.ok) return; const data = await r.json(); const count = Number(data.count || 0); badge.hidden = count < 1; badge.textContent = count > 99 ? '99+' : String(count); } catch { /* contador indisponível sem interromper a UI */ } });
+      const tip = document.querySelector('[data-hf-tip]'); if (tip && normalize(readLocalPreferences()).showTipPopups !== false && !localStorage.getItem(`habitflow.tip.${location.pathname}`)) feedback.showToast('info', 'Dica de uso', tip.getAttribute('data-hf-tip'), { delay: 7000 });
     }
-  });
-  function showToast(message) { const host = document.getElementById('hfToastHost'); if (!host || !window.bootstrap) return; const node = document.createElement('div'); node.className = 'toast hf-toast'; node.setAttribute('role','status'); const body = document.createElement('div'); body.className = 'toast-body'; body.textContent = message; node.appendChild(body); host.appendChild(node); window.bootstrap.Toast.getOrCreateInstance(node, { delay: 4500 }).show(); }
-  function confirmAction(message, onConfirm) { const modalEl = document.getElementById('hfConfirmModal'); if (!modalEl || !window.bootstrap) { if (confirm(message)) onConfirm(); return; } document.getElementById('hfConfirmMessage').textContent = message; const action = document.getElementById('hfConfirmAction'); const clone = action.cloneNode(true); action.replaceWith(clone); clone.addEventListener('click', () => { window.bootstrap.Modal.getInstance(modalEl).hide(); onConfirm(); }); window.bootstrap.Modal.getOrCreateInstance(modalEl).show(); }
+  };
+  window.HabitFlowFeedback = feedback; window.hfToast = (message) => feedback.showToast('info', 'Informação', message);
+  window.applyUiPreferences = (preferences) => { const p = normalize(preferences); document.body.classList.remove('hf-contrast-default','hf-contrast-high','hf-font-normal','hf-font-large','hf-reduce-motion','hf-reduce-popups'); document.body.classList.add(p.contrastMode === 'HighContrast' ? 'hf-contrast-high' : 'hf-contrast-default', p.fontScale === 'Large' ? 'hf-font-large' : 'hf-font-normal'); if (p.reduceMotion) document.body.classList.add('hf-reduce-motion'); if (p.reducePopups) document.body.classList.add('hf-reduce-popups'); };
+  window.previewContrastMode = (mode) => window.applyUiPreferences({ ...readLocalPreferences(), contrastMode: mode }); window.previewFontScale = (scale) => window.applyUiPreferences({ ...readLocalPreferences(), fontScale: scale }); window.previewReduceMotion = (enabled) => window.applyUiPreferences({ ...readLocalPreferences(), reduceMotion: enabled });
+  function initPasswordToggles() { document.querySelectorAll('[data-password-toggle]').forEach((button) => { const input = document.querySelector(button.getAttribute('data-password-toggle') || ''); if (!input) return; input.type = 'password'; button.addEventListener('click', () => { const visible = input.type === 'password'; input.type = visible ? 'text' : 'password'; button.classList.toggle('is-visible', visible); button.setAttribute('aria-label', visible ? 'Ocultar senha' : 'Mostrar senha'); button.setAttribute('aria-pressed', String(visible)); }); }); }
+  function initRegisterPasswordValidation() { document.querySelectorAll('[data-register-form]').forEach((form) => form.addEventListener('submit', (ev) => { const password = form.querySelector('#Password'); const confirm = form.querySelector('#ConfirmPassword'); const error = form.querySelector('[data-password-match-error]'); if (!password || !confirm || !error) return; const mismatch = password.value !== confirm.value; error.classList.toggle('d-none', !mismatch); confirm.classList.toggle('hf-input-invalid', mismatch); if (mismatch) { ev.preventDefault(); confirm.focus(); } })); }
+  ready(() => { window.applyUiPreferences(readLocalPreferences()); initPasswordToggles(); initRegisterPasswordValidation(); feedback.init(); document.querySelectorAll('form').forEach((form) => form.addEventListener('submit', () => { const btn = form.querySelector('button[type="submit"],button:not([type])'); if (btn && !btn.dataset.noLoading) { btn.dataset.originalText = btn.textContent; btn.textContent = btn.dataset.loadingText || 'Processando...'; btn.disabled = true; } })); document.querySelectorAll('[data-copy]').forEach((btn) => btn.addEventListener('click', async () => { await navigator.clipboard.writeText(btn.getAttribute('data-copy') || ''); feedback.showToast('success', 'Copiado', 'Conteúdo copiado com segurança.'); })); document.querySelectorAll('.hf-day-toggle input').forEach((input) => input.addEventListener('change', () => input.closest('.hf-day-toggle').classList.toggle('is-selected', input.checked))); const form = document.querySelector('[data-ui-preferences-form]'); if (form) { const update = () => { const preferences = { contrastMode: form.querySelector('[data-ui-contrast]')?.value || 'Default', fontScale: form.querySelector('[data-ui-font]')?.value || 'Normal', reduceMotion: Boolean(form.querySelector('[data-ui-motion]')?.checked), showAchievementPopups: Boolean(form.querySelector('[data-ui-achievements]')?.checked ?? true), showTipPopups: Boolean(form.querySelector('[data-ui-tips]')?.checked ?? true), enableToasts: Boolean(form.querySelector('[data-ui-toasts]')?.checked ?? true), reducePopups: Boolean(form.querySelector('[data-ui-reduce-popups]')?.checked) }; window.applyUiPreferences(preferences); saveLocalPreferences(preferences); }; form.addEventListener('change', update); update(); } });
 })();

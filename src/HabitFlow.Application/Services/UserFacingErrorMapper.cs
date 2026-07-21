@@ -10,18 +10,18 @@ public sealed class UserFacingErrorMapper : IUserFacingErrorMapper
 {
     public string ToPublicMessage(string? code, string? context = null) => (code ?? string.Empty).ToLowerInvariant() switch
     {
-        "postgres.invalid_password" => "Não foi possível concluir esta operação agora. Tente novamente em instantes.",
-        "postgres.database_missing" => "Não foi possível acessar os dados necessários no momento.",
-        "42p01" or "postgres.table_missing" => "Estamos finalizando uma configuração interna. Tente novamente em instantes.",
+        "postgres.invalid_password" => "Não conseguimos acessar os dados necessários agora.",
+        "postgres.database_missing" => "Não conseguimos localizar os dados necessários agora.",
+        "42p01" or "postgres.table_missing" => "O sistema ainda não encontrou todas as informações necessárias.",
         var c when c.StartsWith("library.") && context == "habit-library" => "Não foi possível carregar todos os dados agora, mas você ainda pode explorar sugestões prontas.",
         _ => "Não foi possível carregar esta informação agora. Tente novamente em instantes."
     };
 
     public string ToAdminMessage(string? code, string? fallback = null) => (code ?? string.Empty).ToLowerInvariant() switch
     {
-        "postgres.invalid_password" => "As credenciais do PostgreSQL estão incorretas.",
-        "postgres.database_missing" => "O banco configurado não foi encontrado.",
-        "42p01" or "postgres.table_missing" => "Uma tabela obrigatória do schema habitflow não foi encontrada.",
+        "postgres.invalid_password" => "Senha do PostgreSQL incorreta para o usuário configurado.",
+        "postgres.database_missing" => "Banco habitflow não existe ou connection string aponta para banco incorreto.",
+        "42p01" or "postgres.table_missing" => "Execute database/script_completo.sql.",
         _ => fallback ?? "Falha técnica registrada nos logs da aplicação."
     };
 }
