@@ -59,3 +59,7 @@ A versão v4.2 adiciona recorrência de hábitos (diária, dias úteis, finais d
 ## v4.3 Admin Operacional
 
 O HabitFlow inclui painel administrativo operacional em `/admin`, gestão de usuários, suporte, LGPD, logs, métricas, leads Premium, financeiro inicial, exportações CSV seguras e migration `013_admin_operacional.sql`. A aplicação continua usando ASP.NET Core, Dapper e PostgreSQL na porta 5097.
+
+## v4.6 Premium Payments Billing Automation
+
+O HabitFlow agora possui planos reais Free/Premium, tela `/plans`, área `/billing`, checkout Mercado Pago configurável, webhook `/webhooks/mercadopago`, histórico financeiro e Admin Financeiro. Sem token Mercado Pago configurado, o checkout falha de forma segura e não ativa pagamento real.

@@ -1,3 +1,4 @@
+using HabitFlow.Domain;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace HabitFlow.Application;
@@ -39,6 +40,15 @@ public static class DependencyInjection
         services.AddScoped<WhatsAppService>();
         services.AddScoped<LgpdService>();
         services.AddScoped<BillingService>();
+        services.AddSingleton<PaymentMetadataSanitizer>();
+        services.AddScoped<PlanService>();
+        services.AddScoped<SubscriptionService>();
+        services.AddScoped<PremiumAccessService>();
+        services.AddScoped<PaymentCheckoutService>();
+        services.AddScoped<PaymentWebhookService>();
+        services.AddScoped<PaymentAuditService>();
+        services.AddScoped<FinancialDashboardService>();
+        services.AddHttpClient<IPaymentProviderService, MercadoPagoService>();
         services.AddHttpClient<TelegramService>();
         return services;
     }

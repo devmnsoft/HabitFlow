@@ -22,3 +22,10 @@ HabitFlow v4 usa ASP.NET Core 10, DDD, Clean Architecture, Dapper, PostgreSQL, B
 ## v4.3 Segurança administrativa
 
 A v4.3 mantém autenticação por cookie, autorização por role Admin, proteção CSRF em POSTs administrativos, Dapper parametrizado, limitação de paginação, sanitização de CSV e middleware de status de conta.
+
+## v4.6 Billing security
+
+- Checkout não recebe tokens no frontend.
+- Premium não é ativado pelo retorno do navegador.
+- Webhook Mercado Pago salva somente payload sanitizado.
+- Secrets devem vir de configuração segura do ambiente/IIS.

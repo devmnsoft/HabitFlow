@@ -17,3 +17,5 @@
 \i database/migrations/014_windows_iis_operations.sql
 
 \i database/migrations/015_schema_hardening.sql
+
+\i database/migrations/016_premium_billing.sql

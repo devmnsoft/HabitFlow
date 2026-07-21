@@ -31,3 +31,7 @@ Inclui a migration `012_habit_recurrence_reports_notifications.sql` com novos ca
 ## v4.3 Admin Operacional
 
 A migration `013_admin_operacional.sql` adiciona campos operacionais em `habitflow.users`, notas administrativas, histórico de exportações e snapshots de dashboard. O `script_completo.sql` inclui a migration para instalação limpa sem depender de includes externos.
+
+## v4.6 Billing schema
+
+A migration `database/migrations/016_premium_billing.sql` cria `habitflow.plans`, `habitflow.subscriptions`, `habitflow.payment_transactions`, `habitflow.payment_webhook_events` e `habitflow.payment_audit_logs`, todas qualificadas no schema obrigatório `habitflow`.

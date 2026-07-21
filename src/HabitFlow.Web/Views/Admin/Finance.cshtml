@@ -1,2 +1,13 @@
-@{ ViewData["Title"] = "Finance"; }
-<div class="container-fluid py-4"><h1>Finance</h1><p class="text-muted">Admin operacional v4.3 com filtros, paginação e exportação CSV segura.</p><a class="btn btn-outline-success" href="/admin">Voltar ao dashboard</a></div>
+@model HabitFlow.Domain.FinancialDashboard?
+@{ ViewData["Title"] = "Admin Financeiro"; }
+<div class="container-fluid py-4"><h1>Admin Financeiro</h1>
+@if (TempData["Error"] is string error){<div class="alert alert-warning">@error</div>}
+@if (Model is not null){<div class="row g-3 mb-4">
+<div class="col-md-3"><div class="card"><div class="card-body"><span>Receita aprovada</span><strong class="d-block">@Model.ApprovedRevenue.ToString("C")</strong></div></div></div>
+<div class="col-md-3"><div class="card"><div class="card-body"><span>Receita pendente</span><strong class="d-block">@Model.PendingRevenue.ToString("C")</strong></div></div></div>
+<div class="col-md-3"><div class="card"><div class="card-body"><span>MRR estimado</span><strong class="d-block">@Model.EstimatedMrr.ToString("C")</strong></div></div></div>
+<div class="col-md-3"><div class="card"><div class="card-body"><span>ARR estimado</span><strong class="d-block">@Model.EstimatedArr.ToString("C")</strong></div></div></div>
+</div><div class="row g-3 mb-4"><div class="col-md-4">Assinaturas ativas: <strong>@Model.ActiveSubscriptions</strong></div><div class="col-md-4">Pendentes: <strong>@Model.PendingSubscriptions</strong></div><div class="col-md-4">Canceladas: <strong>@Model.CanceledSubscriptions</strong></div></div>
+<h2 class="h5">Últimas transações</h2><table class="table"><thead><tr><th>Data</th><th>Status</th><th>Valor</th><th>Provider</th><th>Pagamento</th></tr></thead><tbody>@foreach(var tx in Model.LatestTransactions){<tr><td>@tx.CreatedAt</td><td>@tx.Status</td><td>@tx.Amount?.ToString("C")</td><td>@tx.Provider</td><td>@tx.ProviderPaymentId</td></tr>}</tbody></table>
+<h2 class="h5">Últimos webhooks</h2><table class="table"><thead><tr><th>Recebido</th><th>Status</th><th>Provider</th><th>Erro</th></tr></thead><tbody>@foreach(var wh in Model.LatestWebhooks){<tr><td>@wh.ReceivedAt</td><td>@wh.Status</td><td>@wh.Provider</td><td>@wh.ProcessingError</td></tr>}</tbody></table>}
+</div>

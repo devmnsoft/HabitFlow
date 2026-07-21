@@ -26,6 +26,12 @@ public static class DependencyInjection
         services.AddScoped<ISupportRepository, SupportRepository>();
         services.AddScoped<ILgpdRepository, LgpdRepository>();
         services.AddScoped<IBillingRepository, BillingRepository>();
+        services.AddScoped<IPlanRepository, PlanRepository>();
+        services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
+        services.AddScoped<IPaymentTransactionRepository, PaymentTransactionRepository>();
+        services.AddScoped<IPaymentWebhookRepository, PaymentWebhookRepository>();
+        services.AddScoped<IPaymentAuditRepository, PaymentAuditRepository>();
+        services.AddScoped<IFinancialDashboardRepository, FinancialDashboardRepository>();
         services.AddScoped<IAdminUserRepository, AdminUserRepository>();
         services.AddScoped<IAdminMetricsRepository, AdminMetricsRepository>();
         services.AddScoped<IAdminBillingRepository, AdminMetricsRepository>();
