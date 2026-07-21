@@ -1,3 +1,3 @@
-# BRANDING_MNSOFT
+# HERO_CONTEXT_GUIDELINES
 
 Atualização v5.4: separa mensagens públicas de detalhes técnicos, mantém Dapper/PostgreSQL no schema habitflow, evita binários novos e melhora a experiência premium do HabitFlow.

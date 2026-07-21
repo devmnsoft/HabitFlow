@@ -183,3 +183,20 @@ firebase deploy --only hosting
 ## v5.0 próximos passos
 - Adicionar manualmente a logo oficial MNSOFT no caminho documentado.
 - Executar QA visual em navegadores reais com PostgreSQL disponível.
+
+## v5.4-UserSafeErrors-HabitLibraryFix-PremiumFooter-HeroContext
+- Correção do uso inválido de [Compare]
+- Cadastro com ViewModel apropriado
+- Ocultação de erros técnicos para usuário final
+- Diagnóstico de banco restrito a admin/dev
+- Mensagens amigáveis para falhas de infraestrutura
+- Correção funcional da Habit Library
+- Fallback útil para objetivos/hábitos
+- Nova hero illustration contextual ao software
+- Home mais coerente com o negócio
+- Rodapé premium redesenhado
+- Assinatura MNSOFT compacta com ícone SVG
+- Mais ícones contextuais
+- Ajuda contextual por página
+- CSS reorganizado
+- Testes de segurança visual e funcional

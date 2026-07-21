@@ -1,12 +1,13 @@
 using System.Security.Claims;
 using HabitFlow.Application;
+using HabitFlow.Web.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HabitFlow.Web.Controllers;
 
-public class AuthController(AuthService authService, IWebHostEnvironment env, ILogger<AuthController> logger) : Controller
+public class AuthController(AuthService authService, IWebHostEnvironment env, IUserFacingErrorMapper errorMapper, ILogger<AuthController> logger) : Controller
 {
     [HttpGet("/login")]
     public IActionResult Login() => View();
@@ -41,17 +42,17 @@ public class AuthController(AuthService authService, IWebHostEnvironment env, IL
     }
 
     [HttpGet("/register")]
-    public IActionResult Register() => View();
+    public IActionResult Register() => View(new RegisterViewModel());
 
     [ValidateAntiForgeryToken]
     [HttpPost("/register")]
-    public async Task<IActionResult> Register(RegisterDto dto, CancellationToken ct)
+    public async Task<IActionResult> Register(RegisterViewModel model, CancellationToken ct)
     {
         try
         {
-            if (!ModelState.IsValid) return View(dto);
-            var result = await authService.RegisterAsync(dto, ct);
-            if (result.IsFailure) { SetFailureMessage(result.Error.Code, result.Error.Message); return View(dto); }
+            if (!ModelState.IsValid) return View(model);
+            var result = await authService.RegisterAsync(model.ToDto(), ct);
+            if (result.IsFailure) { SetFailureMessage(result.Error.Code, result.Error.Message); return View(model); }
             TempData["Success"] = "Cadastro criado. Faça login para continuar.";
             return RedirectToAction(nameof(Login));
         }
@@ -59,7 +60,7 @@ public class AuthController(AuthService authService, IWebHostEnvironment env, IL
         {
             logger.LogError(ex, "Erro inesperado no POST /register");
             TempData["Error"] = "Não foi possível concluir o cadastro agora.";
-            return View(dto);
+            return View(model);
         }
     }
 
@@ -67,9 +68,8 @@ public class AuthController(AuthService authService, IWebHostEnvironment env, IL
     {
         if (code.StartsWith("postgres.", StringComparison.OrdinalIgnoreCase))
         {
-            TempData["DatabaseError"] = message;
-            TempData["DatabaseErrorCode"] = code;
-            if (env.IsDevelopment()) TempData["Info"] = "Dica para desenvolvimento: acesse /health/db para ver o diagnóstico.";
+            TempData["DatabaseError"] = errorMapper.ToPublicMessage(code);
+            if (env.IsDevelopment() || User?.IsInRole("Admin") == true) TempData["Info"] = errorMapper.ToAdminMessage(code, message) + " Acesse /diagnostics/database.";
         }
         else if (code.StartsWith("validation.", StringComparison.OrdinalIgnoreCase))
         {

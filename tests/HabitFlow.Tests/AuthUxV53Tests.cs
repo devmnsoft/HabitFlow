@@ -1,4 +1,5 @@
 using HabitFlow.Application;
+using HabitFlow.Web.Models;
 using System.ComponentModel.DataAnnotations;
 
 namespace HabitFlow.Tests;
@@ -6,12 +7,12 @@ namespace HabitFlow.Tests;
 public sealed class AuthUxV53Tests
 {
     [Fact]
-    public void RegisterDto_requires_confirm_password_and_matching_passwords()
+    public void RegisterViewModel_requires_confirm_password_and_matching_passwords()
     {
-        var dto = new RegisterDto("Ana", "ana@example.com", "senhasegura", "diferente");
+        var dto = new RegisterViewModel { Name = "Ana", Email = "ana@example.com", Password = "senhasegura", ConfirmPassword = "diferente" };
         var results = new List<ValidationResult>();
         Validator.TryValidateObject(dto, new ValidationContext(dto), results, true);
-        Assert.Contains(results, r => r.ErrorMessage == "As senhas não conferem. Digite a mesma senha nos dois campos.");
+        Assert.Contains(results, r => r.ErrorMessage == "As senhas não conferem.");
     }
 
     [Fact]

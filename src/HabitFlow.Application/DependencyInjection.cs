@@ -10,6 +10,7 @@ public static class DependencyInjection
         services.AddSingleton<LogSanitizer>();
         services.AddSingleton<ProtocolGenerator>();
         services.AddSingleton<WhatsAppValidator>();
+        services.AddSingleton<IUserFacingErrorMapper, UserFacingErrorMapper>();
         services.AddScoped<IPasswordHasher, BCryptPasswordHasher>();
         services.AddScoped<HabitPolicy>();
         services.AddScoped<ProgressService>();
