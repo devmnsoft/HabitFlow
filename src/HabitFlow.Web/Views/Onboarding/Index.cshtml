@@ -1,0 +1,4 @@
+@model IReadOnlyList<HabitFlow.Domain.HabitObjective>
+@{ ViewData["Title"] = "Onboarding guiado"; }
+<section class="hf-section hf-guided-card"><p class="hf-section-kicker">Primeiro passo</p><h1>O que você quer melhorar primeiro?</h1><p>O HabitFlow ajuda pessoas a transformarem pequenas ações diárias em rotina. Escolha um objetivo para ver hábitos prontos.</p></section>
+<div class="row g-3">@foreach (var objective in Model) {<div class="col-md-6 col-xl-4"><form method="post" action="/onboarding/select-objective" class="h-100">@Html.AntiForgeryToken()<input type="hidden" name="slug" value="@objective.Slug" /><button class="hf-objective-card h-100 w-100 text-start" type="submit"><span class="hf-card-icon">@objective.Icon</span><strong>@objective.Name</strong><span>@objective.Description</span></button></form></div>}</div>

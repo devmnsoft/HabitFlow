@@ -146,3 +146,21 @@
 - script_completo.sql atualizado
 - Documentação Premium/Pagamentos/Webhooks
 - Testes de billing
+
+## v4.9-GuidedJourney-PremiumUX-HabitLibrary
+- Explicação simples do que é o HabitFlow
+- Home reescrita com foco em clareza e conversão
+- Template premium refinado
+- Jornada do cliente simplificada
+- Biblioteca de hábitos prontos
+- Objetivos: saúde, estudos, produtividade, bem-estar e organização
+- Onboarding guiado por objetivo
+- Criação de hábito a partir de template
+- Dashboard com próximo passo
+- Planos com explicação mais simples
+- Microcopy humanizada
+- Admin da biblioteca de hábitos
+- Métricas de jornada
+- Migration 017
+- script_completo.sql atualizado
+- Documentação da jornada e biblioteca

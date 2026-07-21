@@ -16,6 +16,8 @@ public static class DependencyInjection
         services.AddScoped<UnitOfWork>();
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IHabitRepository, HabitRepository>();
+        services.AddScoped<IHabitObjectiveRepository, HabitObjectiveRepository>();
+        services.AddScoped<IHabitTemplateRepository, HabitTemplateRepository>();
         services.AddScoped<IHabitCompletionRepository, HabitCompletionRepository>();
         services.AddScoped<IHabitWeekDayRepository, HabitWeekDayRepository>();
         services.AddScoped<INotificationRepository, NotificationRepository>();

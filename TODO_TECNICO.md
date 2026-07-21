@@ -141,3 +141,7 @@ firebase deploy --only hosting
 ## v4.6 limitações conhecidas
 - Cancelamento real no Mercado Pago permanece como integração futura; nesta versão há preparação para cancelamento manual/admin e suporte.
 - Envio de Telegram/e-mail para todos os eventos financeiros está documentado para configuração operacional e pode ser expandido por worker dedicado.
+
+## v4.9 follow-up
+- Medir uso real de cada template quando a camada analítica estiver ativa.
+- Adicionar edição completa de templates no Admin se houver demanda operacional.
