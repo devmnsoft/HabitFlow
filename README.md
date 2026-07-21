@@ -85,3 +85,10 @@ Publique com `dotnet publish src/HabitFlow.Web/HabitFlow.Web.csproj -c Release -
 ### Validar banco
 
 Execute `database/script_completo.sql` em banco limpo e depois `database/validate_schema_habitflow.sql`. Todas as tabelas do produto devem ficar no schema `habitflow`.
+
+## v5.0 Acessibilidade e MNSOFT
+
+- Preferências de visualização em `/profile/accessibility`.
+- Modo alto contraste, fonte maior e redução de animações.
+- Logo oficial MNSOFT esperada em `src/HabitFlow.Web/wwwroot/brand/mnsoft/logo-mnsoft-oficial.png`; binários devem ser adicionados manualmente.
+- Execução sem Docker e porta 5097 preservadas.

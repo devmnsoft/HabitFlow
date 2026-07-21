@@ -398,3 +398,19 @@ insert into habitflow.habit_templates(id, objective_id, name, description, categ
 select (substr(md5(o.slug || ':' || d.name),1,8)||'-'||substr(md5(o.slug || ':' || d.name),9,4)||'-'||substr(md5(o.slug || ':' || d.name),13,4)||'-'||substr(md5(o.slug || ':' || d.name),17,4)||'-'||substr(md5(o.slug || ':' || d.name),21,12))::uuid, o.id, d.name, d.description, d.category, 'Daily', d.suggested_color, d.difficulty, d.estimated_time_minutes, d.benefit_text, d.sort_order, true
 from data d join habitflow.habit_objectives o on o.slug=d.slug
 on conflict(objective_id, name) do update set description=excluded.description, category=excluded.category, suggested_color=excluded.suggested_color, difficulty=excluded.difficulty, estimated_time_minutes=excluded.estimated_time_minutes, benefit_text=excluded.benefit_text, sort_order=excluded.sort_order, is_active=true, updated_at=now();
+
+
+-- 018_user_ui_preferences_accessibility
+create table if not exists habitflow.user_ui_preferences (
+  id uuid primary key,
+  user_id uuid not null references habitflow.users(id) on delete cascade,
+  contrast_mode varchar(50) not null default 'Default',
+  font_scale varchar(50) not null default 'Normal',
+  reduce_motion boolean not null default false,
+  created_at timestamp not null default now(),
+  updated_at timestamp not null default now(),
+  constraint user_ui_preferences_user_unique unique(user_id),
+  constraint user_ui_preferences_contrast_check check (contrast_mode in ('Default','HighContrast')),
+  constraint user_ui_preferences_font_check check (font_scale in ('Normal','Large'))
+);
+create index if not exists ix_user_ui_preferences_user_id on habitflow.user_ui_preferences(user_id);

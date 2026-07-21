@@ -29,3 +29,7 @@ Use `.hf-page-header` no topo de telas, `.hf-grid` com colunas utilitárias para
 ## v4.9 — Componentes premium
 
 Novas classes: `hf-shell`, `hf-navbar`, `hf-brand`, `hf-hero`, `hf-hero-grid`, `hf-feature-card`, `hf-step-card`, `hf-premium-card`, `hf-mockup-card`, `hf-section`, `hf-section-kicker`, `hf-empty-state`, `hf-guided-card`, `hf-objective-card`, `hf-habit-template-card`, `hf-footer`, `mnsoft-signature` e `mnsoft-wordmark`.
+
+## v5.0 — Tokens de contraste seguro
+
+O design system passa a centralizar cores em `site.css` com `--hf-bg`, `--hf-surface`, `--hf-text`, `--hf-text-muted`, `--hf-primary`, tokens MNSOFT e superfícies `surface-*`. Use texto escuro em fundos claros e `text-on-dark` em fundos escuros.

@@ -5,3 +5,7 @@ Esta documentação descreve os recursos de experiência do usuário adicionados
 ## Segurança e privacidade
 
 Os recursos usam autenticação por cookie, dados do próprio usuário, SQL parametrizado via Dapper e auditoria sem registrar dados sensíveis.
+
+## Preferências de visualização
+
+Acesse **Perfil > Preferências de visualização** para ativar alto contraste, aumentar a fonte ou reduzir animações. As mudanças aparecem na hora e podem ser salvas na sua conta.

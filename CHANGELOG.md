@@ -164,3 +164,19 @@
 - Migration 017
 - script_completo.sql atualizado
 - Documentação da jornada e biblioteca
+
+## v5.0-AccessibilityContrast-OfficialMNSOFTLogo-PremiumUI
+- Auditoria de contraste visual
+- Design tokens consolidados
+- Correção de legibilidade em cards, fundos, badges, links e botões
+- Modo alto contraste
+- Preferência de fonte maior
+- Preferência para reduzir animações
+- Tabela habitflow.user_ui_preferences
+- Tela de preferências de visualização
+- Logo oficial MNSOFT preservada e preparada no template
+- Documentação de uso da logo oficial
+- Checklist visual de QA
+- Script de verificação de tokens de cor
+- Template premium refinado com foco em legibilidade
+- Mobile e acessibilidade revisados
