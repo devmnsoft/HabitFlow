@@ -19,3 +19,7 @@ HabitFlow v4.4-WindowsIIS-Production-NoDocker formaliza operação em Windows/II
 - App pool errado: use No Managed Code para ASP.NET Core hospedado pelo ANCM.
 - Banco não criado: execute setup-postgres-database antes do apply.
 - SSL/cookie secure: habilite HTTPS antes de CookieSecure em produção.
+
+## Mercado Pago no IIS
+
+Não publique `appsettings.Production.json` real. Use variáveis de ambiente ou configuração protegida do servidor para o AccessToken. A aplicação continua ouvindo porta 5097 quando executada diretamente; no IIS o binding é controlado pelo site.

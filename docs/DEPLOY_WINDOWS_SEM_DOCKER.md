@@ -24,3 +24,7 @@ HabitFlow v4.4-WindowsIIS-Production-NoDocker formaliza operação em Windows/II
 - App pool errado: use No Managed Code para ASP.NET Core hospedado pelo ANCM.
 - Banco não criado: execute setup-postgres-database antes do apply.
 - SSL/cookie secure: habilite HTTPS antes de CookieSecure em produção.
+
+## Pagamentos v4.6 sem Docker
+
+Configure `Payment:PublicBaseUrl`, `MercadoPago:AccessToken`, `MercadoPago:WebhookSecret` e `MercadoPago:NotificationUrl` via IIS/variáveis seguras. A produção deve usar HTTPS público; localhost não recebe webhooks externos sem túnel de desenvolvimento.

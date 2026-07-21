@@ -137,3 +137,7 @@ firebase deploy --only hosting
 ## v4.3 follow-up
 - Conectar notificações internas detalhadas para respostas administrativas de suporte.
 - Expandir snapshots periódicos do dashboard via job agendado.
+
+## v4.6 limitações conhecidas
+- Cancelamento real no Mercado Pago permanece como integração futura; nesta versão há preparação para cancelamento manual/admin e suporte.
+- Envio de Telegram/e-mail para todos os eventos financeiros está documentado para configuração operacional e pode ser expandido por worker dedicado.

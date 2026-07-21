@@ -109,3 +109,22 @@
 - Migration 013
 - script_completo.sql atualizado
 - Testes administrativos
+
+## v4.6-PremiumPayments-BillingAutomation
+- Planos reais Free/Premium
+- Tela de planos
+- Área Minha Assinatura
+- Checkout Mercado Pago
+- Webhook Mercado Pago
+- Ativação automática Premium por pagamento aprovado
+- Histórico de transações
+- Assinaturas
+- Payment audit logs
+- Admin financeiro real
+- MRR/ARR estimado
+- Notificações internas de pagamento preparadas
+- Telegram para eventos financeiros documentado
+- Migration 016
+- script_completo.sql atualizado
+- Documentação Premium/Pagamentos/Webhooks
+- Testes de billing

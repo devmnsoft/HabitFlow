@@ -1,0 +1,21 @@
+@model IReadOnlyList<HabitFlow.Domain.Plan>
+@{
+    ViewData["Title"] = "Planos";
+}
+<div class="container py-4">
+  <div class="d-flex align-items-center gap-2 mb-3"><h1>Planos HabitFlow</h1>@if ((bool)(ViewBag.ShowSandbox ?? false)){<span class="badge bg-warning text-dark">Sandbox</span>}</div>
+  @if (TempData["Error"] is string error){<div class="alert alert-warning">@error</div>}
+  <div class="row g-3">
+    @foreach (var plan in Model)
+    {
+      var isPremium = plan.Code.StartsWith("premium");
+      var cycle = plan.Code.EndsWith("yearly") ? "Yearly" : "Monthly";
+      <div class="col-md-4"><div class="card h-100 @(isPremium ? "border-primary shadow" : "")"><div class="card-body">
+        <h2 class="h4">@plan.Name</h2><p>@plan.Description</p>
+        <p class="display-6">@(plan.PriceYearly?.ToString("C") ?? plan.PriceMonthly?.ToString("C") ?? "R$ 0,00")</p>
+        <ul><li>@(plan.HabitLimit is null ? "Hábitos ilimitados" : $"Até {plan.HabitLimit} hábitos ativos")</li><li>@(plan.AdvancedReportsEnabled ? "Relatórios avançados" : "Relatórios básicos")</li><li>@(plan.ChallengesEnabled ? "Desafios premium" : "Recursos essenciais")</li></ul>
+        @if (isPremium){<form asp-controller="Billing" asp-action="Checkout" method="post">@Html.AntiForgeryToken()<input type="hidden" name="planCode" value="@plan.Code"/><input type="hidden" name="billingCycle" value="@cycle"/><button class="btn btn-primary w-100" type="submit">Assinar Premium</button></form>} else {<a class="btn btn-outline-secondary w-100" href="/billing">Plano atual gratuito</a>}
+      </div></div></div>
+    }
+  </div>
+</div>
