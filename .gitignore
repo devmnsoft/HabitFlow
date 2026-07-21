@@ -40,3 +40,6 @@ firebase-adminsdk*.json
 *.user
 .vs/
 .idea/
+
+# Configuração local com secrets
+src/HabitFlow.Web/appsettings.Development.local.json

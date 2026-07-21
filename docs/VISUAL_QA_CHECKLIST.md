@@ -1,6 +1,9 @@
-# Checklist Visual QA v5.1
+# VISUAL_QA_CHECKLIST
 
-- Validar Home, Dashboard, Biblioteca, Planos, Suporte e Ajuda.
-- Verificar foco por teclado, contraste, mobile 360/390/768 e desktop.
-- Executar scripts `check-missing-assets.ps1`, `check-placeholders.ps1` e `check-color-tokens.ps1`.
-- Confirmar que não há PNG/JPG/ZIP adicionados pelo Codex.
+Documento da versão v5.2-DatabaseConnectionFix-PremiumDemo-UXNavigation.
+
+- O app roda sem Docker na porta 5097.
+- Use appsettings.Development.local.json para secrets locais.
+- /demo é uma demonstração sem dependência do banco.
+- /help centraliza dúvidas de uso.
+- A logo oficial MNSOFT deve ser adicionada manualmente em src/HabitFlow.Web/wwwroot/brand/mnsoft/logo-mnsoft-oficial.png; sem ela, a interface mostra fallback textual elegante, sem imagem quebrada.

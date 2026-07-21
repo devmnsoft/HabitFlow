@@ -1,3 +1,27 @@
+
+## v5.2-DatabaseConnectionFix-PremiumDemo-UXNavigation
+- Correção amigável para erro PostgreSQL 28P01
+- Suporte a appsettings.Development.local.json
+- Scripts de validação de conexão PostgreSQL
+- /health/db com diagnóstico de senha inválida
+- AuditService resiliente a falha de banco
+- Botão Ver demonstração corrigido
+- Página /demo funcional sem banco
+- Demo interativa com JavaScript Vanilla
+- Navbar revisada com ícones e descrições
+- Menu visitante e menu logado separados
+- Footer corrigido
+- Bloco MNSOFT sem fallback feio
+- Ilustrações SVG inline
+- Biblioteca de ícones SVG
+- Home mais premium e vendável
+- Central de Ajuda mais clara
+- Manual rápido por tela
+- Checklist de primeiros passos
+- Tour guiado funcional
+- Scripts de validação de assets, links e placeholders
+- Template refinado para usuário comum
+
 ## v5.1 Premium Visual QA
 
 Esta versão melhora Home, Dashboard, Central de Ajuda, tour guiado, checklist de primeiros passos, scripts de validação visual e fallback seguro para a marca MNSOFT. A execução sem Docker permanece preservada na porta 5097.

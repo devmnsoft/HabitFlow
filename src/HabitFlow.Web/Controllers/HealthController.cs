@@ -20,6 +20,9 @@ public class HealthController(IConfiguration configuration, IWebHostEnvironment 
         {
             status = d?.Status ?? "unhealthy",
             database = d?.Database,
+            schema = "habitflow",
+            code = d?.Status == "unhealthy" ? d?.ErrorCode ?? "postgres.unhealthy" : "postgres.ok",
+            message = d?.ErrorMessage ?? "Conexão com PostgreSQL validada.",
             schemaExists = d?.SchemaExists ?? false,
             requiredTablesOk = d?.RequiredTablesOk ?? false,
             publicConflicts = d?.PublicConflicts ?? 0,

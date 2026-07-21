@@ -19,7 +19,8 @@ public sealed class PremiumVisualV51Tests
         var component = File.ReadAllText("../../../../src/HabitFlow.Web/ViewComponents/MNSOFTLogoViewComponent.cs");
         var view = File.ReadAllText("../../../../src/HabitFlow.Web/Views/Shared/Components/MNSOFTLogo/Default.cshtml");
         Assert.Contains("logo-mnsoft-oficial.png", component);
-        Assert.Contains("Assinatura visual temporária", view);
+        Assert.DoesNotContain("Assinatura visual temporária", view);
+        Assert.Contains("Consultorias e soluções em TI", view);
         Assert.Contains("mnsoft-official-logo", view);
     }
 

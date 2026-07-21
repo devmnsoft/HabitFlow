@@ -1,0 +1,19 @@
+@{ Layout = "~/Views/Shared/_Layout.cshtml"; ViewData["Title"] = "Demonstração"; }
+<section class="hf-hero hf-hero-grid mb-4">
+  <div><span class="hf-section-kicker">Demonstração sem cadastro</span><h1>Veja o HabitFlow funcionando</h1><p class="lead">Uma demonstração simples de como você organiza hábitos, marca conclusões e acompanha sua evolução.</p><div class="d-flex gap-2 flex-wrap"><a class="btn btn-success btn-lg" href="/register">Criar minha conta grátis</a><a class="btn btn-outline-success btn-lg" href="/habit-library">Ver biblioteca de hábitos</a></div></div>
+  <aside class="hf-mockup-card">@await Html.PartialAsync("~/Views/Shared/Partials/Illustrations/_DemoProgressIllustration.cshtml")</aside>
+</section>
+<section class="hf-section hf-demo-panel" data-demo-habit>
+  <div class="row g-3 mb-3">
+    <div class="col-sm-6 col-lg-3"><article class="hf-metric-card"><span>Hábitos de hoje</span><strong>4</strong></article></div>
+    <div class="col-sm-6 col-lg-3"><article class="hf-metric-card"><span>Concluídos</span><strong id="demoDone">3</strong><small>/4</small></article></div>
+    <div class="col-sm-6 col-lg-3"><article class="hf-metric-card"><span>Sequência atual</span><strong>7 dias</strong></article></div>
+    <div class="col-sm-6 col-lg-3"><article class="hf-metric-card"><span>Progresso do dia</span><strong id="demoProgressText">75%</strong></article></div>
+  </div>
+  <div class="progress mb-4" aria-label="Progresso da demonstração"><div id="demoProgressBar" class="progress-bar bg-success" style="width:75%"></div></div>
+  <div class="row g-4">
+    <div class="col-lg-7"><h2>Hábitos simulados</h2><ul class="hf-demo-list"><li>💧 Beber água <span>concluído</span></li><li>🚶 Caminhar 20 minutos <span>concluído</span></li><li id="demoPendingHabit">📚 Ler 10 minutos <span>pendente</span> <button id="demoCompleteBtn" class="btn btn-sm btn-success ms-2">Marcar como feito</button></li><li>🌙 Dormir antes das 23h <span>concluído</span></li></ul><p id="demoMessage" class="alert alert-success d-none" role="status">Excelente! Você completou todos os hábitos da demonstração.</p></div>
+    <div class="col-lg-5"><article class="hf-premium-card"><h2>Semana</h2><div class="hf-week-mini"><span>Seg ✓</span><span>Ter ✓</span><span>Qua ✓</span><span>Qui •</span><span>Sex •</span><span>Sáb •</span><span>Dom •</span></div><h3 class="mt-4">Relatórios</h3><p>Veja porcentagem diária, sequência e hábitos mais consistentes para decidir o que ajustar.</p></article></div>
+  </div>
+</section>
+@section Scripts { <script src="/js/demo.js" asp-append-version="true"></script> }
