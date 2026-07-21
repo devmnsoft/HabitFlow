@@ -15,8 +15,33 @@
   window.previewReduceMotion = (enabled) => window.applyUiPreferences({ ...readLocalPreferences(), reduceMotion: enabled });
   function readLocalPreferences() { try { return JSON.parse(localStorage.getItem(storageKey) || '{}'); } catch { return {}; } }
   function saveLocalPreferences(preferences) { localStorage.setItem(storageKey, JSON.stringify(normalize(preferences))); }
+  function initPasswordToggles() {
+    document.querySelectorAll('[data-password-toggle]').forEach((button) => {
+      const input = document.querySelector(button.getAttribute('data-password-toggle') || '');
+      if (!input) return;
+      input.type = 'password';
+      button.addEventListener('click', () => {
+        const visible = input.type === 'password';
+        input.type = visible ? 'text' : 'password';
+        button.classList.toggle('is-visible', visible);
+        button.setAttribute('aria-label', visible ? 'Ocultar senha' : 'Mostrar senha');
+        button.setAttribute('aria-pressed', String(visible));
+      });
+    });
+  }
+  function initRegisterPasswordValidation() {
+    document.querySelectorAll('[data-register-form]').forEach((form) => form.addEventListener('submit', (ev) => {
+      const password = form.querySelector('#Password'); const confirm = form.querySelector('#ConfirmPassword'); const error = form.querySelector('[data-password-match-error]');
+      if (!password || !confirm || !error) return;
+      const mismatch = password.value !== confirm.value;
+      error.classList.toggle('d-none', !mismatch); confirm.classList.toggle('hf-input-invalid', mismatch);
+      if (mismatch) { ev.preventDefault(); confirm.focus(); }
+    }));
+  }
   ready(() => {
     window.applyUiPreferences(readLocalPreferences());
+    initPasswordToggles();
+    initRegisterPasswordValidation();
     document.querySelectorAll('[data-hf-toast]').forEach((el) => showToast(el.getAttribute('data-hf-toast') || 'Atualizado'));
     document.querySelectorAll('.alert').forEach((alert) => setTimeout(() => window.bootstrap?.Alert.getOrCreateInstance(alert).close(), 6500));
     document.querySelectorAll('form').forEach((form) => form.addEventListener('submit', () => { const btn = form.querySelector('button[type="submit"],button:not([type])'); if (btn && !btn.dataset.noLoading) { btn.dataset.originalText = btn.textContent; btn.textContent = btn.dataset.loadingText || 'Processando...'; btn.disabled = true; } }));

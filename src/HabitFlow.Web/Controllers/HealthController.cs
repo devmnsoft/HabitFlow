@@ -33,6 +33,14 @@ public class HealthController(IConfiguration configuration, IWebHostEnvironment 
         return payload.status == "unhealthy" ? StatusCode(503, payload) : Ok(payload);
     }
 
+    [HttpGet("diagnostics/database")]
+    public async Task<IActionResult> DatabaseDiagnostics(CancellationToken ct)
+    {
+        if (!env.IsDevelopment() && User?.IsInRole("Admin") != true) return NotFound();
+        var result = await diagnostics.GetAsync(ct);
+        return View("DatabaseDiagnostics", result.Value);
+    }
+
     [HttpGet("health/version")]
     public IActionResult Version()
     {

@@ -44,7 +44,7 @@
 </header>
 <main id="conteudo" class="hf-main" tabindex="-1">
   <div class="container-fluid hf-shell">
-    @foreach (var key in new[]{"Success","Info","Error"}) { if (TempData[key] is not null) { var cls = key == "Error" ? "danger" : key == "Info" ? "info" : "success"; <div class="alert alert-@cls hf-alert alert-dismissible fade show" role="status"><span>@TempData[key]</span><button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button></div> } }
+    @await Html.PartialAsync("~/Views/Shared/Partials/_AppMessages.cshtml")
     @RenderBody()
   </div>
 </main>

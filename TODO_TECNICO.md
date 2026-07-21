@@ -1,4 +1,9 @@
 
+## v5.3 pendências técnicas
+- Validar manualmente PostgreSQL 28P01/3D000/42P01 em ambiente com banco real.
+- Capturar prints após execução local com SDK .NET disponível.
+
+
 ## v5.2-DatabaseConnectionFix-PremiumDemo-UXNavigation
 - Correção amigável para erro PostgreSQL 28P01
 - Suporte a appsettings.Development.local.json

@@ -11,10 +11,16 @@ public sealed class AuthService(IUserRepository users, IPasswordHasher hasher, A
         try
         {
             logger.LogInformation("Tentativa de cadastro para {Email}", dto.Email);
-            if (dto.Password.Length < 8) return Result<User>.Failure("password.short", "Senha deve ter ao menos 8 caracteres.");
-            if (await users.GetByEmailAsync(dto.Email.ToLowerInvariant(), ct) is not null) return Result<User>.Failure("email.exists", "E-mail já cadastrado.");
+            if (string.IsNullOrWhiteSpace(dto.Name)) return Result<User>.Failure("validation.name_required", "Informe seu nome.");
+            if (string.IsNullOrWhiteSpace(dto.Email)) return Result<User>.Failure("validation.email_required", "Informe seu e-mail.");
+            if (string.IsNullOrEmpty(dto.Password)) return Result<User>.Failure("validation.password_required", "Informe uma senha para proteger sua conta.");
+            if (string.IsNullOrEmpty(dto.ConfirmPassword)) return Result<User>.Failure("validation.confirm_password_required", "Confirme sua senha para continuar.");
+            if (dto.Password.Length < 8) return Result<User>.Failure("validation.password_short", "A senha deve ter pelo menos 8 caracteres.");
+            if (!string.Equals(dto.Password, dto.ConfirmPassword, StringComparison.Ordinal)) return Result<User>.Failure("validation.password_mismatch", "As senhas não conferem. Digite a mesma senha nos dois campos.");
+            var email = dto.Email.Trim().ToLowerInvariant();
+            if (await users.GetByEmailAsync(email, ct) is not null) return Result<User>.Failure("email.exists", "E-mail já cadastrado.");
             var now = DateTime.UtcNow;
-            var user = new User(Guid.NewGuid(), dto.Name.Trim(), dto.Email.ToLowerInvariant(), hasher.Hash(dto.Password), null, UserRole.User, AccountStatus.Active, RiskStatus.Normal, UserPlan.Free, PlanStatus.Active, false, false, now, now, null, null, now, now);
+            var user = new User(Guid.NewGuid(), dto.Name.Trim(), email, hasher.Hash(dto.Password), null, UserRole.User, AccountStatus.Active, RiskStatus.Normal, UserPlan.Free, PlanStatus.Active, false, false, now, now, null, null, now, now);
             await users.CreateAsync(user, ct);
             await audit.LogAsync("user_registered", "Novo usuário", AuditSeverity.Info, user.Id, user.Email, null, ct);
             return Result<User>.Success(user);
@@ -27,7 +33,7 @@ public sealed class AuthService(IUserRepository users, IPasswordHasher hasher, A
                 await audit.LogAsync("register_error", "Erro ao cadastrar usuário.", AuditSeverity.Error, null, dto.Email, new { dto.Email }, ct);
             }
             return PostgresErrorHelper.IsConnectionFailure(ex)
-                ? Result<User>.Failure(PostgresErrorHelper.BuildErrorCode(ex), PostgresErrorHelper.BuildFriendlyMessage(ex))
+                ? Result<User>.Failure(PostgresErrorHelper.BuildErrorCode(ex), PostgresErrorHelper.ToPublicUserMessage(ex, false))
                 : Result<User>.Failure("auth.register_error", "Não foi possível concluir o cadastro agora.");
         }
     }
@@ -52,7 +58,7 @@ public sealed class AuthService(IUserRepository users, IPasswordHasher hasher, A
                 await audit.LogAsync("login_error", "Erro ao realizar login.", AuditSeverity.Error, null, dto.Email, new { dto.Email }, ct);
             }
             return PostgresErrorHelper.IsConnectionFailure(ex)
-                ? Result<User>.Failure(PostgresErrorHelper.BuildErrorCode(ex), PostgresErrorHelper.BuildFriendlyMessage(ex))
+                ? Result<User>.Failure(PostgresErrorHelper.BuildErrorCode(ex), PostgresErrorHelper.ToPublicUserMessage(ex, false))
                 : Result<User>.Failure("auth.login_error", "Não foi possível realizar o login agora.");
         }
     }

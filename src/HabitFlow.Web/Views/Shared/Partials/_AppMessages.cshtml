@@ -1,0 +1,23 @@
+@inject IWebHostEnvironment Env
+@{
+    var messages = new[] {
+        (Key:"Success", Css:"hf-message-success", Title:"Tudo certo", Icon:"✓"),
+        (Key:"Info", Css:"hf-message-info", Title:"Informação", Icon:"i"),
+        (Key:"Warning", Css:"hf-message-warning", Title:"Atenção", Icon:"!"),
+        (Key:"Error", Css:"hf-message-error", Title:"Não foi possível continuar", Icon:"!"),
+        (Key:"ValidationError", Css:"hf-message-error", Title:"Revise os dados", Icon:"!"),
+        (Key:"DatabaseError", Css:"hf-message-db", Title:"Banco de dados indisponível", Icon:"⛓")
+    };
+}
+@foreach (var item in messages)
+{
+    if (TempData[item.Key] is not null)
+    {
+        <div class="hf-message @item.Css alert-dismissible fade show" role="@(item.Key.Contains("Error") ? "alert" : "status")">
+            <div class="hf-message-icon" aria-hidden="true">@item.Icon</div>
+            <div class="hf-message-content"><strong class="hf-message-title">@item.Title</strong><div class="hf-message-body">@TempData[item.Key]</div>
+            @if (item.Key == "DatabaseError") { <div class="hf-message-actions"><a href="@(Env.IsDevelopment() ? "/health/db" : "/support")">@(Env.IsDevelopment() ? "Ver JSON de diagnóstico" : "Falar com suporte")</a>@if (Env.IsDevelopment()) { <a href="/help/database-setup">Guia PostgreSQL</a><a href="/diagnostics/database">Painel visual</a> }<span>Código: @TempData["DatabaseErrorCode"]</span></div> }
+            </div><button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+        </div>
+    }
+}
