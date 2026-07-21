@@ -1,4 +1,7 @@
-<div class="mnsoft-signature" aria-label="Produto desenvolvido pela MNSOFT">
-  @await Html.PartialAsync("~/Views/Shared/Partials/_MNSOFTOfficialLogo.cshtml")
-  <div><strong>MNSOFT</strong><br><span>Consultorias e soluções em TI. · <a href="mailto:comercial@mnsoft.com.br">comercial@mnsoft.com.br</a></span></div>
+<div class="mnsoft-signature">
+    @await Component.InvokeAsync("MNSOFTLogo")
+    <div>
+        <strong>HabitFlow por MNSOFT</strong>
+        <p class="mb-0 small">Consultoria e soluções em TI para produtos seguros, simples e confiáveis.</p>
+    </div>
 </div>

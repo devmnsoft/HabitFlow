@@ -1,0 +1,5 @@
+@{ var text = ViewData["Text"] as string ?? "Use esta página para avançar com clareza no HabitFlow."; }
+<aside class="hf-quick-help" data-tour="quick-help">
+    @await Html.PartialAsync("~/Views/Shared/Partials/Icons/_Icon.cshtml", null, new ViewDataDictionary(ViewData){{"Name","help"},{"Class","hf-icon-lg"}})
+    <div><strong>Ajuda rápida</strong><p class="mb-0">@text</p><a href="/help">Abrir Central de Ajuda</a></div>
+</aside>

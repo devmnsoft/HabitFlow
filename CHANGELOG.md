@@ -1,3 +1,22 @@
+## v5.1-PremiumVisualQA-HelpCenter-GuidedExperience
+- Auditoria visual do template
+- Correção de imagens faltantes
+- Fallback seguro para logo oficial MNSOFT
+- Biblioteca de ícones SVG inline
+- Ilustrações SVG premium sem binários
+- CSS reorganizado e documentado
+- Home mais didática e vendável
+- Central de Ajuda
+- Manual do Usuário
+- Tour guiado do primeiro uso
+- Checklist de primeiros passos
+- Dashboard mais humano
+- Biblioteca de hábitos mais visual
+- Planos com copy comercial e FAQ
+- Suporte com mais confiança MNSOFT
+- Scripts de validação de assets e placeholders
+- Documentação de UX, vendas e manual
+
 ## v4.7-PremiumTemplate-UX-ProductExperience
 - Template premium do HabitFlow
 - Novo layout principal responsivo
