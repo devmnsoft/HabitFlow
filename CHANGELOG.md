@@ -1,3 +1,21 @@
+## v5.6.2-EnumPersistenceFix-PublicNavigation-FooterUX
+- Corrigida persistência de enums como texto no Dapper
+- Corrigido erro 23514 em habitflow.users.account_status
+- Corrigido erro 23514 em habitflow.system_audit_logs.severity
+- Criado helper DbEnum
+- Criado validate_enum_constraints.sql
+- PostgresErrorHelper reconhece CHECK constraint violation
+- Cadastro de usuário estabilizado
+- Auditoria resiliente
+- Navbar pública reorganizada
+- Link Planos visível para visitantes
+- Navbar logada separada da pública
+- Ícone de Ajuda corrigido com SVG
+- Botões Entrar/Começar grátis realinhados
+- Footer premium redesenhado
+- MNSOFT badge compacta refinada
+- Testes de enum, navbar e footer
+
 
 ## v5.6.1-ClientBuildFix-FeedbackStabilization
 - Corrigido erro CS0509 em UpdateClientRequest
