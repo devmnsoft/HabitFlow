@@ -1,0 +1,16 @@
+@inject HabitFlow.Web.Services.IBrandAssetService BrandAssets
+@{
+    var compact = string.Equals(ViewData["Compact"]?.ToString(), "true", StringComparison.OrdinalIgnoreCase);
+    var logo = BrandAssets.Exists("/brand/mnsoft/logo-mnsoft-oficial.png") ? "/brand/mnsoft/logo-mnsoft-oficial.png" : null;
+}
+<span class="mnsoft-brand-badge @(compact ? "mnsoft-brand-badge-compact" : "")">
+@if (!string.IsNullOrWhiteSpace(logo))
+{
+    <img src="@logo" alt="MNSOFT" class="mnsoft-brand-logo" loading="lazy" />
+}
+else
+{
+    <span class="mnsoft-brand-icon" aria-hidden="true">mn</span>
+}
+    <span class="mnsoft-brand-copy"><span class="mnsoft-brand-title">MNSOFT</span><span class="mnsoft-brand-subtitle">Consultorias e soluções em TI.</span></span>
+</span>

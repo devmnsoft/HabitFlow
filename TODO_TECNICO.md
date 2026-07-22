@@ -206,3 +206,8 @@ firebase deploy --only hosting
 - Evoluir dashboard para marcação de hábitos 100% AJAX.
 - Persistir dicas descartadas por usuário no banco.
 - Expandir notificações para pagamentos e relatórios prontos.
+
+## v5.6 próximos passos
+
+- Implementar tela completa de vínculo de usuários a clientes.
+- Popular métricas de hábitos por cliente quando o vínculo estiver em uso.

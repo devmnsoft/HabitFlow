@@ -286,3 +286,21 @@
 - FeedbackMapper para erros técnicos
 - Documentação de feedback e notificações
 - Testes de pop-ups, mensagens e notificações
+
+## v5.6-ClientRegistration-ActionMessages-MNSOFTBranding-FunctionalEvolution
+- Cadastro completo de clientes
+- Listagem de clientes
+- Edição de clientes
+- Ativar/desativar/bloquear cliente
+- Detalhe do cliente
+- Estrutura de vínculo cliente-usuário
+- Métricas iniciais do cliente
+- Auditoria de ações de cliente
+- Feedback global de ações
+- Toasts para ações de sucesso
+- Modais para erros e confirmações
+- FeedbackBridge via TempData
+- Padronização de mensagens por ação
+- MNSOFT brand badge refinado
+- Rodapé premium reorganizado
+- Documentação de clientes e feedbacks

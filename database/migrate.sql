@@ -26,3 +26,6 @@
 
 \i database/migrations/019_notifications_feedback_preferences.sql
 \i database/migrations/020_popup_preferences.sql
+
+\i migrations/021_clients_management.sql
+\i migrations/022_users_clients_link.sql

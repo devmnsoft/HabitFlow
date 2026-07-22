@@ -1,0 +1,18 @@
+@using System.Text.Json
+@{
+    var type = TempData["Feedback.Type"]?.ToString();
+    var title = TempData["Feedback.Title"]?.ToString();
+    var message = TempData["Feedback.Message"]?.ToString();
+    var modal = TempData["Feedback.Modal"]?.ToString() == "true";
+}
+@if (!string.IsNullOrWhiteSpace(type) && !string.IsNullOrWhiteSpace(message))
+{
+<script>
+window.addEventListener('DOMContentLoaded', () => {
+  const f = window.HabitFlowFeedback;
+  if (!f) return;
+  const payload = @Html.Raw(JsonSerializer.Serialize(new { type, title, message }));
+  @(modal ? "f.showModal(payload.type, payload.title, payload.message);" : "f.showToast(payload.type, payload.title, payload.message);")
+});
+</script>
+}

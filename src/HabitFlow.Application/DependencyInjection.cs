@@ -18,6 +18,7 @@ public static class DependencyInjection
         services.AddScoped<AdminAuthorizationService>();
         services.AddScoped<AuthService>();
         services.AddScoped<UserService>();
+        services.AddScoped<ClientService>();
         services.AddScoped<HabitService>();
         services.AddScoped<HabitLibraryService>();
         services.AddScoped<GuidedJourneyService>();
