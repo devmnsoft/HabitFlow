@@ -43,3 +43,9 @@ A migration `017_habit_templates_guided_journey.sql` cria `habitflow.habit_objec
 ## v5.6 clientes
 
 A gestão de clientes usa `habitflow.clients`, constraints de plano/status, índices por nome/e-mail/documento/status/criação e vínculo opcional `habitflow.users.client_id`.
+
+## v5.6.1 clientes
+
+O módulo de clientes usa Dapper e PostgreSQL com schema explícito. Todas as consultas, inserts e updates apontam para `habitflow.clients`; não crie nem use tabela `clients` no schema `public`.
+
+Para rodar sem Docker, configure uma connection string PostgreSQL local por variável de ambiente ou arquivo local não versionado, aplique `database/migrations/021_clients_management.sql` e execute `dotnet run --project src/HabitFlow.Web`.

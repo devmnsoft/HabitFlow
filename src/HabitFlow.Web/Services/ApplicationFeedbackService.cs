@@ -4,11 +4,20 @@ namespace HabitFlow.Web.Services;
 
 public sealed class ApplicationFeedbackService
 {
-    public void SetSuccess(Controller c, string title, string message) => Set(c, "success", title, message, false);
-    public void SetInfo(Controller c, string title, string message) => Set(c, "info", title, message, false);
-    public void SetWarning(Controller c, string title, string message) => Set(c, "warning", title, message, false);
-    public void SetError(Controller c, string title, string message) => Set(c, "error", title, message, true);
-    public void SetDatabaseError(Controller c, string title, string message) => Set(c, "database", title, message, true);
-    public void SetModal(Controller c, string type, string title, string message) => Set(c, type, title, message, true);
-    private static void Set(Controller c, string type, string title, string message, bool modal) { c.TempData["Feedback.Type"] = type; c.TempData["Feedback.Title"] = title; c.TempData["Feedback.Message"] = message; c.TempData["Feedback.Modal"] = modal ? "true" : "false"; }
+    public void SetSuccess(Controller controller, string title, string message) => SetFeedback(controller, "success", title, message);
+    public void SetInfo(Controller controller, string title, string message) => SetFeedback(controller, "info", title, message);
+    public void SetWarning(Controller controller, string title, string message) => SetFeedback(controller, "warning", title, message);
+    public void SetError(Controller controller, string title, string message) => SetFeedback(controller, "error", title, message, modal: true);
+    public void SetDatabaseError(Controller controller, string title, string message) => SetFeedback(controller, "database", title, message, modal: true);
+    public void SetModal(Controller controller, string type, string title, string message) => SetFeedback(controller, type, title, message, modal: true);
+
+    public void SetFeedback(Controller controller, string type, string title, string message) => SetFeedback(controller, type, title, message, modal: false);
+
+    private static void SetFeedback(Controller controller, string type, string title, string message, bool modal)
+    {
+        controller.TempData["Feedback.Type"] = type;
+        controller.TempData["Feedback.Title"] = title;
+        controller.TempData["Feedback.Message"] = message;
+        controller.TempData["Feedback.Modal"] = modal ? "true" : "false";
+    }
 }
