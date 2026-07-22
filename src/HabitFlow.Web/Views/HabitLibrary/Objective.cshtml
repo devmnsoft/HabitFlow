@@ -1,6 +1,7 @@
 @model (HabitFlow.Domain.HabitObjective Objective, IReadOnlyList<HabitFlow.Domain.HabitTemplate> Templates)
 @{ ViewData["Title"] = $"Hábitos para {Model.Objective.Name}"; var returnUrl = Context.Request.Path.ToString(); }
 <section class="hf-section"><a href="/habit-library" class="btn btn-link px-0">← Voltar aos objetivos</a><p class="hf-section-kicker">@Model.Objective.Name</p><h1>Hábitos para melhorar sua @Model.Objective.Name.ToLowerInvariant()</h1><p class="lead text-muted">Escolha um hábito simples para começar hoje. Você pode ajustar sua rotina depois.</p></section>
+@if ((bool?)ViewData["UsingFallback"] == true) { <div class="alert alert-info">Estamos usando sugestões básicas enquanto a biblioteca completa é preparada.</div> }
 <section class="row g-3">
 @foreach (var template in Model.Templates) {
  <div class="col-md-6 col-xl-4"><article class="hf-habit-template-card h-100"><span class="hf-difficulty">@template.Difficulty</span><h2 class="h4">@template.Name</h2><p>@template.Description</p><p class="text-muted"><strong>Benefício:</strong> @template.BenefitText</p><p class="small text-muted">Tempo estimado: @(template.EstimatedTimeMinutes?.ToString() ?? "flexível") min · Frequência: @template.SuggestedFrequency</p>
