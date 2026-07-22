@@ -1,3 +1,8 @@
+## v5.6.1-ClientBuildFix-FeedbackStabilization
+- Validar manualmente o fluxo completo de clientes em ambiente com SDK .NET e PostgreSQL disponíveis.
+- Capturar evidências visuais mobile/desktop após execução local sem Docker.
+- Confirmar que publish/windows permanece fora do Git após publicação Release.
+
 
 ## v5.3 pendências técnicas
 - Validar manualmente PostgreSQL 28P01/3D000/42P01 em ambiente com banco real.

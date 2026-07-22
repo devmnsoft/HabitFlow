@@ -1,4 +1,17 @@
 
+## v5.6.1-ClientBuildFix-FeedbackStabilization
+- Corrigido erro CS0509 em UpdateClientRequest
+- Criada base ClientRequestBase para Create/Update
+- Corrigidos namespaces dos DTOs de clientes
+- Corrigidas views Razor de clientes
+- Corrigido AdminClientsController
+- Garantido registro de ClientService e IClientRepository
+- Estabilizado cadastro de cliente
+- Feedback de ações do módulo clientes revisado
+- Documentada limpeza de bin/obj para Razor Source Generator
+- Testes de compilação e clientes ajustados
+
+
 ## v5.3-AuthUX-DatabaseMessages-ContextualPremiumTemplate
 - Cadastro com confirmação de senha
 - Validação backend de senha e confirmação
