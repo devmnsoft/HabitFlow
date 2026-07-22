@@ -10,12 +10,14 @@ public static class PostgresErrorHelper
     public const string ConnectionSqlState = "08001";
     public const string PermissionDeniedSqlState = "42501";
     public const string MissingTableSqlState = "42P01";
+    public const string CheckConstraintViolationSqlState = "23514";
 
     public const string InvalidPasswordCode = "postgres.invalid_password";
     public const string DatabaseMissingCode = "postgres.database_missing";
     public const string ConnectionUnavailableCode = "postgres.unavailable";
     public const string PermissionDeniedCode = "postgres.permission_denied";
     public const string MissingTableCode = "postgres.table_missing";
+    public const string CheckConstraintViolationCode = "postgres.check_constraint_violation";
     public const string GenericDatabaseCode = "postgres.error";
 
     public const string FriendlyInvalidPasswordMessage = "A senha do PostgreSQL está incorreta para o usuário configurado.";
@@ -23,6 +25,7 @@ public static class PostgresErrorHelper
     public const string FriendlyConnectionUnavailableMessage = "Não foi possível conectar ao PostgreSQL.";
     public const string FriendlyPermissionDeniedMessage = "O usuário configurado não tem permissão para acessar o banco HabitFlow.";
     public const string FriendlyMissingTableMessage = "Uma tabela obrigatória do schema habitflow não foi encontrada.";
+    public const string FriendlyCheckConstraintViolationMessage = "Não foi possível salvar os dados porque uma configuração interna precisa ser revisada.";
     public const string FriendlyGenericMessage = "Não foi possível acessar o banco de dados agora. Verifique a configuração do PostgreSQL.";
 
     public const string DatabaseMissingLogMessage = "Banco de dados habitflow não existe. Execute scripts/database/create-habitflow-db.ps1 e scripts/database/apply-script-completo.ps1.";
@@ -32,6 +35,7 @@ public static class PostgresErrorHelper
     public static bool IsDatabaseMissing(Exception ex) => HasSqlState(ex, DatabaseMissingSqlState);
     public static bool IsPermissionDenied(Exception ex) => HasSqlState(ex, PermissionDeniedSqlState);
     public static bool IsMissingTable(Exception ex) => HasSqlState(ex, MissingTableSqlState);
+    public static bool IsCheckConstraintViolation(Exception ex) => HasSqlState(ex, CheckConstraintViolationSqlState);
 
     public static bool IsConnectionUnavailable(Exception ex) =>
         HasSqlState(ex, ConnectionSqlState) || Contains(ex, e =>
@@ -40,12 +44,13 @@ public static class PostgresErrorHelper
             e.GetType().Name.Contains("Timeout", StringComparison.OrdinalIgnoreCase) ||
             e.Message.Contains("connection refused", StringComparison.OrdinalIgnoreCase));
 
-    public static bool IsConnectionFailure(Exception ex) => IsInvalidPassword(ex) || IsDatabaseMissing(ex) || IsConnectionUnavailable(ex) || IsPermissionDenied(ex) || IsMissingTable(ex);
+    public static bool IsConnectionFailure(Exception ex) => IsInvalidPassword(ex) || IsDatabaseMissing(ex) || IsConnectionUnavailable(ex) || IsPermissionDenied(ex) || IsMissingTable(ex) || IsCheckConstraintViolation(ex);
 
     public static string ToFriendlyCode(Exception ex) => IsInvalidPassword(ex) ? InvalidPasswordCode
         : IsDatabaseMissing(ex) ? DatabaseMissingCode
         : IsPermissionDenied(ex) ? PermissionDeniedCode
         : IsMissingTable(ex) ? MissingTableCode
+        : IsCheckConstraintViolation(ex) ? CheckConstraintViolationCode
         : IsConnectionUnavailable(ex) ? ConnectionUnavailableCode
         : GenericDatabaseCode;
 
@@ -53,6 +58,7 @@ public static class PostgresErrorHelper
         : IsDatabaseMissing(ex) ? FriendlyDatabaseMissingMessage
         : IsPermissionDenied(ex) ? FriendlyPermissionDeniedMessage
         : IsMissingTable(ex) ? FriendlyMissingTableMessage
+        : IsCheckConstraintViolation(ex) ? FriendlyCheckConstraintViolationMessage
         : IsConnectionUnavailable(ex) ? FriendlyConnectionUnavailableMessage
         : FriendlyGenericMessage;
 
@@ -64,6 +70,7 @@ public static class PostgresErrorHelper
             : IsDatabaseMissing(ex) ? "O banco de dados configurado não foi encontrado."
             : IsPermissionDenied(ex) ? "O usuário configurado não possui permissão suficiente no banco."
             : IsMissingTable(ex) ? "O banco está acessível, mas ainda não possui todas as tabelas necessárias."
+            : IsCheckConstraintViolation(ex) ? FriendlyCheckConstraintViolationMessage
             : IsConnectionUnavailable(ex) ? "Não foi possível conectar ao servidor PostgreSQL."
             : "Não foi possível concluir sua solicitação porque o sistema não conseguiu acessar o banco de dados.";
     }
@@ -72,6 +79,7 @@ public static class PostgresErrorHelper
         : IsDatabaseMissing(ex) ? "O banco de dados habitflow não existe. Crie o banco e aplique database/script_completo.sql."
         : IsPermissionDenied(ex) ? "Conceda permissões ao usuário configurado no schema habitflow."
         : IsMissingTable(ex) ? "Execute database/script_completo.sql e database/validate_schema_habitflow.sql."
+        : IsCheckConstraintViolation(ex) ? "Violação de CHECK CONSTRAINT no PostgreSQL. Verifique se enums C# estão sendo gravados como texto compatível com a constraint."
         : IsConnectionUnavailable(ex) ? "Verifique se o PostgreSQL está iniciado e acessível em Host/Port configurados."
         : "Falha ao conectar ao PostgreSQL. Verifique Host, Database, Username e Password em appsettings.Development.local.json.";
 

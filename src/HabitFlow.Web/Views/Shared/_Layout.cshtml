@@ -24,7 +24,7 @@
       <div class="collapse navbar-collapse" id="hfNav">
         <ul class="navbar-nav mx-auto mb-2 mb-lg-0 hf-nav-links">
           @if (!isAuthenticated) {
-            foreach (var item in new[]{("/","home","Início","Entenda o que é o HabitFlow"),("/demo","demo","Demonstração","Veja o sistema funcionando"),("/#como-usar","guide","Como funciona","Aprenda em 3 passos"),("/habit-library","library","Biblioteca","Conheça hábitos prontos"),("/plans","premium","Planos","Grátis e Premium"),("/help","help","Ajuda","Tire dúvidas")}) {
+            foreach (var item in new[]{("/","home","Início","Entenda o que é o HabitFlow"),("/demo","demo","Demonstração","Veja o sistema funcionando"),("/habit-library","library","Biblioteca","Conheça hábitos prontos"),("/plans","premium","Planos","Grátis e Premium"),("/help","help","Ajuda","Tire dúvidas")}) {
               <li class="nav-item"><a class="nav-link hf-nav-card" href="@item.Item1" title="@item.Item4">@await Html.PartialAsync("~/Views/Shared/Partials/Icons/_Icon.cshtml", null, new ViewDataDictionary(ViewData){{"Name",item.Item2}})<span>@item.Item3</span><small>@item.Item4</small></a></li>
             }
           } else {
@@ -34,9 +34,9 @@
             if(isAdmin){<li class="nav-item"><a class="nav-link hf-nav-card" href="/admin" title="Administração">@await Html.PartialAsync("~/Views/Shared/Partials/Icons/_Icon.cshtml", null, new ViewDataDictionary(ViewData){{"Name","admin"}})<span>Admin</span><small>Gestão do sistema</small></a></li>}
           }
         </ul>
-        <div class="hf-user-area">
+        <div class="hf-user-area @(isAuthenticated ? "hf-session-actions" : "hf-auth-actions")">
           @if (isAuthenticated) { @await Html.PartialAsync("~/Views/Shared/Partials/_NotificationBell.cshtml") }
-          @if (isAuthenticated) { <div class="hf-user-chip"><span>@userName</span><small>@userEmail</small></div><span class="hf-plan-badge">Free</span><form method="post" action="/logout" class="m-0">@Html.AntiForgeryToken()<button class="btn btn-outline-secondary" data-loading-text="Saindo...">Logout</button></form> } else { <a class="btn btn-outline-success" href="/login">Entrar</a><a class="btn btn-success" href="/register">Começar grátis</a> }
+          @if (isAuthenticated) { <div class="hf-user-chip"><span>@userName</span><small>@userEmail</small></div><span class="hf-plan-badge">Free</span><form method="post" action="/logout" class="m-0">@Html.AntiForgeryToken()<button class="btn btn-outline-secondary" data-loading-text="Saindo...">Sair</button></form> } else { <a class="btn btn-outline-success" href="/login">Entrar</a><a class="btn btn-success btn-primary-cta" href="/register">Começar grátis</a> }
         </div>
       </div>
     </div>

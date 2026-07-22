@@ -4,5 +4,5 @@ namespace HabitFlow.Infrastructure;
 
 public sealed class BillingRepository(SqlExecutor db) : IBillingRepository
 {
-    public Task AddAsync(BillingEvent billingEvent, CancellationToken ct = default) => db.ExecuteAsync("insert into habitflow.billing_events(id,user_id,provider,event_type,plan,status,amount,metadata,created_at) values(@Id,@UserId,@Provider,@EventType,@Plan::text,@Status,@Amount,@Metadata::jsonb,@CreatedAt)", billingEvent, ct);
+    public Task AddAsync(BillingEvent billingEvent, CancellationToken ct = default) => db.ExecuteAsync("insert into habitflow.billing_events(id,user_id,provider,event_type,plan,status,amount,metadata,created_at) values(@Id,@UserId,@Provider,@EventType,@Plan,@Status,@Amount,@Metadata::jsonb,@CreatedAt)", new { billingEvent.Id, billingEvent.UserId, billingEvent.Provider, billingEvent.EventType, Plan = DbEnum.Text(billingEvent.Plan), billingEvent.Status, billingEvent.Amount, billingEvent.Metadata, billingEvent.CreatedAt }, ct);
 }
