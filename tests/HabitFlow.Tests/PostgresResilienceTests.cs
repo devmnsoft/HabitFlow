@@ -1,6 +1,7 @@
 using HabitFlow.Application;
 using HabitFlow.Domain;
 using Microsoft.Extensions.Logging.Abstractions;
+using Xunit;
 
 namespace HabitFlow.Tests;
 
