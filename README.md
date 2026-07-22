@@ -1,4 +1,21 @@
 
+## v5.7-DapperDateTimeHandlers-PublicPlans-HabitLibraryBootstrap
+- Corrigido suporte Dapper para DateOnly
+- Corrigido suporte Dapper para TimeOnly
+- Corrigido erro nos relatórios semanais/mensais
+- Corrigido erro ao criar hábito com ReminderTime
+- Página /plans liberada para visitantes
+- Checkout/Billing continuam protegidos
+- Criadas tabelas habitflow.habit_objectives e habitflow.habit_templates
+- Seed completo da biblioteca de hábitos
+- Fallback em memória para a Habit Library
+- Adicionar hábito da biblioteca funciona com fallback
+- script_completo.sql atualizado
+- validate_schema_habitflow.sql atualizado
+- favicon.svg criado
+- Testes de DateOnly/TimeOnly, Plans e Habit Library
+
+
 
 ## v5.3 Auth UX e mensagens de banco
 
@@ -151,3 +168,11 @@ O HabitFlow agora possui `HabitFlowFeedback` para toasts, modais, confirmações
 ## v5.6 ClientRegistration ActionMessages MNSOFT Branding
 
 Inclui gestão administrativa de clientes, feedback global por toasts/modais, auditoria de ações de cliente, vínculo opcional cliente-usuário e badge institucional MNSOFT refinado. O projeto continua executando sem Docker na porta 5097.
+
+### Rotas públicas, billing e biblioteca
+
+- `/plans` é público para visitantes e usuários logados.
+- `/billing` e `POST /billing/checkout` permanecem protegidos por autenticação.
+- A biblioteca de hábitos depende de `habitflow.habit_objectives` e `habitflow.habit_templates`.
+- Em banco limpo, aplique `psql -U postgres -d habitflow -f database/script_completo.sql` e depois `psql -U postgres -d habitflow -f database/validate_schema_habitflow.sql`.
+- Se as tabelas da biblioteca ainda não existirem, o fallback em memória mantém `/habit-library` funcional enquanto o banco é preparado.

@@ -1,3 +1,20 @@
+
+## v5.7-DapperDateTimeHandlers-PublicPlans-HabitLibraryBootstrap
+- Corrigido suporte Dapper para DateOnly
+- Corrigido suporte Dapper para TimeOnly
+- Corrigido erro nos relatórios semanais/mensais
+- Corrigido erro ao criar hábito com ReminderTime
+- Página /plans liberada para visitantes
+- Checkout/Billing continuam protegidos
+- Criadas tabelas habitflow.habit_objectives e habitflow.habit_templates
+- Seed completo da biblioteca de hábitos
+- Fallback em memória para a Habit Library
+- Adicionar hábito da biblioteca funciona com fallback
+- script_completo.sql atualizado
+- validate_schema_habitflow.sql atualizado
+- favicon.svg criado
+- Testes de DateOnly/TimeOnly, Plans e Habit Library
+
 ## v5.6.1-ClientBuildFix-FeedbackStabilization
 - Validar manualmente o fluxo completo de clientes em ambiente com SDK .NET e PostgreSQL disponíveis.
 - Capturar evidências visuais mobile/desktop após execução local sem Docker.

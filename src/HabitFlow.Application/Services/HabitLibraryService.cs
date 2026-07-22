@@ -4,11 +4,12 @@ using Microsoft.Extensions.Logging;
 
 namespace HabitFlow.Application;
 
-public sealed class HabitLibraryService(IHabitObjectiveRepository objectives, IHabitTemplateRepository templates, HabitService habits, AuditService audit, NotificationService notifications, ILogger<HabitLibraryService> logger)
+public sealed class HabitLibraryService(IHabitObjectiveRepository objectives, IHabitTemplateRepository templates, HabitLibraryFallbackProvider fallback, HabitService habits, AuditService audit, NotificationService notifications, ILogger<HabitLibraryService> logger)
 {
     public async Task<Result<IReadOnlyList<HabitObjective>>> GetObjectivesAsync(CancellationToken ct = default)
     {
         try { await audit.LogAsync("habit_library_viewed", "Biblioteca de hábitos visualizada", ct: ct); return Result<IReadOnlyList<HabitObjective>>.Success(await objectives.ListActiveAsync(ct)); }
+        catch (Exception ex) when (IsMissingTable(ex)) { logger.LogWarning(ex, "Habit Library sem tabelas; usando fallback de objetivos"); return Result<IReadOnlyList<HabitObjective>>.Success(fallback.GetObjectives()); }
         catch (Exception ex) { logger.LogError(ex, "Erro ao listar objetivos"); return Result<IReadOnlyList<HabitObjective>>.Failure("library.objectives_error", "Não foi possível carregar os objetivos agora."); }
     }
 
@@ -21,12 +22,14 @@ public sealed class HabitLibraryService(IHabitObjectiveRepository objectives, IH
             await audit.LogAsync("objective_selected", "Objetivo selecionado na biblioteca", metadata: new { slug }, ct: ct);
             return Result<IReadOnlyList<HabitTemplate>>.Success(await templates.ListActiveByObjectiveAsync(objective.Id, ct));
         }
+        catch (Exception ex) when (IsMissingTable(ex)) { logger.LogWarning(ex, "Habit Library sem tabelas; usando fallback para {Slug}", slug); return Result<IReadOnlyList<HabitTemplate>>.Success(fallback.GetTemplatesBySlug(slug)); }
         catch (Exception ex) { logger.LogError(ex, "Erro ao listar templates de {Slug}", slug); return Result<IReadOnlyList<HabitTemplate>>.Failure("library.templates_error", "Não foi possível carregar os hábitos prontos agora."); }
     }
 
     public async Task<Result<HabitTemplate>> GetTemplateAsync(Guid id, CancellationToken ct = default)
     {
         try { var template = await templates.GetAsync(id, ct); return template is { IsActive: true } ? Result<HabitTemplate>.Success(template) : Result<HabitTemplate>.Failure("library.template_inactive", "Este hábito pronto não está disponível."); }
+        catch (Exception ex) when (IsMissingTable(ex)) { logger.LogWarning(ex, "Habit Library sem tabelas; buscando fallback {TemplateId}", id); var fb = fallback.GetTemplate(id); return fb is not null ? Result<HabitTemplate>.Success(fb) : Result<HabitTemplate>.Failure("library.template_inactive", "Este hábito pronto não está disponível."); }
         catch (Exception ex) { logger.LogError(ex, "Erro ao obter template {TemplateId}", id); return Result<HabitTemplate>.Failure("library.template_error", "Não foi possível carregar este hábito pronto."); }
     }
 
@@ -44,9 +47,11 @@ public sealed class HabitLibraryService(IHabitObjectiveRepository objectives, IH
                 return created;
             }
             await audit.LogAsync("habit_template_added", "Hábito pronto adicionado ao dia do usuário", AuditSeverity.Info, user.Id, user.Email, new { templateId, template.Name }, ct);
-            await notifications.CreateAsync(user.Id, "habit_template_added", "Hábito adicionado", "Hábito adicionado. Você já pode começar hoje.", "habit", created.Value!.Id, ct);
+            await notifications.CreateAsync(user.Id, "habit_template_added", "Hábito adicionado", "Agora você pode acompanhá-lo no Dashboard.", "habit", created.Value!.Id, ct);
             return created;
         }
         catch (Exception ex) { logger.LogError(ex, "Erro ao adicionar template {TemplateId} para {UserId}", templateId, user.Id); return Result<Habit>.Failure("library.add_error", "Não foi possível concluir agora. Tente novamente em instantes."); }
     }
+
+    private static bool IsMissingTable(Exception ex) => ex.ToString().Contains("42P01", StringComparison.OrdinalIgnoreCase) || ex.ToString().Contains("relation", StringComparison.OrdinalIgnoreCase) || ex.ToString().Contains("relação", StringComparison.OrdinalIgnoreCase);
 }

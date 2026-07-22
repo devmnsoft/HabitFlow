@@ -20,6 +20,7 @@ public static class DependencyInjection
         services.AddScoped<UserService>();
         services.AddScoped<ClientService>();
         services.AddScoped<HabitService>();
+        services.AddSingleton<HabitLibraryFallbackProvider>();
         services.AddScoped<HabitLibraryService>();
         services.AddScoped<GuidedJourneyService>();
         services.AddScoped<HabitScheduleService>();

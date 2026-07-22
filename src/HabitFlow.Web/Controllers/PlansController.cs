@@ -4,9 +4,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace HabitFlow.Web.Controllers;
 
-[Authorize]
 public sealed class PlansController(PlanService plans, IConfiguration config, IWebHostEnvironment env) : Controller
 {
+    [AllowAnonymous]
     [HttpGet("plans")]
     public async Task<IActionResult> Index(CancellationToken ct)
     {

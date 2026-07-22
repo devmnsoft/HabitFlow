@@ -1,6 +1,6 @@
-using Dapper;
 using HabitFlow.Application;
 using HabitFlow.Domain;
+using HabitFlow.Infrastructure.Data;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -10,7 +10,7 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddHabitFlowInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-        DefaultTypeMap.MatchNamesWithUnderscores = true;
+        DapperTypeHandlers.Register();
         services.AddScoped<DbConnectionFactory>();
         services.AddScoped<SqlExecutor>();
         services.AddScoped<UnitOfWork>();

@@ -49,3 +49,10 @@ A gestão de clientes usa `habitflow.clients`, constraints de plano/status, índ
 O módulo de clientes usa Dapper e PostgreSQL com schema explícito. Todas as consultas, inserts e updates apontam para `habitflow.clients`; não crie nem use tabela `clients` no schema `public`.
 
 Para rodar sem Docker, configure uma connection string PostgreSQL local por variável de ambiente ou arquivo local não versionado, aplique `database/migrations/021_clients_management.sql` e execute `dotnet run --project src/HabitFlow.Web`.
+
+## v5.7 — Dapper DateOnly/TimeOnly e Habit Library
+
+- `DateOnly` e `TimeOnly` são suportados por handlers globais do Dapper registrados na infraestrutura.
+- `GET /plans` é público; `GET /billing` e `POST /billing/checkout` continuam protegidos.
+- A biblioteca pública depende de `habitflow.habit_objectives` e `habitflow.habit_templates`, criadas em `database/script_completo.sql` e validadas por `database/validate_schema_habitflow.sql`.
+- Se as tabelas da biblioteca ainda não existirem, o fallback em memória mantém `/habit-library` e `/habit-library/objective/{slug}` utilizáveis até o banco ser atualizado.
