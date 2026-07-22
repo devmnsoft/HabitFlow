@@ -12,7 +12,7 @@ public sealed class UserUiPreferenceRepository(SqlExecutor db) : IUserUiPreferen
     public Task UpsertAsync(UserUiPreference p, CancellationToken ct = default) =>
         db.ExecuteAsync(@"
 insert into habitflow.user_ui_preferences(id, user_id, contrast_mode, font_scale, reduce_motion, show_achievement_popups, show_tip_popups, enable_toasts, reduce_popups, created_at, updated_at)
-values(@Id, @UserId, @ContrastMode::text, @FontScale::text, @ReduceMotion, @ShowAchievementPopups, @ShowTipPopups, @EnableToasts, @ReducePopups, @CreatedAt, @UpdatedAt)
+values(@Id, @UserId, @ContrastMode, @FontScale, @ReduceMotion, @ShowAchievementPopups, @ShowTipPopups, @EnableToasts, @ReducePopups, @CreatedAt, @UpdatedAt)
 on conflict(user_id) do update set
   contrast_mode = excluded.contrast_mode,
   font_scale = excluded.font_scale,
@@ -21,5 +21,5 @@ on conflict(user_id) do update set
   show_tip_popups = excluded.show_tip_popups,
   enable_toasts = excluded.enable_toasts,
   reduce_popups = excluded.reduce_popups,
-  updated_at = now();", p, ct);
+  updated_at = now();", new { p.Id, p.UserId, ContrastMode = DbEnum.Text(p.ContrastMode), FontScale = DbEnum.Text(p.FontScale), p.ReduceMotion, p.ShowAchievementPopups, p.ShowTipPopups, p.EnableToasts, p.ReducePopups, p.CreatedAt, p.UpdatedAt }, ct);
 }

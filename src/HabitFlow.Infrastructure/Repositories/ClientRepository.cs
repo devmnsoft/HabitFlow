@@ -22,15 +22,15 @@ public sealed class ClientRepository(SqlExecutor db) : IClientRepository
 
     public Task CreateAsync(Client c, CancellationToken ct = default) => db.ExecuteAsync("""
         insert into habitflow.clients(id,name,legal_name,document,email,phone,contact_name,plan,status,notes,is_active,created_at,updated_at)
-        values(@Id,@Name,@LegalName,@Document,@Email,@Phone,@ContactName,@Plan::text,@Status::text,@Notes,@IsActive,@CreatedAt,@UpdatedAt)
-        """, c, ct);
+        values(@Id,@Name,@LegalName,@Document,@Email,@Phone,@ContactName,@Plan,@Status,@Notes,@IsActive,@CreatedAt,@UpdatedAt)
+        """, new { c.Id, c.Name, c.LegalName, c.Document, c.Email, c.Phone, c.ContactName, Plan = DbEnum.Text(c.Plan), Status = DbEnum.Text(c.Status), c.Notes, c.IsActive, c.CreatedAt, c.UpdatedAt }, ct);
 
     public Task UpdateAsync(Client c, CancellationToken ct = default) => db.ExecuteAsync("""
         update habitflow.clients
         set name=@Name, legal_name=@LegalName, document=@Document, email=@Email, phone=@Phone, contact_name=@ContactName,
-            plan=@Plan::text, status=@Status::text, notes=@Notes, is_active=@IsActive, updated_at=@UpdatedAt
+            plan=@Plan, status=@Status, notes=@Notes, is_active=@IsActive, updated_at=@UpdatedAt
         where id=@Id
-        """, c, ct);
+        """, new { c.Id, c.Name, c.LegalName, c.Document, c.Email, c.Phone, c.ContactName, Plan = DbEnum.Text(c.Plan), Status = DbEnum.Text(c.Status), c.Notes, c.IsActive, c.CreatedAt, c.UpdatedAt }, ct);
 
     public Task<bool> DocumentExistsAsync(string document, Guid? exceptId = null, CancellationToken ct = default) =>
         db.QuerySingleOrDefaultAsync<bool>("select exists(select 1 from habitflow.clients where document=@document and (@exceptId is null or id <> @exceptId))", new { document, exceptId }, ct);
