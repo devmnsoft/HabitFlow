@@ -29,3 +29,6 @@
 
 \i migrations/021_clients_management.sql
 \i migrations/022_users_clients_link.sql
+
+\i database/migrations/023_clients_cpf_cnpj_superadmin.sql
+\i database/migrations/024_superadmin_billing_entitlements.sql

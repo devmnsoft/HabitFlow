@@ -1,4 +1,14 @@
 
+## v5.8-SuperAdmin-ClientCpfCnpj-BillingEntitlements
+- Cadastro de cliente com Pessoa Física/Pessoa Jurídica.
+- CPF/CNPJ com validação real, máscara visual e documento normalizado/único.
+- Perfil SuperAdmin e área `/superadmin` para visão global de clientes, planos, assinaturas, pagamentos e inadimplência.
+- Preparação de Pix/Boleto Mercado Pago sem tokens reais e sem processamento de pagamento no frontend.
+- EntitlementService para bloquear benefícios pagos mantendo acesso Free e dados do cliente.
+- Auditoria SuperAdmin, notificações de cobrança/bloqueio e exportações CSV protegidas contra CSV injection.
+- Projeto continua executando sem Docker na porta 5097; scripts de banco seguem no schema `habitflow`.
+
+
 ## v5.7-DapperDateTimeHandlers-PublicPlans-HabitLibraryBootstrap
 - Corrigido suporte Dapper para DateOnly
 - Corrigido suporte Dapper para TimeOnly

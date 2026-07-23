@@ -10,6 +10,7 @@ public static class DependencyInjection
         services.AddSingleton<LogSanitizer>();
         services.AddSingleton<ProtocolGenerator>();
         services.AddSingleton<WhatsAppValidator>();
+        services.AddSingleton<DocumentValidator>();
         services.AddSingleton<IUserFacingErrorMapper, UserFacingErrorMapper>();
         services.AddSingleton<FeedbackMapper>();
         services.AddScoped<IPasswordHasher, BCryptPasswordHasher>();
@@ -47,6 +48,8 @@ public static class DependencyInjection
         services.AddScoped<WhatsAppService>();
         services.AddScoped<LgpdService>();
         services.AddScoped<BillingService>();
+        services.AddScoped<EntitlementService>();
+        services.AddScoped<SuperAdminService>();
         services.AddSingleton<PaymentMetadataSanitizer>();
         services.AddScoped<PlanService>();
         services.AddScoped<SubscriptionService>();

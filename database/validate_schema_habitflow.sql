@@ -50,3 +50,8 @@ select 'habitflow.user_ui_preferences' as required_table, to_regclass('habitflow
 select column_name from information_schema.columns where table_schema='habitflow' and table_name='user_ui_preferences' and column_name in ('id','user_id','contrast_mode','font_scale','reduce_motion','show_achievement_popups','show_tip_popups','enable_toasts','reduce_popups','created_at','updated_at') order by column_name;
 select 'habitflow.clients' as required_table, to_regclass('habitflow.clients') is not null as exists;
 select 'habitflow.users.client_id' as required_column, exists(select 1 from information_schema.columns where table_schema='habitflow' and table_name='users' and column_name='client_id') as exists;
+
+-- v5.8 SuperAdmin CPF/CNPJ billing entitlement validation
+select 'clients_document_normalized' as check_name, count(*) from information_schema.columns where table_schema='habitflow' and table_name='clients' and column_name='document_normalized';
+select 'superadmin_audit_logs' as check_name, count(*) from information_schema.tables where table_schema='habitflow' and table_name='superadmin_audit_logs';
+select 'client_invoices' as check_name, count(*) from information_schema.tables where table_schema='habitflow' and table_name='client_invoices';

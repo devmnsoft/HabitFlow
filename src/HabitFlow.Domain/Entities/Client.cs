@@ -1,6 +1,45 @@
 namespace HabitFlow.Domain;
 
-public sealed record Client(Guid Id, string Name, string? LegalName, string? Document, string? Email, string? Phone, string? ContactName, ClientPlan Plan, ClientStatus Status, string? Notes, bool IsActive, DateTime CreatedAt, DateTime UpdatedAt);
+public sealed record Client(
+    Guid Id,
+    string Name,
+    string? LegalName,
+    string? Document,
+    string? Email,
+    string? Phone,
+    string? ContactName,
+    ClientPlan Plan,
+    ClientStatus Status,
+    string? Notes,
+    bool IsActive,
+    DateTime CreatedAt,
+    DateTime UpdatedAt,
+    ClientPersonType PersonType = ClientPersonType.LegalPerson,
+    ClientDocumentType DocumentType = ClientDocumentType.CNPJ,
+    string? DocumentRaw = null,
+    string? DocumentNormalized = null,
+    string? TradeName = null,
+    string? StateRegistration = null,
+    string? MunicipalRegistration = null,
+    string? BillingEmail = null,
+    string? BillingPhone = null,
+    string? BillingResponsibleName = null,
+    string? AddressZipcode = null,
+    string? AddressStreet = null,
+    string? AddressNumber = null,
+    string? AddressComplement = null,
+    string? AddressDistrict = null,
+    string? AddressCity = null,
+    string? AddressState = null,
+    ClientSubscriptionStatus SubscriptionStatus = ClientSubscriptionStatus.Free,
+    ClientBenefitsStatus BenefitsStatus = ClientBenefitsStatus.Free,
+    ClientPaymentStatus PaymentStatus = ClientPaymentStatus.None,
+    DateTime? LastPaymentAt = null,
+    DateOnly? NextDueDate = null,
+    DateOnly? OverdueSince = null,
+    DateOnly? GracePeriodUntil = null,
+    DateTime? BlockedPaidBenefitsAt = null,
+    string? BlockedPaidBenefitsReason = null);
 
 public sealed record ClientUserSummary(Guid Id, string Name, string Email, string Role, string AccountStatus, DateTime CreatedAt);
 public sealed record ClientMetrics(int LinkedUsers, int ActiveHabits, int CompletedHabits);
