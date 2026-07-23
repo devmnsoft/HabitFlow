@@ -1,4 +1,25 @@
 
+## v6.0-SaaSLaunch-Onboarding-BillingCommunication-Operations
+- Onboarding do cliente
+- Checklist de implantação
+- Área Minha Empresa
+- Dados de cobrança do cliente
+- Régua de cobrança
+- Comunicações internas do cliente
+- Histórico de comunicação
+- BillingCommunicationJob
+- job_execution_logs
+- Notificações de cobrança
+- Painel Admin de comunicações
+- Painel SuperAdmin Customer Success
+- CustomerHealthScore
+- Régua de engajamento
+- Suporte operacional com SLA inicial
+- Páginas públicas Privacy, Terms e LGPD
+- Footer corrigido com links legais reais
+- Testes de comunicação, jobs e customer health
+
+
 ## v5.8-SuperAdmin-ClientCpfCnpj-BillingEntitlements
 - Cadastro de cliente com Pessoa Física/Pessoa Jurídica.
 - CPF/CNPJ com validação real, máscara visual e documento normalizado/único.

@@ -61,3 +61,7 @@ select 'v5.9 users client_id' as check_name, count(*) from information_schema.co
 select 'v5.9 habits client_id' as check_name, count(*) from information_schema.columns where table_schema='habitflow' and table_name='habits' and column_name='client_id';
 select 'v5.9 user_invites table' as check_name, count(*) from information_schema.tables where table_schema='habitflow' and table_name='user_invites';
 select 'v5.9 no public user_invites' as check_name, count(*) from information_schema.tables where table_schema='public' and table_name='user_invites';
+select 'client_onboarding' as required_table where exists (select 1 from information_schema.tables where table_schema='habitflow' and table_name='client_onboarding');
+select 'billing_communication_rules' as required_table where exists (select 1 from information_schema.tables where table_schema='habitflow' and table_name='billing_communication_rules');
+select 'client_communications' as required_table where exists (select 1 from information_schema.tables where table_schema='habitflow' and table_name='client_communications');
+select 'job_execution_logs' as required_table where exists (select 1 from information_schema.tables where table_schema='habitflow' and table_name='job_execution_logs');

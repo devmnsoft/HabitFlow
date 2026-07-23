@@ -196,3 +196,13 @@ Inclui gestão administrativa de clientes, feedback global por toasts/modais, au
 - **Cobrança automática**: `BillingStatusJob` pode ser habilitado por configuração e roda sem Docker.
 - **Bloqueio de benefícios**: inadimplência suspende recursos Premium/Enterprise, preservando login e área Free.
 - **Execução sem Docker**: a aplicação continua ouvindo na porta 5097 e Docker permanece opcional.
+
+## v6.0 SaaS Launch, Onboarding, Billing Communication e Operations
+
+A versão v6.0 adiciona a camada operacional SaaS: onboarding em `/admin/onboarding`, checklist de implantação, área Minha Empresa em `/admin/company`, central de comunicações em `/admin/communications`, visão SuperAdmin em `/superadmin/communications` e painel Customer Success em `/superadmin/customer-success`.
+
+A régua de cobrança usa `habitflow.billing_communication_rules`, histórico persistente em `habitflow.client_communications` e prevenção de duplicidade por cliente/fatura/tipo/canal. O `BillingCommunicationJob` nasce desativado por padrão (`BillingCommunicationJob:Enabled=false`) e registra execuções em `habitflow.job_execution_logs`.
+
+As páginas públicas `/privacy`, `/terms` e `/lgpd` explicam dados tratados, CPF/CNPJ, dados de uso, dados mínimos de pagamento e solicitações LGPD. O footer aponta para links reais de privacidade, termos, LGPD, suporte, ajuda e planos.
+
+A aplicação continua rodando sem Docker com PostgreSQL/Dapper no schema `habitflow`; Docker permanece opcional.
