@@ -28,18 +28,54 @@ public sealed class SuperAdminController(SuperAdminService dashboard, ClientServ
 
     [HttpPost("clients/{id:guid}/block-paid-benefits")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> BlockPaidBenefits(Guid id, string reason, CancellationToken ct) { await entitlements.BlockPaidBenefitsAsync(id, reason, this.CurrentUserSnapshot(), ct); return RedirectToAction(nameof(ClientDetails), new { id }); }
+    public async Task<IActionResult> BlockPaidBenefits(Guid id, string reason, CancellationToken ct)
+    {
+        if (!HasRequiredReason(reason)) return RedirectWithReasonError(nameof(ClientDetails), new { id });
+        var result = await entitlements.BlockPaidBenefitsAsync(id, reason, this.CurrentUserSnapshot(), ct);
+        TempData[result.IsSuccess ? "Success" : "Error"] = result.IsSuccess
+            ? "Benefícios pagos bloqueados. O cliente segue com acesso Free."
+            : result.Error.Message;
+        return RedirectToAction(nameof(ClientDetails), new { id });
+    }
+
     [HttpPost("clients/{id:guid}/release-paid-benefits")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> ReleasePaidBenefits(Guid id, string reason, CancellationToken ct) { await entitlements.ReleasePaidBenefitsAsync(id, reason, this.CurrentUserSnapshot(), ct); return RedirectToAction(nameof(ClientDetails), new { id }); }
+    public async Task<IActionResult> ReleasePaidBenefits(Guid id, string reason, CancellationToken ct)
+    {
+        if (!HasRequiredReason(reason)) return RedirectWithReasonError(nameof(ClientDetails), new { id });
+        var result = await entitlements.ReleasePaidBenefitsAsync(id, reason, this.CurrentUserSnapshot(), ct);
+        TempData[result.IsSuccess ? "Success" : "Error"] = result.IsSuccess
+            ? "Benefícios pagos reativados com segurança."
+            : result.Error.Message;
+        return RedirectToAction(nameof(ClientDetails), new { id });
+    }
 
 
     [HttpGet("clients/{id:guid}/activity")] public IActionResult ClientActivity(Guid id) => View("~/Views/SuperAdmin/Simple.cshtml", $"Atividade do cliente {id}");
-    [HttpPost("clients/{id:guid}/change-plan")] [ValidateAntiForgeryToken] public IActionResult ChangePlan(Guid id, string planCode, string reason) => RedirectToAction(nameof(ClientDetails), new { id });
-    [HttpPost("payments/{id:guid}/mark-as-paid")] [ValidateAntiForgeryToken] public IActionResult MarkPaymentAsPaid(Guid id, string reason) => RedirectToAction(nameof(Payments));
-    [HttpPost("payments/{id:guid}/mark-as-overdue")] [ValidateAntiForgeryToken] public IActionResult MarkPaymentAsOverdue(Guid id, string reason) => RedirectToAction(nameof(Overdue));
-    [HttpPost("subscriptions/{id:guid}/cancel")] [ValidateAntiForgeryToken] public IActionResult CancelSubscription(Guid id, string reason) => RedirectToAction(nameof(Subscriptions));
-    [HttpPost("subscriptions/{id:guid}/reactivate")] [ValidateAntiForgeryToken] public IActionResult ReactivateSubscription(Guid id, string reason) => RedirectToAction(nameof(Subscriptions));
+    [HttpPost("clients/{id:guid}/change-plan")]
+    [ValidateAntiForgeryToken]
+    public IActionResult ChangePlan(Guid id, string planCode, string reason) =>
+        HasRequiredReason(reason) ? RedirectToAction(nameof(ClientDetails), new { id }) : RedirectWithReasonError(nameof(ClientDetails), new { id });
+
+    [HttpPost("payments/{id:guid}/mark-as-paid")]
+    [ValidateAntiForgeryToken]
+    public IActionResult MarkPaymentAsPaid(Guid id, string reason) =>
+        HasRequiredReason(reason) ? RedirectToAction(nameof(Payments)) : RedirectWithReasonError(nameof(Payments));
+
+    [HttpPost("payments/{id:guid}/mark-as-overdue")]
+    [ValidateAntiForgeryToken]
+    public IActionResult MarkPaymentAsOverdue(Guid id, string reason) =>
+        HasRequiredReason(reason) ? RedirectToAction(nameof(Overdue)) : RedirectWithReasonError(nameof(Overdue));
+
+    [HttpPost("subscriptions/{id:guid}/cancel")]
+    [ValidateAntiForgeryToken]
+    public IActionResult CancelSubscription(Guid id, string reason) =>
+        HasRequiredReason(reason) ? RedirectToAction(nameof(Subscriptions)) : RedirectWithReasonError(nameof(Subscriptions));
+
+    [HttpPost("subscriptions/{id:guid}/reactivate")]
+    [ValidateAntiForgeryToken]
+    public IActionResult ReactivateSubscription(Guid id, string reason) =>
+        HasRequiredReason(reason) ? RedirectToAction(nameof(Subscriptions)) : RedirectWithReasonError(nameof(Subscriptions));
     [HttpGet("export/payments")] public IActionResult ExportPayments() => File(Encoding.UTF8.GetBytes("Pagamento,Status,Metodo\n"), "text/csv", "habitflow-pagamentos.csv");
     [HttpGet("export/overdue")] public IActionResult ExportOverdue() => File(Encoding.UTF8.GetBytes("Cliente,Vencimento,Status\n"), "text/csv", "habitflow-inadimplentes.csv");
     [HttpGet("export/subscriptions")] public IActionResult ExportSubscriptions() => File(Encoding.UTF8.GetBytes("Cliente,Plano,Status\n"), "text/csv", "habitflow-assinaturas.csv");
@@ -61,4 +97,10 @@ public sealed class SuperAdminController(SuperAdminService dashboard, ClientServ
         return File(Encoding.UTF8.GetBytes(csv.ToString()), "text/csv", "habitflow-clientes.csv");
     }
     private static string Safe(string? v) { v ??= ""; if (v.StartsWith('=') || v.StartsWith('+') || v.StartsWith('-') || v.StartsWith('@')) v = "'" + v; return '"' + v.Replace("\"", "\"\"") + '"'; }
+    private static bool HasRequiredReason(string? reason) => !string.IsNullOrWhiteSpace(reason) && reason.Trim().Length >= 5;
+    private IActionResult RedirectWithReasonError(string actionName, object? routeValues = null)
+    {
+        TempData["Error"] = "Informe um motivo obrigatório com pelo menos 5 caracteres para ações sensíveis.";
+        return RedirectToAction(actionName, routeValues);
+    }
 }
