@@ -1,0 +1,13 @@
+@model HabitFlow.Domain.UserInvite?
+@{
+    ViewData["Title"] = "Aceitar convite";
+}
+<h1>Aceitar convite</h1>
+@if (Model is null) { <div class="alert alert-warning">Este convite é inválido ou expirou.</div> }
+else {
+    <p>Você foi convidado para participar deste cliente como <strong>@Model.Role</strong>.</p>
+    <form method="post" action="/invite/@ViewBag.Token/accept">
+        @Html.AntiForgeryToken()
+        <button class="btn btn-success" type="submit">Aceitar convite</button>
+    </form>
+}

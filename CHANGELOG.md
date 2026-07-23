@@ -362,3 +362,23 @@
 - MNSOFT brand badge refinado
 - Rodapé premium reorganizado
 - Documentação de clientes e feedbacks
+
+## v5.9-TenantIsolation-UserInvites-BillingAutomation-SaaSHardening
+- Isolamento multi-tenant por client_id
+- CurrentUserContext
+- CurrentTenantService
+- Policies Admin/SuperAdmin/ClientAccess
+- client_id nas tabelas principais
+- Backfill de client_id
+- Convites de usuários
+- Aceite de convite com token seguro
+- Gestão de usuários por cliente
+- Admin billing do cliente
+- BillingStatusJob
+- Bloqueio automático de benefícios pagos vencidos
+- Reativação automática após pagamento aprovado
+- SuperAdmin inadimplência
+- Dashboard SuperAdmin aprimorado
+- Auditoria multi-tenant
+- Testes de isolamento entre clientes
+- Documentação multitenancy e billing jobs

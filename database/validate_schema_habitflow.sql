@@ -55,3 +55,9 @@ select 'habitflow.users.client_id' as required_column, exists(select 1 from info
 select 'clients_document_normalized' as check_name, count(*) from information_schema.columns where table_schema='habitflow' and table_name='clients' and column_name='document_normalized';
 select 'superadmin_audit_logs' as check_name, count(*) from information_schema.tables where table_schema='habitflow' and table_name='superadmin_audit_logs';
 select 'client_invoices' as check_name, count(*) from information_schema.tables where table_schema='habitflow' and table_name='client_invoices';
+
+-- v5.9 tenant isolation validation
+select 'v5.9 users client_id' as check_name, count(*) from information_schema.columns where table_schema='habitflow' and table_name='users' and column_name='client_id';
+select 'v5.9 habits client_id' as check_name, count(*) from information_schema.columns where table_schema='habitflow' and table_name='habits' and column_name='client_id';
+select 'v5.9 user_invites table' as check_name, count(*) from information_schema.tables where table_schema='habitflow' and table_name='user_invites';
+select 'v5.9 no public user_invites' as check_name, count(*) from information_schema.tables where table_schema='public' and table_name='user_invites';

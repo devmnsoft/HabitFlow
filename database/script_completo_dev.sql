@@ -569,3 +569,8 @@ create index if not exists ix_habitflow_client_subscriptions_client_id on habitf
 create index if not exists ix_habitflow_client_invoices_client_id on habitflow.client_invoices(client_id);
 create index if not exists ix_habitflow_client_invoices_status_due_date on habitflow.client_invoices(status, due_date);
 create index if not exists ix_habitflow_superadmin_audit_logs_created_at on habitflow.superadmin_audit_logs(created_at desc);
+
+-- v5.9-TenantIsolation-UserInvites-BillingAutomation-SaaSHardening
+\i database/migrations/025_tenant_isolation_client_id.sql
+\i database/migrations/026_backfill_client_id.sql
+\i database/migrations/027_user_invites.sql

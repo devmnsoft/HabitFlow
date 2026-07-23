@@ -8,3 +8,8 @@ Esta documentação cobre a evolução SaaS v5.8-SuperAdmin-ClientCpfCnpj-Billin
 - Clientes inadimplentes mantêm login e recursos Free; benefícios Premium/Enterprise podem ser bloqueados e reativados sem apagar dados.
 - Todas as tabelas e validações permanecem no schema explícito `habitflow`.
 - Secrets devem ficar fora do Git em configuração segura de ambiente.
+
+## v5.9 SaaS hardening
+- Inadimplência bloqueia somente benefícios pagos, mantendo recursos Free e login.
+- Pagamento aprovado por webhook confiável reativa assinatura e limpa campos de bloqueio.
+- Ações sensíveis exigem auditoria e nunca registram tokens ou secrets.

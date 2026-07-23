@@ -186,3 +186,13 @@ Inclui gestão administrativa de clientes, feedback global por toasts/modais, au
 - A biblioteca de hábitos depende de `habitflow.habit_objectives` e `habitflow.habit_templates`.
 - Em banco limpo, aplique `psql -U postgres -d habitflow -f database/script_completo.sql` e depois `psql -U postgres -d habitflow -f database/validate_schema_habitflow.sql`.
 - Se as tabelas da biblioteca ainda não existirem, o fallback em memória mantém `/habit-library` funcional enquanto o banco é preparado.
+
+## v5.9 SaaS multi-tenant
+
+- **SuperAdmin**: visão global de clientes, usuários e inadimplência.
+- **Admin do cliente**: administra usuários, convites e billing apenas do próprio `client_id`.
+- **User**: acessa hábitos, relatórios, suporte e notificações apenas do próprio `client_id`.
+- **Convites**: `/admin/users/invite` cria convite seguro com hash de token; `/invite/{token}` aceita e vincula usuário ao cliente.
+- **Cobrança automática**: `BillingStatusJob` pode ser habilitado por configuração e roda sem Docker.
+- **Bloqueio de benefícios**: inadimplência suspende recursos Premium/Enterprise, preservando login e área Free.
+- **Execução sem Docker**: a aplicação continua ouvindo na porta 5097 e Docker permanece opcional.

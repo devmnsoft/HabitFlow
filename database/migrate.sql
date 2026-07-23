@@ -32,3 +32,9 @@
 
 \i database/migrations/023_clients_cpf_cnpj_superadmin.sql
 \i database/migrations/024_superadmin_billing_entitlements.sql
+
+\i database/migrations/025_tenant_isolation_client_id.sql
+
+\i database/migrations/026_backfill_client_id.sql
+
+\i database/migrations/027_user_invites.sql

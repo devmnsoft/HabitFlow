@@ -1,6 +1,7 @@
 using HabitFlow.Application;
 using HabitFlow.Infrastructure;
 using HabitFlow.Web.Configuration;
+using HabitFlow.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +16,8 @@ builder.Services
     .AddHabitFlowApplication()
     .AddHabitFlowInfrastructure(builder.Configuration)
     .AddHabitFlowWeb(builder.Configuration, builder.Environment);
+
+builder.Services.AddHostedService<BillingStatusHostedService>();
 
 var app = builder.Build();
 

@@ -15,6 +15,7 @@ public static class DependencyInjection
         services.AddScoped<SqlExecutor>();
         services.AddScoped<UnitOfWork>();
         services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IUserInviteRepository, UserInviteRepository>();
         services.AddScoped<IClientRepository, ClientRepository>();
         services.AddScoped<IHabitRepository, HabitRepository>();
         services.AddScoped<IHabitObjectiveRepository, HabitObjectiveRepository>();
@@ -30,6 +31,7 @@ public static class DependencyInjection
         services.AddScoped<ISupportRepository, SupportRepository>();
         services.AddScoped<ILgpdRepository, LgpdRepository>();
         services.AddScoped<IBillingRepository, BillingRepository>();
+        services.AddScoped<IBillingStatusRepository, BillingStatusRepository>();
         services.AddScoped<IPlanRepository, PlanRepository>();
         services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
         services.AddScoped<IPaymentTransactionRepository, PaymentTransactionRepository>();
