@@ -87,7 +87,7 @@ public sealed class SuperAdminController(SuperAdminService dashboard, ClientServ
     [HttpGet("overdue")] public IActionResult Overdue() => View("~/Views/SuperAdmin/Simple.cshtml", "Inadimplentes");
     [HttpGet("audit")] public IActionResult Audit() => View("~/Views/SuperAdmin/Simple.cshtml", "Auditoria SuperAdmin");
     [HttpGet("system")] public IActionResult System() => View("~/Views/SuperAdmin/Simple.cshtml", "Sistema");
-    [HttpGet("communications")] public async Task<IActionResult> Communications(CancellationToken ct) => View("~/Views/SuperAdmin/Communications.cshtml", await communications.ListAllAsync(new ClientCommunicationFilter(), ct));
+    [HttpGet("communications")] public async Task<IActionResult> Communications(CancellationToken ct) => View("~/Views/SuperAdmin/Communications.cshtml", await communications.ListAllAsync(new Domain.ClientCommunicationFilter(), ct));
     [HttpGet("customer-success")] public IActionResult CustomerSuccess() => View("~/Views/SuperAdmin/CustomerSuccess.cshtml", health.Calculate(Guid.Empty, false, false, false, false, true, false, false, false, true));
     [HttpGet("support")] public IActionResult SupportOperations() => View("~/Views/SuperAdmin/Simple.cshtml", "Suporte operacional com SLA inicial");
 
