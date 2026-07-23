@@ -13,12 +13,16 @@ public static class DependencyInjection
         services.AddSingleton<DocumentValidator>();
         services.AddSingleton<IUserFacingErrorMapper, UserFacingErrorMapper>();
         services.AddSingleton<FeedbackMapper>();
+        services.AddHttpContextAccessor();
         services.AddScoped<IPasswordHasher, BCryptPasswordHasher>();
+        services.AddScoped<CurrentUserContext>();
+        services.AddScoped<CurrentTenantService>();
         services.AddScoped<HabitPolicy>();
         services.AddScoped<ProgressService>();
         services.AddScoped<AdminAuthorizationService>();
         services.AddScoped<AuthService>();
         services.AddScoped<UserService>();
+        services.AddScoped<UserInviteService>();
         services.AddScoped<ClientService>();
         services.AddScoped<HabitService>();
         services.AddSingleton<HabitLibraryFallbackProvider>();
@@ -48,6 +52,7 @@ public static class DependencyInjection
         services.AddScoped<WhatsAppService>();
         services.AddScoped<LgpdService>();
         services.AddScoped<BillingService>();
+        services.AddScoped<BillingStatusJob>();
         services.AddScoped<EntitlementService>();
         services.AddScoped<SuperAdminService>();
         services.AddSingleton<PaymentMetadataSanitizer>();

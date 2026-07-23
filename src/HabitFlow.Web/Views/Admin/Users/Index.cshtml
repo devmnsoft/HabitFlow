@@ -1,0 +1,8 @@
+@{
+    ViewData["Title"] = "Usuários do cliente";
+}
+<h1>Usuários do cliente</h1>
+<p>Gerencie usuários vinculados ao client_id atual. Admins não administram outros clientes.</p>
+@if (TempData["Success"] is not null) { <div class="alert alert-success">@TempData["Success"]</div> }
+@if (TempData["InviteLink"] is not null) { <div class="alert alert-info">Link de convite: @TempData["InviteLink"]</div> }
+<a class="btn btn-primary" href="/admin/users/invite">Convidar usuário</a>

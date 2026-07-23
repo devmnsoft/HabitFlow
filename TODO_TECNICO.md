@@ -243,3 +243,8 @@ firebase deploy --only hosting
 
 - Implementar tela completa de vínculo de usuários a clientes.
 - Popular métricas de hábitos por cliente quando o vínculo estiver em uso.
+
+## v5.9 hardening follow-up
+- Ampliar filtros `client_id` em todos os repositories legados antes de produção.
+- Adicionar testes de integração com PostgreSQL para vazamento cross-tenant.
+- Revisar manualmente `026_backfill_client_id.sql` antes de rodar em produção.
