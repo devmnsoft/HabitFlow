@@ -1,0 +1,3 @@
+@model IReadOnlyList<HabitFlow.Domain.ClientCommunication>
+@{ ViewData["Title"] = "Comunicações"; }
+<section class="premium-card"><h1>Central de comunicação</h1><p>Mensagens internas, cobranças, avisos de pagamento, bloqueio e suporte do seu cliente.</p>@foreach(var c in Model){<article><strong>@c.Title</strong><p>@c.Message</p><small>@c.Type · @c.Status · @c.CreatedAt.ToLocalTime()</small></article>}</section>

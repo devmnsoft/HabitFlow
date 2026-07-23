@@ -63,6 +63,9 @@ public static class DependencyInjection
         services.AddScoped<PaymentWebhookService>();
         services.AddScoped<PaymentAuditService>();
         services.AddScoped<FinancialDashboardService>();
+        services.AddScoped<ClientOnboardingService>();
+        services.AddScoped<ClientCommunicationService>();
+        services.AddScoped<CustomerHealthService>();
         services.AddHttpClient<IPaymentProviderService, MercadoPagoService>();
         services.AddHttpClient<TelegramService>();
         return services;

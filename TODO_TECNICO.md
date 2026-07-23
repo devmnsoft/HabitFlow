@@ -248,3 +248,9 @@ firebase deploy --only hosting
 - Ampliar filtros `client_id` em todos os repositories legados antes de produção.
 - Adicionar testes de integração com PostgreSQL para vazamento cross-tenant.
 - Revisar manualmente `026_backfill_client_id.sql` antes de rodar em produção.
+
+
+## v6.0 operação SaaS
+- Evoluir o BillingCommunicationJob para consultar faturas reais quando o módulo de invoices expuser o repositório agregado.
+- Configurar canais Email/WhatsAppManual/TelegramAdmin após homologação comercial e LGPD.
+- Adicionar smoke tests autenticados com banco PostgreSQL disponível.

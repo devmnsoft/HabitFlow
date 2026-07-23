@@ -38,6 +38,10 @@ public static class DependencyInjection
         services.AddScoped<IPaymentWebhookRepository, PaymentWebhookRepository>();
         services.AddScoped<IPaymentAuditRepository, PaymentAuditRepository>();
         services.AddScoped<IFinancialDashboardRepository, FinancialDashboardRepository>();
+        services.AddScoped<IClientOnboardingRepository, ClientOnboardingRepository>();
+        services.AddScoped<IClientCommunicationRepository, ClientCommunicationRepository>();
+        services.AddScoped<IBillingCommunicationRuleRepository, BillingCommunicationRuleRepository>();
+        services.AddScoped<IJobExecutionLogRepository, JobExecutionLogRepository>();
         services.AddScoped<IAdminUserRepository, AdminUserRepository>();
         services.AddScoped<IAdminMetricsRepository, AdminMetricsRepository>();
         services.AddScoped<IAdminBillingRepository, AdminMetricsRepository>();

@@ -7,7 +7,7 @@ namespace HabitFlow.Web.Controllers;
 
 [Authorize(Roles = "SuperAdmin")]
 [Route("superadmin")]
-public sealed class SuperAdminController(SuperAdminService dashboard, ClientService clients, EntitlementService entitlements) : Controller
+public sealed class SuperAdminController(SuperAdminService dashboard, ClientService clients, EntitlementService entitlements, ClientCommunicationService communications, CustomerHealthService health) : Controller
 {
     [HttpGet("")]
     public async Task<IActionResult> Index(CancellationToken ct) => View(await dashboard.GetDashboardAsync(ct));
@@ -87,6 +87,9 @@ public sealed class SuperAdminController(SuperAdminService dashboard, ClientServ
     [HttpGet("overdue")] public IActionResult Overdue() => View("~/Views/SuperAdmin/Simple.cshtml", "Inadimplentes");
     [HttpGet("audit")] public IActionResult Audit() => View("~/Views/SuperAdmin/Simple.cshtml", "Auditoria SuperAdmin");
     [HttpGet("system")] public IActionResult System() => View("~/Views/SuperAdmin/Simple.cshtml", "Sistema");
+    [HttpGet("communications")] public async Task<IActionResult> Communications(CancellationToken ct) => View("~/Views/SuperAdmin/Communications.cshtml", await communications.ListAllAsync(new ClientCommunicationFilter(), ct));
+    [HttpGet("customer-success")] public IActionResult CustomerSuccess() => View("~/Views/SuperAdmin/CustomerSuccess.cshtml", health.Calculate(Guid.Empty, false, false, false, false, true, false, false, false, true));
+    [HttpGet("support")] public IActionResult SupportOperations() => View("~/Views/SuperAdmin/Simple.cshtml", "Suporte operacional com SLA inicial");
 
     [HttpGet("export/clients")]
     public async Task<IActionResult> ExportClients(CancellationToken ct)

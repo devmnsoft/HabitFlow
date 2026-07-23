@@ -1,0 +1,3 @@
+@model HabitFlow.Domain.CustomerHealthScore
+@{ ViewData["Title"] = "Customer Success"; }
+<section class="premium-card"><h1>Saúde dos clientes</h1><div class="metric-grid"><article>Implantação pendente</article><article>Risco de churn</article><article>Inadimplentes</article><article>Alto potencial Premium</article><article>Suporte pendente</article></div><h2>CustomerHealthScore: @Model.Score - @Model.Status</h2><ul>@foreach(var s in Model.Signals){<li>@s</li>}</ul></section>

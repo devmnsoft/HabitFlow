@@ -1,0 +1,3 @@
+@model IReadOnlyList<HabitFlow.Domain.OnboardingChecklistItem>
+@{ ViewData["Title"] = "Onboarding do cliente"; }
+<section class="premium-card"><h1>Onboarding HabitFlow</h1><p>Configure sua conta em poucos passos, sem pop-ups invasivos.</p>@if(Model.All(i=>i.Completed)){<div class="alert alert-success">Tudo pronto. Sua conta já está preparada para uso.</div>}<div class="checklist">@foreach(var item in Model){<article class="checklist-item"><span>@item.Icon</span><div><strong>@item.Text</strong><p>@item.HelpText</p><a href="@item.ActionUrl">Ação</a></div><span>@(item.Completed ? "Concluído" : "Pendente")</span></article>}</div><form method="post" action="/admin/onboarding/finish">@Html.AntiForgeryToken()<button>Finalizar implantação</button></form></section>
