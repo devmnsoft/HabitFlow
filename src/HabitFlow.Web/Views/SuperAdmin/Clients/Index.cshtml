@@ -1,0 +1,3 @@
+@model IReadOnlyList<HabitFlow.Application.ClientListItemDto>
+@{ ViewData["Title"] = "Clientes SuperAdmin"; }
+<section class="container py-4"><h1>Clientes</h1><p class="text-muted">Gestão global de clientes PF/PJ com CPF/CNPJ normalizado.</p><div class="table-responsive"><table class="table"><thead><tr><th>Nome</th><th>Documento</th><th>Email</th><th>Plano</th><th>Status</th><th></th></tr></thead><tbody>@foreach (var c in Model){<tr><td>@c.Name</td><td>@c.Document</td><td>@c.Email</td><td><span class="badge bg-primary">@c.Plan</span></td><td>@c.Status</td><td><a href="/superadmin/clients/@c.Id">Detalhes</a></td></tr>}</tbody></table></div></section>

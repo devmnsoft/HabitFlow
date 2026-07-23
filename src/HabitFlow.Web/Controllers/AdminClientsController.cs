@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace HabitFlow.Web.Controllers;
 
-[Authorize(Roles = "Admin")]
+[Authorize(Policy = "RequireAdmin")]
 [Route("admin/clients")]
 public sealed class AdminClientsController(ClientService clients, ApplicationFeedbackService feedback) : Controller
 {

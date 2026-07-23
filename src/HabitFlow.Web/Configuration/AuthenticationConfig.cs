@@ -15,7 +15,12 @@ public static class AuthenticationConfig
             options.Cookie.SecurePolicy = environment.IsDevelopment() ? CookieSecurePolicy.SameAsRequest : CookieSecurePolicy.Always;
             options.ExpireTimeSpan = TimeSpan.FromHours(configuration.GetValue("Authentication:CookieHours", 8));
         });
-        services.AddAuthorization();
+        services.AddAuthorization(options =>
+        {
+            options.AddPolicy("RequireAdmin", policy => policy.RequireRole("Admin", "SuperAdmin"));
+            options.AddPolicy("RequireSuperAdmin", policy => policy.RequireRole("SuperAdmin"));
+            options.AddPolicy("RequireClientAccess", policy => policy.RequireAuthenticatedUser());
+        });
         return services;
     }
 }

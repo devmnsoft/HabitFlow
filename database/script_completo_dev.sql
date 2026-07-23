@@ -505,3 +505,67 @@ create index if not exists ix_habitflow_clients_status on habitflow.clients(stat
 create index if not exists ix_habitflow_clients_created_at on habitflow.clients(created_at);
 alter table habitflow.users add column if not exists client_id uuid null references habitflow.clients(id);
 create index if not exists ix_habitflow_users_client_id on habitflow.users(client_id);
+set search_path to habitflow;
+
+alter table habitflow.clients add column if not exists person_type varchar(20) not null default 'LegalPerson';
+alter table habitflow.clients add column if not exists document_type varchar(10) not null default 'CNPJ';
+alter table habitflow.clients add column if not exists document_raw varchar(30);
+alter table habitflow.clients add column if not exists document_normalized varchar(20);
+alter table habitflow.clients add column if not exists trade_name varchar(180);
+alter table habitflow.clients add column if not exists state_registration varchar(40);
+alter table habitflow.clients add column if not exists municipal_registration varchar(40);
+alter table habitflow.clients add column if not exists billing_email varchar(200);
+alter table habitflow.clients add column if not exists billing_phone varchar(40);
+alter table habitflow.clients add column if not exists billing_responsible_name varchar(160);
+alter table habitflow.clients add column if not exists address_zipcode varchar(20);
+alter table habitflow.clients add column if not exists address_street varchar(200);
+alter table habitflow.clients add column if not exists address_number varchar(40);
+alter table habitflow.clients add column if not exists address_complement varchar(120);
+alter table habitflow.clients add column if not exists address_district varchar(120);
+alter table habitflow.clients add column if not exists address_city varchar(120);
+alter table habitflow.clients add column if not exists address_state varchar(2);
+alter table habitflow.clients add column if not exists subscription_status varchar(40) not null default 'Free';
+alter table habitflow.clients add column if not exists benefits_status varchar(40) not null default 'Free';
+alter table habitflow.clients add column if not exists payment_status varchar(40) not null default 'None';
+alter table habitflow.clients add column if not exists last_payment_at timestamp;
+alter table habitflow.clients add column if not exists next_due_date date;
+alter table habitflow.clients add column if not exists overdue_since date;
+alter table habitflow.clients add column if not exists grace_period_until date;
+alter table habitflow.clients add column if not exists blocked_paid_benefits_at timestamp;
+alter table habitflow.clients add column if not exists blocked_paid_benefits_reason text;
+
+alter table habitflow.clients drop constraint if exists ck_habitflow_clients_person_type;
+alter table habitflow.clients add constraint ck_habitflow_clients_person_type check (person_type in ('NaturalPerson','LegalPerson'));
+alter table habitflow.clients drop constraint if exists ck_habitflow_clients_document_type;
+alter table habitflow.clients add constraint ck_habitflow_clients_document_type check (document_type in ('CPF','CNPJ'));
+alter table habitflow.clients drop constraint if exists ck_habitflow_clients_subscription_status;
+alter table habitflow.clients add constraint ck_habitflow_clients_subscription_status check (subscription_status in ('Free','Trial','Active','PastDue','Canceled','Suspended'));
+alter table habitflow.clients drop constraint if exists ck_habitflow_clients_benefits_status;
+alter table habitflow.clients add constraint ck_habitflow_clients_benefits_status check (benefits_status in ('Free','PremiumActive','PremiumBlocked','EnterpriseActive','EnterpriseBlocked'));
+alter table habitflow.clients drop constraint if exists ck_habitflow_clients_payment_status;
+alter table habitflow.clients add constraint ck_habitflow_clients_payment_status check (payment_status in ('None','Pending','Approved','Rejected','Canceled','Expired','Overdue','Refunded'));
+
+update habitflow.clients set document_normalized = regexp_replace(coalesce(document,''), '\\D', '', 'g') where document_normalized is null and document is not null;
+create unique index if not exists ux_habitflow_clients_document_normalized_not_null on habitflow.clients(document_normalized) where document_normalized is not null;
+create index if not exists ix_habitflow_clients_person_type on habitflow.clients(person_type);
+create index if not exists ix_habitflow_clients_document_type on habitflow.clients(document_type);
+create index if not exists ix_habitflow_clients_document_normalized on habitflow.clients(document_normalized);
+create index if not exists ix_habitflow_clients_subscription_status on habitflow.clients(subscription_status);
+create index if not exists ix_habitflow_clients_benefits_status on habitflow.clients(benefits_status);
+create index if not exists ix_habitflow_clients_payment_status on habitflow.clients(payment_status);
+create index if not exists ix_habitflow_clients_next_due_date on habitflow.clients(next_due_date);
+create index if not exists ix_habitflow_clients_overdue_since on habitflow.clients(overdue_since);
+set search_path to habitflow;
+
+create table if not exists habitflow.client_subscriptions(
+ id uuid primary key, client_id uuid not null references habitflow.clients(id), plan_code varchar(80) not null, status varchar(40) not null, billing_cycle varchar(40) not null, started_at timestamp null, current_period_start date null, current_period_end date null, trial_ends_at date null, canceled_at timestamp null, created_at timestamp not null default now(), updated_at timestamp not null default now());
+create table if not exists habitflow.client_invoices(
+ id uuid primary key, client_id uuid not null references habitflow.clients(id), subscription_id uuid null references habitflow.client_subscriptions(id), invoice_number varchar(80) unique not null, amount numeric(12,2) not null, currency varchar(10) not null default 'BRL', due_date date not null, status varchar(40) not null default 'Pending', payment_method varchar(40) null, paid_at timestamp null, canceled_at timestamp null, mercado_pago_payment_id varchar(150) null, mercado_pago_preference_id varchar(150) null, checkout_url text null, pix_qr_code text null, boleto_url text null, created_at timestamp not null default now(), updated_at timestamp not null default now());
+create table if not exists habitflow.client_entitlement_events(
+ id uuid primary key, client_id uuid not null references habitflow.clients(id), action varchar(100) not null, previous_status varchar(80) null, new_status varchar(80) not null, reason text null, created_by_user_id uuid null, created_at timestamp not null default now());
+create table if not exists habitflow.superadmin_audit_logs(
+ id uuid primary key, super_admin_user_id uuid null, super_admin_email varchar(200) null, action varchar(120) not null, target_type varchar(80) null, target_id uuid null, reason text null, metadata jsonb null, created_at timestamp not null default now());
+create index if not exists ix_habitflow_client_subscriptions_client_id on habitflow.client_subscriptions(client_id);
+create index if not exists ix_habitflow_client_invoices_client_id on habitflow.client_invoices(client_id);
+create index if not exists ix_habitflow_client_invoices_status_due_date on habitflow.client_invoices(status, due_date);
+create index if not exists ix_habitflow_superadmin_audit_logs_created_at on habitflow.superadmin_audit_logs(created_at desc);

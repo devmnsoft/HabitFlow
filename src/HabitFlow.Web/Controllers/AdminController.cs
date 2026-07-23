@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace HabitFlow.Web.Controllers;
 
-[Authorize(Roles = "Admin")]
+[Authorize(Policy = "RequireAdmin")]
 public class AdminController(AdminDashboardService dashboard, SettingsService settingsService, ILogger<AdminController> logger) : Controller
 {
     [HttpGet("admin")]
