@@ -59,7 +59,7 @@ public sealed class CustomerHealthService
 
 public sealed class SchemaMigrationStatusService(ISuperAdminOperationalRepository repo)
 {
-    public IReadOnlyList<SchemaMigrationStatus> ListExpectedMigrations() => Enumerable.Range(1, 29).Select(i => new SchemaMigrationStatus($"{i:000}", i == 29 ? "operational_completeness_v61" : $"migration_{i:000}", false, null)).ToList();
+    public IReadOnlyList<SchemaMigrationStatus> ListExpectedMigrations() => Enumerable.Range(1, 30).Select(i => new SchemaMigrationStatus($"{i:000}", i == 30 ? "client_registration_cpf_cnpj_real_flow" : i == 29 ? "operational_completeness_v61" : $"migration_{i:000}", false, null)).ToList();
     public Task<IReadOnlyList<SchemaMigrationStatus>> ListAppliedMigrationsAsync(CancellationToken ct = default) => repo.ListAppliedMigrationsAsync(ct);
     public async Task<IReadOnlyList<SchemaMigrationStatus>> GetPendingMigrationsAsync(CancellationToken ct = default)
     {

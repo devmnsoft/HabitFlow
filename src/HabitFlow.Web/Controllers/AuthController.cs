@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace HabitFlow.Web.Controllers;
 
-public class AuthController(AuthService authService, IWebHostEnvironment env, IUserFacingErrorMapper errorMapper, ILogger<AuthController> logger) : Controller
+public class AuthController(AuthService authService, ClientAccountRegistrationService clientRegistration, IWebHostEnvironment env, IUserFacingErrorMapper errorMapper, ILogger<AuthController> logger) : Controller
 {
     [HttpGet("/login")]
     public IActionResult Login() => View();
@@ -51,9 +51,15 @@ public class AuthController(AuthService authService, IWebHostEnvironment env, IU
         try
         {
             if (!ModelState.IsValid) return View(model);
-            var result = await authService.RegisterAsync(model.ToDto(), ct);
-            if (result.IsFailure) { SetFailureMessage(result.Error.Code, result.Error.Message); return View(model); }
-            TempData["Success"] = "Cadastro criado. Faça login para continuar.";
+            var result = await clientRegistration.RegisterAsync(model.ToClientAccountDto(), ct);
+            if (result.IsFailure)
+            {
+                if (result.Error.Code == "validation.cpf_invalid" || result.Error.Code == "validation.cnpj_invalid") ModelState.AddModelError(nameof(RegisterViewModel.Document), result.Error.Message);
+                else if (result.Error.Code == "validation.document_duplicate") TempData["Warning"] = "Conta já existente: Já existe uma conta cadastrada com este CPF/CNPJ.";
+                else SetFailureMessage(result.Error.Code, result.Error.Message);
+                return View(model);
+            }
+            TempData["Success"] = "Conta criada com sucesso. Agora entre para começar sua rotina.";
             return RedirectToAction(nameof(Login));
         }
         catch (Exception ex)

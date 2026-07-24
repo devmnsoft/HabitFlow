@@ -28,4 +28,5 @@ public sealed class DocumentValidator
     }
     public string FormatCpf(string? cpf) { var n = Normalize(cpf); return n.Length == 11 ? $"{n[..3]}.{n[3..6]}.{n[6..9]}-{n[9..]}" : n; }
     public string FormatCnpj(string? cnpj) { var n = Normalize(cnpj); return n.Length == 14 ? $"{n[..2]}.{n[2..5]}.{n[5..8]}/{n[8..12]}-{n[12..]}" : n; }
+    public string GetDocumentTypeByPersonType(string? personType) => string.Equals(personType, "NaturalPerson", StringComparison.OrdinalIgnoreCase) ? "CPF" : string.Equals(personType, "LegalPerson", StringComparison.OrdinalIgnoreCase) ? "CNPJ" : string.Empty;
 }

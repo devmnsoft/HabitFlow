@@ -21,6 +21,7 @@ public static class DependencyInjection
         services.AddScoped<ProgressService>();
         services.AddScoped<AdminAuthorizationService>();
         services.AddScoped<AuthService>();
+        services.AddScoped<ClientAccountRegistrationService>();
         services.AddScoped<UserService>();
         services.AddScoped<UserInviteService>();
         services.AddScoped<ClientService>();

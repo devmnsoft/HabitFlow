@@ -71,3 +71,9 @@ select 'ck_habitflow_users_role accepts SuperAdmin' as check_name, count(*) as f
 from information_schema.check_constraints where constraint_schema='habitflow' and constraint_name='ck_habitflow_users_role';
 select table_schema, table_name from information_schema.tables where table_schema='public' and table_name in ('users','clients','client_invoices','client_subscriptions','client_communications');
 select table_name from information_schema.tables where table_schema='habitflow' and table_name in ('schema_migrations','client_onboarding','client_communications','job_execution_logs','client_invoices','client_subscriptions','client_entitlement_events','superadmin_audit_logs');
+
+
+-- v6.1.1 client registration CPF/CNPJ validation
+select 'v6.1.1 clients.document_normalized unique' as check_name, count(*) as found from pg_indexes where schemaname='habitflow' and indexname='ux_habitflow_clients_document_normalized_not_null';
+select 'v6.1.1 person/document coherence' as check_name, count(*) as found from information_schema.check_constraints where constraint_schema='habitflow' and constraint_name='ck_habitflow_clients_person_document_match';
+select 'v6.1.1 CPF/CNPJ columns' as check_name, count(*) as found from information_schema.columns where table_schema='habitflow' and table_name='clients' and column_name in ('person_type','document_type','document_raw','document_normalized','legal_name','trade_name','billing_responsible_name','billing_email','billing_phone');

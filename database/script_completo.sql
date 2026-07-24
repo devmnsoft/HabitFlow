@@ -538,6 +538,8 @@ alter table habitflow.clients drop constraint if exists ck_habitflow_clients_per
 alter table habitflow.clients add constraint ck_habitflow_clients_person_type check (person_type in ('NaturalPerson','LegalPerson'));
 alter table habitflow.clients drop constraint if exists ck_habitflow_clients_document_type;
 alter table habitflow.clients add constraint ck_habitflow_clients_document_type check (document_type in ('CPF','CNPJ'));
+alter table habitflow.clients drop constraint if exists ck_habitflow_clients_person_document_match;
+alter table habitflow.clients add constraint ck_habitflow_clients_person_document_match check ((person_type = 'NaturalPerson' and document_type = 'CPF') or (person_type = 'LegalPerson' and document_type = 'CNPJ'));
 alter table habitflow.clients drop constraint if exists ck_habitflow_clients_subscription_status;
 alter table habitflow.clients add constraint ck_habitflow_clients_subscription_status check (subscription_status in ('Free','Trial','Active','PastDue','Canceled','Suspended'));
 alter table habitflow.clients drop constraint if exists ck_habitflow_clients_benefits_status;

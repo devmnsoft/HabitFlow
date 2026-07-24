@@ -1,10 +1,12 @@
-# HabitFlow v5.8 — SuperAdmin, CPF/CNPJ, Billing e Entitlements
+# HabitFlow v6.1.1 — Cadastro SaaS PF/PJ com CPF/CNPJ
 
-Esta documentação cobre a evolução SaaS v5.8-SuperAdmin-ClientCpfCnpj-BillingEntitlements.
+O fluxo público `/register` cria um cliente SaaS completo e o primeiro usuário administrador vinculado por `client_id`.
 
-- Clientes podem ser Pessoa Física (CPF) ou Pessoa Jurídica (CNPJ), com documento normalizado apenas com números no backend.
-- O perfil SuperAdmin acessa `/superadmin` e visualiza clientes, planos, assinaturas, pagamentos, inadimplência, auditoria e diagnóstico.
-- Pagamentos Pix/Boleto via Mercado Pago são preparados para confirmação segura por backend/webhook/admin; retorno do navegador não libera Premium.
-- Clientes inadimplentes mantêm login e recursos Free; benefícios Premium/Enterprise podem ser bloqueados e reativados sem apagar dados.
-- Todas as tabelas e validações permanecem no schema explícito `habitflow`.
-- Secrets devem ficar fora do Git em configuração segura de ambiente.
+- Pessoa Física usa `person_type = NaturalPerson` e `document_type = CPF`.
+- Pessoa Jurídica usa `person_type = LegalPerson` e `document_type = CNPJ`.
+- `document_raw` guarda o documento formatado e `document_normalized` guarda apenas números.
+- O documento é validado no backend, normalizado e protegido por índice único parcial em `habitflow.clients`.
+- O cliente nasce no plano Free, com `subscription_status = Free`, `benefits_status = Free` e `payment_status = None`.
+- O primeiro usuário nasce como `Admin`, `Active`, `Free` e com `client_id` preenchido.
+- O onboarding inicial e a comunicação de boas-vindas são criados no cadastro.
+- Dados fiscais completos devem ser visíveis apenas para SuperAdmin ou Admin do próprio cliente.
