@@ -32,8 +32,11 @@ public sealed class ClientRepository(SqlExecutor db) : IClientRepository
         where id=@Id
         """, new { c.Id, c.Name, c.LegalName, c.Document, c.Email, c.Phone, c.ContactName, Plan = DbEnum.Text(c.Plan), Status = DbEnum.Text(c.Status), c.Notes, c.IsActive, c.CreatedAt, c.UpdatedAt, PersonType = DbEnum.Text(c.PersonType), DocumentType = DbEnum.Text(c.DocumentType), c.DocumentRaw, c.DocumentNormalized, c.TradeName, c.StateRegistration, c.MunicipalRegistration, c.BillingEmail, c.BillingPhone, c.BillingResponsibleName, c.AddressZipcode, c.AddressStreet, c.AddressNumber, c.AddressComplement, c.AddressDistrict, c.AddressCity, c.AddressState, SubscriptionStatus = DbEnum.Text(c.SubscriptionStatus), BenefitsStatus = DbEnum.Text(c.BenefitsStatus), PaymentStatus = DbEnum.Text(c.PaymentStatus), c.LastPaymentAt, c.NextDueDate, c.OverdueSince, c.GracePeriodUntil, c.BlockedPaidBenefitsAt, c.BlockedPaidBenefitsReason }, ct);
 
-    public Task<bool> DocumentExistsAsync(string document, Guid? exceptId = null, CancellationToken ct = default) =>
-        db.QuerySingleOrDefaultAsync<bool>("select exists(select 1 from habitflow.clients where document_normalized=@document and (@exceptId is null or id <> @exceptId))", new { document, exceptId }, ct);
+    public Task<bool> DocumentExistsAsync(string documentNormalized, Guid? ignoreClientId = null, CancellationToken ct = default) =>
+        db.QuerySingleOrDefaultAsync<bool>("select exists(select 1 from habitflow.clients where document_normalized=@documentNormalized and (@ignoreClientId is null or id <> @ignoreClientId))", new { documentNormalized, ignoreClientId }, ct);
+
+    public Task<Client?> GetByDocumentAsync(string documentNormalized, CancellationToken ct = default) =>
+        db.QuerySingleOrDefaultAsync<Client>($"select {Columns} from habitflow.clients where document_normalized = @documentNormalized", new { documentNormalized }, ct);
 
     public async Task<IReadOnlyList<ClientUserSummary>> GetUsersAsync(Guid clientId, CancellationToken ct = default) =>
         (await db.QueryAsync<ClientUserSummary>("select id, name, email, role, account_status, created_at from habitflow.users where client_id = @clientId order by created_at desc", new { clientId }, ct)).ToList();

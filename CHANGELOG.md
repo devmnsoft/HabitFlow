@@ -1,3 +1,19 @@
+## v6.1.1-ClientRegistrationCpfCnpj-RealSaaSOnboarding
+- Cadastro público agora cria Cliente + primeiro Admin do Cliente
+- Cadastro diferencia Pessoa Física e Pessoa Jurídica
+- CPF/CNPJ no formulário de cadastro
+- Validação real de CPF e CNPJ
+- Máscara visual CPF/CNPJ com JavaScript Vanilla
+- Documento normalizado e único
+- Usuário criado com client_id
+- Cliente criado com plano Free inicial
+- Onboarding criado automaticamente
+- SuperAdmin lista PF/PJ e CPF/CNPJ
+- Dashboard SuperAdmin com métricas PF/PJ
+- Exportação de cadastros
+- Mensagens amigáveis de CPF/CNPJ inválido e duplicado
+- Testes de validação, cadastro e segurança multi-tenant
+
 
 ## v6.1-DeepAudit-OperationalCompleteness-ProductionReadiness
 - Auditoria profunda do estado real do projeto

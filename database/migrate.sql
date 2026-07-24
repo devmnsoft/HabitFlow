@@ -27,3 +27,5 @@
 \i database/migrations/027_user_invites.sql
 \i database/migrations/028_client_onboarding.sql
 \i database/migrations/029_operational_completeness_v61.sql
+
+\i database/migrations/030_client_registration_cpf_cnpj_real_flow.sql

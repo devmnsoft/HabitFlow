@@ -1,3 +1,8 @@
+## v6.1.1 CPF/CNPJ
+
+- Acompanhar evolução visual do SuperAdmin para filtros avançados PF/PJ, pagamento e benefícios.
+- Expandir testes integrados com PostgreSQL real para o fluxo completo de cadastro público.
+
 
 ## v6.1 riscos técnicos restantes
 - Executar validação em ambiente com SDK .NET e PostgreSQL reais.
