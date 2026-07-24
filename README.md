@@ -1,4 +1,15 @@
 
+## v6.1-DeepAudit-OperationalCompleteness-ProductionReadiness
+
+Rodar sem Docker: `dotnet run --project src/HabitFlow.Web --urls http://localhost:5097`.
+Aplicar banco: `psql -U postgres -d habitflow -f database/migrate.sql`.
+Validar scripts: `pwsh scripts/qa/check-database-scripts.ps1` e `psql -U postgres -d habitflow -f database/validate_schema_habitflow.sql`.
+Criar primeiro SuperAdmin: `pwsh scripts/admin/create-superadmin.ps1` e execute o SQL parametrizado/documentado.
+Seeds: use `database/seed_dev.sql` somente em desenvolvimento e `database/seed_production_minimal.sql` para dados mínimos sem usuários reais.
+SuperAdmin: acesse `/superadmin` com usuário de role `SuperAdmin`; telas operacionais incluem `/superadmin/plans`, `/superadmin/subscriptions`, `/superadmin/payments`, `/superadmin/overdue`, `/superadmin/audit` e `/superadmin/system-health`.
+Publicação IIS: `dotnet publish src/HabitFlow.Web/HabitFlow.Web.csproj -c Release -o publish/windows`; não versionar `publish/`, `bin/` ou `obj/`.
+
+
 ## v5.8-SuperAdmin-ClientCpfCnpj-BillingEntitlements
 - Cadastro de cliente com Pessoa Física/Pessoa Jurídica.
 - CPF/CNPJ com validação real, máscara visual e documento normalizado/único.

@@ -7,7 +7,7 @@ namespace HabitFlow.Web.Controllers;
 
 [Authorize(Roles = "SuperAdmin")]
 [Route("superadmin")]
-public sealed class SuperAdminController(SuperAdminService dashboard, ClientService clients, EntitlementService entitlements, ClientCommunicationService communications, CustomerHealthService health) : Controller
+public sealed class SuperAdminController(SuperAdminService dashboard, ClientService clients, EntitlementService entitlements, ClientCommunicationService communications, CustomerHealthService health, SuperAdminOperationalService operations, SchemaMigrationStatusService schema) : Controller
 {
     [HttpGet("")]
     public async Task<IActionResult> Index(CancellationToken ct) => View(await dashboard.GetDashboardAsync(ct));
@@ -54,42 +54,68 @@ public sealed class SuperAdminController(SuperAdminService dashboard, ClientServ
     [HttpGet("clients/{id:guid}/activity")] public IActionResult ClientActivity(Guid id) => View("~/Views/SuperAdmin/Simple.cshtml", $"Atividade do cliente {id}");
     [HttpPost("clients/{id:guid}/change-plan")]
     [ValidateAntiForgeryToken]
-    public IActionResult ChangePlan(Guid id, string planCode, string reason) =>
-        HasRequiredReason(reason) ? RedirectToAction(nameof(ClientDetails), new { id }) : RedirectWithReasonError(nameof(ClientDetails), new { id });
+    public async Task<IActionResult> ChangePlan(Guid id, string planCode, string reason, CancellationToken ct)
+    {
+        if (!HasRequiredReason(reason)) return RedirectWithReasonError(nameof(ClientDetails), new { id });
+        var result = await operations.ChangeClientPlanAsync(id, planCode, reason, User.Identity?.Name ?? "superadmin", ct);
+        TempData[result.IsSuccess ? "Success" : "Error"] = result.IsSuccess ? "Plano alterado com auditoria." : result.Error.Message;
+        return RedirectToAction(nameof(ClientDetails), new { id });
+    }
 
     [HttpPost("payments/{id:guid}/mark-as-paid")]
     [ValidateAntiForgeryToken]
-    public IActionResult MarkPaymentAsPaid(Guid id, string reason) =>
-        HasRequiredReason(reason) ? RedirectToAction(nameof(Payments)) : RedirectWithReasonError(nameof(Payments));
+    public async Task<IActionResult> MarkPaymentAsPaid(Guid id, string reason, CancellationToken ct)
+    {
+        if (!HasRequiredReason(reason)) return RedirectWithReasonError(nameof(Payments));
+        var result = await operations.MarkInvoicePaidAsync(id, reason, User.Identity?.Name ?? "superadmin", ct);
+        TempData[result.IsSuccess ? "Success" : "Error"] = result.IsSuccess ? "Pagamento marcado como pago e benefícios liberados." : result.Error.Message;
+        return RedirectToAction(nameof(Payments));
+    }
 
     [HttpPost("payments/{id:guid}/mark-as-overdue")]
     [ValidateAntiForgeryToken]
-    public IActionResult MarkPaymentAsOverdue(Guid id, string reason) =>
-        HasRequiredReason(reason) ? RedirectToAction(nameof(Overdue)) : RedirectWithReasonError(nameof(Overdue));
+    public async Task<IActionResult> MarkPaymentAsOverdue(Guid id, string reason, CancellationToken ct)
+    {
+        if (!HasRequiredReason(reason)) return RedirectWithReasonError(nameof(Overdue));
+        var result = await operations.MarkInvoiceOverdueAsync(id, reason, User.Identity?.Name ?? "superadmin", ct);
+        TempData[result.IsSuccess ? "Success" : "Error"] = result.IsSuccess ? "Fatura marcada como vencida." : result.Error.Message;
+        return RedirectToAction(nameof(Overdue));
+    }
 
     [HttpPost("subscriptions/{id:guid}/cancel")]
     [ValidateAntiForgeryToken]
-    public IActionResult CancelSubscription(Guid id, string reason) =>
-        HasRequiredReason(reason) ? RedirectToAction(nameof(Subscriptions)) : RedirectWithReasonError(nameof(Subscriptions));
+    public async Task<IActionResult> CancelSubscription(Guid id, string reason, CancellationToken ct)
+    {
+        if (!HasRequiredReason(reason)) return RedirectWithReasonError(nameof(Subscriptions));
+        var result = await operations.CancelSubscriptionAsync(id, reason, User.Identity?.Name ?? "superadmin", ct);
+        TempData[result.IsSuccess ? "Success" : "Error"] = result.IsSuccess ? "Assinatura cancelada com auditoria." : result.Error.Message;
+        return RedirectToAction(nameof(Subscriptions));
+    }
 
     [HttpPost("subscriptions/{id:guid}/reactivate")]
     [ValidateAntiForgeryToken]
-    public IActionResult ReactivateSubscription(Guid id, string reason) =>
-        HasRequiredReason(reason) ? RedirectToAction(nameof(Subscriptions)) : RedirectWithReasonError(nameof(Subscriptions));
+    public async Task<IActionResult> ReactivateSubscription(Guid id, string reason, CancellationToken ct)
+    {
+        if (!HasRequiredReason(reason)) return RedirectWithReasonError(nameof(Subscriptions));
+        var result = await operations.ReactivateSubscriptionAsync(id, reason, User.Identity?.Name ?? "superadmin", ct);
+        TempData[result.IsSuccess ? "Success" : "Error"] = result.IsSuccess ? "Assinatura reativada e benefícios recalculados." : result.Error.Message;
+        return RedirectToAction(nameof(Subscriptions));
+    }
     [HttpGet("export/payments")] public IActionResult ExportPayments() => File(Encoding.UTF8.GetBytes("Pagamento,Status,Metodo\n"), "text/csv", "habitflow-pagamentos.csv");
     [HttpGet("export/overdue")] public IActionResult ExportOverdue() => File(Encoding.UTF8.GetBytes("Cliente,Vencimento,Status\n"), "text/csv", "habitflow-inadimplentes.csv");
     [HttpGet("export/subscriptions")] public IActionResult ExportSubscriptions() => File(Encoding.UTF8.GetBytes("Cliente,Plano,Status\n"), "text/csv", "habitflow-assinaturas.csv");
 
-    [HttpGet("plans")] public IActionResult Plans() => View("~/Views/SuperAdmin/Simple.cshtml", "Planos");
-    [HttpGet("subscriptions")] public IActionResult Subscriptions() => View("~/Views/SuperAdmin/Simple.cshtml", "Assinaturas");
-    [HttpGet("billing")] public IActionResult Billing() => View("~/Views/SuperAdmin/Simple.cshtml", "Faturamento");
-    [HttpGet("payments")] public IActionResult Payments() => View("~/Views/SuperAdmin/Simple.cshtml", "Pagamentos Pix/Boleto Mercado Pago");
-    [HttpGet("overdue")] public IActionResult Overdue() => View("~/Views/SuperAdmin/Simple.cshtml", "Inadimplentes");
-    [HttpGet("audit")] public IActionResult Audit() => View("~/Views/SuperAdmin/Simple.cshtml", "Auditoria SuperAdmin");
-    [HttpGet("system")] public IActionResult System() => View("~/Views/SuperAdmin/Simple.cshtml", "Sistema");
+    [HttpGet("plans")] public async Task<IActionResult> Plans(CancellationToken ct) => View("~/Views/SuperAdmin/Plans/Index.cshtml", await operations.ListPlansAsync(ct));
+    [HttpGet("subscriptions")] public async Task<IActionResult> Subscriptions(CancellationToken ct) => View("~/Views/SuperAdmin/Subscriptions/Index.cshtml", await operations.ListSubscriptionsAsync(ct));
+    [HttpGet("billing")] public async Task<IActionResult> Billing(CancellationToken ct) => View("~/Views/SuperAdmin/Payments/Index.cshtml", await operations.ListPaymentsAsync(null, ct));
+    [HttpGet("payments")] public async Task<IActionResult> Payments(CancellationToken ct) => View("~/Views/SuperAdmin/Payments/Index.cshtml", await operations.ListPaymentsAsync(null, ct));
+    [HttpGet("overdue")] public async Task<IActionResult> Overdue(CancellationToken ct) => View("~/Views/SuperAdmin/Overdue/Index.cshtml", await operations.ListPaymentsAsync("Overdue", ct));
+    [HttpGet("audit")] public async Task<IActionResult> Audit(CancellationToken ct) => View("~/Views/SuperAdmin/Audit/Index.cshtml", await operations.ListAuditAsync(ct));
+    [HttpGet("system")] public async Task<IActionResult> System(CancellationToken ct) => View("~/Views/SuperAdmin/SystemHealth/Index.cshtml", await schema.BuildStatusAsync(ct));
+    [HttpGet("system-health")] public async Task<IActionResult> SystemHealth(CancellationToken ct) => View("~/Views/SuperAdmin/SystemHealth/Index.cshtml", await schema.BuildStatusAsync(ct));
     [HttpGet("communications")] public async Task<IActionResult> Communications(CancellationToken ct) => View("~/Views/SuperAdmin/Communications.cshtml", await communications.ListAllAsync(new Domain.ClientCommunicationFilter(), ct));
     [HttpGet("customer-success")] public IActionResult CustomerSuccess() => View("~/Views/SuperAdmin/CustomerSuccess.cshtml", health.Calculate(Guid.Empty, false, false, false, false, true, false, false, false, true));
-    [HttpGet("support")] public IActionResult SupportOperations() => View("~/Views/SuperAdmin/Simple.cshtml", "Suporte operacional com SLA inicial");
+    [HttpGet("support")] public IActionResult SupportOperations() => View("~/Views/SuperAdmin/Support/Index.cshtml");
 
     [HttpGet("export/clients")]
     public async Task<IActionResult> ExportClients(CancellationToken ct)

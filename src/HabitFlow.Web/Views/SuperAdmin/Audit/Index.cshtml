@@ -1,0 +1,3 @@
+@model IReadOnlyList<HabitFlow.Domain.SuperAdminAuditRow>
+@{ ViewData["Title"] = "Auditoria SuperAdmin"; }
+<section class="premium-card"><h1>Auditoria SuperAdmin</h1><table class="table"><thead><tr><th>Data</th><th>SuperAdmin</th><th>Ação</th><th>Alvo</th><th>Motivo</th><th>Metadata</th></tr></thead><tbody>@foreach(var a in Model){<tr><td>@a.CreatedAt</td><td>@a.ActorEmail</td><td>@a.Action</td><td>@a.TargetType @a.TargetId</td><td>@a.Reason</td><td>@a.Metadata</td></tr>}</tbody></table></section>

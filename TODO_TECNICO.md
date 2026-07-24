@@ -1,4 +1,10 @@
 
+## v6.1 riscos técnicos restantes
+- Executar validação em ambiente com SDK .NET e PostgreSQL reais.
+- Conectar Mercado Pago real somente com secrets fora do Git.
+- Expandir testes funcionais com massa autenticada por perfil quando ambiente permitir.
+
+
 ## v5.8-SuperAdmin-ClientCpfCnpj-BillingEntitlements
 - Cadastro de cliente com Pessoa Física/Pessoa Jurídica.
 - CPF/CNPJ com validação real, máscara visual e documento normalizado/único.

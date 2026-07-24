@@ -65,3 +65,9 @@ select 'client_onboarding' as required_table where exists (select 1 from informa
 select 'billing_communication_rules' as required_table where exists (select 1 from information_schema.tables where table_schema='habitflow' and table_name='billing_communication_rules');
 select 'client_communications' as required_table where exists (select 1 from information_schema.tables where table_schema='habitflow' and table_name='client_communications');
 select 'job_execution_logs' as required_table where exists (select 1 from information_schema.tables where table_schema='habitflow' and table_name='job_execution_logs');
+
+-- v6.1 validations
+select 'ck_habitflow_users_role accepts SuperAdmin' as check_name, count(*) as found
+from information_schema.check_constraints where constraint_schema='habitflow' and constraint_name='ck_habitflow_users_role';
+select table_schema, table_name from information_schema.tables where table_schema='public' and table_name in ('users','clients','client_invoices','client_subscriptions','client_communications');
+select table_name from information_schema.tables where table_schema='habitflow' and table_name in ('schema_migrations','client_onboarding','client_communications','job_execution_logs','client_invoices','client_subscriptions','client_entitlement_events','superadmin_audit_logs');

@@ -1,4 +1,27 @@
 
+## v6.1-DeepAudit-OperationalCompleteness-ProductionReadiness
+- Auditoria profunda do estado real do projeto
+- Correção de DI inconsistente
+- Sincronização de migrate.sql, script_completo.sql e validate_schema_habitflow.sql
+- Inclusion oficial da migration 028 no fluxo de banco
+- Migration 029 de fechamento operacional
+- Constraint de UserRole ajustada para SuperAdmin
+- schema_migrations preparado
+- SuperAdmin com telas operacionais reais
+- Ações SuperAdmin efetivas no banco
+- SuperAdmin Payments, Overdue, Audit e System Health
+- BillingCommunicationJob com processamento real de comunicações
+- BillingStatusJob revisado para inadimplência real
+- EntitlementService auditado
+- Tenant isolation auditado por repository
+- Testes funcionais de rotas públicas/protegidas/admin/superadmin
+- Testes/scripts de banco e migrations
+- Seeds dev/prod revisados
+- Script para criar primeiro SuperAdmin
+- QA de placeholders, Simple.cshtml, assets e links
+- Documentação de produção e operação
+
+
 ## v6.0-SaaSLaunch-Onboarding-BillingCommunication-Operations
 - Onboarding do cliente
 - Checklist de implantação
