@@ -9,32 +9,21 @@
 \i database/migrations/009_create_billing.sql
 \i database/migrations/010_create_indexes.sql
 \i database/migrations/011_seed_initial_settings.sql
-
 \i database/migrations/012_habit_recurrence_reports_notifications.sql
-
 \i database/migrations/013_admin_operacional.sql
-
 \i database/migrations/014_windows_iis_operations.sql
-
 \i database/migrations/015_schema_hardening.sql
-
 \i database/migrations/016_premium_billing.sql
-
 \i database/migrations/017_habit_templates_guided_journey.sql
-
 \i database/migrations/018_user_ui_preferences_accessibility.sql
-
 \i database/migrations/019_notifications_feedback_preferences.sql
 \i database/migrations/020_popup_preferences.sql
-
-\i migrations/021_clients_management.sql
-\i migrations/022_users_clients_link.sql
-
+\i database/migrations/021_clients_management.sql
+\i database/migrations/022_users_clients_link.sql
 \i database/migrations/023_clients_cpf_cnpj_superadmin.sql
 \i database/migrations/024_superadmin_billing_entitlements.sql
-
 \i database/migrations/025_tenant_isolation_client_id.sql
-
 \i database/migrations/026_backfill_client_id.sql
-
 \i database/migrations/027_user_invites.sql
+\i database/migrations/028_client_onboarding.sql
+\i database/migrations/029_operational_completeness_v61.sql

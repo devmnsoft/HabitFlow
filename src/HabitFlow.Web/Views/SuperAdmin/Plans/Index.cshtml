@@ -1,0 +1,3 @@
+@model IReadOnlyList<HabitFlow.Domain.SuperAdminPlanRow>
+@{ ViewData["Title"] = "Planos SuperAdmin"; }
+<section class="premium-card"><h1>Planos</h1><p>Visão operacional dos planos e uso por clientes.</p><table class="table"><thead><tr><th>Código</th><th>Nome</th><th>Mensal</th><th>Anual</th><th>Limite</th><th>Relatórios</th><th>Avançados</th><th>Ativo</th><th>Público</th><th>Clientes</th><th>Receita estimada</th></tr></thead><tbody>@foreach (var p in Model){<tr><td>@p.Code</td><td>@p.Name</td><td>@p.PriceMonthly</td><td>@p.PriceYearly</td><td>@p.HabitLimit</td><td>@p.ReportsEnabled</td><td>@p.AdvancedReportsEnabled</td><td>@p.IsActive</td><td>@p.IsPublic</td><td>@p.ClientsUsing</td><td>@p.EstimatedRevenue</td></tr>}</tbody></table></section>

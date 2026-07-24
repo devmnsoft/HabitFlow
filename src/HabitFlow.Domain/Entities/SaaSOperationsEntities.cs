@@ -7,3 +7,10 @@ public sealed record JobExecutionLog(Guid Id, string JobName, string Status, Dat
 public sealed record CustomerHealthScore(Guid ClientId, int Score, string Status, IReadOnlyList<string> Signals);
 public sealed record ClientCommunicationFilter(Guid? ClientId = null, string? Type = null, string? Status = null, DateTime? From = null, DateTime? To = null);
 public sealed record OnboardingChecklistItem(string Text, bool Completed, string Icon, string ActionUrl, string HelpText);
+
+public sealed record SuperAdminPlanRow(string Code, string Name, decimal? PriceMonthly, decimal? PriceYearly, int? HabitLimit, bool ReportsEnabled, bool AdvancedReportsEnabled, bool IsActive, bool IsPublic, int ClientsUsing, decimal EstimatedRevenue);
+public sealed record SuperAdminSubscriptionRow(Guid Id, Guid ClientId, string ClientName, string PlanCode, string Status, string? BillingCycle, DateTime? CurrentPeriodStart, DateTime? CurrentPeriodEnd, DateTime? TrialEndsAt, DateTime? CanceledAt, DateOnly? NextDueDate);
+public sealed record SuperAdminPaymentRow(Guid Id, Guid ClientId, string ClientName, string? InvoiceNumber, decimal Amount, DateOnly DueDate, string Method, string Status, DateTime? PaidAt, string? CheckoutUrl, string? ProviderPaymentId);
+public sealed record SuperAdminAuditRow(DateTime CreatedAt, string ActorEmail, string Action, string TargetType, Guid? TargetId, string? Reason, string? Metadata);
+public sealed record SchemaMigrationStatus(string Id, string Name, bool Applied, DateTime? AppliedAt);
+public sealed record SystemHealthStatus(bool DatabaseOk, IReadOnlyList<SchemaMigrationStatus> Migrations, IReadOnlyList<string> MissingTables, IReadOnlyList<string> MissingIndexes, IReadOnlyList<string> MissingConstraints, int PlansCount, int HabitTemplatesCount, bool MercadoPagoConfigured, string EnvironmentName, string ApplicationVersion, string Urls, bool DockerRequired);

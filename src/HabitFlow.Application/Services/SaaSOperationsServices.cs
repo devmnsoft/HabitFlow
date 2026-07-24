@@ -56,3 +56,29 @@ public sealed class CustomerHealthService
         return new CustomerHealthScore(clientId, score, status, signals);
     }
 }
+
+public sealed class SchemaMigrationStatusService(ISuperAdminOperationalRepository repo)
+{
+    public IReadOnlyList<SchemaMigrationStatus> ListExpectedMigrations() => Enumerable.Range(1, 29).Select(i => new SchemaMigrationStatus($"{i:000}", i == 29 ? "operational_completeness_v61" : $"migration_{i:000}", false, null)).ToList();
+    public Task<IReadOnlyList<SchemaMigrationStatus>> ListAppliedMigrationsAsync(CancellationToken ct = default) => repo.ListAppliedMigrationsAsync(ct);
+    public async Task<IReadOnlyList<SchemaMigrationStatus>> GetPendingMigrationsAsync(CancellationToken ct = default)
+    {
+        var applied = (await ListAppliedMigrationsAsync(ct)).Select(x => x.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        return ListExpectedMigrations().Where(x => !applied.Contains(x.Id)).ToList();
+    }
+    public async Task<SystemHealthStatus> BuildStatusAsync(CancellationToken ct = default) => await repo.BuildSystemHealthAsync(ListExpectedMigrations(), ct);
+}
+
+public sealed class SuperAdminOperationalService(ISuperAdminOperationalRepository repo, ILogger<SuperAdminOperationalService> logger)
+{
+    public Task<IReadOnlyList<SuperAdminPlanRow>> ListPlansAsync(CancellationToken ct = default) => repo.ListPlansAsync(ct);
+    public Task<IReadOnlyList<SuperAdminSubscriptionRow>> ListSubscriptionsAsync(CancellationToken ct = default) => repo.ListSubscriptionsAsync(ct);
+    public Task<IReadOnlyList<SuperAdminPaymentRow>> ListPaymentsAsync(string? status = null, CancellationToken ct = default) => repo.ListPaymentsAsync(status, ct);
+    public Task<IReadOnlyList<SuperAdminAuditRow>> ListAuditAsync(CancellationToken ct = default) => repo.ListAuditAsync(ct);
+    public async Task<Result> ExecuteAsync(Func<CancellationToken, Task> action, CancellationToken ct = default){try{await action(ct);return Result.Success();}catch(Exception ex){logger.LogError(ex,"Falha em ação SuperAdmin");return Result.Failure("superadmin.action_error","Não foi possível concluir a ação. Tente novamente ou acione suporte técnico.");}}
+    public Task<Result> ChangeClientPlanAsync(Guid id,string plan,string reason,string actor,CancellationToken ct=default)=>ExecuteAsync(c=>repo.ChangeClientPlanAsync(id,plan,reason,actor,c),ct);
+    public Task<Result> MarkInvoicePaidAsync(Guid id,string reason,string actor,CancellationToken ct=default)=>ExecuteAsync(c=>repo.MarkInvoicePaidAsync(id,reason,actor,c),ct);
+    public Task<Result> MarkInvoiceOverdueAsync(Guid id,string reason,string actor,CancellationToken ct=default)=>ExecuteAsync(c=>repo.MarkInvoiceOverdueAsync(id,reason,actor,c),ct);
+    public Task<Result> CancelSubscriptionAsync(Guid id,string reason,string actor,CancellationToken ct=default)=>ExecuteAsync(c=>repo.CancelSubscriptionAsync(id,reason,actor,c),ct);
+    public Task<Result> ReactivateSubscriptionAsync(Guid id,string reason,string actor,CancellationToken ct=default)=>ExecuteAsync(c=>repo.ReactivateSubscriptionAsync(id,reason,actor,c),ct);
+}

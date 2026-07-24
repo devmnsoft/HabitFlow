@@ -25,3 +25,18 @@ public interface IJobExecutionLogRepository
     Task<Guid> StartAsync(string jobName, CancellationToken ct = default);
     Task FinishAsync(Guid id, string status, int processedCount, string? errorMessage, CancellationToken ct = default);
 }
+
+public interface ISuperAdminOperationalRepository
+{
+    Task<IReadOnlyList<SuperAdminPlanRow>> ListPlansAsync(CancellationToken ct = default);
+    Task<IReadOnlyList<SuperAdminSubscriptionRow>> ListSubscriptionsAsync(CancellationToken ct = default);
+    Task<IReadOnlyList<SuperAdminPaymentRow>> ListPaymentsAsync(string? status = null, CancellationToken ct = default);
+    Task<IReadOnlyList<SuperAdminAuditRow>> ListAuditAsync(CancellationToken ct = default);
+    Task ChangeClientPlanAsync(Guid clientId, string planCode, string reason, string actorEmail, CancellationToken ct = default);
+    Task MarkInvoicePaidAsync(Guid invoiceId, string reason, string actorEmail, CancellationToken ct = default);
+    Task MarkInvoiceOverdueAsync(Guid invoiceId, string reason, string actorEmail, CancellationToken ct = default);
+    Task CancelSubscriptionAsync(Guid subscriptionId, string reason, string actorEmail, CancellationToken ct = default);
+    Task ReactivateSubscriptionAsync(Guid subscriptionId, string reason, string actorEmail, CancellationToken ct = default);
+    Task<IReadOnlyList<SchemaMigrationStatus>> ListAppliedMigrationsAsync(CancellationToken ct = default);
+    Task<SystemHealthStatus> BuildSystemHealthAsync(IReadOnlyList<SchemaMigrationStatus> expected, CancellationToken ct = default);
+}

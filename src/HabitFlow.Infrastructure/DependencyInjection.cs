@@ -42,9 +42,10 @@ public static class DependencyInjection
         services.AddScoped<IClientCommunicationRepository, ClientCommunicationRepository>();
         services.AddScoped<IBillingCommunicationRuleRepository, BillingCommunicationRuleRepository>();
         services.AddScoped<IJobExecutionLogRepository, JobExecutionLogRepository>();
+        services.AddScoped<ISuperAdminOperationalRepository, SuperAdminOperationalRepository>();
         services.AddScoped<IAdminUserRepository, AdminUserRepository>();
         services.AddScoped<IAdminMetricsRepository, AdminMetricsRepository>();
-        services.AddScoped<IAdminBillingRepository, AdminMetricsRepository>();
+        services.AddScoped<IAdminBillingRepository, AdminBillingRepository>();
         services.AddScoped<IAdminSupportRepository, AdminSupportRepository>();
         services.AddScoped<IAdminLgpdRepository, AdminLgpdRepository>();
         services.AddScoped<IAdminAuditQueryRepository, AdminAuditQueryRepository>();

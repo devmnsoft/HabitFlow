@@ -649,3 +649,6 @@ insert into habitflow.billing_communication_rules(id,code,name,trigger_type,days
 (gen_random_uuid(),'engagement_first_habit','Engajamento primeiro hábito','AfterDueDate',0,'Internal','Comece com seu primeiro hábito','Você ainda não criou hábitos. Use a biblioteca para começar em poucos segundos.'),
 (gen_random_uuid(),'engagement_free_limit','Engajamento limite Free','AfterDueDate',0,'Internal','Você chegou ao limite gratuito','Considere revisar os hábitos arquivados ou conhecer o Premium.')
 on conflict(code) do nothing;
+
+-- v6.1 operational completeness baseline
+\i database/migrations/029_operational_completeness_v61.sql
