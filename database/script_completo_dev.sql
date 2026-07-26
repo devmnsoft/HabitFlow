@@ -576,3 +576,6 @@ create index if not exists ix_habitflow_superadmin_audit_logs_created_at on habi
 \i database/migrations/025_tenant_isolation_client_id.sql
 \i database/migrations/026_backfill_client_id.sql
 \i database/migrations/027_user_invites.sql
+
+-- v6.1.2 Registration claims, onboarding activation and cadastral quality
+\i database/migrations/031_registration_claims_onboarding_quality.sql

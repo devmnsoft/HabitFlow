@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 
 namespace HabitFlow.Application;
 
-public sealed class ClientAccountRegistrationService(IClientRepository clients, IUserRepository users, IPasswordHasher hasher, DocumentValidator documents, ClientOnboardingService onboarding, ClientCommunicationService communications, AuditService audit, ILogger<ClientAccountRegistrationService> logger)
+public sealed class ClientAccountRegistrationService(IClientRepository clients, IUserRepository users, IPasswordHasher hasher, DocumentValidator documents, ClientOnboardingService onboarding, ClientCommunicationService communications, AuditService audit, ILogger<ClientAccountRegistrationService> logger, IUnitOfWork unitOfWork)
 {
     public async Task<Result<Client>> RegisterAsync(RegisterClientAccountDto dto, CancellationToken ct = default)
     {
@@ -25,6 +25,7 @@ public sealed class ClientAccountRegistrationService(IClientRepository clients, 
             var email = dto.Email.Trim().ToLowerInvariant();
             if (await users.GetByEmailAsync(email, ct) is not null) return Result<Client>.Failure("email.exists", "E-mail já cadastrado.");
 
+            await unitOfWork.BeginTransactionAsync(ct);
             var now = DateTime.UtcNow;
             var formatted = isCpf ? documents.FormatCpf(normalized) : documents.FormatCnpj(normalized);
             var clientName = isCpf ? dto.ClientName.Trim() : (dto.LegalName ?? dto.ClientName).Trim();
@@ -38,10 +39,12 @@ public sealed class ClientAccountRegistrationService(IClientRepository clients, 
             await onboarding.GetOrCreateAsync(client.Id, ct);
             await communications.CreateInternalMessageAsync(client.Id, user.Id, "Welcome", "Conta criada", "Sua conta gratuita foi criada com sucesso.", null, ct);
             await audit.LogAsync("client_registered", "Cliente criado no cadastro público", AuditSeverity.Info, user.Id, email, new { client.Id, personType = personType.ToString(), documentType = expectedDocumentType, document = Mask(normalized) }, ct);
+            await unitOfWork.CommitAsync(ct);
             return Result<Client>.Success(client);
         }
         catch (Exception ex)
         {
+            await unitOfWork.RollbackAsync(ct);
             logger.LogError(ex, "Erro ao criar conta SaaS pública para {Email}", dto.Email);
             return Result<Client>.Failure("client_registration.error", "Não foi possível criar a conta. Tente novamente em instantes.");
         }

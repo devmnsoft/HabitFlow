@@ -14,3 +14,7 @@ public sealed record SuperAdminPaymentRow(Guid Id, Guid ClientId, string ClientN
 public sealed record SuperAdminAuditRow(DateTime CreatedAt, string ActorEmail, string Action, string TargetType, Guid? TargetId, string? Reason, string? Metadata);
 public sealed record SchemaMigrationStatus(string Id, string Name, bool Applied, DateTime? AppliedAt);
 public sealed record SystemHealthStatus(bool DatabaseOk, IReadOnlyList<SchemaMigrationStatus> Migrations, IReadOnlyList<string> MissingTables, IReadOnlyList<string> MissingIndexes, IReadOnlyList<string> MissingConstraints, int PlansCount, int HabitTemplatesCount, bool MercadoPagoConfigured, string EnvironmentName, string ApplicationVersion, string Urls, bool DockerRequired);
+
+public sealed record RegistrationQualitySummary(int TodayRegistrations, int MonthRegistrations, int NaturalPersonClients, int LegalPersonClients, int ClientsWithoutDocument, int ClientsWithInvalidDocument, int ClientsWithoutAdmin, int UsersWithoutClient, int FreeClients, int PremiumClients, int ClientsWithBlockedBenefits);
+public sealed record RegistrationQualityRow(DateTime CreatedAt, Guid ClientId, string PersonType, string Name, string? Document, string? Email, string Plan, string BenefitsStatus, string PaymentStatus, string? AdminEmail);
+public sealed record RegistrationQualityReport(RegistrationQualitySummary Summary, IReadOnlyList<RegistrationQualityRow> Recent);

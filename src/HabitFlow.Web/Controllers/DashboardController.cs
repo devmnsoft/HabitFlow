@@ -5,12 +5,17 @@ using Microsoft.AspNetCore.Mvc;
 namespace HabitFlow.Web.Controllers;
 
 [Authorize]
-public class DashboardController(HabitService habitService, ProgressService progressService, ILogger<DashboardController> logger) : Controller
+public class DashboardController(HabitService habitService, ProgressService progressService, ILogger<DashboardController> logger, CurrentUserContext currentUser, ClientOnboardingService onboarding) : Controller
 {
     public async Task<IActionResult> Index(CancellationToken ct)
     {
         try
         {
+            if (currentUser.IsAdmin && currentUser.ClientId.HasValue)
+            {
+                var state = await onboarding.GetOrCreateAsync(currentUser.ClientId.Value, ct);
+                if (!state.Completed) return RedirectToAction("Onboarding", "AdminOperations");
+            }
             var user = this.CurrentUserSnapshot();
             var habits = await habitService.ListAsync(user.Id, ct);
             var dto = new DashboardDto(user.Name, habits.Count(x => !x.IsArchived), 0, 0, 0, habits.Select(x => new HabitDto(x.Id, x.Name, x.Color, x.Category, false, x.IsArchived)).ToList());

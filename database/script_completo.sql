@@ -654,3 +654,6 @@ on conflict(code) do nothing;
 
 -- v6.1 operational completeness baseline
 \i database/migrations/029_operational_completeness_v61.sql
+
+-- v6.1.2 Registration claims, onboarding activation and cadastral quality
+\i database/migrations/031_registration_claims_onboarding_quality.sql

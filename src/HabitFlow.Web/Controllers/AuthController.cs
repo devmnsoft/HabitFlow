@@ -22,14 +22,19 @@ public class AuthController(AuthService authService, ClientAccountRegistrationSe
             var result = await authService.LoginAsync(dto, HttpContext.Connection.RemoteIpAddress?.ToString(), Request.Headers.UserAgent, ct);
             if (result.IsFailure) { SetFailureMessage(result.Error.Code, result.Error.Message); return View(dto); }
             var user = result.Value!;
-            var identity = new ClaimsIdentity(new[]
+            var claims = new List<Claim>
             {
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Name, user.Name),
-                new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.Role, user.Role.ToString()),
-                new Claim("account_status", user.AccountStatus.ToString())
-            }, CookieAuthenticationDefaults.AuthenticationScheme);
+                new(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new(ClaimTypes.Name, user.Name),
+                new(ClaimTypes.Email, user.Email),
+                new(ClaimTypes.Role, user.Role.ToString()),
+                new("account_status", user.AccountStatus.ToString())
+            };
+            if (user.ClientId.HasValue)
+            {
+                claims.Add(new Claim("client_id", user.ClientId.Value.ToString()));
+            }
+            var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identity));
             return RedirectToAction("Index", "Dashboard");
         }
@@ -59,7 +64,7 @@ public class AuthController(AuthService authService, ClientAccountRegistrationSe
                 else SetFailureMessage(result.Error.Code, result.Error.Message);
                 return View(model);
             }
-            TempData["Success"] = "Conta criada com sucesso. Agora entre para começar sua rotina.";
+            TempData["Success"] = "Conta criada com sucesso. Entre para concluir a configuração da sua conta.";
             return RedirectToAction(nameof(Login));
         }
         catch (Exception ex)

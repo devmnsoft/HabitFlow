@@ -16,6 +16,7 @@ public static class MiddlewareConfig
         app.UseRouting();
         app.UseAuthentication();
         app.UseAuthorization();
+        app.UseMiddleware<ClientBindingMiddleware>();
         app.UseMiddleware<AccountStatusMiddleware>();
         app.MapControllerRoute("login", "login", new { controller = "Auth", action = "Login" });
         app.MapControllerRoute("register", "register", new { controller = "Auth", action = "Register" });

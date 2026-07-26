@@ -105,6 +105,28 @@ public sealed class SuperAdminController(SuperAdminService dashboard, ClientServ
     [HttpGet("export/overdue")] public IActionResult ExportOverdue() => File(Encoding.UTF8.GetBytes("Cliente,Vencimento,Status\n"), "text/csv", "habitflow-inadimplentes.csv");
     [HttpGet("export/subscriptions")] public IActionResult ExportSubscriptions() => File(Encoding.UTF8.GetBytes("Cliente,Plano,Status\n"), "text/csv", "habitflow-assinaturas.csv");
 
+
+    [HttpGet("registrations")]
+    public async Task<IActionResult> Registrations(CancellationToken ct) => View("~/Views/SuperAdmin/Registrations/Index.cshtml", await operations.GetRegistrationQualityAsync(ct));
+
+    [HttpGet("reports/registrations")]
+    public async Task<IActionResult> RegistrationReport(CancellationToken ct) => View("~/Views/SuperAdmin/Registrations/Index.cshtml", await operations.GetRegistrationQualityAsync(ct));
+
+    [HttpGet("export/registrations")]
+    public async Task<IActionResult> ExportRegistrations(CancellationToken ct)
+    {
+        var report = await operations.GetRegistrationQualityAsync(ct);
+        var sb = new StringBuilder("Data;ClienteId;Tipo;Nome;Documento;Email;Plano;Beneficios;Pagamento;Admin principal;Usuarios vinculados;Onboarding concluido\n");
+        foreach (var r in report.Recent) sb.AppendLine(string.Join(';', new[] { r.CreatedAt.ToString("O"), r.ClientId.ToString(), SafeRegistration(r.PersonType), SafeRegistration(r.Name), SafeRegistration(r.Document), SafeRegistration(r.Email), SafeRegistration(r.Plan), SafeRegistration(r.BenefitsStatus), SafeRegistration(r.PaymentStatus), SafeRegistration(r.AdminEmail), string.Empty, string.Empty }));
+        return File(Encoding.UTF8.GetBytes(sb.ToString()), "text/csv", "habitflow-registrations.csv");
+    }
+
+    private static string SafeRegistration(string? value)
+    {
+        var v = (value ?? string.Empty).Replace(";", ",").Replace("\r", " ").Replace("\n", " ");
+        return v.Length > 0 && "=+-@".Contains(v[0]) ? "'" + v : v;
+    }
+
     [HttpGet("plans")] public async Task<IActionResult> Plans(CancellationToken ct) => View("~/Views/SuperAdmin/Plans/Index.cshtml", await operations.ListPlansAsync(ct));
     [HttpGet("subscriptions")] public async Task<IActionResult> Subscriptions(CancellationToken ct) => View("~/Views/SuperAdmin/Subscriptions/Index.cshtml", await operations.ListSubscriptionsAsync(ct));
     [HttpGet("billing")] public async Task<IActionResult> Billing(CancellationToken ct) => View("~/Views/SuperAdmin/Payments/Index.cshtml", await operations.ListPaymentsAsync(null, ct));
