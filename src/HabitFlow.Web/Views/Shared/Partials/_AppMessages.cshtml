@@ -26,7 +26,7 @@
         }
         if (item.Key == "DatabaseError" && (Env.IsDevelopment() || User?.IsInRole("Admin") == true))
         {
-            <span data-hf-toast="Verifique o painel de diagnóstico e o guia PostgreSQL." data-hf-toast-type="info" data-hf-toast-title="Diagnóstico disponível"></span>
+            <span data-hf-toast="Não foi possível conectar agora. Tente novamente em instantes." data-hf-toast-type="info" data-hf-toast-title="Serviço indisponível"></span>
         }
     }
 }

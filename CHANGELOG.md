@@ -454,3 +454,10 @@
 - Relatório de cadastros
 - Testes de PF/PJ, claims, tenant e onboarding
 - Validação de scripts de banco atualizada
+## v6.2-ParameterizedPlans-RBAC-SuperAdminGovernance-IntimateExperience
+
+- Planos Gratuito, Ritmo e Evolução com preços e recursos parametrizados.
+- Produto separado do ciclo mensal ou anual e snapshots preparados nas assinaturas.
+- Plano contratado preservado e acesso efetivo Gratuito durante restrição financeira.
+- Funções e permissões com escopos de plataforma e conta.
+- Página pública dinâmica, em linguagem próxima e acolhedora.

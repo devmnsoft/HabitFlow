@@ -82,3 +82,8 @@ select '031_registration_claims_onboarding_quality expected' as check_name, coun
 select 'users.client_id exists' as check_name, count(*) as found from information_schema.columns where table_schema='habitflow' and table_name='users' and column_name='client_id';
 select 'clients.document_normalized exists' as check_name, count(*) as found from information_schema.columns where table_schema='habitflow' and table_name='clients' and column_name='document_normalized';
 select 'no HabitFlow tables in public' as check_name, count(*) as public_tables from information_schema.tables where table_schema='public' and table_name in ('clients','users','habits','schema_migrations');
+select to_regclass('habitflow.plan_prices') as plan_prices,
+       to_regclass('habitflow.feature_catalog') as feature_catalog,
+       to_regclass('habitflow.plan_features') as plan_features,
+       to_regclass('habitflow.roles') as roles,
+       to_regclass('habitflow.permissions') as permissions;

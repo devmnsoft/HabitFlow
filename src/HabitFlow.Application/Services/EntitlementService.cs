@@ -3,9 +3,9 @@ using HabitFlow.Shared;
 
 namespace HabitFlow.Application;
 
-public sealed class EntitlementService(IClientRepository clients, AuditService audit)
+public sealed class EntitlementService(IClientRepository clients, AuditService audit, PlanEntitlementService plans)
 {
-    public async Task<ClientPlan> GetEffectivePlanAsync(Guid userId, CancellationToken ct = default) => ClientPlan.Free;
+    public async Task<ClientPlan> GetEffectivePlanAsync(Guid userId, CancellationToken ct = default) => (await plans.GetEffectivePlanForUserAsync(userId, ct)) switch { PlanCodes.Ritmo => ClientPlan.Premium, PlanCodes.Evolucao => ClientPlan.Enterprise, _ => ClientPlan.Free };
     public async Task<Result<ClientEntitlementsDto>> GetClientEntitlementsAsync(Guid clientId, CancellationToken ct = default)
     {
         var c = await clients.GetByIdAsync(clientId, ct);
@@ -13,10 +13,10 @@ public sealed class EntitlementService(IClientRepository clients, AuditService a
         var premium = c.BenefitsStatus is ClientBenefitsStatus.PremiumActive or ClientBenefitsStatus.EnterpriseActive;
         return Result<ClientEntitlementsDto>.Success(new(c.Id, c.Plan, c.BenefitsStatus, c.SubscriptionStatus, c.PaymentStatus, AppConstants.FreePlanHabitLimit, premium, premium));
     }
-    public Task<bool> CanUsePremiumFeatureAsync(Guid userId, string featureCode, CancellationToken ct = default) => Task.FromResult(false);
-    public Task<bool> CanCreateHabitAsync(Guid userId, int activeHabitsCount, CancellationToken ct = default) => Task.FromResult(activeHabitsCount < AppConstants.FreePlanHabitLimit);
-    public Task<bool> CanAccessAdvancedReportsAsync(Guid userId, CancellationToken ct = default) => Task.FromResult(false);
-    public Task<bool> CanUseHabitLibraryPremiumAsync(Guid userId, CancellationToken ct = default) => Task.FromResult(false);
+    public Task<bool> CanUsePremiumFeatureAsync(Guid userId, string featureCode, CancellationToken ct = default) => plans.CanUseFeatureAsync(userId, featureCode, ct);
+    public Task<bool> CanCreateHabitAsync(Guid userId, int activeHabitsCount, CancellationToken ct = default) => plans.CanCreateHabitAsync(userId, activeHabitsCount, ct);
+    public Task<bool> CanAccessAdvancedReportsAsync(Guid userId, CancellationToken ct = default) => plans.CanAccessAdvancedReportsAsync(userId, ct);
+    public Task<bool> CanUseHabitLibraryPremiumAsync(Guid userId, CancellationToken ct = default) => plans.CanUseFullLibraryAsync(userId, ct);
     public Task ApplyPaymentStatusAsync(Guid clientId, CancellationToken ct = default) => Task.CompletedTask;
     public Task<Result<Client>> BlockPaidBenefitsAsync(Guid clientId, string reason, User superAdmin, CancellationToken ct = default) => ChangeAsync(clientId, reason, superAdmin, true, ct);
     public Task<Result<Client>> ReleasePaidBenefitsAsync(Guid clientId, string reason, User superAdmin, CancellationToken ct = default) => ChangeAsync(clientId, reason, superAdmin, false, ct);
