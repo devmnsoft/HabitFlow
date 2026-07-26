@@ -48,6 +48,32 @@ public sealed class SuperAdminOperationalRepository(SqlExecutor db) : ISuperAdmi
     public async Task<IReadOnlyList<SuperAdminPlanRow>> ListPlansAsync(CancellationToken ct = default) => (await db.QueryAsync<SuperAdminPlanRow>(@"select p.code, p.name, p.price_monthly, p.price_yearly, p.habit_limit, p.reports_enabled, p.advanced_reports_enabled, p.is_active, p.is_public, count(c.id)::int clients_using, coalesce(sum(case when c.subscription_status in ('Active','Trial') then coalesce(p.price_monthly,0) else 0 end),0) estimated_revenue from habitflow.plans p left join habitflow.clients c on lower(c.plan::text)=replace(lower(p.code),'_monthly','') group by p.code,p.name,p.price_monthly,p.price_yearly,p.habit_limit,p.reports_enabled,p.advanced_reports_enabled,p.is_active,p.is_public order by p.price_monthly nulls first", null, ct)).ToList();
     public async Task<IReadOnlyList<SuperAdminSubscriptionRow>> ListSubscriptionsAsync(CancellationToken ct = default) => (await db.QueryAsync<SuperAdminSubscriptionRow>(@"select s.id, coalesce(s.client_id, c.id) client_id, coalesce(c.name,'Cliente não vinculado') client_name, s.plan_code, s.status, s.billing_cycle, s.current_period_start, s.current_period_end, s.trial_ends_at, s.canceled_at, c.next_due_date from habitflow.client_subscriptions s left join habitflow.clients c on c.id=s.client_id order by s.updated_at desc limit 500", null, ct)).ToList();
     public async Task<IReadOnlyList<SuperAdminPaymentRow>> ListPaymentsAsync(string? status = null, CancellationToken ct = default) => (await db.QueryAsync<SuperAdminPaymentRow>(@"select i.id, i.client_id, c.name client_name, i.invoice_number, i.amount, i.due_date, coalesce(i.payment_method,'Manual') method, i.status, i.paid_at, i.checkout_url, i.provider_payment_id from habitflow.client_invoices i join habitflow.clients c on c.id=i.client_id where (@status is null or i.status=@status) order by i.due_date desc limit 500", new { status }, ct)).ToList();
+
+    public async Task<RegistrationQualityReport> GetRegistrationQualityAsync(CancellationToken ct = default)
+    {
+        var summary = await db.QuerySingleOrDefaultAsync<RegistrationQualitySummary>(@"""
+            select
+              count(*) filter (where c.created_at::date = current_date)::int today_registrations,
+              count(*) filter (where date_trunc('month', c.created_at) = date_trunc('month', now()))::int month_registrations,
+              count(*) filter (where c.person_type = 'NaturalPerson')::int natural_person_clients,
+              count(*) filter (where c.person_type = 'LegalPerson')::int legal_person_clients,
+              count(*) filter (where coalesce(c.document_normalized,'') = '')::int clients_without_document,
+              count(*) filter (where c.document_normalized is not null and c.document_normalized !~ '^[0-9]{11}$|^[0-9]{14}$')::int clients_with_invalid_document,
+              count(*) filter (where not exists(select 1 from habitflow.users u where u.client_id = c.id and u.role = 'Admin'))::int clients_without_admin,
+              (select count(*)::int from habitflow.users u where u.role <> 'SuperAdmin' and u.client_id is null)::int users_without_client,
+              count(*) filter (where c.plan = 'Free')::int free_clients,
+              count(*) filter (where c.plan = 'Premium')::int premium_clients,
+              count(*) filter (where c.benefits_status in ('Blocked','Suspended'))::int clients_with_blocked_benefits
+            from habitflow.clients c
+            """, null, ct) ?? new RegistrationQualitySummary(0,0,0,0,0,0,0,0,0,0,0);
+        var rows = (await db.QueryAsync<RegistrationQualityRow>(@"""
+            select c.created_at, c.id client_id, c.person_type, c.name, c.document, c.email, c.plan, c.benefits_status, c.payment_status,
+                   (select u.email from habitflow.users u where u.client_id = c.id and u.role='Admin' order by u.created_at limit 1) admin_email
+            from habitflow.clients c order by c.created_at desc limit 100
+            """, null, ct)).ToList();
+        return new RegistrationQualityReport(summary, rows);
+    }
+
     public async Task<IReadOnlyList<SuperAdminAuditRow>> ListAuditAsync(CancellationToken ct = default) => (await db.QueryAsync<SuperAdminAuditRow>(@"select created_at, coalesce(actor_email,'sistema') actor_email, action, target_type, target_id, reason, metadata::text metadata from habitflow.superadmin_audit_logs order by created_at desc limit 500", null, ct)).ToList();
     public async Task ChangeClientPlanAsync(Guid clientId, string planCode, string reason, string actorEmail, CancellationToken ct = default){await db.ExecuteAsync(@"update habitflow.clients set plan=@planCode, subscription_status=case when @planCode='Free' then 'Free' else 'Active' end, benefits_status=case when @planCode='Enterprise' then 'EnterpriseActive' when @planCode='Premium' then 'PremiumActive' else 'Free' end, updated_at=now() where id=@clientId; insert into habitflow.superadmin_audit_logs(id,actor_email,action,target_type,target_id,reason,metadata,created_at) values(gen_random_uuid(),@actorEmail,'client.change_plan','Client',@clientId,@reason,jsonb_build_object('plan',@planCode),now())",new{clientId,planCode,reason,actorEmail},ct);}
     public Task MarkInvoicePaidAsync(Guid invoiceId, string reason, string actorEmail, CancellationToken ct = default)=>db.ExecuteAsync(@"with inv as (update habitflow.client_invoices set status='Approved', paid_at=now(), updated_at=now() where id=@invoiceId returning client_id,id) update habitflow.clients c set payment_status='Approved', last_payment_at=now(), overdue_since=null, grace_period_until=null, benefits_status=case when c.plan='Enterprise' then 'EnterpriseActive' when c.plan='Premium' then 'PremiumActive' else 'Free' end, updated_at=now() from inv where c.id=inv.client_id; insert into habitflow.client_entitlement_events(id,client_id,event_type,reason,created_at) select gen_random_uuid(), client_id, 'PaymentApproved', @reason, now() from habitflow.client_invoices where id=@invoiceId; insert into habitflow.superadmin_audit_logs(id,actor_email,action,target_type,target_id,reason,metadata,created_at) values(gen_random_uuid(),@actorEmail,'invoice.mark_paid','Invoice',@invoiceId,@reason,'{}'::jsonb,now())",new{invoiceId,reason,actorEmail},ct);

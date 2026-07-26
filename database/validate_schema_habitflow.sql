@@ -77,3 +77,8 @@ select table_name from information_schema.tables where table_schema='habitflow' 
 select 'v6.1.1 clients.document_normalized unique' as check_name, count(*) as found from pg_indexes where schemaname='habitflow' and indexname='ux_habitflow_clients_document_normalized_not_null';
 select 'v6.1.1 person/document coherence' as check_name, count(*) as found from information_schema.check_constraints where constraint_schema='habitflow' and constraint_name='ck_habitflow_clients_person_document_match';
 select 'v6.1.1 CPF/CNPJ columns' as check_name, count(*) as found from information_schema.columns where table_schema='habitflow' and table_name='clients' and column_name in ('person_type','document_type','document_raw','document_normalized','legal_name','trade_name','billing_responsible_name','billing_email','billing_phone');
+
+select '031_registration_claims_onboarding_quality expected' as check_name, count(*) as found from habitflow.schema_migrations where id='031';
+select 'users.client_id exists' as check_name, count(*) as found from information_schema.columns where table_schema='habitflow' and table_name='users' and column_name='client_id';
+select 'clients.document_normalized exists' as check_name, count(*) as found from information_schema.columns where table_schema='habitflow' and table_name='clients' and column_name='document_normalized';
+select 'no HabitFlow tables in public' as check_name, count(*) as public_tables from information_schema.tables where table_schema='public' and table_name in ('clients','users','habits','schema_migrations');

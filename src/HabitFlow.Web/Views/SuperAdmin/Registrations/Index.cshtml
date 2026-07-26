@@ -1,0 +1,13 @@
+@model HabitFlow.Domain.RegistrationQualityReport
+@{ ViewData["Title"] = "Qualidade cadastral"; var s = Model.Summary; }
+<section class="premium-card">
+  <p class="hf-eyebrow">SuperAdmin</p><h1>Registration Quality</h1>
+  <form method="get" class="row g-2 mb-3"><input class="form-control" name="documento" placeholder="CPF/CNPJ, período, plano ou status"><small>Filtros disponíveis: período, PF/PJ, documento, plano, benefícios, pagamento, sem Admin e sem client_id.</small></form>
+  <div class="row g-3 mb-4">
+    @foreach (var card in new[]{("Cadastros hoje",s.TodayRegistrations),("Cadastros no mês",s.MonthRegistrations),("Clientes Pessoa Física",s.NaturalPersonClients),("Clientes Pessoa Jurídica",s.LegalPersonClients),("Clientes sem documento",s.ClientsWithoutDocument),("Clientes com documento inválido",s.ClientsWithInvalidDocument),("Clientes sem usuário Admin",s.ClientsWithoutAdmin),("Usuários sem client_id",s.UsersWithoutClient),("Clientes Free",s.FreeClients),("Clientes Premium",s.PremiumClients),("Benefícios bloqueados",s.ClientsWithBlockedBenefits)}) { <div class="col-md-3"><div class="card p-3"><strong>@card.Item1</strong><span class="display-6">@card.Item2</span></div></div> }
+  </div>
+  <div class="mb-3"><a class="btn btn-outline-success" href="/superadmin/export/registrations">Exportar CSV seguro</a></div>
+  <h2>Cadastros recentes</h2><table class="table"><thead><tr><th>Data</th><th>Tipo PF/PJ</th><th>Nome/Razão Social</th><th>CPF/CNPJ</th><th>E-mail</th><th>Plano</th><th>Benefícios</th><th>Pagamento</th><th>Usuário Admin</th><th>Ações</th></tr></thead><tbody>
+  @foreach(var r in Model.Recent){<tr><td>@r.CreatedAt</td><td>@r.PersonType</td><td>@r.Name</td><td>@r.Document</td><td>@r.Email</td><td>@r.Plan</td><td>@r.BenefitsStatus</td><td>@r.PaymentStatus</td><td>@(r.AdminEmail ?? "Sem Admin")</td><td><a href="/superadmin/clients/@r.ClientId">Detalhes</a></td></tr>}
+  </tbody></table>
+</section>

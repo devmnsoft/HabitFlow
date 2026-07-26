@@ -442,3 +442,15 @@
 - Auditoria multi-tenant
 - Testes de isolamento entre clientes
 - Documentação multitenancy e billing jobs
+
+## v6.1.2-TenantClaims-TransactionalRegistration-OnboardingActivation
+- Claim client_id no login
+- CurrentUserContext consolidado para multi-tenant
+- Cadastro público transacional
+- Evita cliente órfão sem Admin
+- Redirecionamento pós-login para onboarding
+- Área Minha Conta/Minha Empresa com PF/PJ e CPF/CNPJ
+- SuperAdmin Registration Quality
+- Relatório de cadastros
+- Testes de PF/PJ, claims, tenant e onboarding
+- Validação de scripts de banco atualizada

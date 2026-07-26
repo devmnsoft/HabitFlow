@@ -17,4 +17,6 @@ public sealed class CurrentUserContext(IHttpContextAccessor httpContextAccessor)
     public bool IsSuperAdmin => IsAuthenticated && Role == UserRole.SuperAdmin;
     public bool IsAdmin => IsAuthenticated && Role == UserRole.Admin;
     public bool IsUser => IsAuthenticated && Role == UserRole.User;
+    public bool RequiresClient => IsAdmin || IsUser;
+    public bool HasClient => ClientId.HasValue;
 }

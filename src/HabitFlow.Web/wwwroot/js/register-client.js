@@ -22,7 +22,8 @@
     help.textContent = pjSelected ? 'Use CNPJ quando a conta for para uma empresa, equipe ou organização.' : 'Use CPF quando a conta for para uso individual.';
     doc.value = pjSelected ? maskCnpj(doc.value) : maskCpf(doc.value);
     const len = digits(doc.value).length, max = pjSelected ? 14 : 11;
-    feedback.textContent = len ? `${len}/${max} dígitos` : '';
+    feedback.textContent = len === max ? (pjSelected ? 'CNPJ preenchido' : 'CPF preenchido') : (len ? (pjSelected ? 'CNPJ incompleto' : 'CPF incompleto') : '');
+    feedback.className = len === max ? 'form-text text-success' : 'form-text text-muted';
   }
   radios.forEach(r => r.addEventListener('change', sync));
   doc?.addEventListener('input', sync);

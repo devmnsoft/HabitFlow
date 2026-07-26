@@ -75,6 +75,7 @@ public sealed class SuperAdminOperationalService(ISuperAdminOperationalRepositor
     public Task<IReadOnlyList<SuperAdminSubscriptionRow>> ListSubscriptionsAsync(CancellationToken ct = default) => repo.ListSubscriptionsAsync(ct);
     public Task<IReadOnlyList<SuperAdminPaymentRow>> ListPaymentsAsync(string? status = null, CancellationToken ct = default) => repo.ListPaymentsAsync(status, ct);
     public Task<IReadOnlyList<SuperAdminAuditRow>> ListAuditAsync(CancellationToken ct = default) => repo.ListAuditAsync(ct);
+    public Task<RegistrationQualityReport> GetRegistrationQualityAsync(CancellationToken ct = default) => repo.GetRegistrationQualityAsync(ct);
     public async Task<Result> ExecuteAsync(Func<CancellationToken, Task> action, CancellationToken ct = default){try{await action(ct);return Result.Success();}catch(Exception ex){logger.LogError(ex,"Falha em ação SuperAdmin");return Result.Failure("superadmin.action_error","Não foi possível concluir a ação. Tente novamente ou acione suporte técnico.");}}
     public Task<Result> ChangeClientPlanAsync(Guid id,string plan,string reason,string actor,CancellationToken ct=default)=>ExecuteAsync(c=>repo.ChangeClientPlanAsync(id,plan,reason,actor,c),ct);
     public Task<Result> MarkInvoicePaidAsync(Guid id,string reason,string actor,CancellationToken ct=default)=>ExecuteAsync(c=>repo.MarkInvoicePaidAsync(id,reason,actor,c),ct);

@@ -13,6 +13,7 @@ public static class DependencyInjection
         DapperTypeHandlers.Register();
         services.AddScoped<DbConnectionFactory>();
         services.AddScoped<SqlExecutor>();
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<UnitOfWork>();
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IUserInviteRepository, UserInviteRepository>();

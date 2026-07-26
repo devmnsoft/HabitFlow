@@ -265,3 +265,7 @@ firebase deploy --only hosting
 - Evoluir o BillingCommunicationJob para consultar faturas reais quando o módulo de invoices expuser o repositório agregado.
 - Configurar canais Email/WhatsAppManual/TelegramAdmin após homologação comercial e LGPD.
 - Adicionar smoke tests autenticados com banco PostgreSQL disponível.
+
+## v6.1.2 follow-up
+- Ampliar testes de integração WebApplicationFactory contra PostgreSQL dedicado.
+- Evoluir filtros avançados do painel SuperAdmin Registration Quality.

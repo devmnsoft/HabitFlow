@@ -1,2 +1,22 @@
-@{ ViewData["Title"] = "Minha Empresa"; }
-<section class="premium-card"><h1>Minha Conta / Minha Empresa</h1><p>Área administrativa do cliente com plano atual, status dos benefícios, pagamento, próximo vencimento, dados de cobrança e usuários vinculados.</p><div class="actions"><a href="/admin/billing">Ver faturas</a><a href="/admin/support">Suporte</a></div><form method="post" action="/admin/company/update">@Html.AntiForgeryToken()<button>Editar dados</button></form><form id="billing" method="post" action="/admin/company/billing-data">@Html.AntiForgeryToken()<button>Salvar dados de cobrança</button></form></section>
+@model HabitFlow.Domain.Client
+@using HabitFlow.Domain
+@{ ViewData["Title"] = "Minha Conta / Minha Empresa"; var pf = Model.PersonType == ClientPersonType.NaturalPerson; }
+<section class="premium-card">
+  <p class="hf-eyebrow">Tenant seguro</p>
+  <h1>@(pf ? "Minha Conta" : "Minha Empresa")</h1>
+  <p>Dados cadastrais visíveis somente para o Admin do próprio cliente.</p>
+  <div class="row g-3 mb-4">
+    <div class="col-md-4"><strong>Tipo</strong><p>@(pf ? "Pessoa Física" : "Pessoa Jurídica")</p></div>
+    <div class="col-md-4"><strong>@(pf ? "Nome completo" : "Razão social")</strong><p>@Model.Name</p></div>
+    @if (!pf) { <div class="col-md-4"><strong>Nome fantasia</strong><p>@(Model.TradeName ?? "—")</p></div> }
+    <div class="col-md-4"><strong>@(pf ? "CPF" : "CNPJ")</strong><p>@Model.DocumentRaw</p></div>
+    <div class="col-md-4"><strong>@(pf ? "E-mail" : "E-mail financeiro")</strong><p>@(Model.BillingEmail ?? Model.Email)</p></div>
+    <div class="col-md-4"><strong>@(pf ? "Telefone" : "Telefone financeiro")</strong><p>@(Model.BillingPhone ?? Model.Phone ?? "—")</p></div>
+    @if (!pf) { <div class="col-md-4"><strong>Responsável</strong><p>@(Model.BillingResponsibleName ?? Model.ContactName)</p></div> }
+    <div class="col-md-4"><strong>Plano</strong><p>@Model.Plan</p></div>
+    <div class="col-md-4"><strong>Status dos benefícios</strong><p>@Model.BenefitsStatus</p></div>
+    <div class="col-md-4"><strong>Status de pagamento</strong><p>@Model.PaymentStatus</p></div>
+  </div>
+  <div class="actions"><a href="/admin/billing">Ver faturas</a><a href="/plans">Ver plano</a><a href="/admin/support">Abrir suporte</a></div>
+  <form method="post" action="/admin/company/update" class="mt-3">@Html.AntiForgeryToken()<button class="btn btn-outline-success">Editar dados básicos</button></form>
+</section>

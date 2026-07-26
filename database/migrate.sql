@@ -29,3 +29,4 @@
 \i database/migrations/029_operational_completeness_v61.sql
 
 \i database/migrations/030_client_registration_cpf_cnpj_real_flow.sql
+\i database/migrations/031_registration_claims_onboarding_quality.sql
