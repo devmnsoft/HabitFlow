@@ -1,0 +1,11 @@
+set search_path to habitflow, public;
+alter table habitflow.client_subscriptions add column if not exists plan_id uuid null references habitflow.plans(id);
+alter table habitflow.client_subscriptions add column if not exists plan_price_id uuid null references habitflow.plan_prices(id);
+alter table habitflow.client_subscriptions add column if not exists price_snapshot numeric(12,2);
+alter table habitflow.client_subscriptions add column if not exists currency_snapshot varchar(10);
+alter table habitflow.client_subscriptions add column if not exists feature_snapshot jsonb;
+alter table habitflow.client_subscriptions add column if not exists contracted_plan_name varchar(120);
+create table if not exists habitflow.plan_restriction_snapshots(id uuid primary key,client_id uuid not null references habitflow.clients(id),previous_plan_code varchar(80) not null,restricted_plan_code varchar(80) not null default 'free',active_habits_snapshot jsonb not null default '[]',active_users_snapshot jsonb not null default '[]',created_at timestamp not null default now(),restored_at timestamp null);
+alter table habitflow.payment_transactions add column if not exists client_id uuid null references habitflow.clients(id);
+alter table habitflow.payment_transactions add column if not exists client_subscription_id uuid null references habitflow.client_subscriptions(id);
+insert into habitflow.system_settings(key,value,description,is_public,created_at,updated_at) values('billing.grace_period_days','3','Período global de tolerância de pagamento.',false,now(),now()) on conflict(key) do nothing;

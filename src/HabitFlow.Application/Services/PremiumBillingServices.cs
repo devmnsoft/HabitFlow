@@ -64,7 +64,7 @@ public sealed class PaymentCheckoutService(IPlanRepository plans, SubscriptionSe
         catch (Exception ex) { logger.LogError(ex, "Erro ao iniciar checkout"); return Result<CheckoutPreference>.Failure("checkout.error", "Não foi possível iniciar checkout."); }
     }
     public async Task<Result> ValidateCheckoutRequest(string planCode, BillingCycle cycle, CancellationToken ct = default)
-    { if (planCode is not ("premium_monthly" or "premium_yearly")) return Result.Failure("checkout.invalid_plan", "Plano inválido para checkout."); if ((planCode == "premium_monthly" && cycle != BillingCycle.Monthly) || (planCode == "premium_yearly" && cycle != BillingCycle.Yearly)) return Result.Failure("checkout.invalid_cycle", "Ciclo inválido."); var p = await plans.GetByCodeAsync(planCode, ct); return p is null || !p.IsActive || !p.IsPublic ? Result.Failure("checkout.invalid_plan", "Plano indisponível.") : Result.Success(); }
+    { if (planCode is not (PlanCodes.Ritmo or PlanCodes.Evolucao)) return Result.Failure("checkout.invalid_plan", "Plano inválido para pagamento."); var p = await plans.GetByCodeAsync(planCode, ct); return p is null || !p.IsActive || !p.IsPublic ? Result.Failure("checkout.invalid_plan", "Plano indisponível.") : Result.Success(); }
 }
 
 public sealed class PaymentWebhookService(IPaymentWebhookRepository webhooks, ISubscriptionRepository subscriptions, IPaymentTransactionRepository transactions, SubscriptionService subscriptionService, PaymentMetadataSanitizer sanitizer, IPaymentProviderService provider, ILogger<PaymentWebhookService> logger)

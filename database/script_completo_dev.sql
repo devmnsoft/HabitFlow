@@ -579,3 +579,8 @@ create index if not exists ix_habitflow_superadmin_audit_logs_created_at on habi
 
 -- v6.1.2 Registration claims, onboarding activation and cadastral quality
 \i database/migrations/031_registration_claims_onboarding_quality.sql
+-- v6.2 parametrized catalog, access and governance
+\i database/migrations/032_parameterized_plans_rbac_effective_access.sql
+\i database/migrations/033_plan_prices_features.sql
+\i database/migrations/034_roles_permissions.sql
+\i database/migrations/035_effective_plan_payment_restrictions.sql

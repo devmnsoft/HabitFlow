@@ -11,8 +11,8 @@
 window.addEventListener('DOMContentLoaded', () => {
   const f = window.HabitFlowFeedback;
   if (!f) return;
-  const payload = @Html.Raw(JsonSerializer.Serialize(new { type, title, message }));
-  @(modal ? "f.showModal(payload.type, payload.title, payload.message);" : "f.showToast(payload.type, payload.title, payload.message);")
+  const feedback = @Html.Raw(JsonSerializer.Serialize(new { type, title, message }));
+  @(modal ? "f.showModal(feedback.type, feedback.title, feedback.message);" : "f.showToast(feedback.type, feedback.title, feedback.message);")
 });
 </script>
 }
