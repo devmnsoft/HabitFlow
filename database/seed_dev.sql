@@ -33,3 +33,5 @@ values ('due_minus_3','Aviso 3 dias antes','BeforeDue',-3,'Internal','Fatura ven
 on conflict (code) do nothing;
 
 -- v6.1.2 keeps SuperAdmin global without client_id and client Admin/User with tenant binding.
+
+-- v6.3: catálogo de marcos e benefícios é semeado idempotentemente pelas migrations 033 e 037.

@@ -34,3 +34,8 @@
 \i database/migrations/033_plan_prices_features.sql
 \i database/migrations/034_roles_permissions.sql
 \i database/migrations/035_effective_plan_payment_restrictions.sql
+\i database/migrations/036_personal_goals.sql
+\i database/migrations/037_consistency_milestones.sql
+\i database/migrations/038_reminders.sql
+\i database/migrations/039_shared_routines.sql
+\i database/migrations/040_product_events_privacy.sql

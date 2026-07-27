@@ -461,3 +461,13 @@
 - Plano contratado preservado e acesso efetivo Gratuito durante restrição financeira.
 - Funções e permissões com escopos de plataforma e conta.
 - Página pública dinâmica, em linguagem próxima e acolhedora.
+
+## v6.3-PersonalJourney-Goals-SharedRoutines-AdvancedInsights-PWA
+- Dashboard Hoje e conclusão preparada para atualização sem reload.
+- Objetivos pessoais, vínculos, calendário e marcos de consistência.
+- Lembretes e preferências de resumos diário e semanal.
+- Estrutura de relatórios avançados, insights explicáveis, exportação e impressão.
+- Rotinas e objetivos compartilhados, privacidade e métricas de produto.
+- Experiência acolhedora durante restrição financeira.
+- PWA instalável, página offline e navegação mobile refinada.
+- Aplicação central da matriz parametrizada de benefícios.

@@ -224,3 +224,6 @@ A aplicação continua rodando sem Docker com PostgreSQL/Dapper no schema `habit
 
 ### v6.1.2 Tenant Claims e Cadastro Transacional
 O login agora emite claim `client_id` para Admin/User vinculados, o cadastro público PF/PJ roda em transação Dapper/PostgreSQL no schema `habitflow` e o Admin recém-cadastrado é direcionado ao onboarding antes do dashboard operacional.
+
+## Jornada pessoal v6.3
+A v6.3 adiciona a base de objetivos, consistência, compartilhamento privado e instalação PWA. Consulte `docs/PRODUCT_EXPERIENCE_AUDIT_V6_3.md` e `docs/PLAN_FEATURE_ENFORCEMENT.md`. A aplicação continua em ASP.NET Core/Razor, Dapper e PostgreSQL, executável sem Docker na porta 5097.
