@@ -640,3 +640,57 @@ CREATE INDEX IF NOT EXISTS ix_product_events_occurred ON habitflow.product_event
 CREATE INDEX IF NOT EXISTS ix_product_events_scope ON habitflow.product_events(client_id,user_id,occurred_at DESC);
 COMMENT ON COLUMN habitflow.product_events.metadata IS 'Somente metadados operacionais; nunca documentos, credenciais ou conteúdo de hábitos.';
 COMMIT;
+
+-- v6.4 incremental product core
+BEGIN;
+CREATE TABLE IF NOT EXISTS habitflow.job_locks (
+ job_name varchar(120) PRIMARY KEY, locked_by varchar(200), locked_at timestamp,
+ lock_expires_at timestamp, updated_at timestamp NOT NULL DEFAULT now()
+);
+CREATE TABLE IF NOT EXISTS habitflow.notification_deliveries (
+ id uuid PRIMARY KEY, client_id uuid NOT NULL REFERENCES habitflow.clients(id), user_id uuid NOT NULL REFERENCES habitflow.users(id),
+ source_type varchar(80) NOT NULL, source_id varchar(160) NOT NULL, channel varchar(40) NOT NULL,
+ scheduled_for timestamp NOT NULL, status varchar(40) NOT NULL, delivered_at timestamp, failure_reason text,
+ created_at timestamp NOT NULL DEFAULT now(), UNIQUE(source_type,source_id,channel,scheduled_for)
+);
+CREATE INDEX IF NOT EXISTS ix_notification_deliveries_scope ON habitflow.notification_deliveries(client_id,user_id,scheduled_for DESC);
+COMMIT;
+
+BEGIN;
+CREATE TABLE IF NOT EXISTS habitflow.sharing_consents (
+ id uuid PRIMARY KEY, client_id uuid NOT NULL REFERENCES habitflow.clients(id), user_id uuid NOT NULL REFERENCES habitflow.users(id) ON DELETE CASCADE,
+ consent_type varchar(80) NOT NULL CHECK(consent_type IN ('AggregateProgress','IndividualProgress','SharedGoals','SharedRoutines')),
+ granted boolean NOT NULL DEFAULT false, granted_at timestamp, revoked_at timestamp, updated_at timestamp NOT NULL DEFAULT now(),
+ UNIQUE(user_id,consent_type)
+);
+CREATE INDEX IF NOT EXISTS ix_sharing_consents_scope ON habitflow.sharing_consents(client_id,user_id);
+COMMIT;
+
+BEGIN;
+ALTER TABLE habitflow.goal_habits ADD COLUMN IF NOT EXISTS client_id uuid REFERENCES habitflow.clients(id);
+UPDATE habitflow.goal_habits gh SET client_id=g.client_id FROM habitflow.user_goals g WHERE g.id=gh.goal_id AND gh.client_id IS NULL;
+ALTER TABLE habitflow.goal_habits ALTER COLUMN client_id SET NOT NULL;
+CREATE INDEX IF NOT EXISTS ix_goal_habits_goal ON habitflow.goal_habits(client_id,goal_id);
+CREATE INDEX IF NOT EXISTS ix_goal_habits_habit ON habitflow.goal_habits(client_id,habit_id);
+CREATE TABLE IF NOT EXISTS habitflow.goal_progress_events (
+ id uuid PRIMARY KEY, client_id uuid NOT NULL REFERENCES habitflow.clients(id), user_id uuid NOT NULL REFERENCES habitflow.users(id),
+ goal_id uuid NOT NULL REFERENCES habitflow.user_goals(id) ON DELETE CASCADE, previous_value integer NOT NULL, current_value integer NOT NULL,
+ source_type varchar(60) NOT NULL, source_id varchar(160), created_at timestamp NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS ix_goal_progress_events_scope ON habitflow.goal_progress_events(client_id,user_id,goal_id,created_at DESC);
+COMMIT;
+
+BEGIN;
+CREATE TABLE IF NOT EXISTS habitflow.report_snapshots (
+ id uuid PRIMARY KEY, client_id uuid NOT NULL REFERENCES habitflow.clients(id), user_id uuid REFERENCES habitflow.users(id),
+ report_type varchar(80) NOT NULL, period_start date NOT NULL, period_end date NOT NULL, data jsonb NOT NULL,
+ generated_at timestamp NOT NULL DEFAULT now(), CHECK(period_end>=period_start)
+);
+CREATE INDEX IF NOT EXISTS ix_report_snapshots_scope ON habitflow.report_snapshots(client_id,user_id,report_type,period_start,period_end);
+COMMIT;
+
+BEGIN;
+CREATE UNIQUE INDEX IF NOT EXISTS ux_product_events_pwa_install_day
+ ON habitflow.product_events(user_id,event_name,(occurred_at::date)) WHERE event_name='pwa_installed' AND user_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS ix_product_events_analytics ON habitflow.product_events(event_name,occurred_at DESC,client_id);
+COMMIT;

@@ -39,3 +39,8 @@
 \i database/migrations/038_reminders.sql
 \i database/migrations/039_shared_routines.sql
 \i database/migrations/040_product_events_privacy.sql
+\i database/migrations/041_scheduler_locking_idempotency.sql
+\i database/migrations/042_sharing_privacy_consent.sql
+\i database/migrations/043_goal_progress_completion.sql
+\i database/migrations/044_report_snapshots_analytics.sql
+\i database/migrations/045_pwa_product_events_hardening.sql

@@ -92,3 +92,15 @@ select to_regclass('habitflow.plan_prices') as plan_prices,
 select table_name, to_regclass('habitflow.'||table_name) is not null as exists from (values ('user_goals'),('goal_habits'),('milestones'),('user_milestones'),('habit_reminders'),('user_summary_preferences'),('shared_routines'),('shared_routine_habits'),('shared_routine_members'),('shared_goals'),('shared_goal_members'),('shared_goal_progress'),('product_events')) v(table_name);
 select 'v6.3 no public conflicts' check_name,count(*) public_conflicts from information_schema.tables where table_schema='public' and table_name in ('user_goals','goal_habits','milestones','user_milestones','habit_reminders','user_summary_preferences','shared_routines','shared_goals','product_events');
 select 'v6.3 habits visibility' check_name,count(*) found from information_schema.columns where table_schema='habitflow' and table_name='habits' and column_name='visibility';
+
+-- v6.4 operational tables must exist in habitflow.
+DO $$
+DECLARE object_name text;
+BEGIN
+ FOREACH object_name IN ARRAY ARRAY['job_locks','notification_deliveries','sharing_consents','goal_progress_events','report_snapshots'] LOOP
+  IF to_regclass('habitflow.' || object_name) IS NULL THEN RAISE EXCEPTION 'Tabela obrigatória ausente: habitflow.%', object_name; END IF;
+ END LOOP;
+ IF EXISTS (SELECT 1 FROM pg_tables WHERE schemaname='public' AND tablename IN ('job_locks','notification_deliveries','sharing_consents','goal_progress_events','report_snapshots')) THEN
+  RAISE EXCEPTION 'Objetos v6.4 não podem existir em public';
+ END IF;
+END $$;
