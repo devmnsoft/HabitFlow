@@ -56,6 +56,8 @@ public static class DependencyInjection
         services.AddScoped<BillingStatusJob>();
         services.AddScoped<EntitlementService>();
         services.AddScoped<PlanEntitlementService>();
+        services.AddScoped<FeatureAccessService>();
+        services.AddScoped<GoalService>();
         services.AddScoped<SuperAdminService>();
         services.AddSingleton<PaymentMetadataSanitizer>();
         services.AddScoped<PlanService>();

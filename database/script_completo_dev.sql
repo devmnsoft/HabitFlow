@@ -584,3 +584,59 @@ create index if not exists ix_habitflow_superadmin_audit_logs_created_at on habi
 \i database/migrations/033_plan_prices_features.sql
 \i database/migrations/034_roles_permissions.sql
 \i database/migrations/035_effective_plan_payment_restrictions.sql
+
+-- v6.3 personal journey
+BEGIN;
+CREATE TABLE IF NOT EXISTS habitflow.user_goals (
+ id uuid PRIMARY KEY, client_id uuid NOT NULL REFERENCES habitflow.clients(id), user_id uuid NOT NULL REFERENCES habitflow.users(id),
+ objective_slug varchar(100), title varchar(160) NOT NULL, description text, target_type varchar(80) NOT NULL,
+ target_value integer NOT NULL CHECK(target_value > 0), current_value integer NOT NULL DEFAULT 0 CHECK(current_value >= 0),
+ start_date date NOT NULL, end_date date, status varchar(40) NOT NULL DEFAULT 'Active', color varchar(20), icon varchar(80),
+ created_at timestamp NOT NULL DEFAULT now(), updated_at timestamp NOT NULL DEFAULT now(), completed_at timestamp,
+ CONSTRAINT ck_user_goals_target_type CHECK(target_type IN ('HabitCompletions','ActiveDays','StreakDays','WeeklyCompletions','Custom')),
+ CONSTRAINT ck_user_goals_status CHECK(status IN ('Active','Completed','Paused','Canceled')), CONSTRAINT ck_user_goals_dates CHECK(end_date IS NULL OR end_date >= start_date)
+);
+CREATE INDEX IF NOT EXISTS ix_user_goals_client_user_status ON habitflow.user_goals(client_id,user_id,status);
+CREATE TABLE IF NOT EXISTS habitflow.goal_habits (
+ goal_id uuid NOT NULL REFERENCES habitflow.user_goals(id) ON DELETE CASCADE, habit_id uuid NOT NULL REFERENCES habitflow.habits(id) ON DELETE CASCADE,
+ created_at timestamp NOT NULL DEFAULT now(), PRIMARY KEY(goal_id,habit_id)
+);
+COMMIT;
+BEGIN;
+CREATE TABLE IF NOT EXISTS habitflow.milestones (id uuid PRIMARY KEY, code varchar(80) NOT NULL UNIQUE, title varchar(120) NOT NULL, description varchar(240) NOT NULL, threshold integer, is_active boolean NOT NULL DEFAULT true, created_at timestamp NOT NULL DEFAULT now());
+CREATE TABLE IF NOT EXISTS habitflow.user_milestones (id uuid PRIMARY KEY, client_id uuid NOT NULL REFERENCES habitflow.clients(id), user_id uuid NOT NULL REFERENCES habitflow.users(id), milestone_id uuid NOT NULL REFERENCES habitflow.milestones(id), achieved_at timestamp NOT NULL DEFAULT now(), metadata jsonb, UNIQUE(user_id,milestone_id));
+CREATE INDEX IF NOT EXISTS ix_user_milestones_client_user ON habitflow.user_milestones(client_id,user_id,achieved_at DESC);
+INSERT INTO habitflow.milestones(id,code,title,description,threshold) VALUES
+('37100000-0000-0000-0000-000000000001','first_step','Primeiro passo','Você concluiu seu primeiro hábito.',1),
+('37100000-0000-0000-0000-000000000003','present_3','3 dias presentes','Você esteve presente por 3 dias.',3),
+('37100000-0000-0000-0000-000000000007','rhythm_7','7 dias de ritmo','Você manteve seu ritmo por 7 dias.',7),
+('37100000-0000-0000-0000-000000000015','consistency_15','15 dias de constância','Sua constância chegou a 15 dias.',15),
+('37100000-0000-0000-0000-000000000030','evolution_30','30 dias de evolução','Você cuidou da sua rotina por 30 dias.',30)
+ON CONFLICT(code) DO UPDATE SET title=EXCLUDED.title,description=EXCLUDED.description,threshold=EXCLUDED.threshold;
+COMMIT;
+BEGIN;
+CREATE TABLE IF NOT EXISTS habitflow.habit_reminders (id uuid PRIMARY KEY, client_id uuid NOT NULL REFERENCES habitflow.clients(id), user_id uuid NOT NULL REFERENCES habitflow.users(id), habit_id uuid NOT NULL REFERENCES habitflow.habits(id) ON DELETE CASCADE, reminder_time time NOT NULL, timezone varchar(80) NOT NULL DEFAULT 'America/Sao_Paulo', days_of_week integer[], is_active boolean NOT NULL DEFAULT true, last_triggered_at timestamp, next_trigger_at timestamp, created_at timestamp NOT NULL DEFAULT now(), updated_at timestamp NOT NULL DEFAULT now(), CHECK(days_of_week IS NULL OR days_of_week <@ ARRAY[0,1,2,3,4,5,6]));
+CREATE INDEX IF NOT EXISTS ix_habit_reminders_due ON habitflow.habit_reminders(next_trigger_at) WHERE is_active;
+CREATE INDEX IF NOT EXISTS ix_habit_reminders_scope ON habitflow.habit_reminders(client_id,user_id,habit_id);
+CREATE TABLE IF NOT EXISTS habitflow.user_summary_preferences (user_id uuid PRIMARY KEY REFERENCES habitflow.users(id) ON DELETE CASCADE, daily_summary_enabled boolean NOT NULL DEFAULT true, daily_summary_time time NOT NULL DEFAULT '20:00', weekly_summary_enabled boolean NOT NULL DEFAULT true, weekly_summary_day integer NOT NULL DEFAULT 0 CHECK(weekly_summary_day BETWEEN 0 AND 6), weekly_summary_time time NOT NULL DEFAULT '18:00', timezone varchar(80) NOT NULL DEFAULT 'America/Sao_Paulo', updated_at timestamp NOT NULL DEFAULT now());
+COMMIT;
+BEGIN;
+CREATE TABLE IF NOT EXISTS habitflow.shared_routines (id uuid PRIMARY KEY, client_id uuid NOT NULL REFERENCES habitflow.clients(id), created_by_user_id uuid NOT NULL REFERENCES habitflow.users(id), name varchar(160) NOT NULL, description text, color varchar(20), status varchar(40) NOT NULL DEFAULT 'Active' CHECK(status IN ('Active','Archived')), created_at timestamp NOT NULL DEFAULT now(), updated_at timestamp NOT NULL DEFAULT now());
+CREATE TABLE IF NOT EXISTS habitflow.shared_routine_habits (routine_id uuid NOT NULL REFERENCES habitflow.shared_routines(id) ON DELETE CASCADE, habit_template_id uuid REFERENCES habitflow.habit_templates(id), name varchar(160) NOT NULL, category varchar(100), frequency_type varchar(40) NOT NULL, target_per_week integer CHECK(target_per_week BETWEEN 1 AND 7), reminder_time time, sort_order integer NOT NULL DEFAULT 0, PRIMARY KEY(routine_id,name));
+CREATE TABLE IF NOT EXISTS habitflow.shared_routine_members (routine_id uuid NOT NULL REFERENCES habitflow.shared_routines(id) ON DELETE CASCADE, user_id uuid NOT NULL REFERENCES habitflow.users(id), role varchar(40) NOT NULL CHECK(role IN ('Owner','Participant','Viewer')), joined_at timestamp NOT NULL DEFAULT now(), left_at timestamp, PRIMARY KEY(routine_id,user_id));
+CREATE INDEX IF NOT EXISTS ix_shared_routines_client ON habitflow.shared_routines(client_id,status);
+CREATE INDEX IF NOT EXISTS ix_shared_routine_members_user ON habitflow.shared_routine_members(user_id) WHERE left_at IS NULL;
+CREATE TABLE IF NOT EXISTS habitflow.shared_goals (id uuid PRIMARY KEY, client_id uuid NOT NULL REFERENCES habitflow.clients(id), created_by_user_id uuid NOT NULL REFERENCES habitflow.users(id), title varchar(160) NOT NULL, description text, target_value integer NOT NULL CHECK(target_value > 0), status varchar(40) NOT NULL DEFAULT 'Active', start_date date NOT NULL, end_date date, created_at timestamp NOT NULL DEFAULT now(), updated_at timestamp NOT NULL DEFAULT now());
+CREATE TABLE IF NOT EXISTS habitflow.shared_goal_members (goal_id uuid NOT NULL REFERENCES habitflow.shared_goals(id) ON DELETE CASCADE, user_id uuid NOT NULL REFERENCES habitflow.users(id), role varchar(40) NOT NULL DEFAULT 'Participant' CHECK(role IN ('Owner','Participant','Viewer')), joined_at timestamp NOT NULL DEFAULT now(), PRIMARY KEY(goal_id,user_id));
+CREATE TABLE IF NOT EXISTS habitflow.shared_goal_progress (id uuid PRIMARY KEY, goal_id uuid NOT NULL REFERENCES habitflow.shared_goals(id) ON DELETE CASCADE, user_id uuid NOT NULL REFERENCES habitflow.users(id), value integer NOT NULL DEFAULT 0 CHECK(value >= 0), recorded_on date NOT NULL, created_at timestamp NOT NULL DEFAULT now(), UNIQUE(goal_id,user_id,recorded_on));
+CREATE INDEX IF NOT EXISTS ix_shared_goals_client ON habitflow.shared_goals(client_id,status);
+COMMIT;
+BEGIN;
+ALTER TABLE habitflow.habits ADD COLUMN IF NOT EXISTS visibility varchar(40) NOT NULL DEFAULT 'Private';
+ALTER TABLE habitflow.habits DROP CONSTRAINT IF EXISTS ck_habits_visibility;
+ALTER TABLE habitflow.habits ADD CONSTRAINT ck_habits_visibility CHECK(visibility IN ('Private','SharedWithRoutine','AggregateOnly'));
+CREATE TABLE IF NOT EXISTS habitflow.product_events (id uuid PRIMARY KEY, client_id uuid REFERENCES habitflow.clients(id), user_id uuid REFERENCES habitflow.users(id), event_name varchar(120) NOT NULL, entity_type varchar(80), entity_id uuid, plan_code varchar(80), metadata jsonb, occurred_at timestamp NOT NULL DEFAULT now(), session_id varchar(120));
+CREATE INDEX IF NOT EXISTS ix_product_events_occurred ON habitflow.product_events(occurred_at DESC,event_name);
+CREATE INDEX IF NOT EXISTS ix_product_events_scope ON habitflow.product_events(client_id,user_id,occurred_at DESC);
+COMMENT ON COLUMN habitflow.product_events.metadata IS 'Somente metadados operacionais; nunca documentos, credenciais ou conteúdo de hábitos.';
+COMMIT;

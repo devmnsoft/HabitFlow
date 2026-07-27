@@ -269,3 +269,9 @@ firebase deploy --only hosting
 ## v6.1.2 follow-up
 - Ampliar testes de integração WebApplicationFactory contra PostgreSQL dedicado.
 - Evoluir filtros avançados do painel SuperAdmin Registration Quality.
+
+## Pendências auditadas da v6.3
+- Concluir métricas reais e sequência na resposta Ajax do Dashboard.
+- Implementar processadores de lembrete/resumos com locking transacional.
+- Finalizar calendário, relatórios avançados, rotinas e painel da conta no nível de aplicação.
+- Ampliar testes de isolamento, CSV, scheduler, PWA e regressão mobile.

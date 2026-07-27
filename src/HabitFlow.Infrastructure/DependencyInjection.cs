@@ -19,6 +19,7 @@ public static class DependencyInjection
         services.AddScoped<IUserInviteRepository, UserInviteRepository>();
         services.AddScoped<IClientRepository, ClientRepository>();
         services.AddScoped<IHabitRepository, HabitRepository>();
+        services.AddScoped<IUserGoalRepository, UserGoalRepository>();
         services.AddScoped<IHabitObjectiveRepository, HabitObjectiveRepository>();
         services.AddScoped<IHabitTemplateRepository, HabitTemplateRepository>();
         services.AddScoped<IHabitCompletionRepository, HabitCompletionRepository>();

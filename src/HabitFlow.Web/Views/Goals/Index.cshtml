@@ -1,0 +1,5 @@
+@model IReadOnlyList<HabitFlow.Domain.UserGoal>
+@{ViewData["Title"]="Objetivos";}
+<header class="hf-page-header"><div><p class="hf-section-kicker">Sua direção</p><h1>Objetivos pessoais</h1><p>Conecte pequenos hábitos ao que importa para você.</p></div><a class="btn btn-success" href="/goals/create">Criar objetivo</a></header>
+@if(!Model.Any()){<section class="hf-empty-state"><h2>Escolha algo que deseja cuidar.</h2><p>Comece com uma meta possível e ajuste no seu ritmo.</p><a class="btn btn-success" href="/goals/create">Criar meu primeiro objetivo</a></section>}
+<div class="row g-3">@foreach(var goal in Model){var percent=Math.Min(100,goal.TargetValue==0?0:goal.CurrentValue*100/goal.TargetValue);<div class="col-md-6"><article class="hf-card h-100"><span class="badge text-bg-light">@goal.Status</span><h2 class="h4 mt-2"><a href="/goals/@goal.Id">@goal.Title</a></h2><p>@goal.Description</p><div class="progress" role="progressbar" aria-label="Progresso de @goal.Title: @percent%"><div class="progress-bar bg-success" style="width:@percent%">@percent%</div></div></article></div>}</div>

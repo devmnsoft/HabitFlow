@@ -46,6 +46,26 @@ public class HabitsController(HabitService habitService, AuditService audit, ILo
         return RedirectToAction(nameof(Index));
     }
 
+    [ValidateAntiForgeryToken]
+    [HttpPost("habits/{id:guid}/complete")]
+    public async Task<IActionResult> CompleteWithoutReload(Guid id, CancellationToken ct)
+    {
+        var owned = (await habitService.ListAsync(this.CurrentUserId(), ct)).Any(x => x.Id == id);
+        if (!owned) return NotFound(new { success = false, message = "Este hábito não foi encontrado." });
+        var result = await habitService.MarkTodayAsync(this.CurrentUserSnapshot(), id, ct);
+        return Json(new { success = result.IsSuccess, message = result.IsSuccess ? "Um passo concluído. Continue no seu ritmo." : result.Error.Message, completed = result.IsSuccess, dailyProgress = 0, currentStreak = 0, nextHabit = (object?)null });
+    }
+
+    [ValidateAntiForgeryToken]
+    [HttpPost("habits/{id:guid}/undo-completion")]
+    public async Task<IActionResult> UndoWithoutReload(Guid id, CancellationToken ct)
+    {
+        var owned = (await habitService.ListAsync(this.CurrentUserId(), ct)).Any(x => x.Id == id);
+        if (!owned) return NotFound(new { success = false, message = "Este hábito não foi encontrado." });
+        var result = await habitService.UnmarkTodayAsync(id, ct);
+        return Json(new { success = result.IsSuccess, message = result.IsSuccess ? "Conclusão desfeita." : result.Error.Message, completed = false, dailyProgress = 0, currentStreak = 0, nextHabit = (object?)null });
+    }
+
         [ValidateAntiForgeryToken]
     [HttpPost]
     public async Task<IActionResult> Uncomplete(Guid id, CancellationToken ct)
