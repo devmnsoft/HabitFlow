@@ -62,7 +62,7 @@ public class HabitsController(HabitService habitService, AuditService audit, ILo
     {
         var owned = (await habitService.ListAsync(this.CurrentUserId(), ct)).Any(x => x.Id == id);
         if (!owned) return NotFound(new { success = false, message = "Este hábito não foi encontrado." });
-        var result = await habitService.UnmarkTodayAsync(id, ct);
+        var result = await habitService.UnmarkTodayAsync(this.CurrentUserSnapshot(), id, ct);
         return Json(new { success = result.IsSuccess, message = result.IsSuccess ? "Conclusão desfeita." : result.Error.Message, completed = false, dailyProgress = 0, currentStreak = 0, nextHabit = (object?)null });
     }
 
@@ -70,7 +70,7 @@ public class HabitsController(HabitService habitService, AuditService audit, ILo
     [HttpPost]
     public async Task<IActionResult> Uncomplete(Guid id, CancellationToken ct)
     {
-        try { var result = await habitService.UnmarkTodayAsync(id, ct); TempData[result.IsFailure ? "Error" : "Success"] = result.IsFailure ? result.Error.Message : "Marcação removida."; }
+        try { var result = await habitService.UnmarkTodayAsync(this.CurrentUserSnapshot(), id, ct); TempData[result.IsFailure ? "Error" : "Success"] = result.IsFailure ? result.Error.Message : "Marcação removida."; }
         catch (Exception ex) { logger.LogError(ex, "Erro inesperado ao desmarcar hábito {HabitId}", id); TempData["Error"] = "Não foi possível desmarcar o hábito."; }
         return RedirectToAction(nameof(Index));
     }
