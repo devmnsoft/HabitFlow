@@ -471,3 +471,9 @@
 - Experiência acolhedora durante restrição financeira.
 - PWA instalável, página offline e navegação mobile refinada.
 - Aplicação central da matriz parametrizada de benefícios.
+# v6.4-ProductCoreCompletion-Schedulers-SharedExperience-IntegrationQA
+
+- Persistência e validação da edição de objetivos, incluindo conclusão explícita e isolamento por conta/pessoa.
+- Migrations incrementais para leases de jobs, entregas idempotentes, consentimentos, progresso de objetivos, snapshots e analytics.
+- PWA com cache público estrito, atualização consentida e evento somente após instalação confirmada.
+- Auditoria honesta da v6.3, detector de stubs e documentação das decisões de locking, objetivos e QA mobile.
