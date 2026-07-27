@@ -41,13 +41,29 @@ public sealed class HabitService(IHabitRepository habits, IHabitCompletionReposi
 
     public async Task<Result> MarkTodayAsync(User user, Guid habitId, CancellationToken ct = default)
     {
-        try { await completions.AddAsync(new HabitCompletion(Guid.NewGuid(), habitId, user.Id, DateOnly.FromDateTime(DateTime.UtcNow), DateTime.UtcNow), ct); return Result.Success(); }
+        try
+        {
+            var habit = await habits.GetAsync(habitId, ct);
+            if (habit is null || !habit.BelongsTo(user.Id))
+                return Result.Failure("habit.not_found", "Este hábito não foi encontrado.");
+
+            await completions.AddAsync(new HabitCompletion(Guid.NewGuid(), habitId, user.Id, DateOnly.FromDateTime(DateTime.UtcNow), DateTime.UtcNow), ct);
+            return Result.Success();
+        }
         catch (Exception ex) { logger.LogError(ex, "Erro ao marcar hábito {HabitId}", habitId); return Result.Failure("habit.mark_error", "Não foi possível marcar o hábito."); }
     }
 
-    public async Task<Result> UnmarkTodayAsync(Guid habitId, CancellationToken ct = default)
+    public async Task<Result> UnmarkTodayAsync(User user, Guid habitId, CancellationToken ct = default)
     {
-        try { await completions.DeleteAsync(habitId, DateOnly.FromDateTime(DateTime.UtcNow), ct); return Result.Success(); }
+        try
+        {
+            var habit = await habits.GetAsync(habitId, ct);
+            if (habit is null || !habit.BelongsTo(user.Id))
+                return Result.Failure("habit.not_found", "Este hábito não foi encontrado.");
+
+            await completions.DeleteAsync(habitId, user.Id, DateOnly.FromDateTime(DateTime.UtcNow), ct);
+            return Result.Success();
+        }
         catch (Exception ex) { logger.LogError(ex, "Erro ao desmarcar hábito {HabitId}", habitId); return Result.Failure("habit.unmark_error", "Não foi possível desmarcar o hábito."); }
     }
 }
