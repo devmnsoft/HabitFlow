@@ -299,3 +299,9 @@ firebase deploy --only hosting
 - Concluir a adoção transacional das métricas canônicas no payload de atualização do Dashboard e nos objetivos.
 - Evoluir todos os métodos legados de ReportService para exigir `clientId` sem quebra de consumidores.
 - Adicionar cobertura WebApplicationFactory autenticada e cenários PostgreSQL multi-tenant quando o SDK .NET 10 estiver disponível no ambiente de desenvolvimento.
+
+## Recuperação de senha v6.7
+
+- [x] Fluxo público, token seguro, outbox, SMTP STARTTLS e revogação por session_version.
+- [ ] Homologar envio Gmail manual com nova senha de app efêmera, sem expor recipient ou token.
+- [ ] Confirmar externamente a revogação da credencial compartilhada anteriormente.

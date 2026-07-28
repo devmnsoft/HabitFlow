@@ -16,6 +16,12 @@ public static class DependencyInjection
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<UnitOfWork>();
         services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IPasswordResetTokenRepository, PasswordResetTokenRepository>();
+        services.AddScoped<IPasswordResetRequestRepository, PasswordResetRequestRepository>();
+        services.AddScoped<ITransactionalEmailOutboxRepository, TransactionalEmailOutboxRepository>();
+        services.AddScoped<ITransactionalEmailSender, GmailSmtpEmailSender>();
+        services.AddScoped<IUserSessionRevocationService, UserSessionRevocationService>();
+        services.AddScoped<TransactionalEmailProcessor>();
         services.AddScoped<IUserInviteRepository, UserInviteRepository>();
         services.AddScoped<IClientRepository, ClientRepository>();
         services.AddScoped<IHabitRepository, HabitRepository>();

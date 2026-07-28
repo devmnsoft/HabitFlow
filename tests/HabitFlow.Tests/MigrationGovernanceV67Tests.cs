@@ -20,7 +20,7 @@ public sealed class MigrationGovernanceV67Tests
 
         Assert.Equal(versions.Length, versions.Distinct().Count());
         Assert.Equal(Enumerable.Range(1, versions.Length), versions);
-        Assert.Equal(47, versions[^1]);
+        Assert.Equal(48, versions[^1]);
     }
 
     [Fact]

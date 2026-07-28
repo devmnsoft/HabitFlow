@@ -15,6 +15,10 @@ public static class DependencyInjection
         services.AddSingleton<FeedbackMapper>();
         services.AddHttpContextAccessor();
         services.AddScoped<IPasswordHasher, BCryptPasswordHasher>();
+        services.AddScoped<IPasswordPolicy, PasswordPolicy>();
+        services.AddScoped<PasswordResetTokenService>();
+        services.AddScoped<PasswordRecoveryService>();
+        services.AddScoped<PasswordResetService>();
         services.AddScoped<CurrentUserContext>();
         services.AddScoped<CurrentTenantService>();
         services.AddScoped<HabitPolicy>();

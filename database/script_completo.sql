@@ -679,6 +679,7 @@ CREATE TABLE IF NOT EXISTS habitflow.goal_habits (
  created_at timestamp NOT NULL DEFAULT now(), PRIMARY KEY(goal_id,habit_id)
 );
 COMMIT;
+
 BEGIN;
 CREATE TABLE IF NOT EXISTS habitflow.milestones (id uuid PRIMARY KEY, code varchar(80) NOT NULL UNIQUE, title varchar(120) NOT NULL, description varchar(240) NOT NULL, threshold integer, is_active boolean NOT NULL DEFAULT true, created_at timestamp NOT NULL DEFAULT now());
 CREATE TABLE IF NOT EXISTS habitflow.user_milestones (id uuid PRIMARY KEY, client_id uuid NOT NULL REFERENCES habitflow.clients(id), user_id uuid NOT NULL REFERENCES habitflow.users(id), milestone_id uuid NOT NULL REFERENCES habitflow.milestones(id), achieved_at timestamp NOT NULL DEFAULT now(), metadata jsonb, UNIQUE(user_id,milestone_id));
@@ -771,3 +772,5 @@ CREATE UNIQUE INDEX IF NOT EXISTS ux_product_events_pwa_install_day
  ON habitflow.product_events(user_id,event_name,(occurred_at::date)) WHERE event_name='pwa_installed' AND user_id IS NOT NULL;
 CREATE INDEX IF NOT EXISTS ix_product_events_analytics ON habitflow.product_events(event_name,occurred_at DESC,client_id);
 COMMIT;
+-- Password recovery is maintained in its canonical migration for new databases.
+\i database/migrations/048_password_recovery_transactional_email.sql

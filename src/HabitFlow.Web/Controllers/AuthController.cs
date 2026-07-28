@@ -29,6 +29,7 @@ public class AuthController(AuthService authService, ClientAccountRegistrationSe
                 new(ClaimTypes.Email, user.Email),
                 new(ClaimTypes.Role, user.Role.ToString()),
                 new("account_status", user.AccountStatus.ToString())
+                ,new("session_version", user.SessionVersion.ToString(System.Globalization.CultureInfo.InvariantCulture))
             };
             if (user.ClientId.HasValue)
             {

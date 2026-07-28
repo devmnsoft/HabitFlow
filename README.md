@@ -243,3 +243,7 @@ A área autenticada de progresso está disponível em `/progress/calendar`, com 
 ## Progresso v6.6.3
 
 Os contratos, a política de histórico por plano efetivo, a regra de consistência e o procedimento de QA estão documentados em `docs/PROGRESS_CONTRACTS.md`, `docs/PROGRESS_HISTORY_POLICY.md`, `docs/CONSISTENCY_ACROSS_PERIODS.md` e `docs/V663_PROGRESS_QA.md`.
+
+## Recuperação segura de senha
+
+A v6.7 oferece recuperação anti-enumeração com token aleatório de uso único, outbox e Gmail SMTP por STARTTLS. Consulte `docs/PASSWORD_RECOVERY_FLOW.md`; a senha SMTP é fornecida exclusivamente fora do Git.
