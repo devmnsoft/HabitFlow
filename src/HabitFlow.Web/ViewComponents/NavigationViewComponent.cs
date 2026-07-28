@@ -6,6 +6,10 @@ namespace HabitFlow.Web.ViewComponents;
 
 public sealed class NavigationViewComponent(NavigationService navigation) : ViewComponent
 {
-    public IViewComponentResult Invoke(NavigationContext context)
-        => View(navigation.Get(context, HttpContext.User, HttpContext.Request.Path));
+    public async Task<IViewComponentResult> InvokeAsync(NavigationContext context)
+        => View(await navigation.GetAsync(
+            context,
+            HttpContext.User,
+            HttpContext.Request.Path,
+            HttpContext.RequestAborted));
 }

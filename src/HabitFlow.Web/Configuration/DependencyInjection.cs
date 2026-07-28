@@ -10,6 +10,7 @@ public static class DependencyInjection
         services.AddSingleton<IBrandAssetService, BrandAssetService>();
         services.AddHabitFlowAuthentication(configuration, environment);
         services.AddScoped<ApplicationFeedbackService>();
+        services.AddScoped<INavigationAccessEvaluator, NavigationAccessEvaluator>();
         services.AddScoped<NavigationService>();
         services.AddHostedService<BillingCommunicationJob>();
         return services;
