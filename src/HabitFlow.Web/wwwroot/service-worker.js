@@ -1,4 +1,4 @@
-const CACHE='habitflow-public-v64';
+const CACHE='habitflow-public-v651-shell-1';
 const PUBLIC=['/offline.html','/help','/css/site.css','/js/site.js','/js/pwa.js','/favicon.svg'];
 const PRIVATE=/\/(dashboard|habits|goals|progress|reports|account|profile|notifications|billing|superadmin|checkout|webhooks?|fiscal|product-events)(\/|$)/i;
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(PUBLIC))));

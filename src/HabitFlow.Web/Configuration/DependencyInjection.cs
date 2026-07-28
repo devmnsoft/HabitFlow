@@ -12,6 +12,7 @@ public static class DependencyInjection
         services.AddScoped<ApplicationFeedbackService>();
         services.AddScoped<INavigationAccessEvaluator, NavigationAccessEvaluator>();
         services.AddScoped<NavigationService>();
+        services.AddSingleton<LayoutContextResolver>();
         services.AddHostedService<BillingCommunicationJob>();
         return services;
     }

@@ -1,4 +1,3 @@
-@using System.Text.Json
 @{
     var type = TempData["Feedback.Type"]?.ToString();
     var title = TempData["Feedback.Title"]?.ToString();
@@ -7,12 +6,5 @@
 }
 @if (!string.IsNullOrWhiteSpace(type) && !string.IsNullOrWhiteSpace(message))
 {
-<script>
-window.addEventListener('DOMContentLoaded', () => {
-  const f = window.HabitFlowFeedback;
-  if (!f) return;
-  const feedback = @Html.Raw(JsonSerializer.Serialize(new { type, title, message }));
-  @(modal ? "f.showModal(feedback.type, feedback.title, feedback.message);" : "f.showToast(feedback.type, feedback.title, feedback.message);")
-});
-</script>
+    <span hidden data-feedback-bridge data-feedback-type="@type" data-feedback-title="@title" data-feedback-message="@message" data-feedback-modal="@modal.ToString().ToLowerInvariant()"></span>
 }

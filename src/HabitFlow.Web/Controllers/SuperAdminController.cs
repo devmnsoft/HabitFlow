@@ -19,6 +19,9 @@ public sealed class SuperAdminController(SuperAdminService dashboard, ClientServ
         return View("~/Views/SuperAdmin/Clients/Index.cshtml", result.Value ?? Array.Empty<ClientListItemDto>());
     }
 
+    [HttpGet("users")]
+    public IActionResult Users() => View("~/Views/SuperAdmin/Simple.cshtml", "Usuários da plataforma");
+
     [HttpGet("clients/{id:guid}")]
     public async Task<IActionResult> ClientDetails(Guid id, CancellationToken ct)
     {

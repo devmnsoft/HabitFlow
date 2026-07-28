@@ -1,4 +1,4 @@
-@{ Layout = "~/Views/Shared/_Layout.cshtml"; ViewData["Title"] = "Entrar"; }
+@{ ViewData["Title"] = "Entrar"; }
 <section class="hf-auth-grid">
   <div class="hf-auth-card"><p class="hf-eyebrow">Bem-vindo de volta</p><h1>Entre no HabitFlow</h1><p class="lead">Continue acompanhando seus hábitos, sequência e progresso.</p>
     <form method="post" action="/login">@Html.AntiForgeryToken()<div class="mb-3"><label class="form-label" for="Email">E-mail</label><input id="Email" name="Email" type="email" autocomplete="email" required class="form-control" placeholder="voce@email.com"></div>

@@ -10,9 +10,11 @@ namespace HabitFlow.Web.Controllers;
 public sealed class ClientUsersController(UserInviteService inviteService, CurrentTenantService tenant) : Controller
 {
     [HttpGet("")]
+    [HttpGet("/account/people")]
     public IActionResult Index() => View("~/Views/Admin/Users/Index.cshtml");
 
     [HttpGet("invite")]
+    [HttpGet("/account/invites")]
     public IActionResult Invite() => View("~/Views/Admin/Users/Invite.cshtml");
 
     [HttpPost("invite")]

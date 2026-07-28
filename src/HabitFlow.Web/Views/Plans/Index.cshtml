@@ -43,6 +43,7 @@
   </div>
 }
 </div>
+@section Scripts {
 <script>
 document.querySelectorAll('.js-cycle').forEach(button => button.addEventListener('click', () => {
   document.querySelectorAll('.js-cycle').forEach(x => { x.classList.toggle('active', x === button); x.classList.toggle('btn-success', x === button); x.classList.toggle('btn-outline-success', x !== button); });
@@ -52,3 +53,4 @@ document.querySelectorAll('.js-cycle').forEach(button => button.addEventListener
   document.querySelectorAll('.js-cycle-input').forEach(x => x.value = button.dataset.cycle);
 }));
 </script>
+}

@@ -1,0 +1,10 @@
+@model HabitFlow.Web.Models.NavigationItem
+@{
+    var showDescription = ViewData["ShowDescription"] as bool? == true;
+}
+<a class="hf-nav-link @(Model.IsCurrent ? "is-current" : null)"
+   aria-current="@(Model.IsCurrent ? "page" : null)"
+   href="@Model.Url" title="@Model.Description">
+    @await Html.PartialAsync("~/Views/Shared/Partials/Icons/_Icon.cshtml", null, new ViewDataDictionary(ViewData) { ["Name"] = Model.Icon })
+    <span class="hf-nav-copy"><strong>@Model.Label</strong>@if (showDescription) { <small>@Model.Description</small> }</span>
+</a>

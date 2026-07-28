@@ -1,5 +1,5 @@
 @model HabitFlow.Application.PersonalReport
-@{ Layout = "~/Views/Shared/_Layout.cshtml"; ViewData["Title"] = "Relatórios"; var rate = Model?.CompletionRate ?? 0; }
+@{ ViewData["Title"] = "Relatórios"; var rate = Model?.CompletionRate ?? 0; }
 <header class="hf-page-header"><div><p class="hf-eyebrow">Relatórios pessoais</p><h1>Resumo semanal e mensal</h1><p>Período de @Model.PeriodStart a @Model.PeriodEnd com exportação CSV e insights humanizados.</p></div><a class="btn btn-success" href="/reports/export-csv">Exportar CSV</a></header>
 @if ((Model?.TotalCompletions ?? 0) == 0) { <div class="alert alert-info">Você ainda não possui conclusões suficientes para gerar um relatório completo. Comece marcando seus hábitos no Dashboard.</div> }
 <section class="hf-grid mb-4"><div class="hf-col-3 hf-metric-card"><span>Conclusões</span><strong>@Model.TotalCompletions</strong><small>no período</small></div><div class="hf-col-3 hf-metric-card"><span>Dias ativos</span><strong>@Model.ActiveDays</strong><small>com pelo menos um check</small></div><div class="hf-col-6 hf-card"><h2 class="h5">Taxa de conclusão</h2><div class="progress"><div class="progress-bar" style="width:@rate%">@rate%</div></div></div></section>

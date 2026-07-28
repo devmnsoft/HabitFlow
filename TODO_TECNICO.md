@@ -275,3 +275,9 @@ firebase deploy --only hosting
 - Implementar processadores de lembrete/resumos com locking transacional.
 - Finalizar calendário, relatórios avançados, rotinas e painel da conta no nível de aplicação.
 - Ampliar testes de isolamento, CSV, scheduler, PWA e regressão mobile.
+
+## Pós-v6.5.1 — consolidação controlada
+
+- [ ] Migrar tokens/regras de `site.css` para módulos em incrementos visualmente comparados; manter `tokens.css`, `base.css` e `components.css` inativos até concluir a migração.
+- [ ] Provisionar personas efêmeras (Gratuito, proprietário, Super Administrador) na CI para ampliar o Playwright sem armazenar secrets.
+- [ ] Adicionar snapshots baselines aprovados em storage de artifacts, nunca no repositório.

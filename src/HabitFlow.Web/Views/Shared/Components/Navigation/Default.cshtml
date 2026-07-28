@@ -1,25 +1,43 @@
-@model IReadOnlyList<HabitFlow.Web.Models.NavigationItem>
-
-<ul class="navbar-nav mx-auto mb-2 mb-lg-0 hf-nav-links">
-    @foreach (var item in Model)
+@model HabitFlow.Web.Models.NavigationViewModel
+@using HabitFlow.Web.Models
+@{
+    var isSidebar = Model.Variant is NavigationVariant.AccountSidebar or NavigationVariant.PlatformSidebar or NavigationVariant.MobileDrawer;
+    var cssClass = Model.Variant switch
     {
-        <li class="nav-item">
-            <a class="nav-link hf-nav-card @(item.IsActive ? "active" : null)"
-               aria-current="@(item.IsActive ? "page" : null)"
-               href="@item.Url"
-               title="@item.Description">
-
-                @await Html.PartialAsync(
-                    "~/Views/Shared/Partials/Icons/_Icon.cshtml",
-                    null,
-                    new ViewDataDictionary(ViewData)
-                    {
-                        ["Name"] = item.Icon
-                    })
-
-                <span>@item.Label</span>
-                <small>@item.Description</small>
-            </a>
-        </li>
+        NavigationVariant.MobileBottom => "hf-mobile-bottom",
+        NavigationVariant.MobileDrawer => "hf-drawer-nav",
+        NavigationVariant.AccountSidebar => "hf-sidebar-nav hf-account-nav",
+        NavigationVariant.PlatformSidebar => "hf-sidebar-nav hf-platform-nav",
+        _ => "navbar-nav hf-top-nav"
+    };
+    string Group(NavigationItem item) => Model.Context != NavigationContext.Platform ? string.Empty : item.SortOrder switch
+    {
+        <= 15 => "Visão",
+        <= 45 => "Gestão",
+        <= 75 => "Financeiro",
+        <= 85 => "Operação",
+        _ => "Controle"
+    };
+}
+<nav class="@cssClass" aria-label="@((Model.Context is NavigationContext.Account or NavigationContext.Platform) ? "Navegação contextual" : "Navegação principal")" data-navigation-variant="@Model.Variant">
+    @if (isSidebar && Model.Context == NavigationContext.Platform)
+    {
+        @foreach (var group in Model.Items.GroupBy(Group))
+        {
+            <section class="hf-nav-group">
+                <h2>@group.Key</h2>
+                @foreach (var item in group)
+                {
+                    @await Html.PartialAsync("~/Views/Shared/Components/Navigation/_Link.cshtml", item, new ViewDataDictionary(ViewData) { ["ShowDescription"] = true })
+                }
+            </section>
+        }
     }
-</ul>
+    else
+    {
+        @foreach (var item in Model.Items)
+        {
+            @await Html.PartialAsync("~/Views/Shared/Components/Navigation/_Link.cshtml", item, new ViewDataDictionary(ViewData) { ["ShowDescription"] = isSidebar })
+        }
+    }
+</nav>
