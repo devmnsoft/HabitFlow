@@ -3,7 +3,7 @@
   <div class="hf-auth-card"><p class="hf-eyebrow">Bem-vindo de volta</p><h1>Entre no HabitFlow</h1><p class="lead">Continue acompanhando seus hábitos, sequência e progresso.</p>
     <form method="post" action="/login">@Html.AntiForgeryToken()<div class="mb-3"><label class="form-label" for="Email">E-mail</label><input id="Email" name="Email" type="email" autocomplete="email" required class="form-control" placeholder="voce@email.com"></div>
     @await Html.PartialAsync("~/Views/Shared/Partials/_PasswordInput.cshtml", null, new ViewDataDictionary(ViewData){{"Id","Password"},{"Name","Password"},{"Label","Senha"},{"Autocomplete","current-password"},{"Placeholder","Sua senha"},{"HelpText","A senha fica oculta por padrão. Use o olhinho apenas quando precisar conferir."}})
-    <div class="d-flex justify-content-between align-items-center mb-3"><a href="/help/login">Esqueci minha senha</a></div><button class="btn btn-success btn-lg w-100" data-loading-text="Entrando...">Entrar</button></form>
+    <div class="d-flex justify-content-between align-items-center mb-3"><a href="/forgot-password">Esqueci minha senha</a></div><button class="btn btn-success btn-lg w-100" data-loading-text="Entrando...">Entrar</button></form>
     <p class="mt-3 mb-0 text-muted">Ainda não tem conta? <a href="/register">Criar conta</a>. Seus dados são tratados conforme LGPD.</p></div>
   <aside class="hf-auth-aside">@await Html.PartialAsync("~/Views/Shared/Partials/Illustrations/_AuthHabitIllustration.cshtml")<h2>Retome sua rotina.</h2><ul><li>Continue sua sequência.</li><li>Veja seus hábitos de hoje.</li><li>Acompanhe seus relatórios.</li></ul></aside>
 </section>

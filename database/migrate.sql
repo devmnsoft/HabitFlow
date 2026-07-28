@@ -47,3 +47,4 @@
 
 \i database/migrations/046_progress_history_days_limit.sql
 \i database/migrations/047_schema_migration_governance.sql
+\i database/migrations/048_password_recovery_transactional_email.sql

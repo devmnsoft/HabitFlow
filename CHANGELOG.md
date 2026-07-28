@@ -549,3 +549,9 @@
 - Governança inicial de migrations com descoberta dinâmica, checksum SHA-256, advisory lock, transação e rerun idempotente no CI.
 - Status de migrations do Super Administrador passa a refletir os arquivos reais em vez de uma faixa fixa.
 - Auditoria de pré-voo registra com transparência as limitações do ambiente; os demais fluxos da versão continuam pendentes.
+
+## v6.7 - recuperação de senha
+
+- Fluxo público completo, token SHA-256 de uso único, expiração e rate limits por e-mail/IP.
+- Alteração transacional, revogação de sessões por `session_version` e e-mails assíncronos via outbox/Gmail STARTTLS.
+- Configuração e operação segura no IIS sem credenciais versionadas.
