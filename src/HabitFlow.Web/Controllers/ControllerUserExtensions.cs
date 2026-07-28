@@ -27,5 +27,7 @@ internal static class ControllerUserExtensions
         null,
         null,
         DateTime.UtcNow,
-        DateTime.UtcNow);
+        DateTime.UtcNow,
+        Guid.TryParse(controller.User.FindFirstValue("client_id"), out var clientId) ? clientId : null,
+        int.TryParse(controller.User.FindFirstValue("session_version"), out var version) ? version : 0);
 }

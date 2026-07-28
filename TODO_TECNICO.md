@@ -1,3 +1,6 @@
+## v6.8.1
+- [ ] Executar a matriz PostgreSQL/WebApplicationFactory/Playwright em agente com .NET 10 e PostgreSQL.
+
 ## v6.1.1 CPF/CNPJ
 
 - Acompanhar evolução visual do SuperAdmin para filtros avançados PF/PJ, pagamento e benefícios.

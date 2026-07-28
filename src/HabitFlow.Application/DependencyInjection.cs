@@ -19,6 +19,9 @@ public static class DependencyInjection
         services.AddScoped<PasswordResetTokenService>();
         services.AddScoped<PasswordRecoveryService>();
         services.AddScoped<PasswordResetService>();
+        services.AddScoped<CreateSuperAdminHandler>();
+        services.AddScoped<ResetSuperAdminPasswordHandler>();
+        services.AddScoped<PromoteSuperAdminHandler>();
         services.AddScoped<CurrentUserContext>();
         services.AddScoped<CurrentTenantService>();
         services.AddScoped<HabitPolicy>();
@@ -35,6 +38,10 @@ public static class DependencyInjection
         services.AddScoped<UserInviteService>();
         services.AddScoped<ClientService>();
         services.AddScoped<HabitService>();
+        services.AddScoped<ProgressSnapshotService>();
+        services.AddScoped<CompleteHabitUseCase>();
+        services.AddScoped<UndoHabitCompletionUseCase>();
+        services.AddScoped<TodayDashboardService>();
         services.AddSingleton<HabitLibraryFallbackProvider>();
         services.AddScoped<HabitLibraryService>();
         services.AddScoped<GuidedJourneyService>();

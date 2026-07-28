@@ -1,3 +1,7 @@
+## v6.8.1
+- CLI transacional para criar, promover e redefinir SuperAdmin sem senha em argumentos.
+- Conclusão/undo idempotentes com data local e Dashboard/AJAX baseados em snapshot real.
+
 ## v6.1.1-ClientRegistrationCpfCnpj-RealSaaSOnboarding
 - Cadastro público agora cria Cliente + primeiro Admin do Cliente
 - Cadastro diferencia Pessoa Física e Pessoa Jurídica

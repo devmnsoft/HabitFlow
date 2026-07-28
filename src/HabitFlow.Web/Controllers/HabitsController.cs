@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace HabitFlow.Web.Controllers;
 
 [Authorize]
-public class HabitsController(HabitService habitService, AuditService audit, ILogger<HabitsController> logger) : Controller
+public class HabitsController(HabitService habitService, CompleteHabitUseCase completeHabit, UndoHabitCompletionUseCase undoHabit, UserTimeZoneService timeZone, AuditService audit, ILogger<HabitsController> logger) : Controller
 {
     public async Task<IActionResult> Index(CancellationToken ct)
     {
@@ -50,20 +50,22 @@ public class HabitsController(HabitService habitService, AuditService audit, ILo
     [HttpPost("habits/{id:guid}/complete")]
     public async Task<IActionResult> CompleteWithoutReload(Guid id, CancellationToken ct)
     {
-        var owned = (await habitService.ListAsync(this.CurrentUserId(), ct)).Any(x => x.Id == id);
-        if (!owned) return NotFound(new { success = false, message = "Este hábito não foi encontrado." });
-        var result = await habitService.MarkTodayAsync(this.CurrentUserSnapshot(), id, ct);
-        return Json(new { success = result.IsSuccess, message = result.IsSuccess ? "Um passo concluído. Continue no seu ritmo." : result.Error.Message, completed = result.IsSuccess, dailyProgress = 0, currentStreak = 0, nextHabit = (object?)null });
+        var user = this.CurrentUserSnapshot();
+        var result = await completeHabit.ExecuteAsync(new(user.ClientId, user.Id, id, timeZone.Today(), Request.Headers["Idempotency-Key"].FirstOrDefault() ?? Guid.NewGuid().ToString("N"), "Dashboard", HttpContext.TraceIdentifier), ct);
+        if (result.IsFailure && result.Error.Code == "habit.not_found") return NotFound(new { success = false, message = result.Error.Message });
+        if (result.IsFailure) return BadRequest(new { success = false, message = result.Error.Message });
+        return Json(ToPayload(result.Value!, "Um passo concluído. Continue no seu ritmo."));
     }
 
     [ValidateAntiForgeryToken]
     [HttpPost("habits/{id:guid}/undo-completion")]
     public async Task<IActionResult> UndoWithoutReload(Guid id, CancellationToken ct)
     {
-        var owned = (await habitService.ListAsync(this.CurrentUserId(), ct)).Any(x => x.Id == id);
-        if (!owned) return NotFound(new { success = false, message = "Este hábito não foi encontrado." });
-        var result = await habitService.UnmarkTodayAsync(this.CurrentUserSnapshot(), id, ct);
-        return Json(new { success = result.IsSuccess, message = result.IsSuccess ? "Conclusão desfeita." : result.Error.Message, completed = false, dailyProgress = 0, currentStreak = 0, nextHabit = (object?)null });
+        var user = this.CurrentUserSnapshot();
+        var result = await undoHabit.ExecuteAsync(new(user.ClientId, user.Id, id, timeZone.Today(), Request.Headers["Idempotency-Key"].FirstOrDefault() ?? Guid.NewGuid().ToString("N"), "Dashboard", HttpContext.TraceIdentifier), ct);
+        if (result.IsFailure && result.Error.Code == "habit.not_found") return NotFound(new { success = false, message = result.Error.Message });
+        if (result.IsFailure) return BadRequest(new { success = false, message = result.Error.Message });
+        return Json(ToPayload(result.Value!, "Conclusão desfeita."));
     }
 
         [ValidateAntiForgeryToken]
@@ -74,4 +76,11 @@ public class HabitsController(HabitService habitService, AuditService audit, ILo
         catch (Exception ex) { logger.LogError(ex, "Erro inesperado ao desmarcar hábito {HabitId}", id); TempData["Error"] = "Não foi possível desmarcar o hábito."; }
         return RedirectToAction(nameof(Index));
     }
+
+    private static object ToPayload(HabitCompletionResult value, string message) => new
+    {
+        success = true, message, value.HabitId, date = value.Date.ToString("yyyy-MM-dd"), value.Completed,
+        daily = new { scheduled = value.DailySummary.Scheduled, completed = value.DailySummary.Completed, pending = value.DailySummary.Pending, percentage = value.DailySummary.Percentage },
+        streak = new { current = value.CurrentStreak, best = value.BestStreak }, value.NextHabit, value.GoalUpdates, value.NewMilestones
+    };
 }
