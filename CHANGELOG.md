@@ -477,3 +477,8 @@
 - Migrations incrementais para leases de jobs, entregas idempotentes, consentimentos, progresso de objetivos, snapshots e analytics.
 - PWA com cache público estrito, atualização consentida e evento somente após instalação confirmada.
 - Auditoria honesta da v6.3, detector de stubs e documentação das decisões de locking, objetivos e QA mobile.
+## v6.6-Activation-Library-ValueDashboard-Upgrade-AccountBilling
+- Navegação passou a avaliar recursos do plano efetivo de forma assíncrona antes de exibir links.
+- “Meu plano” permanece acessível para pessoas autenticadas mesmo durante mudanças de acesso.
+- Auditoria inicial registra com transparência as validações disponíveis e as limitações do ambiente.
+- Shell passa a carregar apenas o CSS do contexto público, pessoal, conta ou plataforma.

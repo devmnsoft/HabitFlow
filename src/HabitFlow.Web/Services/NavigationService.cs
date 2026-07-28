@@ -3,7 +3,7 @@ using HabitFlow.Web.Models;
 
 namespace HabitFlow.Web.Services;
 
-public sealed class NavigationService
+public sealed class NavigationService(INavigationAccessEvaluator? accessEvaluator = null)
 {
     private static readonly IReadOnlyList<NavigationItem> Items =
     [
@@ -364,6 +364,40 @@ public sealed class NavigationService
             .ToArray();
     }
 
+    /// <summary>Builds navigation after evaluating permissions and effective-plan features.</summary>
+    public async Task<IReadOnlyList<NavigationItem>> GetAsync(
+        NavigationContext context,
+        ClaimsPrincipal user,
+        string path,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(user);
+
+        if (context is NavigationContext.Personal or NavigationContext.Account &&
+            user.Identity?.IsAuthenticated != true)
+        {
+            return [];
+        }
+
+        var candidates = Items.Where(item => item.Context == context && item.IsActive);
+        var visible = new List<NavigationItem>();
+        foreach (var item in candidates)
+        {
+            var allowed = accessEvaluator is null
+                ? HasClaimAccess(user, item.RequiredPermission) && item.RequiredFeature is null
+                : await accessEvaluator.CanAccessAsync(user, item.RequiredPermission, item.RequiredFeature, cancellationToken);
+
+            // Account plan is the safe, authenticated escape hatch even when paid access changes.
+            if ((allowed || item.Code == "my-plan") &&
+                (context == NavigationContext.Public || user.Identity?.IsAuthenticated == true))
+            {
+                visible.Add(item with { IsActive = IsCurrent(item.Url, path) });
+            }
+        }
+
+        return visible.OrderBy(item => item.SortOrder).ToArray();
+    }
+
     public bool HasPlatformAccess(ClaimsPrincipal user)
     {
         ArgumentNullException.ThrowIfNull(user);
@@ -376,6 +410,13 @@ public sealed class NavigationService
                user.HasClaim("permission", "Platform.Audit.View") ||
                user.HasClaim("permission", "Platform.Settings.Manage");
     }
+
+    private static bool HasClaimAccess(ClaimsPrincipal user, string? permission) =>
+        permission is null || user.IsInRole("SuperAdmin") ||
+        user.Claims.Any(claim => claim.Type == "permission" &&
+            (claim.Value.Equals(permission, StringComparison.OrdinalIgnoreCase) ||
+             claim.Value.Equals("Platform.FullAccess", StringComparison.OrdinalIgnoreCase) ||
+             claim.Value.Equals("platform.view", StringComparison.OrdinalIgnoreCase)));
 
     private static bool IsCurrent(string url, string path)
     {

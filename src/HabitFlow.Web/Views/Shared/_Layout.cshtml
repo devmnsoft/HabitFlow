@@ -9,6 +9,13 @@
     var title = ViewData["Title"] as string ?? "HabitFlow";
     var navigationContext = ViewData["NavigationContext"] is NavigationContext value ? value : (isAuthenticated ? NavigationContext.Personal : NavigationContext.Public);
     var layoutClass = ViewData["LayoutClass"] as string ?? "hf-public";
+    var contextualStylesheet = navigationContext switch
+    {
+        NavigationContext.Personal => "personal.css",
+        NavigationContext.Account => "account.css",
+        NavigationContext.Platform => "platform.css",
+        _ => "public.css"
+    };
 }
 <!doctype html>
 <html lang="pt-br">
@@ -19,8 +26,13 @@
   <link rel="manifest" href="/manifest.webmanifest">
   <meta name="theme-color" content="#10B981">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="/css/site.css" asp-append-version="true">
-  <link rel="stylesheet" href="/css/tokens.css" asp-append-version="true"><link rel="stylesheet" href="/css/base.css" asp-append-version="true"><link rel="stylesheet" href="/css/components.css" asp-append-version="true"><link rel="stylesheet" href="/css/public.css" asp-append-version="true"><link rel="stylesheet" href="/css/personal.css" asp-append-version="true"><link rel="stylesheet" href="/css/account.css" asp-append-version="true"><link rel="stylesheet" href="/css/platform.css" asp-append-version="true"><link rel="stylesheet" href="/css/responsive.css" asp-append-version="true"><link rel="stylesheet" href="/css/accessibility.css" asp-append-version="true"><link rel="stylesheet" href="/css/print.css" media="print" asp-append-version="true">
+  <link rel="stylesheet" href="/css/tokens.css" asp-append-version="true">
+  <link rel="stylesheet" href="/css/base.css" asp-append-version="true">
+  <link rel="stylesheet" href="/css/components.css" asp-append-version="true">
+  <link rel="stylesheet" href="/css/@contextualStylesheet" asp-append-version="true">
+  <link rel="stylesheet" href="/css/accessibility.css" asp-append-version="true">
+  <link rel="stylesheet" href="/css/responsive.css" asp-append-version="true">
+  <link rel="stylesheet" href="/css/print.css" media="print" asp-append-version="true">
 </head>
 <body class="hf-contrast-default hf-font-normal @layoutClass">
 <a class="visually-hidden-focusable hf-skip" href="#conteudo">Ir para o conteúdo</a>
