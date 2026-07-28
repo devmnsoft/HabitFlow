@@ -19,6 +19,11 @@ public static class DependencyInjection
         services.AddScoped<CurrentTenantService>();
         services.AddScoped<HabitPolicy>();
         services.AddScoped<ProgressService>();
+        services.AddScoped<HabitOccurrenceService>();
+        services.AddScoped<ConsistencyService>();
+        services.AddScoped<UserTimeZoneService>();
+        services.AddScoped<ProgressCalendarService>();
+        services.AddSingleton(TimeProvider.System);
         services.AddScoped<AdminAuthorizationService>();
         services.AddScoped<AuthService>();
         services.AddScoped<ClientAccountRegistrationService>();

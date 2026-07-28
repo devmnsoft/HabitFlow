@@ -235,3 +235,7 @@ A aplicação usa um único shell Razor e resolve os contextos Public, Personal,
 ### Runtime v6.6.1
 
 A fronteira Dapper/PostgreSQL usa contratos Row explícitos e tipos civis `DateOnly`/`TimeOnly`. A navegação carrega features em lote por requisição e falha de modo seguro, preservando itens básicos e **Meu plano**. Consulte `docs/DAPPER_MATERIALIZATION_CONTRACTS.md`, `docs/NAVIGATION_FAILURE_POLICY.md` e `docs/ERROR_EXPERIENCE.md`.
+
+## Progresso v6.6.2
+
+A área autenticada de progresso está disponível em `/progress/calendar`, com métricas derivadas das ocorrências reais e data local configurada em `Progress:DefaultTimeZone`. Consulte `docs/PROGRESS_CALENDAR.md` e `docs/HABIT_OCCURRENCE_RULES.md`.

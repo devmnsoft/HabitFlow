@@ -287,3 +287,9 @@ firebase deploy --only hosting
 - [ ] Executar a matriz PostgreSQL limpa e snapshot migrado em ambiente CI com credencial efêmera `_tests`.
 - [ ] Expandir Row DTOs explícitos para projeções legadas identificadas na auditoria de 77 chamadas Dapper.
 - [ ] Conectar os contadores `HabitFlow.Runtime` ao painel operacional protegido.
+
+## Pós-v6.6.2
+
+- [ ] Executar e registrar testes PostgreSQL e Playwright da área Progresso em ambiente com SDK, banco e navegadores instalados.
+- [ ] Integrar o mesmo resumo de consistência à resposta Ajax de conclusão do Dashboard e aos objetivos.
+- [ ] Substituir a janela Gratuita fixa por valor lido diretamente do catálogo parametrizado de features.

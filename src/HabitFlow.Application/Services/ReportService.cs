@@ -9,7 +9,8 @@ namespace HabitFlow.Application;
 
 public sealed record PersonalReport(DateOnly PeriodStart, DateOnly PeriodEnd, int TotalCompletions, int ActiveDays, double CompletionRate, string Insight);
 
-public sealed class ReportService(IHabitRepository habits, IHabitCompletionRepository completions, IUserReportRepository reports, AuditService audit, ILogger<ReportService> logger)
+public sealed class ReportService(IHabitRepository habits, IHabitCompletionRepository completions, IHabitWeekDayRepository weekDays,
+    HabitOccurrenceService occurrences, UserTimeZoneService timeZones, IUserReportRepository reports, AuditService audit, ILogger<ReportService> logger)
 {
     public async Task<PersonalReport> BuildWeeklyReportAsync(Guid userId, DateOnly date, CancellationToken ct = default)
     {
@@ -31,6 +32,21 @@ public sealed class ReportService(IHabitRepository habits, IHabitCompletionRepos
         try { var r = await BuildAsync(userId, periodStart, periodEnd, ct); var csv = $"Periodo inicial,Periodo final,Conclusoes,Dias ativos,Taxa,Insight\n{r.PeriodStart},{r.PeriodEnd},{r.TotalCompletions},{r.ActiveDays},{r.CompletionRate.ToString(CultureInfo.InvariantCulture)},\"{SanitizeCsv(r.Insight)}\"\n"; await audit.LogAsync("report_exported", "Relatório exportado", AuditSeverity.Info, userId, null, new { periodStart, periodEnd }, ct); return Result<byte[]>.Success(Encoding.UTF8.GetBytes(csv)); }
         catch (Exception ex) { logger.LogError(ex, "Erro ao exportar relatório de {UserId}", userId); return Result<byte[]>.Failure("report.export_error", "Não foi possível exportar o relatório."); }
     }
-    private async Task<PersonalReport> BuildAsync(Guid userId, DateOnly start, DateOnly end, CancellationToken ct) { var c = await completions.ListByUserAsync(userId, start, ct); var inPeriod = c.Where(x => x.CompletedDate <= end).ToList(); var habitCount = Math.Max(1, (await habits.ListByUserAsync(userId, ct)).Count(x => !x.IsArchived)); var days = end.DayNumber - start.DayNumber + 1; var rate = Math.Round(inPeriod.Count * 100d / (habitCount * days), 1); return new(start, end, inPeriod.Count, inPeriod.Select(x => x.CompletedDate).Distinct().Count(), rate, rate >= 70 ? "Você manteve uma ótima consistência." : "Escolha um hábito pequeno para retomar hoje."); }
+    private async Task<PersonalReport> BuildAsync(Guid userId, DateOnly start, DateOnly end, CancellationToken ct)
+    {
+        var domainHabits = await habits.ListByUserAsync(userId, ct);
+        var rows = domainHabits.Select(h => new ProgressHabitRow { Id = h.Id, Name = h.Name, Category = h.Category,
+            IsArchived = h.IsArchived, ArchivedAt = h.ArchivedAt, CreatedAt = h.CreatedAt, FrequencyType = h.FrequencyType, ReminderTime = h.ReminderTime }).ToList();
+        var configured = await weekDays.ListByHabitsAsync(rows.Select(x => x.Id), ct);
+        var schedule = configured.ToDictionary(x => x.Key, x => (IReadOnlySet<int>)x.Value.Select(y => y.DayOfWeek).ToHashSet());
+        var today = timeZones.Today(); var historicalEnd = end > today ? today : end;
+        var planned = historicalEnd < start ? [] : await occurrences.ListScheduledForPeriodAsync(rows, schedule, start, historicalEnd, timeZones.Resolve());
+        var valid = planned.Select(x => (x.Habit.Id, x.Date)).ToHashSet();
+        var completed = (await completions.ListByUserAsync(userId, start, ct)).Where(x => x.CompletedDate <= historicalEnd)
+            .Select(x => (x.HabitId, x.CompletedDate)).Distinct().Count(valid.Contains);
+        var rate = valid.Count == 0 ? 0 : Math.Round(completed * 100d / valid.Count, 1);
+        return new(start, end, completed, valid.Select(x => x.Date).Distinct().Count(), rate,
+            rate >= 70 ? "Você manteve uma ótima consistência." : "Escolha um hábito pequeno para retomar hoje.");
+    }
     public static string SanitizeCsv(string value) => string.IsNullOrWhiteSpace(value) ? string.Empty : ("=+-@".Contains(value[0]) ? "'" + value : value).Replace("\"", "\"\"");
 }

@@ -525,3 +525,11 @@
 - Testes DateOnly
 - Testes PostgreSQL
 - Testes de falha da navegação
+
+## v6.6.2-ProgressCalendar-ConsistencyEngine-RealMetrics-RouteIntegrity
+
+- Rota `/progress/calendar`, redirect canônico, endpoint JSON e detalhe diário.
+- Calendário mensal responsivo e acessível, histórico por plano e estados vazios.
+- Regra única de ocorrências, timezone centralizado, taxa e sequências reais.
+- Relatórios alinhados ao denominador de ocorrências.
+- Isolamento por cliente/pessoa e testes unitários de recorrência e consistência.
