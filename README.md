@@ -1,3 +1,7 @@
+## v6.8.1 — administração e Dashboard seguros
+
+SuperAdmin é provisionado exclusivamente pela CLI segura descrita em [docs/FIRST_SUPERADMIN.md](docs/FIRST_SUPERADMIN.md). O Dashboard usa conclusão transacional e métricas reais.
+
 ## Cadastro SaaS PF/PJ com CPF/CNPJ
 
 O `/register` cria cliente em `habitflow.clients` e o primeiro usuário Admin com `client_id`. PF informa CPF; PJ informa CNPJ. O backend valida dígitos, normaliza o documento e inicia o cliente no plano Free. Valide o banco com `psql -U postgres -d habitflow -f database/validate_schema_habitflow.sql`.

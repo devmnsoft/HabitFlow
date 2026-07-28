@@ -21,6 +21,12 @@ builder.Services.AddHostedService<BillingStatusHostedService>();
 
 var app = builder.Build();
 
+if (AdminCli.IsCommand(args))
+{
+    Environment.ExitCode = await AdminCli.RunAsync(args, app.Services);
+    return;
+}
+
 app.UseHabitFlowPipeline();
 
 app.Run();

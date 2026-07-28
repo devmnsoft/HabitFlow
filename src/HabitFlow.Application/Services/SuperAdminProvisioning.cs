@@ -1,0 +1,57 @@
+using HabitFlow.Domain;
+
+namespace HabitFlow.Application;
+
+public sealed record CreateSuperAdminCommand(string Name, string Email, string Password, string Confirmation, string Actor, string Reason, string CorrelationId);
+public sealed record ResetSuperAdminPasswordCommand(string Email, string Password, string Confirmation, string Actor, string Reason, string CorrelationId);
+public sealed record PromoteSuperAdminCommand(string Email, string Actor, string Reason, string CorrelationId);
+public sealed record SuperAdminProvisioningResult(bool Success, string Message, Guid? UserId = null);
+
+public interface ISuperAdminProvisioningRepository
+{
+    Task<User?> FindByEmailAsync(string email, CancellationToken ct);
+    Task<User> CreateOrPromoteAsync(string name, string email, string passwordHash, string actor, string reason, string correlationId, CancellationToken ct);
+    Task<User?> PromoteAsync(string email, string actor, string reason, string correlationId, CancellationToken ct);
+    Task ResetPasswordAsync(Guid userId, string passwordHash, string actor, string reason, string correlationId, CancellationToken ct);
+}
+
+public sealed class CreateSuperAdminHandler(ISuperAdminProvisioningRepository repository, IPasswordPolicy policy, IPasswordHasher hasher)
+{
+    public async Task<SuperAdminProvisioningResult> HandleAsync(CreateSuperAdminCommand command, CancellationToken ct = default)
+    {
+        if (command.Password != command.Confirmation) return new(false, "A confirmação da senha não confere.");
+        var email = PasswordRecoveryService.NormalizeEmail(command.Email);
+        var current = await repository.FindByEmailAsync(email, ct);
+        var candidate = current ?? SuperAdminCandidate(command.Name, email);
+        var validation = policy.Validate(command.Password, candidate);
+        if (validation is not null) return new(false, validation);
+        var user = await repository.CreateOrPromoteAsync(command.Name.Trim(), email, hasher.Hash(command.Password), command.Actor, command.Reason, command.CorrelationId, ct);
+        return new(true, "Super Administrador provisionado com segurança.", user.Id);
+    }
+
+    private static User SuperAdminCandidate(string name, string email) => new(Guid.Empty, name.Trim(), email, "!not-a-password-hash!", null,
+        UserRole.SuperAdmin, AccountStatus.Active, RiskStatus.Normal, UserPlan.Free, PlanStatus.Active, false, true, null, null, null, null, DateTime.UtcNow, DateTime.UtcNow);
+}
+
+public sealed class ResetSuperAdminPasswordHandler(ISuperAdminProvisioningRepository repository, IPasswordPolicy policy, IPasswordHasher hasher)
+{
+    public async Task<SuperAdminProvisioningResult> HandleAsync(ResetSuperAdminPasswordCommand command, CancellationToken ct = default)
+    {
+        if (command.Password != command.Confirmation) return new(false, "A confirmação da senha não confere.");
+        var user = await repository.FindByEmailAsync(PasswordRecoveryService.NormalizeEmail(command.Email), ct);
+        if (user is null || user.Role != UserRole.SuperAdmin || user.ClientId is not null) return new(false, "Super Administrador global não encontrado.");
+        var validation = policy.Validate(command.Password, user);
+        if (validation is not null) return new(false, validation);
+        await repository.ResetPasswordAsync(user.Id, hasher.Hash(command.Password), command.Actor, command.Reason, command.CorrelationId, ct);
+        return new(true, "Senha redefinida e sessões anteriores revogadas.", user.Id);
+    }
+}
+
+public sealed class PromoteSuperAdminHandler(ISuperAdminProvisioningRepository repository)
+{
+    public async Task<SuperAdminProvisioningResult> HandleAsync(PromoteSuperAdminCommand command, CancellationToken ct = default)
+    {
+        var user = await repository.PromoteAsync(PasswordRecoveryService.NormalizeEmail(command.Email), command.Actor, command.Reason, command.CorrelationId, ct);
+        return user is null ? new(false, "Usuário não encontrado.") : new(true, "Usuário promovido a Super Administrador.", user.Id);
+    }
+}

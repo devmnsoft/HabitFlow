@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 
 namespace HabitFlow.Application;
 
-public sealed class HabitService(IHabitRepository habits, IHabitCompletionRepository completions, IHabitWeekDayRepository weekDays, HabitScheduleService schedule, HabitPolicy policy, AuditService audit, NotificationService notifications, ILogger<HabitService> logger)
+public sealed class HabitService(IHabitRepository habits, IHabitCompletionRepository completions, IHabitWeekDayRepository weekDays, HabitScheduleService schedule, HabitPolicy policy, AuditService audit, NotificationService notifications, CompleteHabitUseCase completeHabit, UndoHabitCompletionUseCase undoHabit, UserTimeZoneService timeZone, ILogger<HabitService> logger)
 {
     public Task<Result<Habit>> CreateAsync(User user, string name, string color, string? category, CancellationToken ct = default) =>
         CreateAsync(user, name, color, category, HabitFrequencyType.Daily, null, null, null, Array.Empty<int>(), ct);
@@ -43,12 +43,8 @@ public sealed class HabitService(IHabitRepository habits, IHabitCompletionReposi
     {
         try
         {
-            var habit = await habits.GetAsync(habitId, ct);
-            if (habit is null || !habit.BelongsTo(user.Id))
-                return Result.Failure("habit.not_found", "Este hábito não foi encontrado.");
-
-            await completions.AddAsync(new HabitCompletion(Guid.NewGuid(), habitId, user.Id, DateOnly.FromDateTime(DateTime.UtcNow), DateTime.UtcNow), ct);
-            return Result.Success();
+            var result = await completeHabit.ExecuteAsync(new(user.ClientId, user.Id, habitId, timeZone.Today(), Guid.NewGuid().ToString("N"), "LegacyAdapter", Guid.NewGuid().ToString("N")), ct);
+            return result.IsSuccess ? Result.Success() : Result.Failure(result.Error.Code, result.Error.Message);
         }
         catch (Exception ex) { logger.LogError(ex, "Erro ao marcar hábito {HabitId}", habitId); return Result.Failure("habit.mark_error", "Não foi possível marcar o hábito."); }
     }
@@ -57,12 +53,8 @@ public sealed class HabitService(IHabitRepository habits, IHabitCompletionReposi
     {
         try
         {
-            var habit = await habits.GetAsync(habitId, ct);
-            if (habit is null || !habit.BelongsTo(user.Id))
-                return Result.Failure("habit.not_found", "Este hábito não foi encontrado.");
-
-            await completions.DeleteAsync(habitId, user.Id, DateOnly.FromDateTime(DateTime.UtcNow), ct);
-            return Result.Success();
+            var result = await undoHabit.ExecuteAsync(new(user.ClientId, user.Id, habitId, timeZone.Today(), Guid.NewGuid().ToString("N"), "LegacyAdapter", Guid.NewGuid().ToString("N")), ct);
+            return result.IsSuccess ? Result.Success() : Result.Failure(result.Error.Code, result.Error.Message);
         }
         catch (Exception ex) { logger.LogError(ex, "Erro ao desmarcar hábito {HabitId}", habitId); return Result.Failure("habit.unmark_error", "Não foi possível desmarcar o hábito."); }
     }
