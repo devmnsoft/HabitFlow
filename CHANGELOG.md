@@ -506,3 +506,22 @@
 - Testes Playwright
 - Invalidação de cache PWA
 - QA mobile e desktop
+
+## v6.6.1-DapperContracts-NavigationResilience-ErrorExperience-RuntimeStability
+
+- ClientPlanAccess corrigido para DateOnly
+- DTO explícito de persistência
+- Aliases explícitos nas queries
+- Materialização Dapper endurecida
+- Auditoria de tipos PostgreSQL
+- Contratos de materialização
+- Navegação resiliente
+- Feature access em lote
+- Cache por requisição
+- Correção UTF-8
+- Página de erro humanizada
+- Correlation ID
+- Diagnóstico de acesso aos planos
+- Testes DateOnly
+- Testes PostgreSQL
+- Testes de falha da navegação

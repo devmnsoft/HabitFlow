@@ -7,7 +7,7 @@ namespace HabitFlow.Web.Controllers;
 
 [Authorize(Roles = "SuperAdmin")]
 [Route("superadmin")]
-public sealed class SuperAdminController(SuperAdminService dashboard, ClientService clients, EntitlementService entitlements, ClientCommunicationService communications, CustomerHealthService health, SuperAdminOperationalService operations, SchemaMigrationStatusService schema) : Controller
+public sealed class SuperAdminController(SuperAdminService dashboard, ClientService clients, EntitlementService entitlements, ClientCommunicationService communications, CustomerHealthService health, SuperAdminOperationalService operations, SchemaMigrationStatusService schema, Domain.IPlanCatalogRepository planCatalog) : Controller
 {
     [HttpGet("")]
     public async Task<IActionResult> Index(CancellationToken ct) => View(await dashboard.GetDashboardAsync(ct));
@@ -138,6 +138,21 @@ public sealed class SuperAdminController(SuperAdminService dashboard, ClientServ
     [HttpGet("audit")] public async Task<IActionResult> Audit(CancellationToken ct) => View("~/Views/SuperAdmin/Audit/Index.cshtml", await operations.ListAuditAsync(ct));
     [HttpGet("system")] public async Task<IActionResult> System(CancellationToken ct) => View("~/Views/SuperAdmin/SystemHealth/Index.cshtml", await schema.BuildStatusAsync(ct));
     [HttpGet("system-health")] public async Task<IActionResult> SystemHealth(CancellationToken ct) => View("~/Views/SuperAdmin/SystemHealth/Index.cshtml", await schema.BuildStatusAsync(ct));
+    [HttpGet("system-health/plan-access")]
+    public async Task<IActionResult> PlanAccessHealth(CancellationToken ct)
+    {
+        var plans = await planCatalog.GetPublicCatalogAsync(ct);
+        var known = new[] { Domain.PlanCodes.Free, Domain.PlanCodes.Ritmo, Domain.PlanCodes.Evolucao };
+        return Ok(new
+        {
+            status = plans.Count > 0 ? "Healthy" : "Degraded",
+            databaseRead = true,
+            postgresCivilDateType = "date -> DateOnly?",
+            knownPlanCodes = known,
+            publishedPlans = plans.Select(plan => new { plan.Code, featureCount = plan.Features.Count }),
+            generatedAtUtc = DateTime.UtcNow
+        });
+    }
     [HttpGet("communications")] public async Task<IActionResult> Communications(CancellationToken ct) => View("~/Views/SuperAdmin/Communications.cshtml", await communications.ListAllAsync(new Domain.ClientCommunicationFilter(), ct));
     [HttpGet("customer-success")] public IActionResult CustomerSuccess() => View("~/Views/SuperAdmin/CustomerSuccess.cshtml", health.Calculate(Guid.Empty, false, false, false, false, true, false, false, false, true));
     [HttpGet("support")] public IActionResult SupportOperations() => View("~/Views/SuperAdmin/Support/Index.cshtml");

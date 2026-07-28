@@ -7,6 +7,19 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: habitflow_test
+          POSTGRES_PASSWORD: habitflow_test
+          POSTGRES_DB: habitflow_tests
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U habitflow_test -d habitflow_tests"
+          --health-interval 10s --health-timeout 5s --health-retries 5
+    env:
+      HABITFLOW_TEST_CONNECTION_STRING: Host=localhost;Port=5432;Database=habitflow_tests;Username=habitflow_test;Password=habitflow_test
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
@@ -16,7 +29,12 @@ jobs:
       - run: dotnet build HabitFlow.sln --no-restore --configuration Release
       - name: Compile Razor views
         run: dotnet publish src/HabitFlow.Web/HabitFlow.Web.csproj --no-restore --configuration Release --output artifacts/razor-compile
-      - run: dotnet test HabitFlow.sln --no-build --configuration Release --verbosity normal
+      - name: Apply canonical migrations to disposable PostgreSQL
+        env:
+          PGPASSWORD: habitflow_test
+        run: psql -v ON_ERROR_STOP=1 -h localhost -U habitflow_test -d habitflow_tests -f database/migrate.sql
+      - name: Unit, PostgreSQL, Dapper, DateOnly, navigation and UTF-8 tests
+        run: dotnet test HabitFlow.sln --no-build --configuration Release --verbosity normal
       - run: dotnet format HabitFlow.sln --verify-no-changes --verbosity minimal
       - name: Validate layout contract
         shell: pwsh

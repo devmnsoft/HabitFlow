@@ -1,9 +1,14 @@
 using HabitFlow.Domain;
+using Microsoft.Extensions.Logging;
 
 namespace HabitFlow.Infrastructure;
 
-public sealed class PlanCatalogRepository(SqlExecutor db) : IPlanCatalogRepository
+public sealed class PlanCatalogRepository(SqlExecutor db, ILogger<PlanCatalogRepository> logger) : IPlanCatalogRepository
 {
+    private static readonly HashSet<string> KnownPlanCodes = new(StringComparer.OrdinalIgnoreCase)
+        { PlanCodes.Free, PlanCodes.Ritmo, PlanCodes.Evolucao };
+    private static readonly HashSet<string> KnownBenefitsStatuses = new(StringComparer.OrdinalIgnoreCase)
+        { "Free", "Active", "PastDue", "Blocked" };
     public async Task<IReadOnlyList<PublicPlan>> GetPublicCatalogAsync(CancellationToken ct = default)
     {
         var plans = (await db.QueryAsync<PlanRow>("""
@@ -25,8 +30,54 @@ public sealed class PlanCatalogRepository(SqlExecutor db) : IPlanCatalogReposito
         return result;
     }
 
-    public Task<ClientPlanAccess?> GetClientAccessAsync(Guid clientId, CancellationToken ct = default) =>
-        db.QuerySingleOrDefaultAsync<ClientPlanAccess>("select id client_id, contracted_plan_code, effective_plan_code, benefits_status, grace_period_until from habitflow.clients where id=@clientId", new { clientId }, ct);
+    public async Task<ClientPlanAccess?> GetClientAccessAsync(Guid clientId, CancellationToken ct = default)
+    {
+        ClientPlanAccessRow? row;
+        try
+        {
+            row = await db.QuerySingleOrDefaultAsync<ClientPlanAccessRow>("""
+                select id as "ClientId",
+                       coalesce(contracted_plan_code, 'free') as "ContractedPlanCode",
+                       coalesce(effective_plan_code, 'free') as "EffectivePlanCode",
+                       coalesce(benefits_status, 'Free') as "BenefitsStatus",
+                       grace_period_until as "GracePeriodUntil"
+                from habitflow.clients
+                where id = @clientId
+                """, new { clientId }, ct);
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            RuntimeDiagnostics.PlanAccessQueryFailures.Add(1);
+            RuntimeDiagnostics.DapperMaterializationFailures.Add(1);
+            logger.LogError(ex, "Falha na consulta/materialização de acesso ao plano para cliente {ClientIdMask}.", Mask(clientId));
+            throw;
+        }
+
+        if (row is null) return null;
+        var effectivePlan = row.EffectivePlanCode;
+        if (!KnownPlanCodes.Contains(row.ContractedPlanCode) || !KnownPlanCodes.Contains(effectivePlan))
+        {
+            logger.LogError("Código de plano desconhecido para cliente {ClientIdMask}. Contratado={ContractedPlanCode}; efetivo={EffectivePlanCode}. Acesso efetivo reduzido para free.",
+                Mask(clientId), row.ContractedPlanCode, row.EffectivePlanCode);
+            RuntimeDiagnostics.UnknownPlanCodes.Add(1);
+            effectivePlan = PlanCodes.Free;
+        }
+
+        var benefitsStatus = row.BenefitsStatus;
+        if (!KnownBenefitsStatuses.Contains(benefitsStatus))
+        {
+            logger.LogError("Status de benefícios inválido para cliente {ClientIdMask}: {BenefitsStatus}.", Mask(clientId), benefitsStatus);
+            RuntimeDiagnostics.InvalidBenefitsStatus.Add(1);
+            benefitsStatus = "Free";
+            effectivePlan = PlanCodes.Free;
+        }
+
+        return new ClientPlanAccess(row.ClientId, row.ContractedPlanCode, effectivePlan, benefitsStatus, row.GracePeriodUntil);
+    }
 
     public Task<Guid?> GetClientIdForUserAsync(Guid userId, CancellationToken ct = default) =>
         db.QuerySingleOrDefaultAsync<Guid?>("select client_id from habitflow.users where id=@userId", new { userId }, ct);
@@ -40,4 +91,14 @@ public sealed class PlanCatalogRepository(SqlExecutor db) : IPlanCatalogReposito
             """, new { planCode }, ct)).ToDictionary(x => x.Code, StringComparer.OrdinalIgnoreCase);
 
     private sealed record PlanRow(Guid Id, string Code, string PublicName, string? Headline, string? Description, string? AudienceText, string? BadgeText, bool IsFeatured, int SortOrder);
+    internal sealed class ClientPlanAccessRow
+    {
+        public Guid ClientId { get; set; }
+        public string ContractedPlanCode { get; set; } = PlanCodes.Free;
+        public string EffectivePlanCode { get; set; } = PlanCodes.Free;
+        public string BenefitsStatus { get; set; } = "Free";
+        public DateOnly? GracePeriodUntil { get; set; }
+    }
+
+    private static string Mask(Guid id) => $"{id:N}"[..8] + "…";
 }

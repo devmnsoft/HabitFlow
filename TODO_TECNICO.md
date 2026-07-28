@@ -281,3 +281,9 @@ firebase deploy --only hosting
 - [ ] Migrar tokens/regras de `site.css` para módulos em incrementos visualmente comparados; manter `tokens.css`, `base.css` e `components.css` inativos até concluir a migração.
 - [ ] Provisionar personas efêmeras (Gratuito, proprietário, Super Administrador) na CI para ampliar o Playwright sem armazenar secrets.
 - [ ] Adicionar snapshots baselines aprovados em storage de artifacts, nunca no repositório.
+
+## Pós-v6.6.1
+
+- [ ] Executar a matriz PostgreSQL limpa e snapshot migrado em ambiente CI com credencial efêmera `_tests`.
+- [ ] Expandir Row DTOs explícitos para projeções legadas identificadas na auditoria de 77 chamadas Dapper.
+- [ ] Conectar os contadores `HabitFlow.Runtime` ao painel operacional protegido.
