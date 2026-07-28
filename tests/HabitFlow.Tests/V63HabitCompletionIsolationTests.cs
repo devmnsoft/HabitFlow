@@ -1,3 +1,5 @@
+using Xunit;
+
 namespace HabitFlow.Tests;
 
 public sealed class V63HabitCompletionIsolationTests
