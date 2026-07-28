@@ -11,4 +11,8 @@
     <ProjectReference Include="../HabitFlow.Domain/HabitFlow.Domain.csproj" />
     <ProjectReference Include="../HabitFlow.Shared/HabitFlow.Shared.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="../../database/migrations/*.sql" Link="database/migrations/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
 </Project>

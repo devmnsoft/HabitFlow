@@ -40,7 +40,19 @@ jobs:
       - name: Apply canonical migrations to disposable PostgreSQL
         env:
           PGPASSWORD: habitflow_test
-        run: psql -v ON_ERROR_STOP=1 -h localhost -U habitflow_test -d habitflow_tests -f database/migrate.sql
+          PGHOST: localhost
+          PGUSER: habitflow_test
+          PGDATABASE: habitflow_tests
+          HABITFLOW_APP_VERSION: ci
+        run: ./scripts/database/run-migrations.sh
+      - name: Prove canonical migration rerun is idempotent
+        env:
+          PGPASSWORD: habitflow_test
+          PGHOST: localhost
+          PGUSER: habitflow_test
+          PGDATABASE: habitflow_tests
+          HABITFLOW_APP_VERSION: ci
+        run: ./scripts/database/run-migrations.sh
       - name: Unit, PostgreSQL, Dapper, DateOnly, navigation and UTF-8 tests
         run: dotnet test HabitFlow.sln --no-build --configuration Release --verbosity normal
       - name: Validate progress compile contract

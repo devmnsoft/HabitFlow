@@ -59,7 +59,32 @@ public sealed class CustomerHealthService
 
 public sealed class SchemaMigrationStatusService(ISuperAdminOperationalRepository repo)
 {
-    public IReadOnlyList<SchemaMigrationStatus> ListExpectedMigrations() => Enumerable.Range(1, 30).Select(i => new SchemaMigrationStatus($"{i:000}", i == 30 ? "client_registration_cpf_cnpj_real_flow" : i == 29 ? "operational_completeness_v61" : $"migration_{i:000}", false, null)).ToList();
+    public IReadOnlyList<SchemaMigrationStatus> ListExpectedMigrations()
+    {
+        var directory = FindMigrationsDirectory();
+        if (directory is null) return [];
+
+        return Directory.EnumerateFiles(directory, "*.sql", SearchOption.TopDirectoryOnly)
+            .Select(Path.GetFileNameWithoutExtension)
+            .Where(name => name is not null && name.Length > 4 && name[3] == '_' && name[..3].All(char.IsDigit))
+            .OrderBy(name => name, StringComparer.Ordinal)
+            .Select(name => new SchemaMigrationStatus(name![..3], name[4..], false, null))
+            .ToList();
+    }
+
+    private static string? FindMigrationsDirectory()
+    {
+        var current = new DirectoryInfo(AppContext.BaseDirectory);
+        while (current is not null)
+        {
+            var candidate = Path.Combine(current.FullName, "database", "migrations");
+            if (Directory.Exists(candidate)) return candidate;
+            current = current.Parent;
+        }
+
+        var workingDirectoryCandidate = Path.Combine(Directory.GetCurrentDirectory(), "database", "migrations");
+        return Directory.Exists(workingDirectoryCandidate) ? workingDirectoryCandidate : null;
+    }
     public Task<IReadOnlyList<SchemaMigrationStatus>> ListAppliedMigrationsAsync(CancellationToken ct = default) => repo.ListAppliedMigrationsAsync(ct);
     public async Task<IReadOnlyList<SchemaMigrationStatus>> GetPendingMigrationsAsync(CancellationToken ct = default)
     {

@@ -544,3 +544,8 @@
 - Controller sem exceção de contexto; CSS e JavaScript do calendário externos.
 - Base canônica para sincronização de Dashboard, relatórios e objetivos com isolamento por cliente.
 - QA de PostgreSQL, testes funcionais, Razor publish e Playwright ordenado na CI.
+## v6.7-ProductionCoreConvergence-TransactionalJourney-AccountAuthority-RBAC
+
+- Governança inicial de migrations com descoberta dinâmica, checksum SHA-256, advisory lock, transação e rerun idempotente no CI.
+- Status de migrations do Super Administrador passa a refletir os arquivos reais em vez de uma faixa fixa.
+- Auditoria de pré-voo registra com transparência as limitações do ambiente; os demais fluxos da versão continuam pendentes.

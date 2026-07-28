@@ -46,3 +46,4 @@
 \i database/migrations/045_pwa_product_events_hardening.sql
 
 \i database/migrations/046_progress_history_days_limit.sql
+\i database/migrations/047_schema_migration_governance.sql
