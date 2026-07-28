@@ -1,0 +1,31 @@
+@model HabitFlow.Application.ProgressCalendarViewModel
+@using HabitFlow.Application
+@{ ViewData["Title"] = "Seu progresso"; string Label(ProgressDayStatus s) => s switch { ProgressDayStatus.NoSchedule => "Sem hábitos previstos", ProgressDayStatus.Future => "Previsto", ProgressDayStatus.NotStarted => "Ainda não iniciado", ProgressDayStatus.Partial => "Progresso parcial", _ => "Dia concluído" }; }
+<style>
+.progress-calendar{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:.5rem}.progress-day{min-height:7.5rem;padding:.65rem;border:1px solid var(--bs-border-color);border-radius:.75rem;color:inherit;text-decoration:none;overflow-wrap:anywhere}.progress-day.outside{opacity:.5}.progress-day.today{outline:3px solid var(--bs-primary);outline-offset:1px}.progress-day.completed{border-color:var(--bs-success);background:rgba(25,135,84,.08)}.progress-day.partial{border-color:var(--bs-warning)}.progress-day .status{font-size:.78rem}.progress-list{display:none}@media(max-width:575.98px){.progress-calendar{display:none}.progress-list{display:block}.calendar-mode .progress-calendar{display:grid;gap:.2rem}.calendar-mode .progress-day{min-height:4.5rem;padding:.3rem;font-size:.72rem}.calendar-mode .progress-list{display:none}.progress-day .status{display:block}.progress-toolbar>*{flex:1}}
+</style>
+<header class="hf-page-header"><div><p class="hf-eyebrow">Consistência real</p><h1>Seu progresso</h1><p>Veja como os pequenos passos estão formando sua rotina.</p></div><a class="btn btn-outline-success" href="/reports">Ver relatórios</a></header>
+<section class="row g-3 mb-4" aria-label="Resumo do mês">
+ <div class="col-6 col-lg-3"><div class="hf-card h-100"><small>Conclusões no mês</small><strong class="d-block fs-3">@Model.CompletedCount de @Model.ScheduledCount</strong></div></div>
+ <div class="col-6 col-lg-3"><div class="hf-card h-100"><small>Progresso</small><strong class="d-block fs-3">@Model.CompletionPercentage%</strong></div></div>
+ <div class="col-6 col-lg-3"><div class="hf-card h-100"><small>Sequência atual</small><strong class="d-block fs-3">@Model.CurrentStreak dias</strong></div></div>
+ <div class="col-6 col-lg-3"><div class="hf-card h-100"><small>Melhor sequência</small><strong class="d-block fs-3">@Model.BestStreak dias</strong></div></div>
+</section>
+<p class="alert alert-light">@Model.InsightMessage</p>
+@if (!Model.HasFullHistory && Model.HistoryLimitStart.HasValue) { <aside class="alert alert-info">Seu histórico continua guardado. No Ritmo, você pode acompanhar períodos anteriores com mais detalhes. <a href="/plans">Comparar planos</a></aside> }
+<nav class="progress-toolbar d-flex flex-wrap align-items-center gap-2 mb-3" aria-label="Navegação entre meses">
+ @if(Model.CanGoPrevious){<a class="btn btn-outline-secondary" aria-label="Mês anterior" href="?year=@Model.PreviousYear&month=@Model.PreviousMonth">← Mês anterior</a>}else{<button class="btn btn-outline-secondary" disabled>← Mês anterior</button>}
+ <a class="btn btn-outline-primary" href="/progress/calendar">Hoje</a>
+ @if(Model.CanGoNext){<a class="btn btn-outline-secondary" aria-label="Próximo mês" href="?year=@Model.NextYear&month=@Model.NextMonth">Próximo mês →</a>}
+ <strong class="ms-lg-auto text-capitalize">@Model.MonthName de @Model.Year</strong>
+ <button id="view-toggle" class="btn btn-outline-dark d-sm-none" type="button" aria-pressed="false">Calendário</button>
+</nav>
+<div class="d-none d-sm-grid progress-calendar fw-semibold text-center mb-2" aria-hidden="true"><span>Dom</span><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span></div>
+<div id="calendar-content">
+ <div class="progress-calendar" role="grid" aria-label="Calendário de @Model.MonthName">
+ @foreach(var day in Model.Days){ var css=day.Status==ProgressDayStatus.Completed?"completed":day.Status==ProgressDayStatus.Partial?"partial":""; <a role="gridcell" class="progress-day @css @(day.IsCurrentMonth?"":"outside") @(day.IsToday?"today":"")" href="@day.DetailUrl" aria-label="@day.AccessibilityLabel" title="@day.AccessibilityLabel"><strong>@day.DayNumber</strong><span class="status d-block mt-2">@Label(day.Status)</span>@if(day.HasSchedule){<span class="d-block">@day.CompletedCount/@day.ScheduledCount · @day.CompletionPercentage%</span>}</a> }
+ </div>
+ <div class="progress-list" aria-label="Lista do mês">@foreach(var day in Model.Days.Where(x=>x.IsCurrentMonth)){<article class="hf-card mb-2 d-flex justify-content-between align-items-center gap-2"><div><strong>@day.Date.ToString("dd/MM")</strong><span class="d-block">@Label(day.Status) · @day.CompletedCount de @day.ScheduledCount (@day.CompletionPercentage%)</span></div><a class="btn btn-sm btn-outline-primary" href="@day.DetailUrl">Ver detalhes</a></article>}</div>
+</div>
+<section class="mt-4" aria-label="Legenda"><h2 class="h5">Legenda</h2><ul class="list-inline"><li class="list-inline-item">○ Sem hábitos previstos</li><li class="list-inline-item">◌ Ainda não iniciado</li><li class="list-inline-item">◐ Progresso parcial</li><li class="list-inline-item">● Dia concluído</li></ul></section>
+<script>document.getElementById('view-toggle')?.addEventListener('click',e=>{const c=document.getElementById('calendar-content');const on=c.classList.toggle('calendar-mode');e.currentTarget.textContent=on?'Lista':'Calendário';e.currentTarget.setAttribute('aria-pressed',String(on));});</script>

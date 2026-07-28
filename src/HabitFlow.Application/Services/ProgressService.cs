@@ -1,10 +1,6 @@
-using HabitFlow.Domain;
-using HabitFlow.Shared;
-using Microsoft.Extensions.Logging;
-
 namespace HabitFlow.Application;
 
-public sealed class ProgressService(ILogger<ProgressService>? logger = null)
+public sealed class ProgressService
 {
     public int CurrentStreak(IEnumerable<DateOnly> dates, DateOnly today)
     {
@@ -29,9 +25,4 @@ public sealed class ProgressService(ILogger<ProgressService>? logger = null)
         return best;
     }
 
-    public Result<ProgressDto> Build(IReadOnlyList<Habit> habits, IReadOnlyList<HabitCompletion> completions)
-    {
-        try { return Result<ProgressDto>.Success(new ProgressDto(habits.Count, completions.Count, BestStreak(completions.Select(x => x.CompletedDate)), 0, 0)); }
-        catch (Exception ex) { logger?.LogError(ex, "Erro ao montar progresso"); return Result<ProgressDto>.Failure("progress.build_error", "Não foi possível montar o progresso."); }
-    }
 }
