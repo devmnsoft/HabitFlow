@@ -21,6 +21,7 @@ public static class PlanFeatureCodes
     public const string BasicReports = "basic_reports";
     public const string ReportPrint = "report_print";
     public const string FullHistory = "full_history";
+    public const string HistoryDaysLimit = "history_days_limit";
     public const string SharedGoals = "shared_goals";
     public const string ClientAdminDashboard = "client_admin_dashboard";
     public const string ConsolidatedReports = "consolidated_reports";

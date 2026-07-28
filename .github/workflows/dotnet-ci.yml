@@ -26,6 +26,14 @@ jobs:
         with:
           dotnet-version: '10.0.x'
       - run: dotnet restore HabitFlow.sln
+      - name: Build Domain
+        run: dotnet build src/HabitFlow.Domain/HabitFlow.Domain.csproj --no-restore --configuration Release
+      - name: Build Application
+        run: dotnet build src/HabitFlow.Application/HabitFlow.Application.csproj --no-restore --configuration Release
+      - name: Build Infrastructure
+        run: dotnet build src/HabitFlow.Infrastructure/HabitFlow.Infrastructure.csproj --no-restore --configuration Release
+      - name: Build Web
+        run: dotnet build src/HabitFlow.Web/HabitFlow.Web.csproj --no-restore --configuration Release
       - run: dotnet build HabitFlow.sln --no-restore --configuration Release
       - name: Compile Razor views
         run: dotnet publish src/HabitFlow.Web/HabitFlow.Web.csproj --no-restore --configuration Release --output artifacts/razor-compile
@@ -35,6 +43,9 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -h localhost -U habitflow_test -d habitflow_tests -f database/migrate.sql
       - name: Unit, PostgreSQL, Dapper, DateOnly, navigation and UTF-8 tests
         run: dotnet test HabitFlow.sln --no-build --configuration Release --verbosity normal
+      - name: Validate progress compile contract
+        shell: pwsh
+        run: ./scripts/qa/check-progress-compile-contract.ps1
       - run: dotnet format HabitFlow.sln --verify-no-changes --verbosity minimal
       - name: Validate layout contract
         shell: pwsh

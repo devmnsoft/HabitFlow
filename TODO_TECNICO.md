@@ -293,3 +293,9 @@ firebase deploy --only hosting
 - [ ] Executar e registrar testes PostgreSQL e Playwright da área Progresso em ambiente com SDK, banco e navegadores instalados.
 - [ ] Integrar o mesmo resumo de consistência à resposta Ajax de conclusão do Dashboard e aos objetivos.
 - [ ] Substituir a janela Gratuita fixa por valor lido diretamente do catálogo parametrizado de features.
+
+## v6.6.3 — acompanhamento
+
+- Concluir a adoção transacional das métricas canônicas no payload de atualização do Dashboard e nos objetivos.
+- Evoluir todos os métodos legados de ReportService para exigir `clientId` sem quebra de consumidores.
+- Adicionar cobertura WebApplicationFactory autenticada e cenários PostgreSQL multi-tenant quando o SDK .NET 10 estiver disponível no ambiente de desenvolvimento.

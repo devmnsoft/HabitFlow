@@ -44,3 +44,5 @@
 \i database/migrations/043_goal_progress_completion.sql
 \i database/migrations/044_report_snapshots_analytics.sql
 \i database/migrations/045_pwa_product_events_hardening.sql
+
+\i database/migrations/046_progress_history_days_limit.sql
