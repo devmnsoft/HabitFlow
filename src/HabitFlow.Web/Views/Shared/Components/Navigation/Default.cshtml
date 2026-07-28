@@ -1,0 +1,11 @@
+@model IReadOnlyList<HabitFlow.Web.Models.NavigationItem>
+@using HabitFlow.Web.Services
+<ul class="navbar-nav mx-auto mb-2 mb-lg-0 hf-nav-links">
+@foreach (var item in Model)
+{
+    <li class="nav-item"><a class="nav-link hf-nav-card @(item.IsActive ? "active" : null)" aria-current="@(item.IsActive ? "page" : null)" href="@NavigationService.ResolveUrl(item.Code)" title="@item.Description">
+        @await Html.PartialAsync("~/Views/Shared/Partials/Icons/_Icon.cshtml", null, new ViewDataDictionary(ViewData){{"Name",item.Icon}})
+        <span>@item.Label</span><small>@item.Description</small>
+    </a></li>
+}
+</ul>
