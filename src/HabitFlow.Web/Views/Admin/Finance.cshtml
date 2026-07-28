@@ -1,6 +1,6 @@
 @model HabitFlow.Domain.FinancialDashboard?
 @{ ViewData["Title"] = "Admin Financeiro"; }
-<div class="container-fluid py-4"><h1>Admin Financeiro</h1>
+<div class="py-4"><h1>Admin Financeiro</h1>
 @if (TempData["Error"] is string error){<div class="alert alert-warning">@error</div>}
 @if (Model is not null){<div class="row g-3 mb-4">
 <div class="col-md-3"><div class="card"><div class="card-body"><span>Receita aprovada</span><strong class="d-block">@Model.ApprovedRevenue.ToString("C")</strong></div></div></div>

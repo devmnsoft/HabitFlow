@@ -1,4 +1,4 @@
-@{ Layout = "~/Views/Shared/_Layout.cshtml"; ViewData["Title"] = "Demonstração"; }
+@{ ViewData["Title"] = "Demonstração"; }
 <section class="hf-hero hf-hero-grid mb-4">
   <div><span class="hf-section-kicker">Demonstração sem cadastro</span><h1>Veja o HabitFlow funcionando</h1><p class="lead">Uma demonstração simples de como você organiza hábitos, marca conclusões e acompanha sua evolução.</p><div class="d-flex gap-2 flex-wrap"><a class="btn btn-success btn-lg" href="/register">Criar minha conta grátis</a><a class="btn btn-outline-success btn-lg" href="/habit-library">Ver biblioteca de hábitos</a></div></div>
   <aside class="hf-mockup-card">@await Html.PartialAsync("~/Views/Shared/Partials/Illustrations/_DemoProgressIllustration.cshtml")</aside>

@@ -482,3 +482,27 @@
 - “Meu plano” permanece acessível para pessoas autenticadas mesmo durante mudanças de acesso.
 - Auditoria inicial registra com transparência as validações disponíveis e as limitações do ambiente.
 - Shell passa a carregar apenas o CSS do contexto público, pessoal, conta ou plataforma.
+
+## v6.5.1-LayoutRecovery-StableShell-ContextNavigation-VisualRegression
+
+- Recuperação do layout após a v6.5
+- Layout HTML único e estável
+- Remoção de layouts aninhados
+- Contexto centralizado
+- Views sem layout explícito
+- Scripts na ordem correta
+- CSS carregado por contexto
+- Navegação pública compacta
+- Navegação pessoal compacta
+- Sidebar da conta
+- Sidebar da plataforma
+- Navegação mobile
+- Footer por contexto
+- Containers corrigidos
+- Cards e tabelas responsivos
+- Ícones de navegação completos
+- Testes de overflow
+- Testes de sobreposição
+- Testes Playwright
+- Invalidação de cache PWA
+- QA mobile e desktop

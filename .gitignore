@@ -43,3 +43,7 @@ firebase-adminsdk*.json
 
 # Configuração local com secrets
 src/HabitFlow.Web/appsettings.Development.local.json
+
+# Playwright visual QA artifacts
+tests/HabitFlow.Playwright/test-results/
+tests/HabitFlow.Playwright/playwright-report/

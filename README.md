@@ -227,3 +227,7 @@ O login agora emite claim `client_id` para Admin/User vinculados, o cadastro pú
 
 ## Jornada pessoal v6.3
 A v6.3 adiciona a base de objetivos, consistência, compartilhamento privado e instalação PWA. Consulte `docs/PRODUCT_EXPERIENCE_AUDIT_V6_3.md` e `docs/PLAN_FEATURE_ENFORCEMENT.md`. A aplicação continua em ASP.NET Core/Razor, Dapper e PostgreSQL, executável sem Docker na porta 5097.
+
+## Layout contextual estável (v6.5.1)
+
+A aplicação usa um único shell Razor e resolve os contextos Public, Personal, Account e Platform no servidor. Consulte `docs/V651_LAYOUT_ARCHITECTURE.md`. O contrato pode ser validado com `pwsh ./scripts/qa/check-layout-contract.ps1`; a regressão visual fica em `tests/HabitFlow.Playwright` e seus screenshots são somente artifacts de CI. A aplicação continua ouvindo na porta **5097**.

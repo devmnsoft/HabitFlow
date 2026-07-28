@@ -18,7 +18,7 @@ public sealed class NavigationService(INavigationAccessEvaluator? accessEvaluato
             RequiredPermission: null,
             RequiredFeature: null,
             SortOrder: 10,
-            IsActive: true),
+            IsEnabled: true),
 
         new(
             Code: "demo",
@@ -30,7 +30,7 @@ public sealed class NavigationService(INavigationAccessEvaluator? accessEvaluato
             RequiredPermission: null,
             RequiredFeature: null,
             SortOrder: 20,
-            IsActive: true),
+            IsEnabled: true),
 
         new(
             Code: "library",
@@ -42,7 +42,7 @@ public sealed class NavigationService(INavigationAccessEvaluator? accessEvaluato
             RequiredPermission: null,
             RequiredFeature: null,
             SortOrder: 30,
-            IsActive: true),
+            IsEnabled: true),
 
         new(
             Code: "plans",
@@ -54,7 +54,7 @@ public sealed class NavigationService(INavigationAccessEvaluator? accessEvaluato
             RequiredPermission: null,
             RequiredFeature: null,
             SortOrder: 40,
-            IsActive: true),
+            IsEnabled: true),
 
         new(
             Code: "help",
@@ -66,7 +66,7 @@ public sealed class NavigationService(INavigationAccessEvaluator? accessEvaluato
             RequiredPermission: null,
             RequiredFeature: null,
             SortOrder: 50,
-            IsActive: true),
+            IsEnabled: true),
 
         // Navegação pessoal
         new(
@@ -79,7 +79,7 @@ public sealed class NavigationService(INavigationAccessEvaluator? accessEvaluato
             RequiredPermission: null,
             RequiredFeature: null,
             SortOrder: 10,
-            IsActive: true),
+            IsEnabled: true),
 
         new(
             Code: "habits",
@@ -91,7 +91,7 @@ public sealed class NavigationService(INavigationAccessEvaluator? accessEvaluato
             RequiredPermission: null,
             RequiredFeature: null,
             SortOrder: 20,
-            IsActive: true),
+            IsEnabled: true),
 
         new(
             Code: "goals",
@@ -103,7 +103,7 @@ public sealed class NavigationService(INavigationAccessEvaluator? accessEvaluato
             RequiredPermission: null,
             RequiredFeature: null,
             SortOrder: 30,
-            IsActive: true),
+            IsEnabled: true),
 
         new(
             Code: "progress",
@@ -115,7 +115,7 @@ public sealed class NavigationService(INavigationAccessEvaluator? accessEvaluato
             RequiredPermission: null,
             RequiredFeature: null,
             SortOrder: 40,
-            IsActive: true),
+            IsEnabled: true),
 
         new(
             Code: "reports",
@@ -127,7 +127,7 @@ public sealed class NavigationService(INavigationAccessEvaluator? accessEvaluato
             RequiredPermission: null,
             RequiredFeature: "basic_reports",
             SortOrder: 50,
-            IsActive: true),
+            IsEnabled: true),
 
         // Navegação da conta
         new(
@@ -140,7 +140,7 @@ public sealed class NavigationService(INavigationAccessEvaluator? accessEvaluato
             RequiredPermission: null,
             RequiredFeature: null,
             SortOrder: 10,
-            IsActive: true),
+            IsEnabled: true),
 
         new(
             Code: "people",
@@ -152,7 +152,7 @@ public sealed class NavigationService(INavigationAccessEvaluator? accessEvaluato
             RequiredPermission: "Client.Users.Manage",
             RequiredFeature: "user_invitations",
             SortOrder: 20,
-            IsActive: true),
+            IsEnabled: true),
 
         new(
             Code: "invites",
@@ -164,7 +164,7 @@ public sealed class NavigationService(INavigationAccessEvaluator? accessEvaluato
             RequiredPermission: "Client.Users.Manage",
             RequiredFeature: "user_invitations",
             SortOrder: 30,
-            IsActive: true),
+            IsEnabled: true),
 
         new(
             Code: "my-plan",
@@ -176,7 +176,7 @@ public sealed class NavigationService(INavigationAccessEvaluator? accessEvaluato
             RequiredPermission: null,
             RequiredFeature: null,
             SortOrder: 40,
-            IsActive: true),
+            IsEnabled: true),
 
         new(
             Code: "payments",
@@ -188,19 +188,19 @@ public sealed class NavigationService(INavigationAccessEvaluator? accessEvaluato
             RequiredPermission: "Client.Billing.View",
             RequiredFeature: null,
             SortOrder: 50,
-            IsActive: true),
+            IsEnabled: true),
 
         new(
             Code: "privacy",
             Label: "Privacidade",
             Description: "Controle seus dados",
             Icon: "privacy",
-            Url: "/profile/privacy",
+            Url: "/privacy",
             Context: NavigationContext.Account,
             RequiredPermission: null,
             RequiredFeature: null,
             SortOrder: 60,
-            IsActive: true),
+            IsEnabled: true),
 
         new(
             Code: "support",
@@ -212,7 +212,7 @@ public sealed class NavigationService(INavigationAccessEvaluator? accessEvaluato
             RequiredPermission: null,
             RequiredFeature: null,
             SortOrder: 70,
-            IsActive: true),
+            IsEnabled: true),
 
         // Navegação da plataforma
         new(
@@ -225,7 +225,7 @@ public sealed class NavigationService(INavigationAccessEvaluator? accessEvaluato
             RequiredPermission: "Platform.Clients.View",
             RequiredFeature: null,
             SortOrder: 10,
-            IsActive: true),
+            IsEnabled: true),
 
         new(
             Code: "clients",
@@ -237,7 +237,7 @@ public sealed class NavigationService(INavigationAccessEvaluator? accessEvaluato
             RequiredPermission: "Platform.Clients.View",
             RequiredFeature: null,
             SortOrder: 20,
-            IsActive: true),
+            IsEnabled: true),
 
         new(
             Code: "users",
@@ -249,7 +249,7 @@ public sealed class NavigationService(INavigationAccessEvaluator? accessEvaluato
             RequiredPermission: "Platform.Users.View",
             RequiredFeature: null,
             SortOrder: 30,
-            IsActive: true),
+            IsEnabled: true),
 
         new(
             Code: "platform-plans",
@@ -261,7 +261,7 @@ public sealed class NavigationService(INavigationAccessEvaluator? accessEvaluato
             RequiredPermission: "Platform.Plans.View",
             RequiredFeature: null,
             SortOrder: 40,
-            IsActive: true),
+            IsEnabled: true),
 
         new(
             Code: "subscriptions",
@@ -273,7 +273,7 @@ public sealed class NavigationService(INavigationAccessEvaluator? accessEvaluato
             RequiredPermission: "Platform.Billing.View",
             RequiredFeature: null,
             SortOrder: 50,
-            IsActive: true),
+            IsEnabled: true),
 
         new(
             Code: "platform-payments",
@@ -285,7 +285,7 @@ public sealed class NavigationService(INavigationAccessEvaluator? accessEvaluato
             RequiredPermission: "Platform.Billing.View",
             RequiredFeature: null,
             SortOrder: 60,
-            IsActive: true),
+            IsEnabled: true),
 
         new(
             Code: "overdue",
@@ -297,7 +297,7 @@ public sealed class NavigationService(INavigationAccessEvaluator? accessEvaluato
             RequiredPermission: "Platform.Billing.View",
             RequiredFeature: null,
             SortOrder: 70,
-            IsActive: true),
+            IsEnabled: true),
 
         new(
             Code: "platform-support",
@@ -309,7 +309,7 @@ public sealed class NavigationService(INavigationAccessEvaluator? accessEvaluato
             RequiredPermission: "Platform.Support.Manage",
             RequiredFeature: null,
             SortOrder: 80,
-            IsActive: true),
+            IsEnabled: true),
 
         new(
             Code: "audit",
@@ -321,7 +321,7 @@ public sealed class NavigationService(INavigationAccessEvaluator? accessEvaluato
             RequiredPermission: "Platform.Audit.View",
             RequiredFeature: null,
             SortOrder: 90,
-            IsActive: true),
+            IsEnabled: true),
 
         new(
             Code: "system",
@@ -333,8 +333,10 @@ public sealed class NavigationService(INavigationAccessEvaluator? accessEvaluato
             RequiredPermission: "Platform.Settings.Manage",
             RequiredFeature: null,
             SortOrder: 100,
-            IsActive: true)
+            IsEnabled: true)
     ];
+
+    public static IReadOnlyList<NavigationItem> Definitions => Items;
 
     public IReadOnlyList<NavigationItem> Get(
         NavigationContext context,
@@ -351,14 +353,14 @@ public sealed class NavigationService(INavigationAccessEvaluator? accessEvaluato
         var isSuperAdmin = user.IsInRole("SuperAdmin");
 
         return Items
-            .Where(item => item.Context == context && item.IsActive)
+            .Where(item => item.Context == context && item.IsEnabled)
             .Where(item =>
                 item.RequiredPermission is null ||
                 isSuperAdmin ||
                 permissions.Contains(item.RequiredPermission))
             .Select(item => item with
             {
-                IsActive = IsCurrent(item.Url, path)
+                IsCurrent = IsCurrent(item.Url, path)
             })
             .OrderBy(item => item.SortOrder)
             .ToArray();
@@ -379,7 +381,7 @@ public sealed class NavigationService(INavigationAccessEvaluator? accessEvaluato
             return [];
         }
 
-        var candidates = Items.Where(item => item.Context == context && item.IsActive);
+        var candidates = Items.Where(item => item.Context == context && item.IsEnabled);
         var visible = new List<NavigationItem>();
         foreach (var item in candidates)
         {
@@ -391,7 +393,7 @@ public sealed class NavigationService(INavigationAccessEvaluator? accessEvaluato
             if ((allowed || item.Code == "my-plan") &&
                 (context == NavigationContext.Public || user.Identity?.IsAuthenticated == true))
             {
-                visible.Add(item with { IsActive = IsCurrent(item.Url, path) });
+                visible.Add(item with { IsCurrent = IsCurrent(item.Url, path) });
             }
         }
 
@@ -445,6 +447,6 @@ public sealed class NavigationService(INavigationAccessEvaluator? accessEvaluato
                     code,
                     StringComparison.OrdinalIgnoreCase));
 
-        return item?.Url ?? "#";
+        return item?.Url ?? "/";
     }
 }

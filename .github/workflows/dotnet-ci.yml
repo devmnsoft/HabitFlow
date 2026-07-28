@@ -14,8 +14,37 @@ jobs:
           dotnet-version: '10.0.x'
       - run: dotnet restore HabitFlow.sln
       - run: dotnet build HabitFlow.sln --no-restore --configuration Release
+      - name: Compile Razor views
+        run: dotnet publish src/HabitFlow.Web/HabitFlow.Web.csproj --no-restore --configuration Release --output artifacts/razor-compile
       - run: dotnet test HabitFlow.sln --no-build --configuration Release --verbosity normal
       - run: dotnet format HabitFlow.sln --verify-no-changes --verbosity minimal
+      - name: Validate layout contract
+        shell: pwsh
+        run: ./scripts/qa/check-layout-contract.ps1
+      - name: Validate links
+        shell: pwsh
+        run: ./scripts/qa/check-links.ps1
+      - name: Validate assets
+        shell: pwsh
+        run: ./scripts/qa/check-assets.ps1
+      - name: Install Playwright tests
+        working-directory: tests/HabitFlow.Playwright
+        run: npm install && npx playwright install --with-deps chromium
+      - name: Run visual regression tests
+        working-directory: tests/HabitFlow.Playwright
+        run: npm test
+      - name: Publish Release
+        run: dotnet publish src/HabitFlow.Web/HabitFlow.Web.csproj --no-restore --configuration Release --output artifacts/publish
+      - name: Upload layout QA artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: layout-visual-qa
+          if-no-files-found: warn
+          path: |
+            tests/HabitFlow.Playwright/test-results
+            tests/HabitFlow.Playwright/playwright-report
+            artifacts/razor-compile
       - name: Basic secret guard
         run: |
           ! git ls-files | grep -E '(^|/)(appsettings\.Production\.json|\.env|\.env\.production)$'

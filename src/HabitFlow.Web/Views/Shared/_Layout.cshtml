@@ -1,65 +1,131 @@
 @using System.Security.Claims
 @using HabitFlow.Web.Models
 @inject HabitFlow.Web.Services.NavigationService Navigation
+@inject HabitFlow.Web.Services.LayoutContextResolver ContextResolver
+@inject IWebHostEnvironment HostEnvironment
 @{
     var isAuthenticated = User?.Identity?.IsAuthenticated == true;
     var userName = User?.FindFirst(ClaimTypes.Name)?.Value ?? User?.Identity?.Name ?? "Visitante";
-    var userEmail = User?.FindFirst(ClaimTypes.Email)?.Value ?? "";
-    var isAdmin = User?.IsInRole("Admin") == true || User?.FindFirst(ClaimTypes.Role)?.Value == "Admin";
+    var userEmail = User?.FindFirst(ClaimTypes.Email)?.Value ?? string.Empty;
     var title = ViewData["Title"] as string ?? "HabitFlow";
-    var navigationContext = ViewData["NavigationContext"] is NavigationContext value ? value : (isAuthenticated ? NavigationContext.Personal : NavigationContext.Public);
-    var layoutClass = ViewData["LayoutClass"] as string ?? "hf-public";
-    var contextualStylesheet = navigationContext switch
-    {
-        NavigationContext.Personal => "personal.css",
-        NavigationContext.Account => "account.css",
-        NavigationContext.Platform => "platform.css",
-        _ => "public.css"
-    };
+    var navigationContext = ContextResolver.Resolve(Context, ViewContext.RouteData, ViewData);
+    var contextName = navigationContext.ToString().ToLowerInvariant();
+    var contextualStylesheet = $"{contextName}.css";
+    var topVariant = navigationContext == NavigationContext.Public ? NavigationVariant.PublicTop : NavigationVariant.PersonalTop;
+    var sidebarVariant = navigationContext == NavigationContext.Account ? NavigationVariant.AccountSidebar : NavigationVariant.PlatformSidebar;
+    var hasSidebar = navigationContext is NavigationContext.Account or NavigationContext.Platform;
+    var version = typeof(Program).Assembly.GetName().Version?.ToString(3) ?? "6.5.1";
 }
 <!doctype html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>@title · HabitFlow</title>
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" type="image/svg+xml" href="~/favicon.svg" asp-append-version="true">
+  <link rel="manifest" href="~/manifest.webmanifest" asp-append-version="true">
   <meta name="theme-color" content="#10B981">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="/css/tokens.css" asp-append-version="true">
-  <link rel="stylesheet" href="/css/base.css" asp-append-version="true">
-  <link rel="stylesheet" href="/css/components.css" asp-append-version="true">
-  <link rel="stylesheet" href="/css/@contextualStylesheet" asp-append-version="true">
-  <link rel="stylesheet" href="/css/accessibility.css" asp-append-version="true">
-  <link rel="stylesheet" href="/css/responsive.css" asp-append-version="true">
-  <link rel="stylesheet" href="/css/print.css" media="print" asp-append-version="true">
+  <link rel="stylesheet" href="~/css/site.css" asp-append-version="true">
+  <link rel="stylesheet" href="~/css/layout-stabilization.css" asp-append-version="true">
+  <link rel="stylesheet" href="~/css/@contextualStylesheet" asp-append-version="true">
+  <link rel="stylesheet" href="~/css/accessibility.css" asp-append-version="true">
+  <link rel="stylesheet" href="~/css/responsive.css" asp-append-version="true">
+  <link rel="stylesheet" href="~/css/print.css" media="print" asp-append-version="true">
+  @await RenderSectionAsync("Styles", required: false)
 </head>
-<body class="hf-contrast-default hf-font-normal @layoutClass">
+<body class="hf-contrast-default hf-font-normal hf-context-@contextName" data-navigation-context="@contextName">
 <a class="visually-hidden-focusable hf-skip" href="#conteudo">Ir para o conteúdo</a>
-<header class="hf-topbar">
-  <nav class="navbar navbar-expand-lg" aria-label="Navegação principal">
-    <div class="container-fluid hf-shell">
-      <a class="hf-brand" href="/"><span class="hf-brand-mark" aria-hidden="true">✓</span><span><strong>HabitFlow</strong><small>Consistência diária, sem complicação.</small></span></a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#hfNav" aria-controls="hfNav" aria-expanded="false" aria-label="Abrir menu"><span class="navbar-toggler-icon"></span></button>
-      <div class="collapse navbar-collapse" id="hfNav">
-        @await Component.InvokeAsync("Navigation", new { context = navigationContext })
-        <div class="hf-user-area @(isAuthenticated ? "hf-session-actions" : "hf-auth-actions")">
-          @if (isAuthenticated) { @await Html.PartialAsync("~/Views/Shared/Partials/_NotificationBell.cshtml") }
-          @if (isAuthenticated) { <a class="btn btn-outline-success" href="/account/plan">Meu plano</a>@if(Navigation.HasPlatformAccess(User!)){<a class="btn btn-outline-secondary" href="/superadmin">Gestão da Plataforma</a>}<div class="hf-user-chip"><span>@userName</span><small>@userEmail</small></div><button type="button" class="btn btn-outline-success" data-pwa-install hidden>Instalar HabitFlow</button><form method="post" action="/logout" class="m-0">@Html.AntiForgeryToken()<button class="btn btn-outline-secondary" data-loading-text="Saindo...">Sair</button></form> } else { <a class="btn btn-outline-success" href="/login">Entrar</a><a class="btn btn-success btn-primary-cta" href="/register">Começar grátis</a> }
+<header class="hf-topbar" data-layout-region="header">
+  <div class="hf-shell hf-header-inner">
+    <a class="hf-brand" href="@(isAuthenticated ? "/dashboard" : "/")" aria-label="HabitFlow — página inicial">
+      <span class="hf-brand-mark" aria-hidden="true">✓</span><span><strong>HabitFlow</strong><small>Consistência diária</small></span>
+    </a>
+    @if (!hasSidebar)
+    {
+      <div class="hf-desktop-navigation">@await Component.InvokeAsync("Navigation", new { context = navigationContext, variant = topVariant })</div>
+      <button class="btn btn-outline-success hf-drawer-trigger" type="button" data-bs-toggle="offcanvas" data-bs-target="#primaryDrawer" aria-controls="primaryDrawer" aria-label="Abrir menu principal">Menu</button>
+    }
+    @if (hasSidebar)
+    {
+      <button class="btn btn-outline-success hf-drawer-trigger" type="button" data-bs-toggle="offcanvas" data-bs-target="#contextDrawer" aria-controls="contextDrawer" aria-label="Abrir navegação contextual">Menu @(navigationContext == NavigationContext.Account ? "da conta" : "da plataforma")</button>
+    }
+    @if (isAuthenticated)
+    {
+      <div class="hf-header-actions">
+        @if (navigationContext == NavigationContext.Personal) { @await Html.PartialAsync("~/Views/Shared/Partials/_NotificationBell.cshtml") }
+        <div class="dropdown">
+          <button class="btn hf-profile-trigger dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Abrir menu de @userName">
+            <span class="hf-avatar" aria-hidden="true">@userName[..1].ToUpperInvariant()</span><span class="hf-profile-name">@userName</span>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end hf-profile-menu">
+            @if (!string.IsNullOrWhiteSpace(userEmail)) { <li><span class="dropdown-item-text hf-user-email">@userEmail</span></li><li><hr class="dropdown-divider"></li> }
+            <li><a class="dropdown-item" href="/account/plan">Meu plano</a></li>
+            <li><a class="dropdown-item" href="/profile">Sua conta</a></li>
+            <li><a class="dropdown-item" href="/profile/accessibility">Preferências</a></li>
+            @if (Navigation.HasPlatformAccess(User!)) { <li><a class="dropdown-item" href="/superadmin">Gestão da Plataforma</a></li> }
+            <li><button type="button" class="dropdown-item" data-pwa-install hidden>Instalar HabitFlow</button></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><form method="post" action="/logout">@Html.AntiForgeryToken()<button class="dropdown-item" data-loading-text="Saindo...">Sair</button></form></li>
+          </ul>
         </div>
       </div>
-    </div>
-  </nav>
-</header>
-<main id="conteudo" class="hf-main" tabindex="-1">
-  <div class="container-fluid hf-shell">
-    @await Html.PartialAsync("~/Views/Shared/Partials/_AppMessages.cshtml")
-    @await Html.PartialAsync("~/Views/Shared/Partials/_FeedbackBridge.cshtml")
-    @RenderBody()
+    }
+    else
+    {
+      <div class="hf-auth-actions"><a class="btn btn-outline-success" href="/login">Entrar</a><a class="btn btn-success" href="/register">Começar grátis</a></div>
+    }
   </div>
-</main>
-<footer class="hf-footer"><div class="container-fluid hf-shell hf-footer-premium"><div>@await Html.PartialAsync("~/Views/Shared/Partials/_MNSOFTBrandBadge.cshtml", null, new ViewDataDictionary(ViewData){{"Compact","true"}})</div><div><h2>HabitFlow</h2><p>Hábitos, rotina e progresso em um só lugar.</p></div><nav aria-label="Produto"><h2>Produto</h2><ul class="hf-footer-links"><li><a href="/">Início</a></li><li><a href="/demo">Demonstração</a></li><li><a href="/habit-library">Biblioteca</a></li><li><a href="/plans">Planos</a></li></ul></nav><nav aria-label="Suporte"><h2>Suporte</h2><ul class="hf-footer-links"><li><a href="/help">Central de Ajuda</a></li><li><a href="/support">Suporte</a></li><li><a href="/privacy">Privacidade</a></li><li><a href="/terms">Termos</a></li><li><a href="/lgpd">LGPD</a></li></ul></nav></div><div class="container-fluid hf-shell hf-footer-bottom">© 2026 MNSOFT — CNPJ 18.160.057/0001-13 — comercial@mnsoft.com.br</div></footer>
+</header>
+@if (!hasSidebar)
+{
+  <div class="offcanvas offcanvas-start hf-context-drawer" tabindex="-1" id="primaryDrawer" aria-labelledby="primaryDrawerLabel">
+    <div class="offcanvas-header"><h2 class="offcanvas-title h5" id="primaryDrawerLabel">Menu principal</h2><button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Fechar menu"></button></div>
+    <div class="offcanvas-body">@await Component.InvokeAsync("Navigation", new { context = navigationContext, variant = NavigationVariant.MobileDrawer })</div>
+  </div>
+}
+@if (hasSidebar)
+{
+  <div class="offcanvas offcanvas-start hf-context-drawer" tabindex="-1" id="contextDrawer" aria-labelledby="contextDrawerLabel">
+    <div class="offcanvas-header"><h2 class="offcanvas-title h5" id="contextDrawerLabel">@(navigationContext == NavigationContext.Account ? "Menu da conta" : "Menu da plataforma")</h2><button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Fechar menu"></button></div>
+    <div class="offcanvas-body">@await Component.InvokeAsync("Navigation", new { context = navigationContext, variant = NavigationVariant.MobileDrawer })</div>
+  </div>
+}
+<div class="hf-page @(hasSidebar ? "hf-page-with-sidebar" : null)">
+  @if (hasSidebar)
+  {
+    <aside class="hf-context-sidebar" aria-label="Menu @(navigationContext == NavigationContext.Account ? "da conta" : "da plataforma")">@await Component.InvokeAsync("Navigation", new { context = navigationContext, variant = sidebarVariant })</aside>
+  }
+  <main id="conteudo" class="hf-main" tabindex="-1">
+    <div class="hf-content-shell">
+      @await Html.PartialAsync("~/Views/Shared/Partials/_AppMessages.cshtml")
+      @await Html.PartialAsync("~/Views/Shared/Partials/_FeedbackBridge.cshtml")
+      @RenderBody()
+    </div>
+  </main>
+</div>
+@if (navigationContext == NavigationContext.Public)
+{
+  <footer class="hf-footer hf-public-footer" data-footer-context="public"><div class="hf-shell hf-footer-grid"><div>@await Html.PartialAsync("~/Views/Shared/Partials/_MNSOFTBrandBadge.cshtml", null, new ViewDataDictionary(ViewData) { ["Compact"] = "true" })</div><div><h2>HabitFlow</h2><p>Hábitos, rotina e progresso em um só lugar.</p></div><nav aria-label="Produto"><h2>Produto</h2><a href="/demo">Demonstração</a><a href="/habit-library">Biblioteca</a><a href="/plans">Planos</a></nav><nav aria-label="Suporte"><h2>Suporte</h2><a href="/help">Ajuda</a><a href="/privacy">Privacidade</a><a href="/terms">Termos</a><a href="/lgpd">LGPD</a></nav></div><div class="hf-shell hf-footer-bottom">© 2026 MNSOFT — CNPJ 18.160.057/0001-13</div></footer>
+}
+else if (navigationContext == NavigationContext.Platform)
+{
+  <footer class="hf-footer hf-operational-footer" data-footer-context="platform"><div class="hf-shell">HabitFlow v@version · @HostEnvironment.EnvironmentName · <a href="/health">Health</a> · MNSOFT</div></footer>
+}
+else
+{
+  <footer class="hf-footer hf-compact-footer" data-footer-context="@contextName"><div class="hf-shell">HabitFlow · <a href="/help">Ajuda</a> · <a href="/privacy">Privacidade</a> · v@version · MNSOFT</div></footer>
+}
+@if (navigationContext == NavigationContext.Personal)
+{
+  @await Component.InvokeAsync("Navigation", new { context = navigationContext, variant = NavigationVariant.MobileBottom })
+}
 @await Html.PartialAsync("~/Views/Shared/Partials/_ToastHost.cshtml")
 @await Html.PartialAsync("~/Views/Shared/Partials/_FeedbackModal.cshtml")
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script><script src="/js/site.js" asp-append-version="true"></script><script src="/js/guided-tour.js" asp-append-version="true"></script><script src="/js/pwa.js" asp-append-version="true"></script>@await RenderSectionAsync("Scripts", false)
-</body></html>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="~/js/site.js" asp-append-version="true"></script>
+<script src="~/js/guided-tour.js" asp-append-version="true"></script>
+<script src="~/js/pwa.js" asp-append-version="true"></script>
+@await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

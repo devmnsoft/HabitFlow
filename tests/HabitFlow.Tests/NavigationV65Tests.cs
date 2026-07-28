@@ -18,7 +18,7 @@ public sealed class NavigationV65Tests
 
         var plan = Assert.Single(items, item => item.Code == "my-plan");
         Assert.Equal("Meu plano", plan.Label);
-        Assert.True(plan.IsActive);
+        Assert.True(plan.IsCurrent);
     }
 
     [Fact]
@@ -41,7 +41,7 @@ public sealed class NavigationV65Tests
 
         var items = await navigation.GetAsync(NavigationContext.Account, user, "/account/plan");
 
-        Assert.Contains(items, item => item.Code == "my-plan" && item.IsActive);
+        Assert.Contains(items, item => item.Code == "my-plan" && item.IsCurrent);
     }
 
     [Fact]
@@ -59,7 +59,7 @@ public sealed class NavigationV65Tests
 
         var items = _navigation.Get(NavigationContext.Platform, user, "/superadmin");
 
-        Assert.Contains(items, item => item.Code == "platform" && item.IsActive);
+        Assert.Contains(items, item => item.Code == "platform" && item.IsCurrent);
         Assert.DoesNotContain(items, item => item.Code == "platform-payments");
     }
 

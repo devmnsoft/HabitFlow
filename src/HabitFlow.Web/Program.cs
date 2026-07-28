@@ -24,3 +24,5 @@ var app = builder.Build();
 app.UseHabitFlowPipeline();
 
 app.Run();
+
+public partial class Program { }
