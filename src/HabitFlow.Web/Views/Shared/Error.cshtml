@@ -1,2 +1,11 @@
-@{ }
-<section class="hero-card"><h1>Algo não saiu como esperado</h1><p>Seu espaço continua seguro. Tente novamente em instantes ou fale com nosso suporte.</p><a class="btn btn-success btn-lg" href="/">Voltar ao início</a></section>
+@{
+    var supportCode = ViewData["SupportCode"] as string ?? Context.TraceIdentifier;
+}
+<section class="hero-card">
+    <h1>Não foi possível abrir esta página agora.</h1>
+    <p>Seu espaço continua seguro. Tente novamente em instantes.</p>
+    <p>Código de atendimento: <strong>@supportCode</strong></p>
+    <a class="btn btn-success btn-lg" href="@Context.Request.Path">Tentar novamente</a>
+    <a class="btn btn-outline-secondary btn-lg" href="/">Voltar ao início</a>
+    <a class="btn btn-outline-secondary btn-lg" href="/help">Ir para ajuda</a>
+</section>

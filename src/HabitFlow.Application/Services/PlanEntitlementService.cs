@@ -18,6 +18,12 @@ public sealed class PlanEntitlementService(IPlanCatalogRepository catalog)
 
     public Task<IReadOnlyDictionary<string, PlanFeatureValue>> GetPlanFeaturesAsync(string planCode, CancellationToken ct = default) => catalog.GetFeaturesAsync(planCode, ct);
 
+    public async Task<IReadOnlyDictionary<string, PlanFeatureValue>> GetFeaturesForUserAsync(Guid userId, CancellationToken ct = default)
+    {
+        var planCode = await GetEffectivePlanForUserAsync(userId, ct);
+        return await GetPlanFeaturesAsync(planCode, ct);
+    }
+
     public async Task<PlanFeatureValue?> GetFeatureAsync(Guid userId, string featureCode, CancellationToken ct = default)
     {
         var features = await GetPlanFeaturesAsync(await GetEffectivePlanForUserAsync(userId, ct), ct);

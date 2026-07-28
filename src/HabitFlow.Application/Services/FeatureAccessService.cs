@@ -8,6 +8,8 @@ public sealed record FeatureAccessViewModel(string Title, string Explanation, st
 /// <summary>Single, friendly boundary for every effective-plan decision.</summary>
 public sealed class FeatureAccessService(PlanEntitlementService plans)
 {
+    public Task<IReadOnlyDictionary<string, PlanFeatureValue>> GetFeaturesForUserAsync(Guid userId, CancellationToken ct = default) =>
+        plans.GetFeaturesForUserAsync(userId, ct);
     public async Task<FeatureAccessResult> CheckFeatureAsync(Guid userId, string featureCode, CancellationToken ct = default)
     {
         var allowed = await plans.GetBooleanFeatureAsync(userId, featureCode, ct);

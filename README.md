@@ -231,3 +231,7 @@ A v6.3 adiciona a base de objetivos, consistência, compartilhamento privado e i
 ## Layout contextual estável (v6.5.1)
 
 A aplicação usa um único shell Razor e resolve os contextos Public, Personal, Account e Platform no servidor. Consulte `docs/V651_LAYOUT_ARCHITECTURE.md`. O contrato pode ser validado com `pwsh ./scripts/qa/check-layout-contract.ps1`; a regressão visual fica em `tests/HabitFlow.Playwright` e seus screenshots são somente artifacts de CI. A aplicação continua ouvindo na porta **5097**.
+
+### Runtime v6.6.1
+
+A fronteira Dapper/PostgreSQL usa contratos Row explícitos e tipos civis `DateOnly`/`TimeOnly`. A navegação carrega features em lote por requisição e falha de modo seguro, preservando itens básicos e **Meu plano**. Consulte `docs/DAPPER_MATERIALIZATION_CONTRACTS.md`, `docs/NAVIGATION_FAILURE_POLICY.md` e `docs/ERROR_EXPERIENCE.md`.
