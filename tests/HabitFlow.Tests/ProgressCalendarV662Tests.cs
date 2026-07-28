@@ -8,7 +8,7 @@ public sealed class ProgressCalendarV662Tests
     private static readonly TimeZoneInfo Zone = TimeZoneInfo.FindSystemTimeZoneById("America/Sao_Paulo");
     private static ProgressHabitRow Habit(HabitFrequencyType frequency, DateTime? created = null, DateTime? archived = null) => new()
     {
-        Id = Guid.NewGuid(), Name = "Ler", FrequencyType = frequency,
+        Id = Guid.NewGuid(), Name = "Ler", FrequencyTypeCode = frequency.ToString(),
         CreatedAt = created ?? new DateTime(2026, 1, 1, 12, 0, 0, DateTimeKind.Utc), ArchivedAt = archived
     };
 
@@ -52,8 +52,33 @@ public sealed class ProgressCalendarV662Tests
     [Fact]
     public void Summary_uses_scheduled_occurrences_and_never_active_habits_times_days()
     {
-        var service = new ProgressCalendarService(null!, null!, new ConsistencyService(), null!);
+        var service = new ProgressCalendarService(null!, null!, new ConsistencyService(), null!, null!);
         var summary = service.BuildSummary([(new(2026, 7, 1), 2, 1), (new(2026, 7, 2), 0, 0), (new(2026, 7, 3), 1, 1)], new(2026, 7, 3));
         Assert.Equal(3, summary.ScheduledCount); Assert.Equal(2, summary.CompletedCount); Assert.Equal(66.7m, summary.CompletionPercentage);
+    }
+
+    [Fact]
+    public void Consistency_crosses_month_and_ignores_days_without_schedule()
+    {
+        var result = new ConsistencyService().Calculate([
+            (new(2026, 1, 31), 1, 1), (new(2026, 2, 1), 0, 0), (new(2026, 2, 2), 1, 1)], new(2026, 2, 2));
+        Assert.Equal(2, result.CurrentStreak);
+        Assert.Equal(2, result.BestStreak);
+    }
+
+    [Fact]
+    public void Incomplete_current_day_does_not_break_streak()
+    {
+        var result = new ConsistencyService().Calculate([
+            (new(2026, 7, 27), 1, 1), (new(2026, 7, 28), 2, 1)], new(2026, 7, 28));
+        Assert.Equal(1, result.CurrentStreak);
+    }
+
+    [Fact]
+    public void Unknown_frequency_is_ignored_without_throwing()
+    {
+        var habit = Habit(HabitFrequencyType.Daily);
+        habit.FrequencyTypeCode = "unexpected";
+        Assert.False(new HabitOccurrenceService().IsScheduledForDate(habit, new HashSet<int>(), new(2026, 7, 28), Zone));
     }
 }

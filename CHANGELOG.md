@@ -533,3 +533,14 @@
 - Regra única de ocorrências, timezone centralizado, taxa e sequências reais.
 - Relatórios alinhados ao denominador de ocorrências.
 - Isolamento por cliente/pessoa e testes unitários de recorrência e consistência.
+
+## v6.6.3-CompileIntegrity-ProgressDomain-EntitlementHistory-DashboardSynchronization
+
+- Correção do CS0173 e estabilização dos contratos/tipos de progresso da Application.
+- Compilação por camada, limpeza segura de bin/obj e interface de repository organizada.
+- Histórico parametrizado pelo plano efetivo, proteção de acesso direto e remoção de `users.plan` do progresso.
+- Sequência entre meses/anos, dias sem agenda e dia atual corrigidos.
+- Timezone multiplataforma, mapping explícito de FrequencyType e nullability explícita.
+- Controller sem exceção de contexto; CSS e JavaScript do calendário externos.
+- Base canônica para sincronização de Dashboard, relatórios e objetivos com isolamento por cliente.
+- QA de PostgreSQL, testes funcionais, Razor publish e Playwright ordenado na CI.

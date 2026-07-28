@@ -18,6 +18,18 @@ public sealed class PlanEntitlementService(IPlanCatalogRepository catalog)
 
     public Task<IReadOnlyDictionary<string, PlanFeatureValue>> GetPlanFeaturesAsync(string planCode, CancellationToken ct = default) => catalog.GetFeaturesAsync(planCode, ct);
 
+    public async Task<PlanAccessSnapshot> GetAccessSnapshotAsync(Guid clientId, CancellationToken ct = default)
+    {
+        var access = await catalog.GetClientAccessAsync(clientId, ct);
+        var contracted = access?.ContractedPlanCode ?? PlanCodes.Free;
+        var effective = access?.EffectivePlanCode ?? PlanCodes.Free;
+        var features = await catalog.GetFeaturesAsync(effective, ct);
+        var fullHistory = features.GetValueOrDefault(PlanFeatureCodes.FullHistory)?.BoolValue == true;
+        var configuredLimit = features.GetValueOrDefault(PlanFeatureCodes.HistoryDaysLimit)?.IntValue;
+        var historyDaysLimit = fullHistory ? -1 : configuredLimit ?? 90;
+        return new(contracted, effective, fullHistory, historyDaysLimit);
+    }
+
     public async Task<IReadOnlyDictionary<string, PlanFeatureValue>> GetFeaturesForUserAsync(Guid userId, CancellationToken ct = default)
     {
         var planCode = await GetEffectivePlanForUserAsync(userId, ct);
@@ -40,3 +52,9 @@ public sealed class PlanEntitlementService(IPlanCatalogRepository catalog)
     public Task<bool> CanExportReportsAsync(Guid userId, CancellationToken ct = default) => GetBooleanFeatureAsync(userId, PlanFeatureCodes.ReportExportCsv, ct);
     public Task<bool> CanUseSharedRoutinesAsync(Guid userId, CancellationToken ct = default) => GetBooleanFeatureAsync(userId, PlanFeatureCodes.SharedRoutines, ct);
 }
+
+public sealed record PlanAccessSnapshot(
+    string ContractedPlanCode,
+    string EffectivePlanCode,
+    bool HasFullHistory,
+    int HistoryDaysLimit);

@@ -36,7 +36,7 @@ public sealed class ReportService(IHabitRepository habits, IHabitCompletionRepos
     {
         var domainHabits = await habits.ListByUserAsync(userId, ct);
         var rows = domainHabits.Select(h => new ProgressHabitRow { Id = h.Id, Name = h.Name, Category = h.Category,
-            IsArchived = h.IsArchived, ArchivedAt = h.ArchivedAt, CreatedAt = h.CreatedAt, FrequencyType = h.FrequencyType, ReminderTime = h.ReminderTime }).ToList();
+            IsArchived = h.IsArchived, ArchivedAt = h.ArchivedAt, CreatedAt = h.CreatedAt, FrequencyTypeCode = h.FrequencyType.ToString(), ReminderTime = h.ReminderTime }).ToList();
         var configured = await weekDays.ListByHabitsAsync(rows.Select(x => x.Id), ct);
         var schedule = configured.ToDictionary(x => x.Key, x => (IReadOnlySet<int>)x.Value.Select(y => y.DayOfWeek).ToHashSet());
         var today = timeZones.Today(); var historicalEnd = end > today ? today : end;

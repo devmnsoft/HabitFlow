@@ -8,7 +8,7 @@ public sealed class ProgressCalendarRepository(SqlExecutor db) : IProgressCalend
     {
         const string habitsSql = """
             select h.id as Id, h.name as Name, h.category as Category, h.is_archived as IsArchived,
-                   h.archived_at as ArchivedAt, h.created_at as CreatedAt, h.frequency_type as FrequencyType,
+                   h.archived_at as ArchivedAt, h.created_at as CreatedAt, h.frequency_type as FrequencyTypeCode,
                    h.reminder_time as ReminderTime
               from habitflow.habits h
               join habitflow.users u on u.id = h.user_id
@@ -32,7 +32,6 @@ public sealed class ProgressCalendarRepository(SqlExecutor db) : IProgressCalend
              group by c.habit_id, c.completed_date
             """;
         var completions = (await db.QueryAsync<ProgressCompletionRow>(completionsSql, new { clientId, userId, start, end }, ct)).ToList();
-        var plan = await db.QuerySingleOrDefaultAsync<string>("select plan::text from habitflow.users where id = @userId and client_id = @clientId", new { clientId, userId }, ct) ?? "Free";
-        return new(habits, weekDays, completions, plan);
+        return new(habits, weekDays, completions);
     }
 }

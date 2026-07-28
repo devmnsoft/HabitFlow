@@ -239,3 +239,7 @@ A fronteira Dapper/PostgreSQL usa contratos Row explícitos e tipos civis `DateO
 ## Progresso v6.6.2
 
 A área autenticada de progresso está disponível em `/progress/calendar`, com métricas derivadas das ocorrências reais e data local configurada em `Progress:DefaultTimeZone`. Consulte `docs/PROGRESS_CALENDAR.md` e `docs/HABIT_OCCURRENCE_RULES.md`.
+
+## Progresso v6.6.3
+
+Os contratos, a política de histórico por plano efetivo, a regra de consistência e o procedimento de QA estão documentados em `docs/PROGRESS_CONTRACTS.md`, `docs/PROGRESS_HISTORY_POLICY.md`, `docs/CONSISTENCY_ACROSS_PERIODS.md` e `docs/V663_PROGRESS_QA.md`.

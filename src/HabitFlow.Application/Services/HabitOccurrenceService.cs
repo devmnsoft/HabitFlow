@@ -1,10 +1,12 @@
 using HabitFlow.Domain;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace HabitFlow.Application;
 
 public sealed record HabitOccurrence(ProgressHabitRow Habit, DateOnly Date);
 
-public sealed class HabitOccurrenceService
+public sealed class HabitOccurrenceService(ILogger<HabitOccurrenceService>? logger = null)
 {
     public bool IsScheduledForDate(ProgressHabitRow habit, IReadOnlySet<int> weekDays, DateOnly date, TimeZoneInfo timeZone)
     {
@@ -16,7 +18,15 @@ public sealed class HabitOccurrenceService
             if (date > archived) return false;
         }
         var day = (int)date.DayOfWeek;
-        return habit.FrequencyType switch
+        if (!Enum.TryParse<HabitFrequencyType>(habit.FrequencyTypeCode, true, out var frequency) ||
+            frequency is not (HabitFrequencyType.Daily or HabitFrequencyType.Weekdays or HabitFrequencyType.Weekends or HabitFrequencyType.CustomWeekly))
+        {
+            (logger ?? NullLogger<HabitOccurrenceService>.Instance).LogWarning(
+                "Unknown habit frequency code {FrequencyTypeCode} for habit {HabitId}; occurrence ignored.",
+                habit.FrequencyTypeCode, habit.Id);
+            return false;
+        }
+        return frequency switch
         {
             HabitFrequencyType.Daily => true,
             HabitFrequencyType.Weekdays => day is >= 1 and <= 5,
