@@ -1,0 +1,4 @@
+@using HabitFlow.Web.Models
+@{ Layout = "_Layout"; ViewData["NavigationContext"] = NavigationContext.Personal; ViewData["LayoutClass"] = "hf-personal"; }
+@RenderBody()
+@await RenderSectionAsync("Scripts", required: false)

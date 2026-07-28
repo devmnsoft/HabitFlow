@@ -1,1 +1,11 @@
-@{ Layout = "_Layout"; }
+@using HabitFlow.Web.Models
+@{
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString() ?? "Home";
+    var publicControllers = new[] { "Home", "Demo", "Auth", "Plans", "Help", "Legal" };
+    var accountControllers = new[] { "Billing", "Profile", "ClientUsers", "Invites", "Support" };
+    Layout = controller.StartsWith("SuperAdmin", StringComparison.OrdinalIgnoreCase) || controller.StartsWith("Admin", StringComparison.OrdinalIgnoreCase)
+        ? "_PlatformLayout"
+        : accountControllers.Contains(controller, StringComparer.OrdinalIgnoreCase) ? "_AccountLayout"
+        : publicControllers.Contains(controller, StringComparer.OrdinalIgnoreCase) || User?.Identity?.IsAuthenticated != true ? "_PublicLayout"
+        : "_PersonalLayout";
+}
