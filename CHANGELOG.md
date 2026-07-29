@@ -559,3 +559,8 @@
 - Fluxo público completo, token SHA-256 de uso único, expiração e rate limits por e-mail/IP.
 - Alteração transacional, revogação de sessões por `session_version` e e-mails assíncronos via outbox/Gmail STARTTLS.
 - Configuração e operação segura no IIS sem credenciais versionadas.
+# v6.8.2 - SeedIntegrity (em desenvolvimento)
+
+- Corrige UUID, códigos, tipos de gatilho e upsert dos seeds de regras de cobrança.
+- Adiciona migration transacional para default defensivo de UUID e normalização não destrutiva de códigos legados.
+- Adiciona auditoria de IDs obrigatórios baseada no catálogo PostgreSQL.
