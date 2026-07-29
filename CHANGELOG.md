@@ -1,3 +1,9 @@
+# v6.8.3-CanonicalProgress (parcial)
+
+- Snapshot de dia/período delega recorrência e sequência aos serviços canônicos e consulta por cliente/pessoa.
+- Contratos explícitos de snapshot e tipos canônicos de objetivo adicionados.
+- A versão não é declarada concluída.
+
 ## v6.8.1
 - CLI transacional para criar, promover e redefinir SuperAdmin sem senha em argumentos.
 - Conclusão/undo idempotentes com data local e Dashboard/AJAX baseados em snapshot real.

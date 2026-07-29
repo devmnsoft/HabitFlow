@@ -1,3 +1,10 @@
+# v6.8.3 — pendências verificáveis
+
+- [ ] Integrar objetivos e marcos à transação de conclusão/undo.
+- [ ] Migrar relatórios, CSV pt-BR e impressão para o snapshot canônico.
+- [ ] Executar build, PostgreSQL, testes funcionais, Playwright e publish com as ferramentas requeridas.
+- [ ] Registrar workflow, SHA e jobs antes de declarar CI verde.
+
 ## v6.8.1
 - [ ] Executar a matriz PostgreSQL/WebApplicationFactory/Playwright em agente com .NET 10 e PostgreSQL.
 
