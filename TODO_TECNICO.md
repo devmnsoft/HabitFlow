@@ -308,3 +308,8 @@ firebase deploy --only hosting
 - [x] Fluxo público, token seguro, outbox, SMTP STARTTLS e revogação por session_version.
 - [ ] Homologar envio Gmail manual com nova senha de app efêmera, sem expor recipient ou token.
 - [ ] Confirmar externamente a revogação da credencial compartilhada anteriormente.
+# v6.8.2
+
+- [x] Corrigir IDs, códigos e upsert das regras de comunicação nos seeds.
+- [x] Adicionar default UUID e política não destrutiva para códigos legados.
+- [ ] Concluir engine transacional de objetivos, marcos e relatórios client-aware.

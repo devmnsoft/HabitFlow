@@ -251,3 +251,7 @@ Os contratos, a política de histórico por plano efetivo, a regra de consistên
 ## Recuperação segura de senha
 
 A v6.7 oferece recuperação anti-enumeração com token aleatório de uso único, outbox e Gmail SMTP por STARTTLS. Consulte `docs/PASSWORD_RECOVERY_FLOW.md`; a senha SMTP é fornecida exclusivamente fora do Git.
+## Integridade de seeds v6.8.2
+
+> A integridade dos seeds de regras de cobrança e a política de migração de códigos
+> legados estão documentadas em `docs/BILLING_COMMUNICATION_RULE_SEEDS.md`.

@@ -774,3 +774,4 @@ CREATE INDEX IF NOT EXISTS ix_product_events_analytics ON habitflow.product_even
 COMMIT;
 -- Password recovery is maintained in its canonical migration for new databases.
 \i database/migrations/048_password_recovery_transactional_email.sql
+\i database/migrations/049_billing_communication_rule_seed_integrity.sql
