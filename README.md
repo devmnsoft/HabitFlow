@@ -1,3 +1,7 @@
+# Progresso canônico v6.8.3 (parcial)
+
+O progresso pessoal usa recorrência e sequência canônicas com isolamento por cliente e pessoa. Consulte [o snapshot](docs/CANONICAL_PROGRESS_SNAPSHOT.md) e [a auditoria](docs/V683_INITIAL_AUDIT.md).
+
 ## v6.8.1 — administração e Dashboard seguros
 
 SuperAdmin é provisionado exclusivamente pela CLI segura descrita em [docs/FIRST_SUPERADMIN.md](docs/FIRST_SUPERADMIN.md). O Dashboard usa conclusão transacional e métricas reais.
