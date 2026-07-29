@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Canonical migration entry point. PostgreSQL connection settings are supplied
+# CANONICAL ENTRY POINT FOR EXISTING DATABASES (and migration-based fresh DBs).
+# Never run this runner and database/script_completo.sql against the same database.
+# PostgreSQL connection settings are supplied
 # through the standard PG* variables (or a psql connection URI as $1).
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 migrations_dir="$repo_root/database/migrations"

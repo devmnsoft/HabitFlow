@@ -1,3 +1,7 @@
+\set ON_ERROR_STOP on
+-- HabitFlow v6.8.2.1-DatabaseBootstrapParity-PlanSeedIntegrity
+-- BOOTSTRAP EXCLUSIVO PARA BANCO NOVO. Bancos existentes usam
+-- scripts/database/run-migrations.sh. Nunca execute os dois no mesmo banco.
 -- HabitFlow - Script completo de produção
 -- Schema oficial: habitflow
 -- Este script não cria tabelas no schema public
@@ -295,10 +299,13 @@ create index if not exists ix_deployment_events_action on habitflow.deployment_e
 create schema if not exists habitflow;
 
 create table if not exists habitflow.plans (
- id uuid primary key, code varchar(80) not null unique, name varchar(120) not null, description text null,
+ id uuid primary key, code varchar(80) not null unique, name varchar(120) not null, public_name varchar(120) not null,
+ headline varchar(200) null, audience_text text null, badge_text varchar(100) null, description text null,
  price_monthly numeric(12,2) null, price_yearly numeric(12,2) null, currency varchar(10) not null default 'BRL',
  habit_limit integer null, reports_enabled boolean not null default false, advanced_reports_enabled boolean not null default false,
  challenges_enabled boolean not null default false, is_active boolean not null default true, is_public boolean not null default true,
+ is_featured boolean not null default false, sort_order integer not null default 0,
+ created_by_user_id uuid null, updated_by_user_id uuid null,
  created_at timestamp not null default now(), updated_at timestamp not null default now()
 );
 create table if not exists habitflow.subscriptions (
@@ -337,11 +344,34 @@ create index if not exists ix_habitflow_payment_transactions_provider_payment_id
 create index if not exists ix_habitflow_payment_webhook_events_event_id on habitflow.payment_webhook_events(event_id);
 create index if not exists ix_habitflow_payment_webhook_events_received_at on habitflow.payment_webhook_events(received_at);
 
-insert into habitflow.plans(id,code,name,description,price_monthly,price_yearly,currency,habit_limit,reports_enabled,advanced_reports_enabled,challenges_enabled,is_active,is_public,created_at,updated_at) values
-('00000000-0000-0000-0000-000000000461','free','Gratuito','Plano gratuito com até 5 hábitos ativos.',0,0,'BRL',5,true,false,false,true,true,now(),now()),
-('00000000-0000-0000-0000-000000000462','premium_monthly','Premium Mensal','Hábitos ilimitados, relatórios avançados e recursos premium.',14.90,null,'BRL',null,true,true,true,true,true,now(),now()),
-('00000000-0000-0000-0000-000000000463','premium_yearly','Premium Anual','Plano anual com melhor custo-benefício.',null,99.00,'BRL',null,true,true,true,true,true,now(),now())
-on conflict(code) do update set name=excluded.name, description=excluded.description, price_monthly=excluded.price_monthly, price_yearly=excluded.price_yearly, currency=excluded.currency, habit_limit=excluded.habit_limit, reports_enabled=excluded.reports_enabled, advanced_reports_enabled=excluded.advanced_reports_enabled, challenges_enabled=excluded.challenges_enabled, is_active=excluded.is_active, is_public=excluded.is_public, updated_at=now();
+-- Keep the first seed compatible with the final plans contract. This block is
+-- intentionally before any INSERT so a partially-created bootstrap can recover.
+alter table habitflow.plans add column if not exists public_name varchar(120);
+alter table habitflow.plans add column if not exists headline varchar(200);
+alter table habitflow.plans add column if not exists audience_text text;
+alter table habitflow.plans add column if not exists badge_text varchar(100);
+alter table habitflow.plans add column if not exists is_featured boolean not null default false;
+alter table habitflow.plans add column if not exists sort_order integer not null default 0;
+alter table habitflow.plans add column if not exists created_by_user_id uuid null;
+alter table habitflow.plans add column if not exists updated_by_user_id uuid null;
+update habitflow.plans
+set public_name = name
+where public_name is null or btrim(public_name) = '';
+alter table habitflow.plans alter column public_name set not null;
+
+insert into habitflow.plans(id,code,name,public_name,headline,description,price_monthly,price_yearly,currency,habit_limit,reports_enabled,advanced_reports_enabled,challenges_enabled,is_active,is_public,is_featured,sort_order,created_at,updated_at) values
+('00000000-0000-0000-0000-000000000461','free','Gratuito','Gratuito',null,'Plano gratuito com até 5 hábitos ativos.',0,0,'BRL',5,true,false,false,true,true,false,10,now(),now()),
+('00000000-0000-0000-0000-000000000462','premium_monthly','Premium Mensal','Premium Mensal',null,'Hábitos ilimitados, relatórios avançados e recursos premium.',14.90,null,'BRL',null,true,true,true,true,true,false,20,now(),now()),
+('00000000-0000-0000-0000-000000000463','premium_yearly','Premium Anual','Premium Anual',null,'Plano anual com melhor custo-benefício.',null,99.00,'BRL',null,true,true,true,true,true,false,30,now(),now())
+on conflict(code) do update set
+ name=excluded.name, public_name=excluded.public_name, headline=excluded.headline,
+ description=excluded.description, price_monthly=excluded.price_monthly,
+ price_yearly=excluded.price_yearly, currency=excluded.currency,
+ habit_limit=excluded.habit_limit, reports_enabled=excluded.reports_enabled,
+ advanced_reports_enabled=excluded.advanced_reports_enabled,
+ challenges_enabled=excluded.challenges_enabled, is_active=excluded.is_active,
+ is_public=excluded.is_public, is_featured=excluded.is_featured,
+ sort_order=excluded.sort_order, updated_at=now();
 -- v4.9 Guided Journey + Habit Library
 create table if not exists habitflow.habit_objectives (
     id uuid primary key,

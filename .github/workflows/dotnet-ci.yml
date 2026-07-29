@@ -5,6 +5,79 @@ on:
   pull_request:
 
 jobs:
+  database-bootstrap-parity:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: habitflow_test
+          POSTGRES_PASSWORD: habitflow_test
+          POSTGRES_DB: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U habitflow_test -d postgres"
+          --health-interval 10s --health-timeout 5s --health-retries 5
+    env:
+      PGHOST: localhost
+      PGUSER: habitflow_test
+      PGPASSWORD: habitflow_test
+      HABITFLOW_APP_VERSION: ci
+    steps:
+      - uses: actions/checkout@v4
+      - name: Audit aggregate inserts against NOT NULL contracts
+        shell: pwsh
+        run: ./scripts/qa/check-aggregate-not-null-contract.ps1
+      - name: Create isolated disposable databases
+        run: |
+          for db in aggregate_fresh_tests runner_fresh_tests snapshot_upgrade_tests aggregate_dev_tests; do
+            createdb "$db"
+          done
+      - name: Aggregate fresh database
+        run: |
+          psql -X -v ON_ERROR_STOP=1 -d aggregate_fresh_tests -f database/script_completo.sql 2>&1 | tee /tmp/aggregate.log
+          ! grep -E '(^|[[:space:]])(ERROR|FATAL|PANIC):' /tmp/aggregate.log
+          psql -X -v ON_ERROR_STOP=1 -d aggregate_fresh_tests -c "select 1 from habitflow.plans having bool_and(public_name is not null and btrim(public_name)<>'');"
+          psql -X -v ON_ERROR_STOP=1 -d aggregate_fresh_tests -c "select 1 from habitflow.system_settings limit 1;"
+      - name: Audit required seed UUIDs
+        shell: pwsh
+        run: ./scripts/qa/check-seed-required-ids.ps1 -ConnectionString 'dbname=aggregate_fresh_tests'
+      - name: Canonical runner fresh database and rerun
+        run: |
+          PGDATABASE=runner_fresh_tests ./scripts/database/run-migrations.sh
+          PGDATABASE=runner_fresh_tests ./scripts/database/run-migrations.sh
+      - name: Upgrade a pre-032 snapshot with runner only
+        run: |
+          export PGDATABASE=snapshot_upgrade_tests
+          for file in $(find database/migrations -maxdepth 1 -name '0[0-2][0-9]_*.sql' -o -name '03[01]_*.sql' | sort); do
+            psql -X -v ON_ERROR_STOP=1 -f "$file"
+          done
+          psql -X -v ON_ERROR_STOP=1 <<'SQL'
+          create table habitflow.schema_migrations (
+            id varchar(120) primary key, name varchar(200) not null,
+            applied_at timestamptz not null default now(), checksum varchar(64),
+            filename varchar(260), app_version varchar(80));
+          SQL
+          for file in $(find database/migrations -maxdepth 1 -name '0[0-2][0-9]_*.sql' -o -name '03[01]_*.sql' | sort); do
+            filename=$(basename "$file"); version=${filename%%_*}; name=${filename#*_}; name=${name%.sql}
+            checksum=$(sha256sum "$file" | awk '{print $1}')
+            psql -X -v ON_ERROR_STOP=1 -c "insert into habitflow.schema_migrations(id,name,checksum,filename,app_version) values ('$version','$name','$checksum','$filename','snapshot');"
+          done
+          ./scripts/database/run-migrations.sh
+          psql -X -v ON_ERROR_STOP=1 -c "select 1 from habitflow.plans having bool_and(public_name is not null and btrim(public_name)<>'');"
+      - name: Development aggregate without privileged fixed credentials
+        run: |
+          psql -X -v ON_ERROR_STOP=1 -d aggregate_dev_tests -f database/script_completo_dev.sql 2>&1 | tee /tmp/aggregate-dev.log
+          ! grep -E '(^|[[:space:]])(ERROR|FATAL|PANIC):' /tmp/aggregate-dev.log
+          test "$(psql -XAt -d aggregate_dev_tests -c "select count(*) from habitflow.users where role='SuperAdmin';")" = 0
+          test "$(psql -XAt -d aggregate_dev_tests -c "select count(*) from habitflow.users;")" = 0
+          psql -XAt -d aggregate_dev_tests -c "select value from habitflow.system_settings where key='dev_seed';" | grep -q 'credentialsSeeded'
+      - name: Compare complete schema signatures
+        run: |
+          psql -XAt -d aggregate_fresh_tests -f scripts/qa/postgres-schema-signature.sql > /tmp/aggregate.signature
+          psql -XAt -d runner_fresh_tests -f scripts/qa/postgres-schema-signature.sql > /tmp/runner.signature
+          diff -u /tmp/aggregate.signature /tmp/runner.signature
+
   build:
     runs-on: ubuntu-latest
     services:
