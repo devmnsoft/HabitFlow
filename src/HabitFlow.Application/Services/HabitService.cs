@@ -43,7 +43,8 @@ public sealed class HabitService(IHabitRepository habits, IHabitCompletionReposi
     {
         try
         {
-            var result = await completeHabit.ExecuteAsync(new(user.ClientId, user.Id, habitId, timeZone.Today(), Guid.NewGuid().ToString("N"), "LegacyAdapter", Guid.NewGuid().ToString("N")), ct);
+            if (!user.ClientId.HasValue) return Result.Failure("client.required", "É necessário selecionar uma conta para acessar hábitos pessoais.");
+            var result = await completeHabit.ExecuteAsync(new(user.ClientId.Value, user.Id, habitId, timeZone.Today(), Guid.NewGuid().ToString("N"), "LegacyAdapter", Guid.NewGuid().ToString("N")), ct);
             return result.IsSuccess ? Result.Success() : Result.Failure(result.Error.Code, result.Error.Message);
         }
         catch (Exception ex) { logger.LogError(ex, "Erro ao marcar hábito {HabitId}", habitId); return Result.Failure("habit.mark_error", "Não foi possível marcar o hábito."); }
@@ -53,7 +54,8 @@ public sealed class HabitService(IHabitRepository habits, IHabitCompletionReposi
     {
         try
         {
-            var result = await undoHabit.ExecuteAsync(new(user.ClientId, user.Id, habitId, timeZone.Today(), Guid.NewGuid().ToString("N"), "LegacyAdapter", Guid.NewGuid().ToString("N")), ct);
+            if (!user.ClientId.HasValue) return Result.Failure("client.required", "É necessário selecionar uma conta para acessar hábitos pessoais.");
+            var result = await undoHabit.ExecuteAsync(new(user.ClientId.Value, user.Id, habitId, timeZone.Today(), Guid.NewGuid().ToString("N"), "LegacyAdapter", Guid.NewGuid().ToString("N")), ct);
             return result.IsSuccess ? Result.Success() : Result.Failure(result.Error.Code, result.Error.Message);
         }
         catch (Exception ex) { logger.LogError(ex, "Erro ao desmarcar hábito {HabitId}", habitId); return Result.Failure("habit.unmark_error", "Não foi possível desmarcar o hábito."); }

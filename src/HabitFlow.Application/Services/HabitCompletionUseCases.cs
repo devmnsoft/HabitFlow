@@ -3,15 +3,17 @@ using HabitFlow.Shared;
 
 namespace HabitFlow.Application;
 
-public sealed record HabitCompletionCommand(Guid? ClientId, Guid UserId, Guid HabitId, DateOnly LocalDate, string IdempotencyKey, string Source, string CorrelationId);
+public sealed record HabitCompletionCommand(Guid ClientId, Guid UserId, Guid HabitId, DateOnly LocalDate, string IdempotencyKey, string Source, string CorrelationId);
 public sealed record DailySummary(int Scheduled, int Completed, int Pending, int Percentage);
 public sealed record NextHabitSnapshot(Guid Id, string Name);
-public sealed record HabitCompletionResult(Guid HabitId, DateOnly Date, bool Completed, DailySummary DailySummary, int CurrentStreak, int BestStreak, NextHabitSnapshot? NextHabit, IReadOnlyList<object> GoalUpdates, IReadOnlyList<object> NewMilestones);
+public sealed record GoalProgressUpdate(Guid GoalId, string Title, decimal PreviousValue, decimal CurrentValue, decimal TargetValue, decimal Percentage, bool CompletedNow);
+public sealed record MilestoneNotification(Guid MilestoneId, string Title, string Message);
+public sealed record HabitCompletionResult(Guid HabitId, DateOnly Date, bool Completed, DailySummary DailySummary, int CurrentStreak, int BestStreak, NextHabitSnapshot? NextHabit, IReadOnlyList<GoalProgressUpdate> GoalUpdates, IReadOnlyList<MilestoneNotification> NewMilestones);
 public sealed record ProgressSnapshot(DateOnly Date, DailySummary Daily, int CurrentStreak, int BestStreak, NextHabitSnapshot? NextHabit, IReadOnlyList<HabitDto> Habits);
 
 public sealed class ProgressSnapshotService(IHabitRepository habits, IHabitCompletionRepository completions, IHabitWeekDayRepository weekDays, UserTimeZoneService timeZone)
 {
-    public async Task<ProgressSnapshot> BuildDayAsync(Guid? clientId, Guid userId, DateOnly date, CancellationToken ct = default)
+    public async Task<ProgressSnapshot> BuildDayAsync(Guid clientId, Guid userId, DateOnly date, CancellationToken ct = default)
     {
         var all = await habits.ListByUserAsync(userId, ct);
         var days = await weekDays.ListByHabitsAsync(all.Select(x => x.Id), ct);
@@ -28,7 +30,7 @@ public sealed class ProgressSnapshotService(IHabitRepository habits, IHabitCompl
         var next = scheduled.FirstOrDefault(x => !completedIds.Contains(x.Id));
         return new(date, summary, current, best, next is null ? null : new(next.Id, next.Name), scheduled.Select(x => new HabitDto(x.Id, x.Name, x.Color, x.Category, completedIds.Contains(x.Id), x.IsArchived)).ToList());
     }
-    public Task<ProgressSnapshot> BuildDashboardAsync(Guid? clientId, Guid userId, CancellationToken ct = default) => BuildDayAsync(clientId, userId, timeZone.Today(), ct);
+    public Task<ProgressSnapshot> BuildDashboardAsync(Guid clientId, Guid userId, CancellationToken ct = default) => BuildDayAsync(clientId, userId, timeZone.Today(), ct);
     private static bool IsScheduled(Habit h, IReadOnlyList<HabitWeekDay> days, DateOnly date) => h.FrequencyType switch
     {
         HabitFrequencyType.Daily => true,
@@ -84,10 +86,11 @@ public sealed class UndoHabitCompletionUseCase(IUserRepository users, IHabitRepo
 public sealed record TodayDashboardViewModel(string Name, string LocalDate, string EffectivePlan, string PlanUsage, ProgressSnapshot Progress);
 public sealed class TodayDashboardService(ProgressSnapshotService snapshots, IUserRepository users)
 {
-    public async Task<TodayDashboardViewModel?> BuildAsync(Guid userId, CancellationToken ct = default)
+    public async Task<TodayDashboardViewModel?> BuildAsync(Guid clientId, Guid userId, CancellationToken ct = default)
     {
-        var user = await users.GetByIdAsync(userId, ct); if (user is null) return null;
-        var progress = await snapshots.BuildDashboardAsync(user.ClientId, user.Id, ct);
+        var user = await users.GetByIdAsync(userId, ct);
+        if (user is null || user.ClientId != clientId) return null;
+        var progress = await snapshots.BuildDashboardAsync(clientId, user.Id, ct);
         return new(user.Name, progress.Date.ToString("dd/MM/yyyy"), user.Plan.ToString(), $"{progress.Daily.Scheduled} hábitos previstos", progress);
     }
 }
