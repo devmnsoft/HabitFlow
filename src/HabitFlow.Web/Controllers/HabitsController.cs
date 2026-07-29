@@ -51,7 +51,8 @@ public class HabitsController(HabitService habitService, CompleteHabitUseCase co
     public async Task<IActionResult> CompleteWithoutReload(Guid id, CancellationToken ct)
     {
         var user = this.CurrentUserSnapshot();
-        var result = await completeHabit.ExecuteAsync(new(user.ClientId, user.Id, id, timeZone.Today(), Request.Headers["Idempotency-Key"].FirstOrDefault() ?? Guid.NewGuid().ToString("N"), "Dashboard", HttpContext.TraceIdentifier), ct);
+        if (!user.ClientId.HasValue) return Forbid();
+        var result = await completeHabit.ExecuteAsync(new(user.ClientId.Value, user.Id, id, timeZone.Today(), Request.Headers["Idempotency-Key"].FirstOrDefault() ?? Guid.NewGuid().ToString("N"), "Dashboard", HttpContext.TraceIdentifier), ct);
         if (result.IsFailure && result.Error.Code == "habit.not_found") return NotFound(new { success = false, message = result.Error.Message });
         if (result.IsFailure) return BadRequest(new { success = false, message = result.Error.Message });
         return Json(ToPayload(result.Value!, "Um passo concluído. Continue no seu ritmo."));
@@ -62,7 +63,8 @@ public class HabitsController(HabitService habitService, CompleteHabitUseCase co
     public async Task<IActionResult> UndoWithoutReload(Guid id, CancellationToken ct)
     {
         var user = this.CurrentUserSnapshot();
-        var result = await undoHabit.ExecuteAsync(new(user.ClientId, user.Id, id, timeZone.Today(), Request.Headers["Idempotency-Key"].FirstOrDefault() ?? Guid.NewGuid().ToString("N"), "Dashboard", HttpContext.TraceIdentifier), ct);
+        if (!user.ClientId.HasValue) return Forbid();
+        var result = await undoHabit.ExecuteAsync(new(user.ClientId.Value, user.Id, id, timeZone.Today(), Request.Headers["Idempotency-Key"].FirstOrDefault() ?? Guid.NewGuid().ToString("N"), "Dashboard", HttpContext.TraceIdentifier), ct);
         if (result.IsFailure && result.Error.Code == "habit.not_found") return NotFound(new { success = false, message = result.Error.Message });
         if (result.IsFailure) return BadRequest(new { success = false, message = result.Error.Message });
         return Json(ToPayload(result.Value!, "Conclusão desfeita."));
