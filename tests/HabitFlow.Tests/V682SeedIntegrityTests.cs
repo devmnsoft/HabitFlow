@@ -2,6 +2,7 @@ using System.Text.RegularExpressions;
 
 namespace HabitFlow.Tests;
 
+using Xunit;
 public sealed class V682SeedIntegrityTests
 {
     private static readonly string Root = FindRoot();
