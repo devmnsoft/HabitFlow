@@ -52,7 +52,7 @@ public sealed class ProgressSnapshotService(IProgressCalendarRepository reposito
     private static DateOnly Max(DateOnly left, DateOnly right) => left > right ? left : right;
 }
 
-public sealed class CompleteHabitUseCase(IUserRepository users, IHabitRepository habits, IHabitCompletionRepository completions, IUnitOfWork unitOfWork, ProgressSnapshotService snapshots, AuditService audit, UserTimeZoneService clock)
+public sealed class CompleteHabitUseCase(IUserRepository users, IHabitRepository habits, IHabitCompletionRepository completions, IUnitOfWork unitOfWork, ProgressSnapshotService snapshots, GoalProgressEngine goals, MilestoneEvaluationService milestones, AuditService audit, UserTimeZoneService clock)
 {
     public async Task<Result<HabitCompletionResult>> ExecuteAsync(HabitCompletionCommand command, CancellationToken ct = default)
     {
@@ -66,18 +66,31 @@ public sealed class CompleteHabitUseCase(IUserRepository users, IHabitRepository
             if (habit.IsArchived) { await unitOfWork.RollbackAsync(ct); return Result<HabitCompletionResult>.Failure("habit.archived", "Um hábito arquivado não pode ser concluído."); }
             var mutation = await completions.AddIfMissingAsync(command.ClientId, user.Id, habit.Id,
                 command.LocalDate, Guid.NewGuid(), ct);
-            if (mutation.Created)
-                await audit.LogAsync("habit.completed", "Hábito concluído", AuditSeverity.Info, user.Id, user.Email, new { habitId = habit.Id, command.Source, command.CorrelationId, command.IdempotencyKey }, ct);
             var snapshot = await snapshots.BuildDayAsync(command.ClientId, command.UserId, command.LocalDate, ct);
+            IReadOnlyList<GoalProgressResult> goalResults = [];
+            IReadOnlyList<MilestoneEvaluationResult> milestoneResults = [];
+            if (mutation.Created)
+            {
+                await audit.LogAsync("habit.completed", "Hábito concluído", AuditSeverity.Info, user.Id, user.Email, new { habitId = habit.Id, command.Source, command.CorrelationId, command.IdempotencyKey }, ct);
+                goalResults = await goals.RecalculateAsync(command.ClientId, command.UserId, habit.Id,
+                    command.LocalDate, mutation.CompletionId, command.IdempotencyKey, command.CorrelationId,
+                    snapshot.CurrentStreak, false, ct);
+                milestoneResults = await milestones.EvaluateAsync(new(command.ClientId, command.UserId, habit.Id,
+                    mutation.CompletionId!.Value, command.LocalDate, snapshot.CurrentStreak,
+                    goalResults.Any(x => x.CompletedNow), command.CorrelationId), ct);
+            }
             await unitOfWork.CommitAsync(ct);
-            return Result<HabitCompletionResult>.Success(ToResult(command.HabitId, true, snapshot));
+            return Result<HabitCompletionResult>.Success(ToResult(command.HabitId, true, snapshot, goalResults, milestoneResults));
         }
         catch { await unitOfWork.RollbackAsync(ct); throw; }
     }
-    internal static HabitCompletionResult ToResult(Guid habitId, bool completed, ProgressSnapshot s) => new(habitId, s.Date, completed, s.Daily, s.CurrentStreak, s.BestStreak, s.NextHabit, [], []);
+    internal static HabitCompletionResult ToResult(Guid habitId, bool completed, ProgressSnapshot s, IReadOnlyList<GoalProgressResult>? goals = null, IReadOnlyList<MilestoneEvaluationResult>? milestones = null) =>
+        new(habitId, s.Date, completed, s.Daily, s.CurrentStreak, s.BestStreak, s.NextHabit,
+            goals?.Select(x => new GoalProgressUpdate(x.GoalId, x.Title, x.PreviousValue, x.CurrentValue, x.TargetValue, x.Percentage, x.CompletedNow)).ToList() ?? [],
+            milestones?.Select(x => new MilestoneNotification(x.MilestoneId, x.Title, x.Message)).ToList() ?? []);
 }
 
-public sealed class UndoHabitCompletionUseCase(IUserRepository users, IHabitRepository habits, IHabitCompletionRepository completions, IUnitOfWork unitOfWork, ProgressSnapshotService snapshots, UserTimeZoneService clock)
+public sealed class UndoHabitCompletionUseCase(IUserRepository users, IHabitRepository habits, IHabitCompletionRepository completions, IUnitOfWork unitOfWork, ProgressSnapshotService snapshots, GoalProgressEngine goals, UserTimeZoneService clock)
 {
     public async Task<Result<HabitCompletionResult>> ExecuteAsync(HabitCompletionCommand command, CancellationToken ct = default)
     {
@@ -87,10 +100,15 @@ public sealed class UndoHabitCompletionUseCase(IUserRepository users, IHabitRepo
         {
             var user = await users.GetByIdAsync(command.UserId, ct); var habit = await habits.GetAsync(command.HabitId, ct);
             if (user is null || user.ClientId != command.ClientId || habit is null || !habit.BelongsTo(command.UserId)) { await unitOfWork.RollbackAsync(ct); return Result<HabitCompletionResult>.Failure("habit.not_found", "Este hábito não foi encontrado."); }
-            await completions.DeleteIfExistsAsync(command.ClientId, user.Id, habit.Id, command.LocalDate, ct);
+            var mutation = await completions.DeleteIfExistsAsync(command.ClientId, user.Id, habit.Id, command.LocalDate, ct);
             var snapshot = await snapshots.BuildDayAsync(command.ClientId, command.UserId, command.LocalDate, ct);
+            IReadOnlyList<GoalProgressResult> goalResults = [];
+            if (mutation.Deleted)
+                goalResults = await goals.RecalculateAsync(command.ClientId, command.UserId, habit.Id,
+                    command.LocalDate, mutation.CompletionId, command.IdempotencyKey, command.CorrelationId,
+                    snapshot.CurrentStreak, true, ct);
             await unitOfWork.CommitAsync(ct);
-            return Result<HabitCompletionResult>.Success(CompleteHabitUseCase.ToResult(command.HabitId, false, snapshot));
+            return Result<HabitCompletionResult>.Success(CompleteHabitUseCase.ToResult(command.HabitId, false, snapshot, goalResults));
         }
         catch { await unitOfWork.RollbackAsync(ct); throw; }
     }

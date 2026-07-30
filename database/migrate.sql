@@ -49,3 +49,4 @@
 \i database/migrations/047_schema_migration_governance.sql
 \i database/migrations/048_password_recovery_transactional_email.sql
 \i database/migrations/049_billing_communication_rule_seed_integrity.sql
+\i database/migrations/050_goal_progress_activation_core.sql
