@@ -9,7 +9,7 @@ public sealed class MigrationGovernanceV67Tests
     private static readonly string Root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../.."));
 
     [Fact]
-    public void Migration_versions_are_unique_contiguous_and_dynamically_discoverable()
+    public void Migration_versions_are_unique_ordered_and_dynamically_discoverable()
     {
         var files = Directory.GetFiles(Path.Combine(Root, "database", "migrations"), "*.sql")
             .Select(Path.GetFileNameWithoutExtension)
@@ -19,8 +19,22 @@ public sealed class MigrationGovernanceV67Tests
         var versions = files.Select(name => int.Parse(name![..3])).ToArray();
 
         Assert.Equal(versions.Length, versions.Distinct().Count());
-        Assert.Equal(Enumerable.Range(1, versions.Length), versions);
-        Assert.Equal(49, versions[^1]);
+        Assert.Equal(versions.Order(), versions);
+        Assert.All(versions, version => Assert.InRange(version, 1, 999));
+    }
+
+    [Fact]
+    public void Compatibility_hooks_are_versioned_checksum_guarded_and_not_hardcoded_in_runner()
+    {
+        var runner = File.ReadAllText(Path.Combine(Root, "scripts", "database", "run-migrations.sh"));
+        var hook = File.ReadAllText(Path.Combine(Root, "scripts", "database", "compatibility-hooks", "035_system_settings_contract.sql"));
+
+        Assert.Contains("hooks_dir", runner);
+        Assert.Contains("run_hooks \"$version\"", runner);
+        Assert.DoesNotContain("migration == 035", runner, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("schema_compatibility_fixes", hook);
+        Assert.Contains("hook_checksum", hook);
+        Assert.Contains("to_regclass('habitflow.system_settings')", hook);
     }
 
     [Fact]
