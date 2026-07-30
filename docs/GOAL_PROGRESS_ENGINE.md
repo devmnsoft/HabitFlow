@@ -1,5 +1,5 @@
 # Motor de progresso de objetivos
 
-Tipos canônicos ficam em `GoalTargetType`; parsing e textos públicos são centralizados. A atualização automática deverá sempre recalcular a fonte canônica, nunca somar cegamente. Objetivos concluídos permanecem concluídos após undo, preservando `completed_at`; a correção deve ser registrada no histórico e não deve repetir o marco inicial.
+Tipos são centralizados em `GoalTargetType`: conclusões, dias ativos, sequência, conclusões semanais e customizado. O cálculo automático deve sempre partir de `ProgressPeriodSnapshot`; sequência deve ser fornecida por `ConsistencyService`. Objetivos customizados aceitam apenas alteração manual justificada. Conclusões são históricas: após undo, valor corrente é recalculado, mas `Completed` e `completed_at` permanecem, sem repetir evento ou notificação.
 
-> Limitação desta entrega: a integração transacional completa do motor e eventos não foi implementada porque o ambiente não dispõe do SDK para validar uma alteração transversal segura.
+A integração transacional completa do motor não pôde ser validada neste ambiente e permanece pendente de teste.

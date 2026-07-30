@@ -64,8 +64,10 @@ public sealed class CompleteHabitUseCase(IUserRepository users, IHabitRepository
             var habit = await habits.GetAsync(command.HabitId, ct);
             if (user is null || user.ClientId != command.ClientId || habit is null || !habit.BelongsTo(command.UserId)) { await unitOfWork.RollbackAsync(ct); return Result<HabitCompletionResult>.Failure("habit.not_found", "Este hábito não foi encontrado."); }
             if (habit.IsArchived) { await unitOfWork.RollbackAsync(ct); return Result<HabitCompletionResult>.Failure("habit.archived", "Um hábito arquivado não pode ser concluído."); }
-            await completions.AddAsync(new(Guid.NewGuid(), habit.Id, user.Id, command.LocalDate, DateTime.UtcNow), ct);
-            await audit.LogAsync("habit.completed", "Hábito concluído", AuditSeverity.Info, user.Id, user.Email, new { habitId = habit.Id, command.Source, command.CorrelationId, command.IdempotencyKey }, ct);
+            var mutation = await completions.AddIfMissingAsync(command.ClientId, user.Id, habit.Id,
+                command.LocalDate, Guid.NewGuid(), ct);
+            if (mutation.Created)
+                await audit.LogAsync("habit.completed", "Hábito concluído", AuditSeverity.Info, user.Id, user.Email, new { habitId = habit.Id, command.Source, command.CorrelationId, command.IdempotencyKey }, ct);
             var snapshot = await snapshots.BuildDayAsync(command.ClientId, command.UserId, command.LocalDate, ct);
             await unitOfWork.CommitAsync(ct);
             return Result<HabitCompletionResult>.Success(ToResult(command.HabitId, true, snapshot));
@@ -85,7 +87,7 @@ public sealed class UndoHabitCompletionUseCase(IUserRepository users, IHabitRepo
         {
             var user = await users.GetByIdAsync(command.UserId, ct); var habit = await habits.GetAsync(command.HabitId, ct);
             if (user is null || user.ClientId != command.ClientId || habit is null || !habit.BelongsTo(command.UserId)) { await unitOfWork.RollbackAsync(ct); return Result<HabitCompletionResult>.Failure("habit.not_found", "Este hábito não foi encontrado."); }
-            await completions.DeleteAsync(habit.Id, user.Id, command.LocalDate, ct);
+            await completions.DeleteIfExistsAsync(command.ClientId, user.Id, habit.Id, command.LocalDate, ct);
             var snapshot = await snapshots.BuildDayAsync(command.ClientId, command.UserId, command.LocalDate, ct);
             await unitOfWork.CommitAsync(ct);
             return Result<HabitCompletionResult>.Success(CompleteHabitUseCase.ToResult(command.HabitId, false, snapshot));
@@ -95,13 +97,15 @@ public sealed class UndoHabitCompletionUseCase(IUserRepository users, IHabitRepo
 }
 
 public sealed record TodayDashboardViewModel(string Name, string LocalDate, string EffectivePlan, string PlanUsage, ProgressSnapshot Progress);
-public sealed class TodayDashboardService(ProgressSnapshotService snapshots, IUserRepository users)
+public sealed class TodayDashboardService(ProgressSnapshotService snapshots, IUserRepository users, PlanEntitlementService entitlements)
 {
     public async Task<TodayDashboardViewModel?> BuildAsync(Guid clientId, Guid userId, CancellationToken ct = default)
     {
         var user = await users.GetByIdAsync(userId, ct);
         if (user is null || user.ClientId != clientId) return null;
         var progress = await snapshots.BuildDashboardAsync(clientId, user.Id, ct);
-        return new(user.Name, progress.Date.ToString("dd/MM/yyyy"), user.Plan.ToString(), $"{progress.Daily.Scheduled} hábitos previstos", progress);
+        var access = await entitlements.GetAccessSnapshotAsync(clientId, ct);
+        return new(user.Name, progress.Date.ToString("dd/MM/yyyy"), access.EffectivePlanCode,
+            $"{progress.Daily.Completed} de {progress.Daily.Scheduled} hábitos previstos concluídos", progress);
     }
 }

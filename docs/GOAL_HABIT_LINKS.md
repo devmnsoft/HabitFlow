@@ -1,3 +1,3 @@
-# Vínculos entre hábitos e objetivos
+# Vínculos objetivo–hábito
 
-Todas as operações devem exigir `clientId` e `userId`, validar que os agregados pertencem à mesma pessoa/conta e aplicar substituição em lote idempotente. A implementação transacional permanece pendente e não foi substituída por regra paralela.
+Operações de listar, vincular, desvincular e substituir devem validar `clientId` e `userId` nos dois lados, objetivo ativo e hábito não arquivado. A unicidade do banco fornece idempotência; endpoints mutáveis exigem antiforgery. Nunca se aceita um identificador pertencente a outra conta.

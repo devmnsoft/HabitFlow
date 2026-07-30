@@ -10,8 +10,26 @@ namespace HabitFlow.Application;
 public sealed record PersonalReport(DateOnly PeriodStart, DateOnly PeriodEnd, int TotalCompletions, int ActiveDays, double CompletionRate, string Insight);
 
 public sealed class ReportService(IHabitRepository habits, IHabitCompletionRepository completions, IHabitWeekDayRepository weekDays,
-    HabitOccurrenceService occurrences, UserTimeZoneService timeZones, IUserReportRepository reports, AuditService audit, ILogger<ReportService> logger)
+    HabitOccurrenceService occurrences, UserTimeZoneService timeZones, IUserReportRepository reports, AuditService audit,
+    ProgressSnapshotService snapshots, ILogger<ReportService> logger)
 {
+    public async Task<PersonalReport> BuildWeeklyReportAsync(Guid clientId, Guid userId, DateOnly date, CancellationToken ct = default)
+    {
+        var start = date.AddDays(-(((int)date.DayOfWeek + 6) % 7));
+        var report = await BuildAsync(clientId, userId, start, start.AddDays(6), ct);
+        await audit.LogAsync("weekly_report_generated", "Relatório semanal gerado", AuditSeverity.Info, userId, null, new { clientId, start }, ct);
+        return report;
+    }
+
+    public async Task<PersonalReport> BuildMonthlyReportAsync(Guid clientId, Guid userId, int year, int month, CancellationToken ct = default)
+    {
+        var start = new DateOnly(year, month, 1);
+        var report = await BuildAsync(clientId, userId, start, start.AddMonths(1).AddDays(-1), ct);
+        await audit.LogAsync("monthly_report_generated", "Relatório mensal gerado", AuditSeverity.Info, userId, null, new { clientId, year, month }, ct);
+        return report;
+    }
+
+    [Obsolete("Use the overload that requires clientId.")]
     public async Task<PersonalReport> BuildWeeklyReportAsync(Guid userId, DateOnly date, CancellationToken ct = default)
     {
         var start = date.AddDays(-((int)date.DayOfWeek));
@@ -19,6 +37,7 @@ public sealed class ReportService(IHabitRepository habits, IHabitCompletionRepos
         await audit.LogAsync("weekly_report_generated", "Relatório semanal gerado", AuditSeverity.Info, userId, null, new { start }, ct);
         return report;
     }
+    [Obsolete("Use the overload that requires clientId.")]
     public async Task<PersonalReport> BuildMonthlyReportAsync(Guid userId, int year, int month, CancellationToken ct = default)
     {
         var start = new DateOnly(year, month, 1);
@@ -26,11 +45,39 @@ public sealed class ReportService(IHabitRepository habits, IHabitCompletionRepos
         await audit.LogAsync("monthly_report_generated", "Relatório mensal gerado", AuditSeverity.Info, userId, null, new { year, month }, ct);
         return report;
     }
+    public Task SaveReportAsync(Guid clientId, Guid userId, PersonalReport report, CancellationToken ct = default) =>
+        reports.CreateAsync(new UserReport(Guid.NewGuid(), userId, "personal", report.PeriodStart, report.PeriodEnd,
+            JsonSerializer.Serialize(new { clientId, report }), DateTime.UtcNow), ct);
+    [Obsolete("Use the overload that requires clientId.")]
     public Task SaveReportAsync(Guid userId, PersonalReport report, CancellationToken ct = default) => reports.CreateAsync(new UserReport(Guid.NewGuid(), userId, "personal", report.PeriodStart, report.PeriodEnd, JsonSerializer.Serialize(report), DateTime.UtcNow), ct);
+    public async Task<Result<byte[]>> ExportPersonalReportCsvAsync(Guid clientId, Guid userId, DateOnly periodStart, DateOnly periodEnd, CancellationToken ct = default)
+    {
+        try
+        {
+            var r = await BuildAsync(clientId, userId, periodStart, periodEnd, ct);
+            var culture = CultureInfo.GetCultureInfo("pt-BR");
+            var csv = $"Período inicial;Período final;Conclusões;Dias ativos;Taxa;Insight\r\n" +
+                      $"{r.PeriodStart:dd/MM/yyyy};{r.PeriodEnd:dd/MM/yyyy};{r.TotalCompletions};{r.ActiveDays};{r.CompletionRate.ToString("N1", culture)}%;\"{SanitizeCsv(r.Insight)}\"\r\n";
+            var encoding = new UTF8Encoding(true);
+            var body = encoding.GetBytes(csv);
+            var bytes = encoding.GetPreamble().Concat(body).ToArray();
+            await audit.LogAsync("report_exported", "Relatório exportado", AuditSeverity.Info, userId, null, new { clientId, periodStart, periodEnd }, ct);
+            return Result<byte[]>.Success(bytes);
+        }
+        catch (Exception ex) { logger.LogError(ex, "Erro ao exportar relatório de {UserId}", userId); return Result<byte[]>.Failure("report.export_error", "Não foi possível exportar o relatório."); }
+    }
+    [Obsolete("Use the overload that requires clientId.")]
     public async Task<Result<byte[]>> ExportPersonalReportCsvAsync(Guid userId, DateOnly periodStart, DateOnly periodEnd, CancellationToken ct = default)
     {
         try { var r = await BuildAsync(userId, periodStart, periodEnd, ct); var csv = $"Periodo inicial,Periodo final,Conclusoes,Dias ativos,Taxa,Insight\n{r.PeriodStart},{r.PeriodEnd},{r.TotalCompletions},{r.ActiveDays},{r.CompletionRate.ToString(CultureInfo.InvariantCulture)},\"{SanitizeCsv(r.Insight)}\"\n"; await audit.LogAsync("report_exported", "Relatório exportado", AuditSeverity.Info, userId, null, new { periodStart, periodEnd }, ct); return Result<byte[]>.Success(Encoding.UTF8.GetBytes(csv)); }
         catch (Exception ex) { logger.LogError(ex, "Erro ao exportar relatório de {UserId}", userId); return Result<byte[]>.Failure("report.export_error", "Não foi possível exportar o relatório."); }
+    }
+    private async Task<PersonalReport> BuildAsync(Guid clientId, Guid userId, DateOnly start, DateOnly end, CancellationToken ct)
+    {
+        var period = await snapshots.BuildPeriodAsync(clientId, userId, start, end, ct);
+        var insight = period.Scheduled < 3 ? "Ainda não há dados suficientes para gerar uma comparação." :
+            period.Percentage >= 70 ? "Você manteve uma boa regularidade no período." : "Escolha um hábito pequeno para retomar hoje.";
+        return new(start, end, period.Completed, period.ActiveDays, (double)period.Percentage, insight);
     }
     private async Task<PersonalReport> BuildAsync(Guid userId, DateOnly start, DateOnly end, CancellationToken ct)
     {

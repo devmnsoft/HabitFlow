@@ -77,6 +77,11 @@ public class PostgresResilienceTests
         public Task<IReadOnlyList<User>> SearchAsync(string? term, CancellationToken ct = default) => throw MissingDatabaseException();
         public Task CreateAsync(User user, CancellationToken ct = default) => throw MissingDatabaseException();
         public Task UpdateAsync(User user, CancellationToken ct = default) => throw MissingDatabaseException();
+        public Task UpdatePasswordAndSessionVersionAsync(
+            Guid userId,
+            string passwordHash,
+            CancellationToken ct = default)
+            => throw MissingDatabaseException();
         public Task AddLoginAttemptAsync(LoginAttempt attempt, CancellationToken ct = default) => throw MissingDatabaseException();
     }
 
