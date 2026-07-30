@@ -39,6 +39,10 @@ public static class DependencyInjection
         services.AddScoped<ClientService>();
         services.AddScoped<HabitService>();
         services.AddScoped<ProgressSnapshotService>();
+        services.AddScoped<GoalProgressCalculator>();
+        services.AddScoped<GoalProgressEngine>();
+        services.AddScoped<GoalHabitLinkService>();
+        services.AddScoped<MilestoneEvaluationService>();
         services.AddScoped<CompleteHabitUseCase>();
         services.AddScoped<UndoHabitCompletionUseCase>();
         services.AddScoped<TodayDashboardService>();
