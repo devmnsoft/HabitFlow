@@ -10,11 +10,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Setup Node.js LTS
+      - name: Setup Node.js 24
         uses: actions/setup-node@v4
         with:
-          node-version: lts/*
-          cache: npm
+          node-version: '24'
       - name: Install dependencies
         run: npm install
       - name: Security source scan
@@ -35,3 +34,6 @@ jobs:
           test ! -d dist/functions
           test ! -d dist/node_modules
           test ! -f dist/.env
+      - name: Reject committed binaries and backups
+        run: |
+          ! find . -path ./.git -prune -o -type f \( -iname '*.exe' -o -iname '*.dll' -o -iname '*.pdb' -o -iname '*.bak' -o -iname '*.zip' \) -print -quit | grep -q .

@@ -50,3 +50,5 @@
 \i database/migrations/048_password_recovery_transactional_email.sql
 \i database/migrations/049_billing_communication_rule_seed_integrity.sql
 \i database/migrations/050_goal_progress_activation_core.sql
+\i database/migrations/051_system_settings_contract.sql
+\i database/migrations/052_library_v2_onboarding.sql
