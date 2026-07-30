@@ -259,3 +259,6 @@ A v6.7 oferece recuperação anti-enumeração com token aleatório de uso únic
 
 > A integridade dos seeds de regras de cobrança e a política de migração de códigos
 > legados estão documentadas em `docs/BILLING_COMMUNICATION_RULE_SEEDS.md`.
+
+### Integridade transacional v6.8.3.1
+Conclusões usam mutações atômicas e idempotentes; relatórios pessoais exigem contexto de cliente, oferecem CSV compatível com Excel pt-BR e rota de impressão em `/reports/print`. Consulte `docs/COMPLETION_MUTATION_IDEMPOTENCY.md` e `docs/CLIENT_AWARE_REPORTS.md`.

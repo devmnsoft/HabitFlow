@@ -1,0 +1,29 @@
+@model HabitFlow.Application.PersonalReport
+@{
+    Layout = null;
+    ViewData["Title"] = "Relatório para impressão";
+}
+<!doctype html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"] - HabitFlow</title>
+    <link rel="stylesheet" href="~/css/print.css" asp-append-version="true" />
+</head>
+<body>
+<main>
+    <header><h1>Relatório HabitFlow</h1><p>Gerado em @DateTime.Now.ToString("dd/MM/yyyy HH:mm")</p></header>
+    <section aria-labelledby="period-title">
+        <h2 id="period-title">Resumo do período</h2>
+        <dl>
+            <dt>Período</dt><dd>@Model.PeriodStart.ToString("dd/MM/yyyy") a @Model.PeriodEnd.ToString("dd/MM/yyyy")</dd>
+            <dt>Conclusões</dt><dd>@Model.TotalCompletions</dd>
+            <dt>Dias ativos</dt><dd>@Model.ActiveDays</dd>
+            <dt>Percentual</dt><dd>@Model.CompletionRate.ToString("N1")%</dd>
+        </dl>
+        <p>@Model.Insight</p>
+    </section>
+</main>
+</body>
+</html>

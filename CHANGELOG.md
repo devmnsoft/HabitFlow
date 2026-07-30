@@ -570,3 +570,9 @@
 - Corrige UUID, códigos, tipos de gatilho e upsert dos seeds de regras de cobrança.
 - Adiciona migration transacional para default defensivo de UUID e normalização não destrutiva de códigos legados.
 - Adiciona auditoria de IDs obrigatórios baseada no catálogo PostgreSQL.
+
+## v6.8.3.1-CompileIntegrity-TransactionalGoals-Milestones-Reports
+- Sincroniza o double de indisponibilidade com `IUserRepository`.
+- Expõe resultados idempotentes de inserção/remoção de conclusões com SQL atômico e isolamento por cliente.
+- Torna os endpoints de relatório client-aware, gera CSV pt-BR e adiciona visualização de impressão.
+- Remove `User.Plan` como autoridade do plano exibido no Dashboard.

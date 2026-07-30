@@ -320,3 +320,9 @@ firebase deploy --only hosting
 - [x] Corrigir IDs, códigos e upsert das regras de comunicação nos seeds.
 - [x] Adicionar default UUID e política não destrutiva para códigos legados.
 - [ ] Concluir engine transacional de objetivos, marcos e relatórios client-aware.
+
+## Validações pendentes v6.8.3.1
+- Executar restore/build/test/publish em ambiente com SDK .NET 10.
+- Executar QA PostgreSQL, WebApplicationFactory e Playwright documentados em `docs/V6831_*_QA.md`.
+- Concluir e validar transacionalmente motor de objetivos, eventos/outbox e catálogo integral de marcos.
+- Confirmar workflow remoto e SHA antes de declarar CI verde.
