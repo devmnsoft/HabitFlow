@@ -14,7 +14,18 @@ public sealed record Habit(
     int? TargetPerWeek = null,
     TimeOnly? ReminderTime = null,
     string? Notes = null,
-    int SortOrder = 0)
+    int SortOrder = 0,
+    Guid? ClientId = null,
+    Guid? SourceTemplateId = null,
+    Guid? SourceCollectionId = null,
+    Guid? ObjectiveId = null,
+    string? IconCode = null,
+    HabitDifficulty? Difficulty = null,
+    int? EstimatedTimeMinutes = null,
+    DateOnly? StartDate = null,
+    int? TemplateContentVersion = null,
+    bool IsTemplateVariation = false,
+    Guid? TemplateIdempotencyKey = null)
 {
     public bool BelongsTo(Guid userId) => UserId == userId;
 

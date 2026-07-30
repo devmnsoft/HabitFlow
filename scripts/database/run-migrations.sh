@@ -41,6 +41,14 @@ alter table habitflow.schema_migrations add column if not exists filename varcha
 alter table habitflow.schema_migrations add column if not exists app_version varchar(80);
 SQL
 
+compatibility_file="$repo_root/scripts/database/pre-migration-compatibility.sql"
+compatibility_checksum="$(sha256sum "$compatibility_file" | awk '{print $1}')"
+psql "${psql_args[@]}" \
+  -v compatibility_filename="pre-migration-compatibility.sql" \
+  -v compatibility_checksum="$compatibility_checksum" \
+  -v compatibility_app_version="$app_version" \
+  -f "$compatibility_file"
+
 for filename in "${migrations[@]}"; do
   version="${filename%%_*}"
   name="${filename#*_}"; name="${name%.sql}"
