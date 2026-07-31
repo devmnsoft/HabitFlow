@@ -48,6 +48,24 @@ public sealed class MigrationGovernanceV67Tests
     }
 
     [Fact]
+    public void Canonical_runner_safely_reconciles_legacy_self_registration()
+    {
+        var runner = File.ReadAllText(Path.Combine(Root, "scripts", "database", "run-migrations.sh"));
+
+        Assert.Contains("hf_schema_migrations_before", runner);
+        Assert.Contains("registered unexpected version(s)", runner);
+        Assert.Contains("on conflict (id) do update", runner, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("checksum = coalesce", runner, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("filename = coalesce", runner, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("registered.checksum is not null", runner);
+        Assert.Contains("registered.filename is not null", runner);
+        Assert.DoesNotContain(
+            "insert into habitflow.schema_migrations(id,name,checksum,filename,app_version)\nvalues",
+            runner,
+            StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public void Status_service_does_not_contain_a_hardcoded_range()
     {
         var source = File.ReadAllText(Path.Combine(Root, "src", "HabitFlow.Application", "Services", "SaaSOperationsServices.cs"));

@@ -99,12 +99,64 @@ begin;
 select pg_advisory_xact_lock(76467001);
 select not exists (select 1 from habitflow.schema_migrations where id = '$version') as should_apply \gset
 \if :should_apply
+create temporary table hf_schema_migrations_before on commit drop as
+select id from habitflow.schema_migrations;
 \i $migrations_dir/$filename
-insert into habitflow.schema_migrations(id,name,checksum,filename,app_version)
-values ('$version','$name','$checksum','$filename','$app_version');
+do \$migration_registry\$
+declare
+  unexpected_ids text;
+  registered habitflow.schema_migrations%rowtype;
+begin
+  -- A legacy migration may register itself. It must not register any other id.
+  select string_agg(m.id, ', ' order by m.id) into unexpected_ids
+    from habitflow.schema_migrations m
+    left join hf_schema_migrations_before b on b.id = m.id
+   where b.id is null and m.id <> '$version';
+  if unexpected_ids is not null then
+    raise exception 'Migration $version registered unexpected version(s): %', unexpected_ids;
+  end if;
+
+  select * into registered
+    from habitflow.schema_migrations
+   where id = '$version'
+   for update;
+
+  if found and registered.checksum is not null and registered.checksum <> '$checksum' then
+    raise exception 'Checksum divergence for migration $version';
+  end if;
+  if found and registered.filename is not null and registered.filename <> '$filename' then
+    raise exception 'Applied migration filename divergence for $version';
+  end if;
+
+  insert into habitflow.schema_migrations(id,name,checksum,filename,app_version)
+  values ('$version','$name','$checksum','$filename','$app_version')
+  on conflict (id) do update
+    set checksum = coalesce(habitflow.schema_migrations.checksum, excluded.checksum),
+        filename = coalesce(habitflow.schema_migrations.filename, excluded.filename),
+        app_version = coalesce(habitflow.schema_migrations.app_version, excluded.app_version);
+end
+\$migration_registry\$;
 \endif
-update habitflow.schema_migrations set checksum=coalesce(checksum,'$checksum'),
- filename=coalesce(filename,'$filename'), app_version=coalesce(app_version,'$app_version') where id='$version';
+do \$migration_registry_validation\$
+declare registered habitflow.schema_migrations%rowtype;
+begin
+  select * into registered from habitflow.schema_migrations where id = '$version' for update;
+  if not found then
+    raise exception 'Migration $version did not register the expected version';
+  end if;
+  if registered.checksum is not null and registered.checksum <> '$checksum' then
+    raise exception 'Checksum divergence for migration $version';
+  end if;
+  if registered.filename is not null and registered.filename <> '$filename' then
+    raise exception 'Applied migration filename divergence for $version';
+  end if;
+  update habitflow.schema_migrations
+     set checksum = coalesce(checksum, '$checksum'),
+         filename = coalesce(filename, '$filename'),
+         app_version = coalesce(app_version, '$app_version')
+   where id = '$version';
+end
+\$migration_registry_validation\$;
 commit;
 SQL
   psql "${psql_args[@]}" -f "$sql_file"
