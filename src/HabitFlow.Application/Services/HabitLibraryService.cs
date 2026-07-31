@@ -33,14 +33,15 @@ public sealed class HabitLibraryService(IHabitObjectiveRepository objectives, IH
         catch (Exception ex) { logger.LogError(ex, "Erro ao obter template {TemplateId}", id); return Result<HabitTemplate>.Failure("library.template_error", "Não foi possível carregar este hábito pronto."); }
     }
 
-    public async Task<Result<Habit>> AddTemplateToUserHabitsAsync(User user, Guid templateId, CancellationToken ct = default)
+    [Obsolete("Use CreateHabitFromTemplateUseCase. This adapter will be removed after callers migrate.")]
+    public async Task<Result<Habit>> AddTemplateToUserHabitsAsync(User user, Guid templateId, CancellationToken ct = default, string? customizedName = null)
     {
         try
         {
             var templateResult = await GetTemplateAsync(templateId, ct);
             if (templateResult.IsFailure) return Result<Habit>.Failure(templateResult.Error.Code, templateResult.Error.Message);
             var template = templateResult.Value!;
-            var created = await habits.CreateAsync(user, template.Name, template.SuggestedColor, template.Category, ct);
+            var created = await habits.CreateAsync(user, string.IsNullOrWhiteSpace(customizedName) ? template.Name : customizedName.Trim(), template.SuggestedColor, template.Category, ct);
             if (created.IsFailure)
             {
                 if (created.Error.Code.Contains("limit", StringComparison.OrdinalIgnoreCase)) await audit.LogAsync("free_limit_reached", "Limite do plano gratuito alcançado ao adicionar template", AuditSeverity.Warning, user.Id, user.Email, new { templateId }, ct);

@@ -1,0 +1,6 @@
+@model HabitFlow.Domain.HabitTemplate
+@{ ViewData["Title"] = $"Personalizar {Model.Name}"; }
+<link rel="stylesheet" href="~/css/habit-library.css" asp-append-version="true" />
+<main class="container py-4 hf-library-detail"><a class="btn btn-link px-0" href="/habit-library/template/@Model.Id">← Voltar aos detalhes</a><h1>Personalize seu hábito</h1><p>Revise o nome antes de adicionar. Você poderá ajustar a agenda no Dashboard.</p>
+<form method="post" data-customize-form novalidate>@Html.AntiForgeryToken()<div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div><div class="mb-3"><label class="form-label" for="name">Nome</label><input class="form-control" id="name" name="name" maxlength="120" required value="@Model.Name" /><span class="text-danger" data-valmsg-for="name"></span></div><dl><dt>Frequência sugerida</dt><dd>@Model.SuggestedFrequency</dd><dt>Tempo estimado</dt><dd>@Model.EstimatedTimeMinutes minutos</dd></dl><button class="btn btn-success" type="submit" data-submit>Adicionar ao meu dia</button><p class="visually-hidden" role="status" aria-live="polite" data-submit-status></p></form></main>
+<script src="~/js/habit-template-customize.js" asp-append-version="true" defer></script>

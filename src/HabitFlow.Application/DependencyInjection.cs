@@ -48,6 +48,7 @@ public static class DependencyInjection
         services.AddScoped<TodayDashboardService>();
         services.AddSingleton<HabitLibraryFallbackProvider>();
         services.AddScoped<HabitLibraryService>();
+        services.AddScoped<HabitTemplateFavoriteService>();
         services.AddScoped<GuidedJourneyService>();
         services.AddScoped<HabitScheduleService>();
         services.AddScoped<NotificationService>();

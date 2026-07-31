@@ -41,10 +41,23 @@ public sealed class MigrationGovernanceV67Tests
     public void Canonical_runner_guards_checksum_and_uses_postgresql_advisory_lock()
     {
         var runner = File.ReadAllText(Path.Combine(Root, "scripts", "database", "run-migrations.sh"));
-        Assert.Contains("pg_advisory_xact_lock", runner);
+        Assert.Contains("pg_advisory_lock", runner);
         Assert.Contains("Checksum divergence", runner);
         Assert.Contains("sha256sum", runner);
         Assert.Contains("app_version", runner);
+    }
+
+    [Fact]
+    public void Canonical_runner_classifies_all_three_execution_modes_and_preserves_snapshot_rows()
+    {
+        var runner = File.ReadAllText(Path.Combine(Root, "scripts", "database", "run-migrations.sh"));
+        var manifest = File.ReadAllText(Path.Combine(Root, "scripts", "database", "migration-execution-modes.conf"));
+
+        Assert.Contains("runner|legacy-detection", runner);
+        Assert.Contains("self|legacy-detection", runner);
+        Assert.Contains("^(runner|self|none)$", runner);
+        Assert.Contains("on commit preserve rows", runner, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("036=self", manifest);
     }
 
     [Fact]

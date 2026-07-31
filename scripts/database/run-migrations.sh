@@ -6,6 +6,7 @@ set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 migrations_dir="$repo_root/database/migrations"
 hooks_dir="$repo_root/scripts/database/compatibility-hooks"
+execution_modes_file="$repo_root/scripts/database/migration-execution-modes.conf"
 app_version="${HABITFLOW_APP_VERSION:-development}"
 connection="${1:-}"
 psql_args=(-X -v ON_ERROR_STOP=1)
@@ -77,12 +78,32 @@ run_hooks() {
   done
 }
 
-printf '%-8s %-52s %-64s %-9s %s\n' VERSION FILENAME CHECKSUM STATUS TRANSACTION
+declare -A manifest_modes=()
+if [[ -f "$execution_modes_file" ]]; then
+  while IFS='=' read -r manifest_version manifest_mode; do
+    [[ -z "$manifest_version" || "$manifest_version" == \#* ]] && continue
+    [[ "$manifest_version" =~ ^[0-9]{3}$ && "$manifest_mode" =~ ^(runner|self|none)$ ]] || {
+      echo "Invalid migration execution mode: $manifest_version=$manifest_mode" >&2; exit 1;
+    }
+    manifest_modes[$manifest_version]="$manifest_mode"
+  done < "$execution_modes_file"
+fi
+
+classify_migration() {
+  local file="$1" version="$2" header
+  header="$(sed -nE 's/^--[[:space:]]*habitflow:transaction=(runner|self|none)[[:space:]]*$/\1/p' "$file" | head -1)"
+  if [[ -n "$header" ]]; then printf '%s|header' "$header"; return; fi
+  if [[ -n "${manifest_modes[$version]:-}" ]]; then printf '%s|manifest' "${manifest_modes[$version]}"; return; fi
+  if grep -Eiq '^[[:space:]]*(begin|commit)[[:space:]]*;' "$file"; then printf 'self|legacy-detection'; return; fi
+  printf 'runner|legacy-detection'
+}
+
+printf '%-8s %-52s %-64s %-9s %-10s %s\n' VERSION FILENAME CHECKSUM STATUS MODE SOURCE
 for filename in "${migrations[@]}"; do
   version="${filename%%_*}"; name="${filename#*_}"; name="${name%.sql}"
   checksum="$(sha256sum "$migrations_dir/$filename" | awk '{print $1}')"
-  transaction_mode="transactional"
-  grep -Eq '^--[[:space:]]*habitflow:transaction=none[[:space:]]*$' "$migrations_dir/$filename" && transaction_mode="none"
+  classification="$(classify_migration "$migrations_dir/$filename" "$version")"
+  transaction_mode="${classification%%|*}"; mode_source="${classification#*|}"
   record="$(psql "${psql_args[@]}" -Atqc "select coalesce(checksum,'') || '|' || coalesce(filename,'') from habitflow.schema_migrations where id = '$version'")"
   status="pending"
   if [[ -n "$record" ]]; then
@@ -90,18 +111,33 @@ for filename in "${migrations[@]}"; do
     [[ -z "$recorded_checksum" || "$recorded_checksum" == "$checksum" ]] || { echo "Checksum divergence for migration $version" >&2; exit 1; }
     [[ -z "$recorded_filename" || "$recorded_filename" == "$filename" ]] || { echo "Applied migration filename divergence for $version" >&2; exit 1; }
   fi
-  printf '%-8s %-52s %-64s %-9s %s\n' "$version" "$filename" "$checksum" "$status" "$transaction_mode"
+  printf '%-8s %-52s %-64s %-9s %-10s %s\n' "$version" "$filename" "$checksum" "$status" "$transaction_mode" "$mode_source"
   [[ "$status" == "applied" ]] || run_hooks "$version"
 
   sql_file="$(mktemp)"; trap 'rm -f "$sql_file"' EXIT
   cat >"$sql_file" <<SQL
-begin;
-select pg_advisory_xact_lock(76467001);
+select pg_advisory_lock(76467001);
 select not exists (select 1 from habitflow.schema_migrations where id = '$version') as should_apply \gset
 \if :should_apply
-create temporary table hf_schema_migrations_before on commit drop as
+create temporary table hf_schema_migrations_before on commit preserve rows as
 select id from habitflow.schema_migrations;
+SQL
+  if [[ "$transaction_mode" == "runner" ]]; then echo 'begin;' >>"$sql_file"; fi
+  cat >>"$sql_file" <<SQL
 \i $migrations_dir/$filename
+SQL
+  if [[ "$transaction_mode" == "runner" ]]; then
+    # Reconciliation remains in the runner transaction, making schema and registry atomic.
+    :
+  elif [[ "$transaction_mode" == "self" ]]; then
+    # The included file has completed its own transaction. Reconcile separately while
+    # the session advisory lock and PRESERVE ROWS snapshot are still alive.
+    echo 'begin;' >>"$sql_file"
+  else
+    # Non-transactional DDL is complete; registry reconciliation is transactional.
+    echo 'begin;' >>"$sql_file"
+  fi
+  cat >>"$sql_file" <<SQL
 do \$migration_registry\$
 declare
   unexpected_ids text;
@@ -136,6 +172,8 @@ begin
         app_version = coalesce(habitflow.schema_migrations.app_version, excluded.app_version);
 end
 \$migration_registry\$;
+drop table hf_schema_migrations_before;
+commit;
 \endif
 do \$migration_registry_validation\$
 declare registered habitflow.schema_migrations%rowtype;
@@ -157,7 +195,7 @@ begin
    where id = '$version';
 end
 \$migration_registry_validation\$;
-commit;
+select pg_advisory_unlock(76467001);
 SQL
   psql "${psql_args[@]}" -f "$sql_file"
   rm -f "$sql_file"; trap - EXIT
