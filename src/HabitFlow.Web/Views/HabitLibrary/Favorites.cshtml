@@ -1,0 +1,3 @@
+@model IReadOnlyList<HabitFlow.Domain.HabitTemplate>
+@{ ViewData["Title"] = "Hábitos favoritos"; }
+<main class="container py-4"><h1>Seus favoritos</h1><p>Continue de onde parou e personalize quando quiser.</p><div class="row g-3">@foreach (var item in Model) { <div class="col-sm-6 col-lg-4"><article class="card h-100"><div class="card-body"><h2 class="h5">@item.Name</h2><p>@item.Description</p><a class="btn btn-outline-success" href="/habit-library/template/@item.Id">Ver detalhes</a></div></article></div> } @if (Model.Count == 0) { <div class="col"><p class="alert alert-info">Você ainda não favoritou hábitos.</p></div> }</div></main>

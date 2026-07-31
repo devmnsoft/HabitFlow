@@ -5,7 +5,7 @@
 <section class="row g-3">
 @foreach (var template in Model.Templates) {
  <div class="col-md-6 col-xl-4"><article class="hf-habit-template-card h-100"><span class="hf-difficulty">@template.Difficulty</span><h2 class="h4">@template.Name</h2><p>@template.Description</p><p class="text-muted"><strong>Benefício:</strong> @template.BenefitText</p><p class="small text-muted">Tempo estimado: @(template.EstimatedTimeMinutes?.ToString() ?? "flexível") min · Frequência: @template.SuggestedFrequency</p>
-@if (User.Identity?.IsAuthenticated == true) { <form method="post" action="/habit-library/add">@Html.AntiForgeryToken()<input type="hidden" name="templateId" value="@template.Id" /><input type="hidden" name="returnUrl" value="@returnUrl" /><button class="btn btn-success w-100" type="submit">Adicionar ao meu dia</button></form> } else { <a class="btn btn-success w-100" href="/register?intent=@Uri.EscapeDataString(template.Name)&returnUrl=@Uri.EscapeDataString(returnUrl)">Adicionar ao meu dia</a> }
+<a class="btn btn-success w-100" href="/habit-library/template/@template.Id">Ver detalhes</a>
  </article></div>
 }
 </section>

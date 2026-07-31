@@ -1,0 +1,14 @@
+@model HabitFlow.Web.Models.HabitTemplateDetailsViewModel
+@{ ViewData["Title"] = Model.Template.Name; var t = Model.Template; }
+<link rel="stylesheet" href="~/css/habit-library.css" asp-append-version="true" />
+<main class="hf-library-detail container py-4">
+  <a class="btn btn-link px-0" href="/habit-library">← Voltar à Biblioteca</a>
+  <article class="card border-0 shadow-sm"><div class="card-body p-4">
+    <div class="d-flex gap-2 flex-wrap mb-3"><span class="badge text-bg-success">@t.Difficulty</span><span class="badge text-bg-light">@t.EstimatedTimeMinutes min</span><span class="badge text-bg-light">Plano @t.MinimumPlanCode</span></div>
+    <h1>@t.Name</h1><p class="lead">@t.Description</p>
+    <dl class="row"><dt class="col-sm-3">Benefício</dt><dd class="col-sm-9">@t.BenefitText</dd><dt class="col-sm-3">Por que ajuda</dt><dd class="col-sm-9">@t.WhyItHelps</dd><dt class="col-sm-3">Como começar</dt><dd class="col-sm-9">@t.HowToStart</dd><dt class="col-sm-3">Primeira ação</dt><dd class="col-sm-9">@t.FirstAction</dd><dt class="col-sm-3">Frequência</dt><dd class="col-sm-9">@t.SuggestedFrequency</dd><dt class="col-sm-3">Horário sugerido</dt><dd class="col-sm-9">@(t.SuggestedReminderTime?.ToString("HH:mm") ?? "Flexível")</dd></dl>
+    <div class="d-flex gap-2 flex-wrap">@if (User.Identity?.IsAuthenticated == true) { <a class="btn btn-success" href="/habit-library/template/@t.Id/customize">Personalizar e adicionar</a><form class="hf-favorite-form" method="post" action="/habit-library/template/@t.Id/@(Model.IsFavorite ? "unfavorite" : "favorite")">@Html.AntiForgeryToken()<button class="btn btn-outline-success" type="submit" aria-pressed="@Model.IsFavorite.ToString().ToLowerInvariant()">@(Model.IsFavorite ? "Remover favorito" : "Favoritar")</button></form> } else { <a class="btn btn-success" href="/login?returnUrl=@Uri.EscapeDataString(Context.Request.Path)">Entrar para adicionar</a> }</div>
+    <p class="visually-hidden" role="status" aria-live="polite" data-favorite-status></p>
+  </div></article>
+</main>
+<script src="~/js/habit-library.js" asp-append-version="true" defer></script>
