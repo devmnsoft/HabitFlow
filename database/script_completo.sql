@@ -123,6 +123,9 @@ create table if not exists habitflow.admin_audit_logs (
 create table if not exists habitflow.system_settings (
     key varchar(100) primary key,
     value jsonb not null,
+    description text null,
+    is_public boolean not null default false,
+    created_at timestamp not null default now(),
     updated_at timestamp not null default now(),
     updated_by uuid null
 );

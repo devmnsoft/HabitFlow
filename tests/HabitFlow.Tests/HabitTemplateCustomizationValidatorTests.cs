@@ -20,7 +20,7 @@ public sealed class HabitTemplateCustomizationValidatorTests
             PreferredTime = new TimeOnly(7, 30),
             CreateGoal = true,
             GoalTitle = "Ler com constância",
-            GoalTargetType = "Count",
+            GoalTargetType = GoalTargetType.HabitCompletions,
             GoalTargetValue = 12
         }, Today);
 
