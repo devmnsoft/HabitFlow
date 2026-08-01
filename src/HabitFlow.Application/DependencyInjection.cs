@@ -48,6 +48,8 @@ public static class DependencyInjection
         services.AddScoped<TodayDashboardService>();
         services.AddSingleton<HabitLibraryFallbackProvider>();
         services.AddScoped<HabitLibraryService>();
+        services.AddSingleton<HabitTemplateCustomizationValidator>();
+        services.AddScoped<CreateHabitFromTemplateUseCase>();
         services.AddScoped<HabitTemplateFavoriteService>();
         services.AddScoped<GuidedJourneyService>();
         services.AddScoped<HabitScheduleService>();

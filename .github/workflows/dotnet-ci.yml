@@ -35,6 +35,7 @@ jobs:
           done
       - name: Aggregate fresh database
         run: |
+          set -o pipefail
           psql -X -v ON_ERROR_STOP=1 -d aggregate_fresh_tests -f database/script_completo.sql 2>&1 | tee /tmp/aggregate.log
           ! grep -E '(^|[[:space:]])(ERROR|FATAL|PANIC):' /tmp/aggregate.log
           psql -X -v ON_ERROR_STOP=1 -d aggregate_fresh_tests -c "select 1 from habitflow.plans having bool_and(public_name is not null and btrim(public_name)<>'');"
@@ -52,12 +53,7 @@ jobs:
           for file in $(find database/migrations -maxdepth 1 -name '0[0-2][0-9]_*.sql' -o -name '03[01]_*.sql' | sort); do
             psql -X -v ON_ERROR_STOP=1 -f "$file"
           done
-          psql -X -v ON_ERROR_STOP=1 <<'SQL'
-          create table habitflow.schema_migrations (
-            id varchar(120) primary key, name varchar(200) not null,
-            applied_at timestamptz not null default now(), checksum varchar(64),
-            filename varchar(260), app_version varchar(80));
-          SQL
+          psql -X -v ON_ERROR_STOP=1 -f tests/fixtures/postgres/pre-032-snapshot.sql
           for file in $(find database/migrations -maxdepth 1 -name '0[0-2][0-9]_*.sql' -o -name '03[01]_*.sql' | sort); do
             filename=$(basename "$file"); version=${filename%%_*}; name=${filename#*_}; name=${name%.sql}
             checksum=$(sha256sum "$file" | awk '{print $1}')
@@ -67,6 +63,7 @@ jobs:
           psql -X -v ON_ERROR_STOP=1 -c "select 1 from habitflow.plans having bool_and(public_name is not null and btrim(public_name)<>'');"
       - name: Development aggregate without privileged fixed credentials
         run: |
+          set -o pipefail
           psql -X -v ON_ERROR_STOP=1 -d aggregate_dev_tests -f database/script_completo_dev.sql 2>&1 | tee /tmp/aggregate-dev.log
           ! grep -E '(^|[[:space:]])(ERROR|FATAL|PANIC):' /tmp/aggregate-dev.log
           test "$(psql -XAt -d aggregate_dev_tests -c "select count(*) from habitflow.users where role='SuperAdmin';")" = 0
