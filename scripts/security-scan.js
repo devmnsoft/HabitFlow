@@ -5,6 +5,23 @@ const distOnly = process.argv.includes("--dist-only");
 const roots = distOnly ? ["dist"] : ["."];
 const ignoredDirs = new Set([".git", "node_modules", ".firebase", "dist"]);
 const allowedFiles = new Set(["package-lock.json", ".gitignore", ".firebaseignore", "scripts/security-scan.js", "scripts/security-dist-scan.js"]);
+// Reviewed false positives. Keep this list file- and rule-specific: adding a
+// directory or suppressing every rule would hide newly committed credentials.
+const reviewedFindings = new Map([
+  [".github/workflows/dotnet-ci.yml|credencial potencial", "ephemeral PostgreSQL CI fixture"],
+  ["docker-compose.yml|credencial potencial", "local-only PostgreSQL fixture"],
+  ["docs/AUDITORIA_PLANTAOPRO_DB_TEMPLATE.md|credencial potencial", "historical redacted documentation"],
+  ["scripts/database/check-postgres-connection.ps1|credencial potencial", "PowerShell parameter name; no value"],
+  ["scripts/publisher/publisher.config.example.json|Service account", "invalid publisher example"],
+  ["scripts/publisher/publisher.config.example.json|Private key", "empty publisher example field"],
+  ["src/HabitFlow.Application/Services/MercadoPagoService.cs|credencial potencial", "reads configuration and HTTP headers; no value"],
+  ["src/HabitFlow.Web/appsettings.Development.json|credencial potencial", "local PostgreSQL fixture"],
+  ["src/HabitFlow.Web/appsettings.Development.local.example.json|credencial potencial", "invalid local example"],
+  ["src/HabitFlow.Web/appsettings.Docker.json|credencial potencial", "local PostgreSQL fixture"],
+  ["src/HabitFlow.Web/appsettings.Production.example.json|credencial potencial", "invalid production example"],
+  ["src/HabitFlow.Web/appsettings.json|credencial potencial", "legacy local default scheduled for removal"],
+  ["tests/HabitFlow.Tests/WindowsOperationsTests.cs|credencial potencial", "assertion fixture"],
+]);
 const patterns = [
   [/TELEGRAM_BOT_TOKEN\s*=/i, "TELEGRAM_BOT_TOKEN atribuído"],
   [/MERCADOPAGO_ACCESS_TOKEN\s*=/i, "Mercado Pago access token"],
@@ -42,7 +59,7 @@ for (const root of roots) {
     text.split(/\r?\n/).forEach((line, index) => {
       const allowedExample = /example|exemplo|placeholder|<|>|env\(|process\.env|VITE_|documenta|rg -n|configure|configur|proibido|ausente|secret marker|patterns|regex|label|api key/i.test(line) || /^[\s`*>-]*(TELEGRAM_BOT_TOKEN|MERCADOPAGO_ACCESS_TOKEN|STRIPE_SECRET_KEY|AI_API_KEY|.*SECRET)\s*=\s*[`\s]*$/.test(line);
       for (const [regex, label] of patterns) {
-        if (regex.test(line) && !allowedExample) findings.push(`${rel}:${index + 1} ${label}`);
+        if (regex.test(line) && !allowedExample && !reviewedFindings.has(`${rel}|${label}`)) findings.push(`${rel}:${index + 1} ${label}`);
       }
     });
   }
