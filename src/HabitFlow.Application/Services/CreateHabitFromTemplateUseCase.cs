@@ -8,7 +8,7 @@ public sealed record CreateHabitFromTemplateCommand(
     Guid ClientId, Guid UserId, Guid TemplateId, string Name,
     HabitFrequencyType FrequencyType, int? TargetPerWeek, IReadOnlyCollection<int> SelectedDays,
     TimeOnly? PreferredTime, string Color, string? Category, string? Notes, DateOnly StartDate,
-    Guid? ExistingGoalId, bool CreateGoal, string? GoalTitle, string? GoalTargetType,
+    Guid? ExistingGoalId, bool CreateGoal, string? GoalTitle, GoalTargetType? GoalTargetType,
     decimal? GoalTargetValue, bool AllowVariation, string? OnboardingSource, Guid? CollectionId,
     Guid IdempotencyKey, string CorrelationId);
 
@@ -16,16 +16,13 @@ public sealed record TemplatePlanUsage(int ActiveHabits, int? Limit, int Remaini
 
 public sealed record CreateHabitFromTemplateResult(
     Habit Habit, UserGoal? Goal, bool GoalLinked, bool WasAlreadyAdded, bool IsVariation,
-    TemplatePlanUsage PlanUsage, bool OnboardingUpdated, IReadOnlyList<object> GoalUpdates,
-    IReadOnlyList<object> NewMilestones, string Message);
+    TemplatePlanUsage PlanUsage, bool OnboardingUpdated, IReadOnlyList<GoalProgressUpdate> GoalUpdates,
+    IReadOnlyList<MilestoneNotification> NewMilestones, bool NotificationCreated, string Message);
 
 public sealed class HabitTemplateCustomizationValidator
 {
     private static readonly HashSet<string> Colors = new(StringComparer.OrdinalIgnoreCase)
         { "#2563EB", "#16A34A", "#9333EA", "#EA580C", "#DC2626", "#0891B2", "#4F46E5", "#64748B" };
-    private static readonly HashSet<string> GoalTypes = new(StringComparer.OrdinalIgnoreCase)
-        { "Count", "Frequency", "Percentage", "Streak" };
-
     public Result Validate(CreateHabitFromTemplateCommand command, DateOnly today)
     {
         var name = command.Name?.Trim() ?? string.Empty;
@@ -52,7 +49,8 @@ public sealed class HabitTemplateCustomizationValidator
         if (command.ExistingGoalId.HasValue && command.CreateGoal)
             return Result.Failure("template.goal_choice_invalid", "Selecione um objetivo existente ou crie um novo.");
         if (command.CreateGoal && (string.IsNullOrWhiteSpace(command.GoalTitle) || command.GoalTitle.Trim().Length > 140 ||
-            !GoalTypes.Contains(command.GoalTargetType ?? string.Empty) || command.GoalTargetValue is null or <= 0 or > 1_000_000))
+            command.GoalTargetType is null || !Enum.IsDefined(command.GoalTargetType.Value) ||
+            command.GoalTargetValue is null or <= 0 or > 1_000_000 || command.GoalTargetValue != decimal.Truncate(command.GoalTargetValue.Value)))
             return Result.Failure("template.goal_invalid", "Revise o título, o tipo e o valor do novo objetivo.");
         if (command.IdempotencyKey == Guid.Empty || string.IsNullOrWhiteSpace(command.CorrelationId))
             return Result.Failure("template.idempotency_required", "Não foi possível identificar esta solicitação.");
@@ -86,16 +84,17 @@ public sealed class CreateHabitFromTemplateUseCase(
             if (template is not { IsActive: true } || template.PublishedAt is null || template.PublishedAt > clock.GetUtcNow().UtcDateTime)
                 return await Rollback("template.unavailable", "Este template não está disponível.", ct);
 
-            var all = await habits.ListByUserAsync(command.UserId, ct);
-            var existing = all.FirstOrDefault(h => h.ClientId == command.ClientId && h.TemplateIdempotencyKey == command.IdempotencyKey)
-                ?? (!command.AllowVariation ? all.FirstOrDefault(h => h.ClientId == command.ClientId && h.SourceTemplateId == command.TemplateId && !h.IsArchived && !h.IsTemplateVariation) : null);
+            var existing = await habits.FindByIdempotencyKeyAsync(command.ClientId, command.UserId, command.IdempotencyKey, ct)
+                ?? (!command.AllowVariation
+                    ? await habits.FindActiveBySourceTemplateAsync(command.ClientId, command.UserId, command.TemplateId, false, ct)
+                    : null);
             var limit = await entitlements.GetIntegerFeatureAsync(command.UserId, PlanFeatureCodes.ActiveHabitsLimit, ct);
-            var active = all.Count(h => !h.IsArchived && h.ClientId == command.ClientId);
+            var active = await habits.CountActiveAsync(command.ClientId, command.UserId, ct);
             var usage = new TemplatePlanUsage(active, limit, limit is null or < 0 ? int.MaxValue : Math.Max(0, limit.Value - active));
             if (existing is not null)
             {
                 await unitOfWork.CommitAsync(ct);
-                return Result<CreateHabitFromTemplateResult>.Success(new(existing, null, false, true, existing.IsTemplateVariation, usage, false, [], [], "Este hábito já havia sido adicionado."));
+                return Result<CreateHabitFromTemplateResult>.Success(new(existing, null, false, true, existing.IsTemplateVariation, usage, false, [], [], false, "Este hábito já havia sido adicionado."));
             }
             if (!await entitlements.CanCreateHabitAsync(command.UserId, active, ct))
                 return await Rollback("template.habit_limit", "Seu plano não possui espaço para outro hábito ativo.", ct);
@@ -116,7 +115,7 @@ public sealed class CreateHabitFromTemplateUseCase(
                 if (goalLimit is >= 0 && goalCount >= goalLimit) return await Rollback("template.goal_limit", "Seu plano não possui espaço para outro objetivo ativo.", ct);
                 var now = clock.GetUtcNow().UtcDateTime;
                 goal = new(Guid.NewGuid(), command.ClientId, command.UserId, null, command.GoalTitle!.Trim(), null,
-                    command.GoalTargetType!, checked((int)command.GoalTargetValue!.Value), 0, command.StartDate, null,
+                    command.GoalTargetType!.Value.ToString(), checked((int)command.GoalTargetValue!.Value), 0, command.StartDate, null,
                     "Active", command.Color, template.IconCode, now, now, null);
                 await goals.CreateAsync(goal, ct);
             }
@@ -135,7 +134,7 @@ public sealed class CreateHabitFromTemplateUseCase(
             await notifications.CreateAsync(command.UserId, "habit_template_added", "Hábito adicionado", "Agora você pode acompanhá-lo no Dashboard.", "habit", habit.Id, ct);
             await unitOfWork.CommitAsync(ct);
             var finalUsage = usage with { ActiveHabits = active + 1, Remaining = usage.Limit is null or < 0 ? int.MaxValue : Math.Max(0, usage.Limit.Value - active - 1) };
-            return Result<CreateHabitFromTemplateResult>.Success(new(habit, goal, goal is not null, false, command.AllowVariation, finalUsage, false, [], [], "Hábito adicionado com sucesso."));
+            return Result<CreateHabitFromTemplateResult>.Success(new(habit, goal, goal is not null, false, command.AllowVariation, finalUsage, false, [], [], true, "Hábito adicionado com sucesso."));
         }
         catch (Exception ex)
         {

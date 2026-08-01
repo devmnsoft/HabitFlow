@@ -27,7 +27,7 @@ public sealed class CustomizeHabitTemplateViewModel
     public Guid? ExistingGoalId { get; set; }
     public bool CreateGoal { get; set; }
     public string? GoalTitle { get; set; }
-    public string? GoalTargetType { get; set; }
+    public GoalTargetType? GoalTargetType { get; set; }
     public decimal? GoalTargetValue { get; set; }
     public bool AllowVariation { get; set; }
     public IReadOnlyList<UserGoal> AvailableGoals { get; set; } = [];
