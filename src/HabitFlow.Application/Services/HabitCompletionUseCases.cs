@@ -13,7 +13,10 @@ public sealed record ProgressDaySnapshot(DateOnly Date, int Scheduled, int Compl
 public sealed record ProgressPeriodSnapshot(DateOnly PeriodStart, DateOnly PeriodEnd, int Scheduled, int Completed, int Pending,
     decimal Percentage, int ActiveDays, int CompletedDays, int PartialDays, int CurrentStreak, int BestStreak,
     IReadOnlyList<ProgressDaySnapshot> DailySummaries, IReadOnlyList<ProgressHabitSnapshot> HabitSummaries);
-public sealed record GoalProgressUpdate(Guid GoalId, string Title, decimal PreviousValue, decimal CurrentValue, decimal TargetValue, decimal Percentage, bool CompletedNow);
+public sealed record GoalProgressUpdate(
+    Guid GoalId, string Title, decimal PreviousValue, decimal CurrentValue,
+    decimal TargetValue, decimal Percentage, bool CompletedNow,
+    string Status = "Active", bool WasCreated = false, bool WasLinked = false);
 public sealed record MilestoneNotification(Guid MilestoneId, string Title, string Message);
 public sealed record HabitCompletionResult(Guid HabitId, DateOnly Date, bool Completed, DailySummary DailySummary, int CurrentStreak, int BestStreak, NextHabitSnapshot? NextHabit, IReadOnlyList<GoalProgressUpdate> GoalUpdates, IReadOnlyList<MilestoneNotification> NewMilestones);
 public sealed record ProgressSnapshot(DateOnly Date, DailySummary Daily, int CurrentStreak, int BestStreak, NextHabitSnapshot? NextHabit, IReadOnlyList<HabitDto> Habits);
