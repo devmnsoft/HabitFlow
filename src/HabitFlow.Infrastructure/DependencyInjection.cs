@@ -31,6 +31,9 @@ public static class DependencyInjection
         services.AddScoped<IMilestoneRepository, MilestoneRepository>();
         services.AddScoped<IHabitObjectiveRepository, HabitObjectiveRepository>();
         services.AddScoped<IHabitTemplateRepository, HabitTemplateRepository>();
+        services.AddScoped<IHabitTemplateCollectionRepository, HabitTemplateCollectionRepository>();
+        services.AddScoped<IUserOnboardingProgressRepository, UserOnboardingProgressRepository>();
+        services.AddScoped<IUserOnboardingDraftRepository, UserOnboardingDraftRepository>();
         services.AddScoped<IHabitTemplateFavoriteRepository, HabitTemplateFavoriteRepository>();
         services.AddScoped<IHabitCompletionRepository, HabitCompletionRepository>();
         services.AddScoped<IHabitWeekDayRepository, HabitWeekDayRepository>();

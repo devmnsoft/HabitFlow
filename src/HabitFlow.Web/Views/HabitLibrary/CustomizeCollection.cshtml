@@ -1,0 +1,9 @@
+@model HabitFlow.Application.HabitTemplateCollectionDetails
+@{ ViewData["Title"] = "Personalizar coleção"; }
+<link rel="stylesheet" href="~/css/habit-library.css" asp-append-version="true" />
+<main class="container py-4"><h1>Personalize sua coleção</h1><form method="post" asp-action="ActivateCollection" asp-route-slug="@Model.Collection.Slug" data-collection-form>
+@Html.AntiForgeryToken()<div aria-live="polite" data-form-status></div>
+@foreach(var item in Model.Items){<fieldset class="card card-body mb-3"><legend class="h5">@item.Template.Name</legend><input type="hidden" name="items.Index" value="@item.TemplateId"/><input type="hidden" name="items[@item.TemplateId].TemplateId" value="@item.TemplateId"/>
+@if(!item.IsRequired){<div class="form-check"><input class="form-check-input" type="checkbox" checked name="items[@item.TemplateId].Selected" value="true" id="select-@item.TemplateId"><label class="form-check-label" for="select-@item.TemplateId">Incluir</label></div>}
+<label class="form-label" for="name-@item.TemplateId">Nome</label><input class="form-control" id="name-@item.TemplateId" name="items[@item.TemplateId].Name" value="@item.Template.Name" maxlength="120" required /></fieldset>}
+<button class="btn btn-primary" type="submit" data-submit>Ativar coleção</button></form></main><script src="~/js/habit-collection.js" asp-append-version="true"></script>

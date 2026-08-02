@@ -6,8 +6,26 @@ using HabitFlow.Web.Models;
 
 namespace HabitFlow.Web.Controllers;
 
-public sealed class HabitLibraryController(HabitLibraryService library, HabitTemplateFavoriteService favorites, IHabitObjectiveRepository objectives, IUserGoalRepository goals, IHabitRepository habits, PlanEntitlementService entitlements, CreateHabitFromTemplateUseCase createFromTemplate, IUserFacingErrorMapper errorMapper, ILogger<HabitLibraryController> logger) : Controller
+public sealed class HabitLibraryController(HabitLibraryService library, HabitTemplateFavoriteService favorites, IHabitObjectiveRepository objectives, IUserGoalRepository goals, IHabitRepository habits, PlanEntitlementService entitlements, CreateHabitFromTemplateUseCase createFromTemplate, IUserFacingErrorMapper errorMapper, ILogger<HabitLibraryController> logger, HabitTemplateCollectionService collections) : Controller
 {
+    [HttpGet("/habit-library/collections")]
+    public async Task<IActionResult> Collections(CancellationToken ct) => View(await collections.ListAsync(ct));
+
+    [HttpGet("/habit-library/collection/{slug}")]
+    [Authorize]
+    public async Task<IActionResult> Collection(string slug, CancellationToken ct)
+    {
+        var result = await collections.GetAsync(slug, this.CurrentUserId(), ct);
+        return result.IsFailure ? NotFound() : View(result.Value);
+    }
+
+    [HttpGet("/habit-library/collection/{slug}/customize")]
+    [Authorize]
+    public async Task<IActionResult> CustomizeCollection(string slug, CancellationToken ct)
+    {
+        var result = await collections.GetAsync(slug, this.CurrentUserId(), ct);
+        return result.IsFailure ? NotFound() : View(result.Value);
+    }
     [HttpGet("/habit-library")]
     public async Task<IActionResult> Index(CancellationToken ct)
     {

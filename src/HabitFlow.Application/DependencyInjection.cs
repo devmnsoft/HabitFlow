@@ -51,11 +51,13 @@ public static class DependencyInjection
         services.AddSingleton<HabitTemplateCustomizationValidator>();
         services.AddScoped<CreateHabitFromTemplateUseCase>();
         services.AddScoped<HabitTemplateFavoriteService>();
+        services.AddScoped<HabitTemplateCollectionService>();
         services.AddScoped<GuidedJourneyService>();
         services.AddScoped<HabitScheduleService>();
         services.AddScoped<NotificationService>();
         services.AddScoped<ReportService>();
         services.AddScoped<OnboardingService>();
+        services.AddScoped<OnboardingJourneyService>();
         services.AddScoped<AuditService>();
         services.AddScoped<AdminAuditService>();
         services.AddScoped<SettingsService>();
