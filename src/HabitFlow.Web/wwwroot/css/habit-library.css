@@ -3,3 +3,5 @@
 .hf-library-detail :focus-visible { outline: .2rem solid #0b6b3a; outline-offset: .2rem; }
 @media (max-width: 359px) { .hf-library-detail .btn, .hf-library-detail form { width: 100%; } }
 @media (prefers-reduced-motion: reduce) { .hf-library-detail * { scroll-behavior: auto !important; transition: none !important; } }
+[data-collection-form] { max-width: 48rem; } [data-collection-form] :focus-visible { outline: 3px solid #0d6efd; outline-offset: 2px; }
+@media (max-width: 575.98px) { [data-collection-form] .card { overflow-wrap:anywhere; } }
