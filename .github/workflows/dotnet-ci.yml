@@ -50,15 +50,11 @@ jobs:
       - name: Upgrade a pre-032 snapshot with runner only
         run: |
           export PGDATABASE=snapshot_upgrade_tests
-          for file in $(find database/migrations -maxdepth 1 -name '0[0-2][0-9]_*.sql' -o -name '03[01]_*.sql' | sort); do
-            psql -X -v ON_ERROR_STOP=1 -f "$file"
-          done
+          ./scripts/database/run-migrations.sh --to-version 031
+          test "$(psql -XAt -c "select max(id) from habitflow.schema_migrations;")" = 031
           psql -X -v ON_ERROR_STOP=1 -f tests/fixtures/postgres/pre-032-snapshot.sql
-          for file in $(find database/migrations -maxdepth 1 -name '0[0-2][0-9]_*.sql' -o -name '03[01]_*.sql' | sort); do
-            filename=$(basename "$file"); version=${filename%%_*}; name=${filename#*_}; name=${name%.sql}
-            checksum=$(sha256sum "$file" | awk '{print $1}')
-            psql -X -v ON_ERROR_STOP=1 -c "insert into habitflow.schema_migrations(id,name,checksum,filename,app_version) values ('$version','$name','$checksum','$filename','snapshot');"
-          done
+          ./scripts/database/run-migrations.sh
+          test "$(psql -XAt -c "select max(id) from habitflow.schema_migrations;")" = "$(find database/migrations -maxdepth 1 -type f -name '*.sql' -printf '%f\n' | sort | tail -1 | cut -d_ -f1)"
           ./scripts/database/run-migrations.sh
           psql -X -v ON_ERROR_STOP=1 -c "select 1 from habitflow.plans having bool_and(public_name is not null and btrim(public_name)<>'');"
       - name: Development aggregate without privileged fixed credentials

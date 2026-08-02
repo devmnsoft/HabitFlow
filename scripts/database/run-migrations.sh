@@ -8,7 +8,35 @@ migrations_dir="$repo_root/database/migrations"
 hooks_dir="$repo_root/scripts/database/compatibility-hooks"
 execution_modes_file="$repo_root/scripts/database/migration-execution-modes.conf"
 app_version="${HABITFLOW_APP_VERSION:-development}"
-connection="${1:-}"
+connection=""
+to_version=""
+
+usage() {
+  cat <<'USAGE'
+Usage: run-migrations.sh [connection] [--to-version NNN]
+
+Applies the canonical migration stream, optionally stopping after NNN. The
+connection can be omitted when the standard PG* environment variables are set.
+USAGE
+}
+
+while (($#)); do
+  case "$1" in
+    --to-version)
+      (($# >= 2)) || { echo "--to-version requires a value" >&2; usage >&2; exit 2; }
+      to_version="$2"; shift 2 ;;
+    --to-version=*) to_version="${1#*=}"; shift ;;
+    -h|--help) usage; exit 0 ;;
+    --*) echo "Unknown option: $1" >&2; usage >&2; exit 2 ;;
+    *)
+      [[ -z "$connection" ]] || { echo "Only one connection argument is supported" >&2; usage >&2; exit 2; }
+      connection="$1"; shift ;;
+  esac
+done
+
+[[ -z "$to_version" || "$to_version" =~ ^[0-9]{3}$ ]] || {
+  echo "Invalid --to-version value: $to_version (expected NNN)" >&2; exit 2;
+}
 psql_args=(-X -v ON_ERROR_STOP=1)
 [[ -z "$connection" ]] || psql_args+=("$connection")
 
@@ -28,6 +56,11 @@ for filename in "${all_sql[@]}"; do
   [[ -z "$previous" || "$previous" < "$filename" ]] || { echo "Incoherent lexical order: $previous then $filename" >&2; exit 1; }
   versions[$version]="$filename"; migrations+=("$filename"); previous="$filename"
 done
+
+if [[ -n "$to_version" && -z "${versions[$to_version]:-}" ]]; then
+  echo "Migration version $to_version does not exist" >&2
+  exit 2
+fi
 
 psql "${psql_args[@]}" <<'SQL'
 create schema if not exists habitflow;
@@ -101,6 +134,7 @@ classify_migration() {
 printf '%-8s %-52s %-64s %-9s %-10s %s\n' VERSION FILENAME CHECKSUM STATUS MODE SOURCE
 for filename in "${migrations[@]}"; do
   version="${filename%%_*}"; name="${filename#*_}"; name="${name%.sql}"
+  [[ -z "$to_version" || ! "$version" > "$to_version" ]] || continue
   checksum="$(sha256sum "$migrations_dir/$filename" | awk '{print $1}')"
   classification="$(classify_migration "$migrations_dir/$filename" "$version")"
   transaction_mode="${classification%%|*}"; mode_source="${classification#*|}"
