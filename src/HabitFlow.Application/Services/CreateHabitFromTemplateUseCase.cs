@@ -64,14 +64,15 @@ public sealed class CreateHabitFromTemplateUseCase(
     IUserRepository users, IHabitTemplateRepository templates, IHabitRepository habits,
     IHabitWeekDayRepository weekDays, IUserGoalRepository goals, PlanEntitlementService entitlements,
     IUnitOfWork unitOfWork, AuditService audit, NotificationService notifications,
-    HabitTemplateCustomizationValidator validator, TimeProvider clock,
+    HabitTemplateCustomizationValidator validator, TimeProvider clock, UserTimeZoneService timeZone,
     ILogger<CreateHabitFromTemplateUseCase> logger)
 {
     public async Task<Result<CreateHabitFromTemplateResult>> ExecuteAsync(CreateHabitFromTemplateCommand command, CancellationToken ct = default)
     {
         if (command.ClientId == Guid.Empty || command.UserId == Guid.Empty)
             return Result<CreateHabitFromTemplateResult>.Failure("template.tenant_required", "A conta e a pessoa são obrigatórias.");
-        var validation = validator.Validate(command, DateOnly.FromDateTime(clock.GetUtcNow().UtcDateTime));
+        // StartDate is a business date in the person's configured timezone, not a UTC date.
+        var validation = validator.Validate(command, timeZone.Today());
         if (validation.IsFailure) return Result<CreateHabitFromTemplateResult>.Failure(validation.Error.Code, validation.Error.Message);
 
         try
@@ -134,7 +135,16 @@ public sealed class CreateHabitFromTemplateUseCase(
             await notifications.CreateAsync(command.UserId, "habit_template_added", "Hábito adicionado", "Agora você pode acompanhá-lo no Dashboard.", "habit", habit.Id, ct);
             await unitOfWork.CommitAsync(ct);
             var finalUsage = usage with { ActiveHabits = active + 1, Remaining = usage.Limit is null or < 0 ? int.MaxValue : Math.Max(0, usage.Limit.Value - active - 1) };
-            return Result<CreateHabitFromTemplateResult>.Success(new(habit, goal, goal is not null, false, command.AllowVariation, finalUsage, false, [], [], true, "Hábito adicionado com sucesso."));
+            var goalUpdates = goal is null
+                ? Array.Empty<GoalProgressUpdate>()
+                : new[]
+                {
+                    new GoalProgressUpdate(goal.Id, goal.Title, goal.CurrentValue, goal.CurrentValue,
+                        goal.TargetValue, goal.TargetValue <= 0 ? 0 : Math.Min(100m,
+                            Math.Round(goal.CurrentValue * 100m / goal.TargetValue, 1)),
+                        false, goal.Status, command.CreateGoal, true)
+                };
+            return Result<CreateHabitFromTemplateResult>.Success(new(habit, goal, goal is not null, false, command.AllowVariation, finalUsage, false, goalUpdates, [], true, "Hábito adicionado com sucesso."));
         }
         catch (Exception ex)
         {
