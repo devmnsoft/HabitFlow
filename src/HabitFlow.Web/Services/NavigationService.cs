@@ -82,6 +82,30 @@ public sealed class NavigationService(INavigationAccessEvaluator? accessEvaluato
             IsEnabled: true),
 
         new(
+            Code: "my-day",
+            Label: "Meu dia",
+            Description: "Organize seus próximos passos",
+            Icon: "dashboard",
+            Url: "/my-day",
+            Context: NavigationContext.Personal,
+            RequiredPermission: null,
+            RequiredFeature: null,
+            SortOrder: 15,
+            IsEnabled: true),
+
+        new(
+            Code: "weekly-review",
+            Label: "Revisão",
+            Description: "Aprenda com sua semana",
+            Icon: "progress",
+            Url: "/weekly-review",
+            Context: NavigationContext.Personal,
+            RequiredPermission: null,
+            RequiredFeature: null,
+            SortOrder: 18,
+            IsEnabled: true),
+
+        new(
             Code: "habits",
             Label: "Hábitos",
             Description: "Cuide da sua rotina",

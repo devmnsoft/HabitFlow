@@ -50,7 +50,7 @@ public sealed class HabitReminderService(IHabitReminderRepository repository, Re
     {
         var reminder = await repository.GetOwnedAsync(clientId, userId, id, ct);
         if (reminder is null) return Result.Failure("reminder.not_found", "Lembrete não encontrado.");
-        var next = active ? schedules.Next(reminder.ReminderTime, reminder.DaysOfWeek, reminder.Timezone) : null;
+        DateTimeOffset? next = active ? schedules.Next(reminder.ReminderTime, reminder.DaysOfWeek, reminder.Timezone) : null;
         return await repository.SetActiveAsync(clientId, userId, id, active, next, ct)
             ? Result.Success() : Result.Failure("reminder.conflict", "O lembrete foi alterado. Atualize a página.");
     }

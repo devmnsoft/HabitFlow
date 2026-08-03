@@ -3,7 +3,10 @@ using HabitFlow.Infrastructure;
 using HabitFlow.Web.Configuration;
 using HabitFlow.Web.Services;
 
-var builder = WebApplication.CreateBuilder(args);
+var builder = WebApplication.CreateBuilder(new WebApplicationOptions { Args = args });
+
+if (!builder.Environment.IsProduction())
+    builder.Host.UseDefaultServiceProvider(options => { options.ValidateScopes = true; options.ValidateOnBuild = true; });
 
 if (builder.Environment.IsDevelopment())
 {
