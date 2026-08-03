@@ -1,0 +1,5 @@
+.hf-content-shell { width: min(100% - 2rem, var(--hf-content-max)); margin-inline: auto; }
+.hf-topbar { background: rgb(255 255 255 / .94); border-bottom: 1px solid var(--hf-border); backdrop-filter: blur(12px); }
+.hf-premium-card { background: var(--hf-surface-raised); border: 1px solid var(--hf-border); border-radius: var(--hf-radius-lg); box-shadow: var(--hf-shadow-sm); padding: clamp(1rem, 2vw, 1.5rem); }
+.hf-page-heading { display: flex; align-items: end; justify-content: space-between; gap: var(--hf-space-6); margin-block: var(--hf-space-6); }
+@media (max-width: 767.98px) { .hf-content-shell { width: min(100% - 1.25rem, var(--hf-content-max)); } .hf-page-heading { align-items: stretch; flex-direction: column; } }

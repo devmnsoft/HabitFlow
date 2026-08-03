@@ -1,0 +1,7 @@
+@if (!ViewData.ModelState.IsValid)
+{
+  <div class="hf-form-error" role="alert" tabindex="-1" data-validation-summary>
+    <h2 class="h6">Revise os campos indicados</h2>
+    <div asp-validation-summary="ModelOnly"></div>
+  </div>
+}

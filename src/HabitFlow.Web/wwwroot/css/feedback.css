@@ -1,0 +1,8 @@
+.hf-feedback-modal { border: 0; border-radius: var(--hf-radius-lg); box-shadow: var(--hf-shadow-md); }
+.hf-feedback-heading { display: flex; align-items: center; gap: var(--hf-space-3); }
+.hf-feedback-icon { display: grid; place-items: center; width: 2.25rem; height: 2.25rem; color: var(--hf-info); background: #e8f3fb; border-radius: 50%; }
+.hf-toast { border: 1px solid var(--hf-border); border-left: .25rem solid var(--hf-info); background: var(--hf-surface-raised); box-shadow: var(--hf-shadow-md); }
+.hf-toast[data-type="success"] { border-left-color: var(--hf-success); }
+.hf-toast[data-type="warning"] { border-left-color: var(--hf-warning); }
+.hf-toast[data-type="error"] { border-left-color: var(--hf-danger); }
+[data-hf-busy="true"] { cursor: wait; opacity: .72; pointer-events: none; }

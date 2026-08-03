@@ -20,6 +20,7 @@ public static class DependencyInjection
         services.AddSingleton<IBrandAssetService, BrandAssetService>();
         services.AddHabitFlowAuthentication(configuration, environment);
         services.AddScoped<ApplicationFeedbackService>();
+        services.AddScoped<FeedbackService>();
         services.AddScoped<INavigationAccessEvaluator, NavigationAccessEvaluator>();
         services.AddScoped<RequestPlanAccessContext>();
         services.AddScoped<NavigationService>();

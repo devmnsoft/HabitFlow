@@ -1,0 +1,9 @@
+.hf-form { display: grid; gap: var(--hf-space-6); }
+.hf-field { display: grid; gap: var(--hf-space-2); }
+.hf-field label { font-weight: 650; }
+.hf-field-help { color: var(--hf-text-muted); font-size: .875rem; }
+.hf-field :is(input, select, textarea)[aria-invalid="true"] { border-color: var(--hf-danger); box-shadow: 0 0 0 .18rem rgb(180 35 24 / .12); }
+.hf-validation-message { color: var(--hf-danger); font-size: .875rem; font-weight: 600; }
+.hf-form-error { border-left: .25rem solid var(--hf-danger); background: #fff1f0; border-radius: var(--hf-radius-sm); padding: var(--hf-space-4); }
+.hf-form-actions { display: flex; justify-content: flex-end; gap: var(--hf-space-3); }
+@media (max-width: 575.98px) { .hf-form-actions { position: sticky; bottom: 0; z-index: 10; margin-inline: calc(var(--hf-space-4) * -1); padding: var(--hf-space-3) var(--hf-space-4); background: var(--hf-surface-raised); border-top: 1px solid var(--hf-border); } }
