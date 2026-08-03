@@ -1,0 +1,2 @@
+@model HabitFlow.Domain.PlanFeatureValue
+<li class="mb-2 d-flex gap-2"><svg width="18" height="18" aria-hidden="true"><use href="#icon-check" /></svg><span>@Model.Name@if (Model.IntValue is >= 0) { <text>: @Model.IntValue</text> } else if (Model.IntValue is < 0) { <text>: ilimitado</text> }</span></li>

@@ -5,11 +5,11 @@ namespace HabitFlow.Infrastructure;
 
 public sealed class SuperAdminProvisioningRepository(SqlExecutor db, IUnitOfWork unitOfWork) : ISuperAdminProvisioningRepository
 {
-    private const string UserColumns = "id,name,email,password_hash,photo_url,role,account_status,risk_status,plan,plan_status,wants_premium_notice,onboarding_completed,accepted_terms_at,accepted_privacy_at,last_login_at,last_activity_at,created_at,updated_at,client_id,session_version";
+    private const string UserColumns = "id,name,email,password_hash,photo_url,role,account_status,risk_status,plan,plan_status,wants_premium_notice,onboarding_completed,accepted_terms_at,accepted_privacy_at,last_login_at,last_activity_at,created_at,updated_at,client_id,session_version,must_change_password";
 
     public Task<User?> FindByEmailAsync(string email, CancellationToken ct) => db.QuerySingleOrDefaultAsync<User>($"select {UserColumns} from habitflow.users where email=@email", new { email }, ct);
 
-    public async Task<User> CreateOrPromoteAsync(string name, string email, string passwordHash, string actor, string reason, string correlationId, CancellationToken ct)
+    public async Task<User> CreateOrPromoteAsync(string name, string email, string passwordHash, bool mustChangePassword, string actor, string reason, string correlationId, CancellationToken ct)
     {
         await unitOfWork.BeginTransactionAsync(ct);
         try
@@ -17,10 +17,11 @@ public sealed class SuperAdminProvisioningRepository(SqlExecutor db, IUnitOfWork
             var existing = await FindByEmailAsync(email, ct);
             var id = existing?.Id ?? Guid.NewGuid();
             await db.ExecuteAsync("""
-                insert into habitflow.users(id,name,email,password_hash,role,account_status,risk_status,plan,plan_status,onboarding_completed,created_at,updated_at,client_id,session_version)
-                values(@id,@name,@email,@passwordHash,'SuperAdmin','Active','Normal','Free','Active',true,now(),now(),null,1)
-                on conflict(email) do update set name=@name,password_hash=@passwordHash,role='SuperAdmin',account_status='Active',client_id=null,session_version=habitflow.users.session_version+1,updated_at=now()
-                """, new { id, name, email, passwordHash }, ct);
+                insert into habitflow.users(id,name,email,password_hash,role,account_status,risk_status,plan,plan_status,onboarding_completed,created_at,updated_at,client_id,session_version,must_change_password)
+                values(@id,@name,@email,@passwordHash,'SuperAdmin','Active','Normal','Free','Active',true,now(),now(),null,1,@mustChangePassword)
+                on conflict(email) do update set name=@name,password_hash=@passwordHash,role='SuperAdmin',account_status='Active',client_id=null,session_version=habitflow.users.session_version+1,must_change_password=@mustChangePassword,updated_at=now()
+                """, new { id, name, email, passwordHash, mustChangePassword }, ct);
+            await db.ExecuteAsync("update habitflow.password_reset_tokens set revoked_at=now() where user_id=@id and used_at is null and revoked_at is null", new { id }, ct);
             await EnsureAuthorityAsync(id, ct);
             await AuditAsync(existing is null ? "superadmin.created" : "superadmin.promoted", id, email, actor, reason, correlationId, ct);
             await unitOfWork.CommitAsync(ct);
@@ -51,7 +52,7 @@ public sealed class SuperAdminProvisioningRepository(SqlExecutor db, IUnitOfWork
         try
         {
             var user = await db.QuerySingleOrDefaultAsync<User>($"select {UserColumns} from habitflow.users where id=@userId and role='SuperAdmin' and client_id is null for update", new { userId }, ct) ?? throw new InvalidOperationException("Super Administrador global não encontrado.");
-            await db.ExecuteAsync("update habitflow.users set password_hash=@passwordHash,session_version=session_version+1,updated_at=now() where id=@userId", new { userId, passwordHash }, ct);
+            await db.ExecuteAsync("update habitflow.users set password_hash=@passwordHash,session_version=session_version+1,must_change_password=false,updated_at=now() where id=@userId", new { userId, passwordHash }, ct);
             await db.ExecuteAsync("update habitflow.password_reset_tokens set revoked_at=now() where user_id=@userId and used_at is null and revoked_at is null", new { userId }, ct);
             await AuditAsync("superadmin.password_reset", userId, user.Email, actor, reason, correlationId, ct);
             await AuditAsync("superadmin.session_revoked", userId, user.Email, actor, reason, correlationId, ct);

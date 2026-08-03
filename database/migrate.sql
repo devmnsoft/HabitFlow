@@ -52,3 +52,5 @@
 \i database/migrations/050_goal_progress_activation_core.sql
 \i database/migrations/051_system_settings_contract.sql
 \i database/migrations/052_library_v2_onboarding.sql
+
+\i database/migrations/056_secure_admin_honest_plans_legal_privacy.sql

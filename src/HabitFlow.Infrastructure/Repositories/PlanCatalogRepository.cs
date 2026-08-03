@@ -87,8 +87,22 @@ public sealed class PlanCatalogRepository(SqlExecutor db, ILogger<PlanCatalogRep
             select f.code, f.name, f.value_type, pf.bool_value, pf.int_value, pf.string_value
             from habitflow.plans p join habitflow.plan_features pf on pf.plan_id=p.id
             join habitflow.feature_catalog f on f.code=pf.feature_code and f.is_active
-            where p.code=@planCode
+            where p.code=@planCode and f.implementation_status='Implemented' and f.is_marketable
             """, new { planCode }, ct)).ToDictionary(x => x.Code, StringComparer.OrdinalIgnoreCase);
+
+    public Task<bool> IsCheckoutEligibleAsync(string planCode, string billingCycle, CancellationToken ct = default) =>
+        db.QuerySingleOrDefaultAsync<bool>("""
+            select exists(
+              select 1 from habitflow.plans p
+              join habitflow.plan_prices pp on pp.plan_id=p.id
+              where p.code=@planCode and p.code <> 'free' and p.is_active and p.is_public and p.is_sellable
+                and p.sales_status='Available' and pp.is_active and pp.billing_cycle=@billingCycle
+                and pp.amount > 0 and pp.currency='BRL' and pp.valid_from <= now()
+                and (pp.valid_until is null or pp.valid_until > now())
+                and not exists (
+                  select 1 from habitflow.plan_features pf join habitflow.feature_catalog f on f.code=pf.feature_code
+                  where pf.plan_id=p.id and f.is_public and (f.implementation_status <> 'Implemented' or not f.is_marketable)))
+            """, new { planCode, billingCycle }, ct);
 
     private sealed record PlanRow(Guid Id, string Code, string PublicName, string? Headline, string? Description, string? AudienceText, string? BadgeText, bool IsFeatured, int SortOrder);
     internal sealed class ClientPlanAccessRow

@@ -4,7 +4,7 @@ namespace HabitFlow.Infrastructure;
 
 public sealed class UserRepository(SqlExecutor db) : IUserRepository
 {
-    private const string Columns = "id, name, email, password_hash, photo_url, role, account_status, risk_status, plan, plan_status, wants_premium_notice, onboarding_completed, accepted_terms_at, accepted_privacy_at, last_login_at, last_activity_at, created_at, updated_at, client_id, session_version";
+    private const string Columns = "id, name, email, password_hash, photo_url, role, account_status, risk_status, plan, plan_status, wants_premium_notice, onboarding_completed, accepted_terms_at, accepted_privacy_at, last_login_at, last_activity_at, created_at, updated_at, client_id, session_version, must_change_password";
 
     public Task<User?> GetByIdAsync(Guid id, CancellationToken ct = default) => db.QuerySingleOrDefaultAsync<User>("select " + Columns + " from habitflow.users where id = @id", new { id }, ct);
     public Task<User?> GetByEmailAsync(string email, CancellationToken ct = default) => db.QuerySingleOrDefaultAsync<User>("select " + Columns + " from habitflow.users where email = @email", new { email }, ct);
@@ -12,7 +12,7 @@ public sealed class UserRepository(SqlExecutor db) : IUserRepository
     public Task CreateAsync(User u, CancellationToken ct = default) => db.ExecuteAsync("insert into habitflow.users(id,name,email,password_hash,photo_url,role,account_status,risk_status,plan,plan_status,wants_premium_notice,onboarding_completed,accepted_terms_at,accepted_privacy_at,last_login_at,last_activity_at,created_at,updated_at,client_id) values(@Id,@Name,@Email,@PasswordHash,@PhotoUrl,@Role,@AccountStatus,@RiskStatus,@Plan,@PlanStatus,@WantsPremiumNotice,@OnboardingCompleted,@AcceptedTermsAt,@AcceptedPrivacyAt,@LastLoginAt,@LastActivityAt,@CreatedAt,@UpdatedAt,@ClientId)", ToParameters(u), ct);
     public Task UpdateAsync(User u, CancellationToken ct = default) => db.ExecuteAsync("update habitflow.users set name=@Name, photo_url=@PhotoUrl, role=@Role, account_status=@AccountStatus, risk_status=@RiskStatus, plan=@Plan, plan_status=@PlanStatus, updated_at=@UpdatedAt, client_id=@ClientId where id=@Id", ToParameters(u), ct);
     public Task UpdatePasswordAndSessionVersionAsync(Guid userId, string passwordHash, CancellationToken ct = default) =>
-        db.ExecuteAsync("update habitflow.users set password_hash=@passwordHash, session_version=session_version+1, updated_at=now() where id=@userId", new { userId, passwordHash }, ct);
+        db.ExecuteAsync("update habitflow.users set password_hash=@passwordHash, session_version=session_version+1, must_change_password=false, updated_at=now() where id=@userId", new { userId, passwordHash }, ct);
     private static object ToParameters(User u) => new
     {
         u.Id,

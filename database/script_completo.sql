@@ -877,3 +877,6 @@ create table if not exists habitflow.user_onboarding_progress (
  last_activity_at timestamptz not null default now(), completed_at timestamptz, skipped_at timestamptz, version integer not null default 1,
  primary key(client_id,user_id), constraint ck_onboarding_days check(preferred_days <@ array[0,1,2,3,4,5,6]::smallint[]),
  constraint ck_onboarding_terminal check(completed_at is null or skipped_at is null));
+
+-- v6.10.0 additive legal/privacy/catalog governance
+\i database/migrations/056_secure_admin_honest_plans_legal_privacy.sql
