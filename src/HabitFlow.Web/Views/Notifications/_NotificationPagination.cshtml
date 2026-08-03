@@ -1,0 +1,2 @@
+@model HabitFlow.Domain.NotificationPage
+@if(Model.TotalPages>1){<nav class="notification-pages" aria-label="Páginas de notificações">@for(var p=1;p<=Model.TotalPages;p++){<a href="?page=@p" aria-current="@(p==Model.Page?"page":null)">@p</a>}</nav>}

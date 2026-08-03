@@ -1,0 +1,6 @@
+@model HabitFlow.Web.Models.HabitReminderEditorViewModel
+@{ ViewData["Title"] = "Configurar lembrete"; }
+@section Styles { <link rel="stylesheet" href="~/css/reminders.css" asp-append-version="true" /> }
+<a href="/reminders" class="back-link">← Voltar aos lembretes</a>
+<div class="reminder-editor"><h1>Quando quer ser lembrado?</h1><p>Escolha um horário que faça sentido para @(string.IsNullOrWhiteSpace(Model.HabitName) ? "este hábito" : Model.HabitName).</p><partial name="_ReminderEditor" model="Model" /></div>
+@section Scripts { <script src="~/js/reminders.js" asp-append-version="true"></script> }

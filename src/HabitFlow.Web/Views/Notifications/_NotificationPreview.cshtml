@@ -1,0 +1,2 @@
+@model HabitFlow.Domain.NotificationPage
+<div class="notification-preview">@foreach(var item in Model.Items){<a href="/notifications"><strong>@item.Title</strong><span>@item.Message</span></a>}<a href="/notifications">Ver todas as notificações</a></div>

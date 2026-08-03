@@ -58,9 +58,15 @@ public static class DependencyInjection
         services.AddScoped<GuidedJourneyService>();
         services.AddScoped<HabitScheduleService>();
         services.AddScoped<NotificationService>();
+        services.AddScoped<NotificationCenterService>();
+        services.AddSingleton<NotificationActionUrlValidator>();
+        services.AddScoped<HabitReminderService>();
+        services.AddSingleton<ReminderScheduleCalculator>();
         services.AddScoped<ReportService>();
         services.AddScoped<OnboardingService>();
         services.AddScoped<OnboardingJourneyService>();
+        services.AddScoped<PersonalOnboardingJourneyService>();
+        services.AddSingleton<PersonalOnboardingRecommendationService>();
         services.AddScoped<AuditService>();
         services.AddScoped<AdminAuditService>();
         services.AddScoped<SettingsService>();
