@@ -11,7 +11,7 @@ public sealed record DailyRoutinePlan(DateOnly LocalDate, IReadOnlyList<DailyRou
     public int Pending => Scheduled - Completed;
 }
 
-public sealed class DailyRoutinePlannerService(IHabitRepository habits, IHabitWeekDayRepository weekDays, IHabitCompletionRepository completions, IHabitScheduleExceptionRepository exceptions, IDailyRoutineOverrideRepository overrides, HabitOccurrenceService occurrences, TimeProvider clock, UserTimeZoneService timeZone)
+public sealed class DailyRoutinePlannerService(IHabitRepository habits, IHabitWeekDayRepository weekDays, IHabitCompletionRepository completions, IHabitScheduleExceptionRepository exceptions, IDailyRoutineOverrideRepository overrides, EffectiveHabitScheduleService schedule, TimeProvider clock, UserTimeZoneService timeZone)
 {
     public async Task<DailyRoutinePlan> BuildAsync(DailyRoutineQuery query, CancellationToken ct = default)
     {
@@ -23,19 +23,28 @@ public sealed class DailyRoutinePlannerService(IHabitRepository habits, IHabitWe
         var overrideMap = (await overrides.ListAsync(query.ClientId, query.UserId, query.LocalDate, ct)).ToDictionary(x => x.HabitId);
         var rows = source.Select(ToProgressRow).ToList();
         var dayMap = days.ToDictionary(x => x.Key, x => (IReadOnlySet<int>)x.Value.Select(d => d.DayOfWeek).ToHashSet());
-        var scheduled = (await occurrences.ListScheduledForDateAsync(rows, dayMap, query.LocalDate, timeZone.Resolve())).Select(x => x.Habit.Id).ToHashSet();
-        foreach (var moved in exceptionList.Where(x => (x.Type is HabitScheduleExceptionType.Excused or HabitScheduleExceptionType.Moved) && x.LocalDate == query.LocalDate)) scheduled.Remove(moved.HabitId);
-        foreach (var added in exceptionList.Where(x => x.Type == HabitScheduleExceptionType.Added || x.Type == HabitScheduleExceptionType.Moved && x.DestinationDate == query.LocalDate)) scheduled.Add(added.HabitId);
+        var effective = await schedule.BuildAsync(new(query.ClientId, query.UserId, query.LocalDate, query.LocalDate, rows, dayMap, exceptionList, overrideMap.Values.ToList(), timeZone.Resolve()));
         var now = TimeOnly.FromDateTime(TimeZoneInfo.ConvertTime(clock.GetUtcNow(), timeZone.Resolve()).DateTime);
-        var items = source.Where(x => scheduled.Contains(x.Id)).Select(h =>
+        var byHabit = source.ToDictionary(x => x.Id);
+        var items = effective.Occurrences.Where(x => byHabit.ContainsKey(x.Habit.Id)).Select(occurrence =>
         {
+            var h = byHabit[occurrence.Habit.Id];
             overrideMap.TryGetValue(h.Id, out var custom);
-            var preferred = custom?.PreferredTime ?? h.ReminderTime;
-            var status = completionSet.Contains(h.Id) ? DailyRoutineItemStatus.Completed : preferred.HasValue && preferred > now ? DailyRoutineItemStatus.Upcoming : DailyRoutineItemStatus.Available;
-            return new DailyRoutineItem(h.Id,h.Name,h.Color,h.Category,preferred,h.EstimatedTimeMinutes ?? 10,status,custom?.SortOrder ?? h.SortOrder,custom?.Version ?? 0,status == DailyRoutineItemStatus.Completed ? "Desfazer" : "Concluir");
+            var preferred = occurrence.EffectiveTime;
+            var status = occurrence.Status switch
+            {
+                EffectiveOccurrenceStatus.Excused => DailyRoutineItemStatus.Excused,
+                EffectiveOccurrenceStatus.MovedOut => DailyRoutineItemStatus.Moved,
+                _ when completionSet.Contains(h.Id) => DailyRoutineItemStatus.Completed,
+                _ when preferred.HasValue && preferred > now => DailyRoutineItemStatus.Upcoming,
+                _ => DailyRoutineItemStatus.Available
+            };
+            var action = status switch { DailyRoutineItemStatus.Completed => "Desfazer", DailyRoutineItemStatus.Excused or DailyRoutineItemStatus.Moved => "Restaurar", _ => "Concluir" };
+            return new DailyRoutineItem(h.Id,h.Name,h.Color,h.Category,preferred,h.EstimatedTimeMinutes ?? 10,status,custom?.SortOrder ?? h.SortOrder,occurrence.ExceptionVersion > 0 ? occurrence.ExceptionVersion : custom?.Version ?? 0,action);
         }).OrderBy(x => x.PreferredTime.HasValue ? 0 : 1).ThenBy(x => x.PreferredTime).ThenBy(x => x.SortOrder).ThenBy(x => x.Name).ToList();
         var done = items.Count(x => x.Status == DailyRoutineItemStatus.Completed);
-        return new(query.LocalDate,items,items.Count,done,items.Count == 0 ? 0 : (int)Math.Round(done * 100d / items.Count));
+        var scheduled = effective.EffectiveOccurrences.Count;
+        return new(query.LocalDate,items,scheduled,done,scheduled == 0 ? 0 : (int)Math.Round(done * 100d / scheduled));
     }
 
     private static ProgressHabitRow ToProgressRow(Habit h) => new() { Id=h.Id,Name=h.Name,Category=h.Category,IsArchived=h.IsArchived,ArchivedAt=h.ArchivedAt,CreatedAt=h.StartDate?.ToDateTime(TimeOnly.MinValue) ?? h.CreatedAt,FrequencyTypeCode=h.FrequencyType.ToString(),ReminderTime=h.ReminderTime };
@@ -48,7 +57,14 @@ public sealed class HabitScheduleExceptionService(IHabitRepository habits, IHabi
         if (await habits.GetAsync(clientId,userId,habitId,ct) is null) return Result.Failure("habit.not_found","Hábito não encontrado.");
         if (type == HabitScheduleExceptionType.Moved && (!destination.HasValue || destination <= date)) return Result.Failure("schedule.invalid_destination","Escolha uma data futura.");
         var now=clock.GetUtcNow();
-        await exceptions.UpsertAsync(new(Guid.NewGuid(),clientId,userId,habitId,date,type,destination,reason?.Trim(),1,now,now),ct);
-        return Result.Success();
+        var mutation = await exceptions.UpsertAsync(new(Guid.NewGuid(),clientId,userId,habitId,date,type,destination,reason?.Trim(),1,now,now),0,ct);
+        return mutation.Succeeded ? Result.Success() : Result.Failure("schedule.conflict","A rotina foi alterada em outra sessão. Atualize a página e tente novamente.");
+    }
+
+    public async Task<Result> RestoreOriginalScheduleAsync(Guid clientId, Guid userId, Guid habitId, DateOnly date, int expectedVersion, CancellationToken ct=default)
+    {
+        if (await habits.GetAsync(clientId,userId,habitId,ct) is null) return Result.Failure("habit.not_found","Hábito não encontrado.");
+        var mutation = await exceptions.DeleteAsync(clientId,userId,habitId,date,expectedVersion,ct);
+        return mutation.Succeeded ? Result.Success() : Result.Failure("schedule.conflict","A rotina foi alterada em outra sessão. Atualize a página e tente novamente.");
     }
 }
