@@ -1,0 +1,11 @@
+@model WeeklyReviewResult
+@{ ViewData["Title"]="Revisão semanal"; }
+@section Styles { <link rel="stylesheet" href="~/css/weekly-review.css" asp-append-version="true" /> }
+<main class="weekly-review container">
+<header class="review-hero"><span class="eyebrow">Olhar com gentileza, ajustar com intenção</span><h1>Revisão semanal</h1><p>@Model.PeriodStart.ToString("dd MMM") — @Model.PeriodEnd.ToString("dd MMM")</p></header>
+<section class="review-metrics" aria-label="Resumo"><article><strong>@Model.Completed/@Model.Scheduled</strong><span>passos concluídos</span></article><article><strong>@Model.Percentage%</strong><span>consistência</span></article><article><strong>@(Model.BestDay ?? "Em construção")</strong><span>dia com mais passos</span></article></section>
+<section><h2>Seus hábitos</h2><div class="review-grid">@foreach(var habit in Model.Habits){<article class="review-habit"><div><h3>@habit.Name</h3><strong>@habit.Completed de @habit.Scheduled</strong></div><div class="progress"><div class="progress-bar" style="width:@habit.Percentage%"></div></div><p>@habit.Insight</p></article>}</div></section>
+@if(Model.Recovery.Count>0){<section class="recovery"><h2>Um caminho mais leve</h2><p>Estas ideias aparecem apenas quando há dados suficientes. Nada será alterado sem sua confirmação.</p>@foreach(var item in Model.Recovery){<article><h3>@item.Reason</h3><p>@item.Recommendation</p><a href="/habits/@item.HabitId" class="btn btn-outline-success">Revisar hábito</a></article>}</section>}
+@if(!Model.IsCompleted){<form method="post" action="@($"/weekly-review/{Model.PeriodStart:yyyy-MM-dd}/complete")" class="review-complete"><input type="hidden" name="idempotencyKey" value="@Model.IdempotencyKey"/><button class="btn btn-success btn-lg" data-submit-once>Concluir revisão</button><p>Nenhum hábito será alterado automaticamente.</p></form>}else{<div class="alert alert-success" role="status">Revisão concluída. Seu aprendizado ficou registrado.</div>}
+</main>
+@section Scripts { <script src="~/js/weekly-review.js" asp-append-version="true"></script> }
