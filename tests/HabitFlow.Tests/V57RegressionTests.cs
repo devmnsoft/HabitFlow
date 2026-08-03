@@ -12,7 +12,7 @@ public sealed class DapperDateTimeHandlerTests
         var parameter = new FakeParameter();
         new DateOnlyTypeHandler().SetValue(parameter, new DateOnly(2026, 7, 22));
         Assert.Equal(DbType.Date, parameter.DbType);
-        Assert.Equal(new DateTime(2026, 7, 22), parameter.Value);
+        Assert.Equal(new DateOnly(2026, 7, 22), parameter.Value);
     }
 
     [Fact]

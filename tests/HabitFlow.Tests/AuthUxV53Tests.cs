@@ -29,11 +29,11 @@ public sealed class AuthUxV53Tests
     [Fact]
     public void Views_and_assets_include_password_toggles_messages_and_no_binary_references()
     {
-        var register = File.ReadAllText("../../../../src/HabitFlow.Web/Views/Auth/Register.cshtml");
-        var login = File.ReadAllText("../../../../src/HabitFlow.Web/Views/Auth/Login.cshtml");
-        var passwordPartial = File.ReadAllText("../../../../src/HabitFlow.Web/Views/Shared/Partials/_PasswordInput.cshtml");
-        var messagesPartial = File.ReadAllText("../../../../src/HabitFlow.Web/Views/Shared/Partials/_AppMessages.cshtml");
-        var js = File.ReadAllText("../../../../src/HabitFlow.Web/wwwroot/js/site.js");
+        var register = File.ReadAllText(RepositoryRootLocator.PathTo("src/HabitFlow.Web/Views/Auth/Register.cshtml"));
+        var login = File.ReadAllText(RepositoryRootLocator.PathTo("src/HabitFlow.Web/Views/Auth/Login.cshtml"));
+        var passwordPartial = File.ReadAllText(RepositoryRootLocator.PathTo("src/HabitFlow.Web/Views/Shared/Partials/_PasswordInput.cshtml"));
+        var messagesPartial = File.ReadAllText(RepositoryRootLocator.PathTo("src/HabitFlow.Web/Views/Shared/Partials/_AppMessages.cshtml"));
+        var js = File.ReadAllText(RepositoryRootLocator.PathTo("src/HabitFlow.Web/wwwroot/js/site.js"));
         Assert.Contains("ConfirmPassword", register);
         Assert.Contains("data-password-toggle", register + login + passwordPartial);
         Assert.Contains("type=\"password\"", passwordPartial);

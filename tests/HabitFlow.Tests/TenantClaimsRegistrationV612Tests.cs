@@ -5,7 +5,7 @@ namespace HabitFlow.Tests;
 
 public sealed class TenantClaimsRegistrationV612Tests
 {
-    private static string Read(string path) => File.ReadAllText(Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../", path)));
+    private static string Read(string path) => File.ReadAllText(RepositoryRootLocator.PathTo(path));
 
     [Fact]
     public void Login_adds_client_id_claim_when_user_has_client()

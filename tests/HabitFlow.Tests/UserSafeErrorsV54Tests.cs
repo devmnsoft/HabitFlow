@@ -33,8 +33,8 @@ public sealed class UserSafeErrorsV54Tests
     [Fact]
     public void Habit_library_and_home_render_safe_fallback_and_contextual_hero()
     {
-        var library = File.ReadAllText("../../../../src/HabitFlow.Web/Views/HabitLibrary/Index.cshtml");
-        var hero = File.ReadAllText("../../../../src/HabitFlow.Web/Views/Shared/Partials/Illustrations/_HeroHabitDashboardIllustration.cshtml");
+        var library = File.ReadAllText(RepositoryRootLocator.PathTo("src/HabitFlow.Web/Views/HabitLibrary/Index.cshtml"));
+        var hero = File.ReadAllText(RepositoryRootLocator.PathTo("src/HabitFlow.Web/Views/Shared/Partials/Illustrations/_HeroHabitDashboardIllustration.cshtml"));
         Assert.Contains("explorar hábitos sugeridos", library);
         Assert.Contains("Hoje", hero);
         Assert.Contains("Sequência", hero);
@@ -45,8 +45,8 @@ public sealed class UserSafeErrorsV54Tests
     [Fact]
     public void Footer_and_mnsoft_signature_are_compact_and_not_temporary()
     {
-        var layout = File.ReadAllText("../../../../src/HabitFlow.Web/Views/Shared/_Layout.cshtml");
-        var signature = File.ReadAllText("../../../../src/HabitFlow.Web/Views/Shared/Partials/_MNSOFTSignatureCompact.cshtml");
+        var layout = File.ReadAllText(RepositoryRootLocator.PathTo("src/HabitFlow.Web/Views/Shared/_Layout.cshtml"));
+        var signature = File.ReadAllText(RepositoryRootLocator.PathTo("src/HabitFlow.Web/Views/Shared/Partials/_MNSOFTSignatureCompact.cshtml"));
         Assert.Contains("Privacidade", layout);
         Assert.Contains("Termos", layout);
         Assert.Contains("Central de Ajuda", layout);

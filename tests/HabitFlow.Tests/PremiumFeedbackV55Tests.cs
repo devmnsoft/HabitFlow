@@ -18,7 +18,7 @@ public sealed class PremiumFeedbackV55Tests
     [Fact]
     public void SiteJs_exposes_feedback_service_and_avoids_native_dialogs()
     {
-        var js = File.ReadAllText("../../../../src/HabitFlow.Web/wwwroot/js/site.js");
+        var js = File.ReadAllText(RepositoryRootLocator.PathTo("src/HabitFlow.Web/wwwroot/js/site.js"));
         Assert.Contains("window.HabitFlowFeedback", js);
         Assert.Contains("showToast", js);
         Assert.Contains("showModal", js);
@@ -32,8 +32,8 @@ public sealed class PremiumFeedbackV55Tests
     [Fact]
     public void Feedback_modal_and_toast_host_are_premium_accessible_partials()
     {
-        var toast = File.ReadAllText("../../../../src/HabitFlow.Web/Views/Shared/Partials/_ToastHost.cshtml");
-        var modal = File.ReadAllText("../../../../src/HabitFlow.Web/Views/Shared/Partials/_FeedbackModal.cshtml");
+        var toast = File.ReadAllText(RepositoryRootLocator.PathTo("src/HabitFlow.Web/Views/Shared/Partials/_ToastHost.cshtml"));
+        var modal = File.ReadAllText(RepositoryRootLocator.PathTo("src/HabitFlow.Web/Views/Shared/Partials/_FeedbackModal.cshtml"));
         Assert.Contains("hf-toast-host", toast);
         Assert.Contains("aria-live=\"polite\"", toast);
         Assert.Contains("aria-labelledby", modal);
