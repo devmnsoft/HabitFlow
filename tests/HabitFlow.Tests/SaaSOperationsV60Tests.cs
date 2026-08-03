@@ -30,7 +30,7 @@ public sealed class SaaSOperationsV60Tests
     [InlineData("/superadmin/customer-success")]
     public void RequiredRoutes_AreDocumentedInSource(string route)
     {
-        var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../.."));
+        var root = RepositoryRootLocator.Root;
         var files = Directory.GetFiles(root, "*.cs", SearchOption.AllDirectories).Concat(Directory.GetFiles(root, "*.cshtml", SearchOption.AllDirectories));
         Assert.Contains(files, file => File.ReadAllText(file).Contains(route, StringComparison.OrdinalIgnoreCase));
     }
@@ -38,7 +38,7 @@ public sealed class SaaSOperationsV60Tests
     [Fact]
     public void DatabaseScript_UsesHabitflowSchemaForV60Tables()
     {
-        var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../.."));
+        var root = RepositoryRootLocator.Root;
         var sql = File.ReadAllText(Path.Combine(root, "database/migrations/028_client_onboarding.sql"));
         Assert.Contains("habitflow.client_onboarding", sql);
         Assert.Contains("habitflow.client_communications", sql);

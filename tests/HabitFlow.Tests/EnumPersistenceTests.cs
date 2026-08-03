@@ -23,8 +23,8 @@ public sealed class EnumPersistenceTests
     [Fact]
     public void Repositories_do_not_cast_enum_parameters_with_postgres_text_casts()
     {
-        var userRepo = File.ReadAllText("../../../../src/HabitFlow.Infrastructure/Repositories/UserRepository.cs");
-        var auditRepo = File.ReadAllText("../../../../src/HabitFlow.Infrastructure/Repositories/AuditRepository.cs");
+        var userRepo = File.ReadAllText(RepositoryRootLocator.PathTo("src/HabitFlow.Infrastructure/Repositories/UserRepository.cs"));
+        var auditRepo = File.ReadAllText(RepositoryRootLocator.PathTo("src/HabitFlow.Infrastructure/Repositories/AuditRepository.cs"));
         Assert.Contains("Role = DbEnum.Text(u.Role)", userRepo);
         Assert.Contains("AccountStatus = DbEnum.Text(u.AccountStatus)", userRepo);
         Assert.Contains("Plan = DbEnum.Text(u.Plan)", userRepo);
@@ -48,9 +48,9 @@ public sealed class EnumPersistenceTests
     [Fact]
     public void Public_navigation_footer_and_help_icon_are_safe()
     {
-        var layout = File.ReadAllText("../../../../src/HabitFlow.Web/Views/Shared/_Layout.cshtml");
-        var icons = File.ReadAllText("../../../../src/HabitFlow.Web/Views/Shared/Partials/Icons/_Icon.cshtml");
-        var footerBadge = File.ReadAllText("../../../../src/HabitFlow.Web/Views/Shared/Partials/_MNSOFTBrandBadge.cshtml");
+        var layout = File.ReadAllText(RepositoryRootLocator.PathTo("src/HabitFlow.Web/Views/Shared/_Layout.cshtml"));
+        var icons = File.ReadAllText(RepositoryRootLocator.PathTo("src/HabitFlow.Web/Views/Shared/Partials/Icons/_Icon.cshtml"));
+        var footerBadge = File.ReadAllText(RepositoryRootLocator.PathTo("src/HabitFlow.Web/Views/Shared/Partials/_MNSOFTBrandBadge.cshtml"));
         Assert.Contains("Planos", layout);
         Assert.DoesNotContain("Assinatura visual temporária", layout + footerBadge);
         Assert.Contains("CNPJ 18.160.057/0001-13", layout);

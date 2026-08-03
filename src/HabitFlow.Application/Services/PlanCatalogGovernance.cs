@@ -7,7 +7,7 @@ public sealed class PlanFeatureImplementationRegistry
     private static readonly IReadOnlyDictionary<string, PlanFeatureImplementation> Items = Build()
         .ToDictionary(x => x.Code, StringComparer.OrdinalIgnoreCase);
 
-    public IReadOnlyCollection<PlanFeatureImplementation> All => Items.Values;
+    public IReadOnlyCollection<PlanFeatureImplementation> All => Items.Values.ToArray();
     public PlanFeatureImplementation? Find(string code) => Items.GetValueOrDefault(code);
 
     private static IEnumerable<PlanFeatureImplementation> Build()
