@@ -1,0 +1,12 @@
+@model HabitFlow.Web.Models.HabitReminderEditorViewModel
+<form method="post" action="/habits/@Model.HabitId/reminders" data-reminder-form>
+ @Html.AntiForgeryToken()<div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+ <label asp-for="ReminderTime" class="form-label">Horário</label><input asp-for="ReminderTime" type="time" class="form-control" />
+ <fieldset><legend>Dias da semana</legend><div class="day-picker">
+ @{ var labels = new[]{"Dom","Seg","Ter","Qua","Qui","Sex","Sáb"}; }
+ @for(var i=0;i<7;i++){<label><input type="checkbox" name="Days" value="@i" checked="@(Model.Days.Contains(i))" /><span>@labels[i]</span></label>}
+ </div></fieldset>
+ <label asp-for="Timezone" class="form-label">Fuso horário</label><select asp-for="Timezone" class="form-select"><option>America/Sao_Paulo</option><option>America/Manaus</option><option>America/Recife</option><option>UTC</option></select>
+ <p class="schedule-preview" aria-live="polite" data-schedule-preview>Você verá aqui uma prévia da próxima lembrança.</p>
+ <button class="btn btn-success" type="submit" data-submit>Salvar lembrete</button>
+</form>

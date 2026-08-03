@@ -1,0 +1,6 @@
+@model HabitFlow.Web.Models.ReminderListViewModel
+@{ ViewData["Title"] = "Lembretes"; }
+@section Styles { <link rel="stylesheet" href="~/css/reminders.css" asp-append-version="true" /> }
+<header class="reminder-heading"><div><span class="eyebrow">Sua rotina</span><h1>Lembretes</h1><p>Pequenos sinais, no seu horário, para manter o que importa em movimento.</p></div></header>
+@if (Model.Reminders.Count == 0) { <partial name="_ReminderEmptyState" /> }
+else { <div class="reminder-grid">@foreach (var item in Model.Reminders) { <partial name="_ReminderCard" model="item" /> }</div> }

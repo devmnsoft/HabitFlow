@@ -39,6 +39,7 @@ public static class DependencyInjection
         services.AddScoped<IHabitWeekDayRepository, HabitWeekDayRepository>();
         services.AddScoped<IProgressCalendarRepository, ProgressCalendarRepository>();
         services.AddScoped<INotificationRepository, NotificationRepository>();
+        services.AddScoped<IHabitReminderRepository, HabitReminderRepository>();
         services.AddScoped<IUserReportRepository, UserReportRepository>();
         services.AddScoped<IUserUiPreferenceRepository, UserUiPreferenceRepository>();
         services.AddScoped<IAuditRepository, AuditRepository>();

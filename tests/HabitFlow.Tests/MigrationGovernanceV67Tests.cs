@@ -6,7 +6,7 @@ namespace HabitFlow.Tests;
 
 public sealed class MigrationGovernanceV67Tests
 {
-    private static readonly string Root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../.."));
+    private static readonly string Root = RepositoryRootLocator.Root;
 
     [Fact]
     public void Migration_versions_are_unique_ordered_and_dynamically_discoverable()
