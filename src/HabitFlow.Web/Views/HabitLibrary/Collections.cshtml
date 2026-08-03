@@ -1,8 +1,8 @@
 @model IReadOnlyList<HabitFlow.Domain.HabitTemplateCollection>
-@{ ViewData["Title"] = "Coleções"; }
+@{ViewData["Title"]="Coleções";var difficulties=Model.Select(x=>x.Difficulty).Distinct().OrderBy(x=>x);}
 <link rel="stylesheet" href="~/css/habit-library.css" asp-append-version="true" />
-<main class="container py-4" aria-labelledby="collections-title">
- <h1 id="collections-title">Coleções de hábitos</h1><p class="text-body-secondary">Rotinas completas para começar com segurança.</p>
- @if (Model.Count == 0) { <div class="alert alert-light">Nenhuma coleção publicada agora.</div> }
- <div class="row g-3">@foreach(var item in Model){<div class="col-12 col-md-6"><article class="card h-100"><div class="card-body"><h2 class="h5">@item.Name</h2><p>@item.Description</p><a class="btn btn-outline-primary" asp-action="Collection" asp-route-slug="@item.Slug">Ver coleção</a></div></article></div>}</div>
-</main>
+<main class="container py-4" aria-labelledby="collections-title"><header class="hf-hero"><span class="text-uppercase small fw-semibold">Biblioteca HabitFlow</span><h1 id="collections-title">Uma rotina completa para o seu momento</h1><p>Escolha um conjunto pensado para funcionar em conjunto e personalize cada passo.</p></header>
+<form class="row g-2 my-4" method="get" data-collection-filters><div class="col-sm-6 col-lg-4"><label class="form-label" for="difficulty">Dificuldade</label><select class="form-select" id="difficulty" data-filter-difficulty><option value="">Todas</option>@foreach(var d in difficulties){<option>@d</option>}</select></div><div class="col-sm-6 col-lg-4"><label class="form-label" for="duration">Duração</label><select class="form-select" id="duration" data-filter-duration><option value="">Qualquer duração</option><option value="15">Até 15 min</option><option value="30">Até 30 min</option></select></div></form>
+@if(Model.Count==0){<div class="hf-empty"><h2 class="h5">Novas rotinas estão sendo preparadas</h2><p>Enquanto isso, explore hábitos individuais na biblioteca.</p><a asp-action="Index" class="btn btn-primary">Explorar hábitos</a></div>}
+<div class="row g-4" data-collection-grid>@foreach(var item in Model){<div class="col-12 col-md-6 col-xl-4" data-difficulty="@item.Difficulty" data-duration="@(item.EstimatedTimeMinutes ?? 0)"><partial name="_CollectionCard" model="item"/></div>}</div><p class="hf-empty d-none mt-4" data-filter-empty>Nenhuma rotina combina com esses filtros. Tente ampliar sua busca.</p></main>
+<script src="~/js/habit-collection.js" asp-append-version="true"></script>

@@ -50,6 +50,9 @@ public static class DependencyInjection
         services.AddScoped<HabitLibraryService>();
         services.AddSingleton<HabitTemplateCustomizationValidator>();
         services.AddScoped<CreateHabitFromTemplateUseCase>();
+        services.AddSingleton<HabitCollectionCustomizationValidator>();
+        services.AddScoped<TemplateActivationService>();
+        services.AddScoped<ActivateHabitCollectionUseCase>();
         services.AddScoped<HabitTemplateFavoriteService>();
         services.AddScoped<HabitTemplateCollectionService>();
         services.AddScoped<GuidedJourneyService>();

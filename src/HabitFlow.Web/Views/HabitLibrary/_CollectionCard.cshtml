@@ -1,0 +1,7 @@
+@model HabitFlow.Domain.HabitTemplateCollection
+<article class="hf-collection-card h-100">
+ <div class="d-flex justify-content-between gap-3"><span class="hf-icon" aria-hidden="true">@(Model.IconCode ?? "✦")</span>@if(Model.IsFeatured){<span class="badge text-bg-warning">Destaque</span>}</div>
+ <h2 class="h5 mt-3">@Model.Name</h2><p class="text-body-secondary">@Model.Description</p>
+ <div class="d-flex flex-wrap gap-2 mb-3"><span class="hf-tag">@(Model.EstimatedTimeMinutes ?? 0) min</span><span class="hf-tag">@Model.Difficulty</span><span class="hf-tag">Plano @Model.MinimumPlanCode</span></div>
+ <a class="btn btn-outline-primary stretched-link" asp-action="Collection" asp-route-slug="@Model.Slug" aria-label="Ver coleção @Model.Name">Conhecer rotina</a>
+</article>

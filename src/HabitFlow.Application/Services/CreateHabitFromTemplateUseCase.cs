@@ -65,7 +65,7 @@ public sealed class CreateHabitFromTemplateUseCase(
     IHabitWeekDayRepository weekDays, IUserGoalRepository goals, PlanEntitlementService entitlements,
     IUnitOfWork unitOfWork, AuditService audit, NotificationService notifications,
     HabitTemplateCustomizationValidator validator, TimeProvider clock, UserTimeZoneService timeZone,
-    ILogger<CreateHabitFromTemplateUseCase> logger)
+    TemplateActivationService activation, ILogger<CreateHabitFromTemplateUseCase> logger)
 {
     public async Task<Result<CreateHabitFromTemplateResult>> ExecuteAsync(CreateHabitFromTemplateCommand command, CancellationToken ct = default)
     {
@@ -121,17 +121,7 @@ public sealed class CreateHabitFromTemplateUseCase(
                 await goals.CreateAsync(goal, ct);
             }
 
-            var timestamp = clock.GetUtcNow().UtcDateTime;
-            var habit = new Habit(Guid.NewGuid(), command.UserId, command.Name.Trim(), command.Color,
-                string.IsNullOrWhiteSpace(command.Category) ? template.Category : command.Category.Trim(), false, null,
-                timestamp, timestamp, command.FrequencyType, command.TargetPerWeek, command.PreferredTime,
-                command.Notes?.Trim(), 0, command.ClientId, template.Id, command.CollectionId, template.ObjectiveId,
-                template.IconCode, template.Difficulty, template.EstimatedTimeMinutes, command.StartDate,
-                template.ContentVersion, command.AllowVariation, command.IdempotencyKey);
-            await habits.CreateAsync(habit, ct);
-            if (command.FrequencyType == HabitFrequencyType.CustomWeekly) await weekDays.ReplaceAsync(habit.Id, command.SelectedDays, ct);
-            if (goal is not null) await goals.LinkHabitAsync(goal.Id, habit.Id, command.ClientId, command.UserId, ct);
-            await audit.LogAsync("habit_template_added", "Template ativado", metadata: new { command.ClientId, command.UserId, command.TemplateId, command.CollectionId, command.CorrelationId }, ct: ct);
+            var habit = await activation.ActivateAsync(template, command, goal, ct);
             await notifications.CreateAsync(command.UserId, "habit_template_added", "Hábito adicionado", "Agora você pode acompanhá-lo no Dashboard.", "habit", habit.Id, ct);
             await unitOfWork.CommitAsync(ct);
             var finalUsage = usage with { ActiveHabits = active + 1, Remaining = usage.Limit is null or < 0 ? int.MaxValue : Math.Max(0, usage.Limit.Value - active - 1) };
