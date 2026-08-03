@@ -3,8 +3,9 @@ namespace HabitFlow.Domain;
 public interface IHabitScheduleExceptionRepository
 {
     Task<IReadOnlyList<HabitScheduleException>> ListAsync(Guid clientId, Guid userId, DateOnly from, DateOnly to, CancellationToken ct = default);
-    Task UpsertAsync(HabitScheduleException exception, CancellationToken ct = default);
-    Task DeleteAsync(Guid clientId, Guid userId, Guid habitId, DateOnly localDate, int expectedVersion, CancellationToken ct = default);
+    Task<HabitScheduleException?> GetAsync(Guid clientId, Guid userId, Guid habitId, DateOnly localDate, CancellationToken ct = default);
+    Task<ScheduleExceptionMutationResult> UpsertAsync(HabitScheduleException exception, int expectedVersion, CancellationToken ct = default);
+    Task<ScheduleExceptionMutationResult> DeleteAsync(Guid clientId, Guid userId, Guid habitId, DateOnly localDate, int expectedVersion, CancellationToken ct = default);
 }
 
 public interface IDailyRoutineOverrideRepository

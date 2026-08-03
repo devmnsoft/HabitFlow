@@ -27,4 +27,8 @@ public sealed class MyDayController(DailyRoutinePlannerService planner,HabitSche
     [HttpPost("{habitId:guid}/excuse"),ValidateAntiForgeryToken]
     public async Task<IActionResult> Excuse(Guid habitId,CancellationToken ct)
     { var result=await schedule.SetAsync(this.CurrentClientId(),this.CurrentUserId(),habitId,timeZone.Today(),HabitScheduleExceptionType.Excused,null,"Pausa somente hoje",ct); TempData[result.IsSuccess?"Success":"Error"]=result.IsSuccess?"Hoje ficou livre. Sua sequência está preservada.":result.Error.Message; return RedirectToAction(nameof(Index)); }
+
+    [HttpPost("{habitId:guid}/restore"),ValidateAntiForgeryToken]
+    public async Task<IActionResult> Restore(Guid habitId,int version,CancellationToken ct)
+    { var result=await schedule.RestoreOriginalScheduleAsync(this.CurrentClientId(),this.CurrentUserId(),habitId,timeZone.Today(),version,ct); TempData[result.IsSuccess?"Success":"Error"]=result.IsSuccess?"Alteração desfeita. O horário original voltou.":result.Error.Message; return RedirectToAction(nameof(Index)); }
 }

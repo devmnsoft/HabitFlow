@@ -7,14 +7,35 @@ public sealed class HabitScheduleExceptionRepository(SqlExecutor db) : IHabitSch
     public async Task<IReadOnlyList<HabitScheduleException>> ListAsync(Guid clientId, Guid userId, DateOnly from, DateOnly to, CancellationToken ct = default) =>
         (await db.QueryAsync<HabitScheduleException>("select id,client_id,user_id,habit_id,local_date,type,destination_date,reason,version,created_at,updated_at from habitflow.habit_schedule_exceptions where client_id=@clientId and user_id=@userId and (local_date between @from and @to or destination_date between @from and @to)", new { clientId, userId, from, to }, ct)).ToList();
 
-    public Task UpsertAsync(HabitScheduleException value, CancellationToken ct = default) => db.ExecuteAsync("""
+    public Task<HabitScheduleException?> GetAsync(Guid clientId, Guid userId, Guid habitId, DateOnly localDate, CancellationToken ct = default) =>
+        db.QuerySingleOrDefaultAsync<HabitScheduleException>("select id,client_id,user_id,habit_id,local_date,type,destination_date,reason,version,created_at,updated_at from habitflow.habit_schedule_exceptions where client_id=@clientId and user_id=@userId and habit_id=@habitId and local_date=@localDate", new { clientId,userId,habitId,localDate }, ct);
+
+    public async Task<ScheduleExceptionMutationResult> UpsertAsync(HabitScheduleException value, int expectedVersion, CancellationToken ct = default)
+    {
+        var affected = await db.ExecuteAsync("""
         insert into habitflow.habit_schedule_exceptions(id,client_id,user_id,habit_id,local_date,type,destination_date,reason,version,created_at,updated_at)
         select @Id,@ClientId,@UserId,h.id,@LocalDate,@Type,@DestinationDate,@Reason,1,@CreatedAt,@UpdatedAt from habitflow.habits h
-        where h.id=@HabitId and h.client_id=@ClientId and h.user_id=@UserId
-        on conflict(client_id,user_id,habit_id,local_date) do update set type=excluded.type,destination_date=excluded.destination_date,reason=excluded.reason,version=habitflow.habit_schedule_exceptions.version+1,updated_at=excluded.updated_at
-        """, new { value.Id, value.ClientId, value.UserId, value.HabitId, value.LocalDate, Type=value.Type.ToString(), value.DestinationDate, value.Reason, value.CreatedAt, value.UpdatedAt }, ct);
+        where h.id=@HabitId and h.client_id=@ClientId and h.user_id=@UserId and @expectedVersion=0
+        on conflict(client_id,user_id,habit_id,local_date) do update
+        set type=excluded.type,destination_date=excluded.destination_date,reason=excluded.reason,version=habitflow.habit_schedule_exceptions.version+1,updated_at=excluded.updated_at
+        where habitflow.habit_schedule_exceptions.client_id=@ClientId
+          and habitflow.habit_schedule_exceptions.user_id=@UserId
+          and habitflow.habit_schedule_exceptions.habit_id=@HabitId
+          and habitflow.habit_schedule_exceptions.local_date=@LocalDate
+          and habitflow.habit_schedule_exceptions.version=@expectedVersion
+        """, new { value.Id, value.ClientId, value.UserId, value.HabitId, value.LocalDate, Type=value.Type.ToString(), value.DestinationDate, value.Reason, value.CreatedAt, value.UpdatedAt, expectedVersion }, ct);
+        var current = await GetAsync(value.ClientId,value.UserId,value.HabitId,value.LocalDate,ct);
+        if (affected == 0) return new(ScheduleExceptionMutationStatus.Conflict,current?.Version ?? 0);
+        return new(expectedVersion == 0 ? ScheduleExceptionMutationStatus.Created : ScheduleExceptionMutationStatus.Updated,current!.Version);
+    }
 
-    public Task DeleteAsync(Guid clientId, Guid userId, Guid habitId, DateOnly localDate, int expectedVersion, CancellationToken ct = default) => db.ExecuteAsync("delete from habitflow.habit_schedule_exceptions where client_id=@clientId and user_id=@userId and habit_id=@habitId and local_date=@localDate and version=@expectedVersion", new { clientId,userId,habitId,localDate,expectedVersion }, ct);
+    public async Task<ScheduleExceptionMutationResult> DeleteAsync(Guid clientId, Guid userId, Guid habitId, DateOnly localDate, int expectedVersion, CancellationToken ct = default)
+    {
+        var affected = await db.ExecuteAsync("delete from habitflow.habit_schedule_exceptions where client_id=@clientId and user_id=@userId and habit_id=@habitId and local_date=@localDate and version=@expectedVersion", new { clientId,userId,habitId,localDate,expectedVersion }, ct);
+        if (affected == 1) return new(ScheduleExceptionMutationStatus.Updated,0);
+        var current = await GetAsync(clientId,userId,habitId,localDate,ct);
+        return new(ScheduleExceptionMutationStatus.Conflict,current?.Version ?? 0);
+    }
 }
 
 public sealed class DailyRoutineOverrideRepository(SqlExecutor db) : IDailyRoutineOverrideRepository

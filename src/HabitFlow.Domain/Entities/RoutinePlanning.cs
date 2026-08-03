@@ -7,6 +7,15 @@ public sealed record HabitScheduleException(
     HabitScheduleExceptionType Type, DateOnly? DestinationDate, string? Reason,
     int Version, DateTimeOffset CreatedAt, DateTimeOffset UpdatedAt);
 
+public enum ScheduleExceptionMutationStatus { Created, Updated, Conflict }
+
+public sealed record ScheduleExceptionMutationResult(
+    ScheduleExceptionMutationStatus Status,
+    int CurrentVersion)
+{
+    public bool Succeeded => Status is ScheduleExceptionMutationStatus.Created or ScheduleExceptionMutationStatus.Updated;
+}
+
 public sealed record DailyRoutineOverride(
     Guid Id, Guid ClientId, Guid UserId, Guid HabitId, DateOnly LocalDate,
     TimeOnly? PreferredTime, int SortOrder, int Version,
