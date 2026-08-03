@@ -1,0 +1,1 @@
+(() => { 'use strict'; document.querySelectorAll('[data-submit-once]').forEach(button => button.closest('form')?.addEventListener('submit', () => { button.disabled=true; button.setAttribute('aria-busy','true'); button.textContent='Salvando revisão…'; })); })();

@@ -3,6 +3,7 @@ namespace HabitFlow.Domain;
 public interface IHabitCompletionRepository
 {
     Task<IReadOnlyList<HabitCompletion>> ListByUserAsync(Guid userId, DateOnly? from = null, CancellationToken ct = default);
+    Task<IReadOnlyList<HabitCompletion>> ListAsync(Guid clientId, Guid userId, DateOnly from, DateOnly to, CancellationToken ct = default);
     Task<CompletionMutationResult> AddIfMissingAsync(Guid clientId, Guid userId, Guid habitId,
         DateOnly localDate, Guid completionId, CancellationToken ct = default);
     Task<CompletionMutationResult> DeleteIfExistsAsync(Guid clientId, Guid userId, Guid habitId,

@@ -1,0 +1,9 @@
+@model DailyRoutineItem
+<article class="routine-item routine-item--@Model.Status.ToString().ToLowerInvariant()">
+ <div class="routine-time">@(Model.PreferredTime?.ToString("HH:mm") ?? "Quando puder")</div>
+ <div class="routine-main"><div class="routine-title"><span class="habit-dot" style="--habit-color:@Model.Color"></span><h3>@Model.Name</h3><span class="badge text-bg-light">@Model.Status</span></div><p>@(Model.Category ?? "Bem-estar") · cerca de @Model.EstimatedMinutes min</p>
+ <div class="routine-actions">
+ @if(Model.Status==DailyRoutineItemStatus.Completed){<form method="post" action="/my-day/@Model.HabitId/undo"><input type="hidden" name="idempotencyKey" value="@(Guid.NewGuid().ToString("N"))"/><button class="btn btn-sm btn-outline-success">Desfazer</button></form>}
+ else {<form method="post" action="/my-day/@Model.HabitId/complete"><input type="hidden" name="idempotencyKey" value="@(Guid.NewGuid().ToString("N"))"/><button class="btn btn-sm btn-success">Concluir</button></form><form method="post" action="/my-day/@Model.HabitId/move-tomorrow"><button class="btn btn-sm btn-outline-secondary">Mover para amanhã</button></form><form method="post" action="/my-day/@Model.HabitId/excuse"><button class="btn btn-sm btn-link">Pausar só hoje</button></form>}
+ <a class="btn btn-sm btn-link" href="/habits/@Model.HabitId">Detalhes</a></div></div>
+</article>
