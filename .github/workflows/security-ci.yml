@@ -10,6 +10,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Validate v6.10 secrets and catalog
+        run: ./scripts/ci/validate-v610-security.sh
       - name: Setup Node.js 24
         uses: actions/setup-node@v4
         with:
@@ -37,3 +39,4 @@ jobs:
       - name: Reject committed binaries and backups
         run: |
           ! find . -path ./.git -prune -o -type f \( -iname '*.exe' -o -iname '*.dll' -o -iname '*.pdb' -o -iname '*.bak' -o -iname '*.zip' \) -print -quit | grep -q .
+

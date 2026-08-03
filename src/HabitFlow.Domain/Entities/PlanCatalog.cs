@@ -31,6 +31,13 @@ public static class PlanFeatureCodes
 }
 
 public sealed record PlanFeatureValue(string Code, string Name, string ValueType, bool? BoolValue, int? IntValue, string? StringValue);
+public enum PlanFeatureImplementationStatus { Implemented, Partial, Planned, Internal, Deprecated }
+public sealed record PlanFeatureImplementation(string Code, PlanFeatureImplementationStatus Status, string PublicName,
+    string PublicDescription, string Evidence, bool IsMarketable, string? ImplementedSince,
+    IReadOnlyList<string> RequiredRoutes, IReadOnlyList<string> RequiredServices);
+public sealed record PlanPublicBenefit(string PlanCode, string FeatureCode, string Title, string Description,
+    string IconCode, int SortOrder, string ComparisonGroup, bool IsHighlighted,
+    PlanFeatureImplementationStatus ImplementationStatus);
 public sealed record PlanPrice(Guid Id, string BillingCycle, decimal Amount, string Currency);
 public sealed record PublicPlan(Guid Id, string Code, string PublicName, string? Headline, string? Description, string? AudienceText, string? BadgeText, bool IsFeatured, int SortOrder, IReadOnlyList<PlanPrice> Prices, IReadOnlyList<PlanFeatureValue> Features);
 public sealed record ClientPlanAccess(Guid ClientId, string ContractedPlanCode, string EffectivePlanCode, string BenefitsStatus, DateOnly? GracePeriodUntil);

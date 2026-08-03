@@ -30,6 +30,7 @@ public class AuthController(AuthService authService, ClientAccountRegistrationSe
                 new(ClaimTypes.Role, user.Role.ToString()),
                 new("account_status", user.AccountStatus.ToString())
                 ,new("session_version", user.SessionVersion.ToString(System.Globalization.CultureInfo.InvariantCulture))
+                ,new("must_change_password", user.MustChangePassword ? "true" : "false")
             };
             if (user.ClientId.HasValue)
             {
@@ -37,6 +38,7 @@ public class AuthController(AuthService authService, ClientAccountRegistrationSe
             }
             var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identity));
+            if (user.MustChangePassword) return Redirect("/account/security/change-required-password");
             return RedirectToAction("Index", "Dashboard");
         }
         catch (Exception ex)

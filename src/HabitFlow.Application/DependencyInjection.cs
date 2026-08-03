@@ -20,6 +20,7 @@ public static class DependencyInjection
         services.AddScoped<PasswordRecoveryService>();
         services.AddScoped<PasswordResetService>();
         services.AddScoped<CreateSuperAdminHandler>();
+        services.AddScoped<CreateDevelopmentSuperAdminHandler>();
         services.AddScoped<ResetSuperAdminPasswordHandler>();
         services.AddScoped<PromoteSuperAdminHandler>();
         services.AddScoped<CurrentUserContext>();
@@ -95,6 +96,9 @@ public static class DependencyInjection
         services.AddScoped<BillingStatusJob>();
         services.AddScoped<EntitlementService>();
         services.AddScoped<PlanEntitlementService>();
+        services.AddSingleton<PlanFeatureImplementationRegistry>();
+        services.AddSingleton<PlanPublicBenefitService>();
+        services.AddSingleton<PlanCatalogValidationService>();
         services.AddScoped<FeatureAccessService>();
         services.AddScoped<GoalService>();
         services.AddScoped<SuperAdminService>();

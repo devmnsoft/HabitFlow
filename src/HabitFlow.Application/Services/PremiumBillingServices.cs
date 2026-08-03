@@ -50,7 +50,7 @@ public sealed class SubscriptionService(ISubscriptionRepository repo, IUserRepos
 public sealed class PaymentAuditService(IPaymentAuditRepository repo, ILogger<PaymentAuditService> logger)
 { public async Task<Result> LogAsync(Guid? userId, Guid? subscriptionId, string action, string message, string severity = "Info", string? metadata = null, CancellationToken ct = default) { try { await repo.CreateAsync(new(Guid.NewGuid(), userId, subscriptionId, action, message, severity, metadata, DateTime.UtcNow), ct); return Result.Success(); } catch (Exception ex) { logger.LogError(ex, "Erro ao registrar auditoria de pagamento"); return Result.Failure("payment_audit.error", "Não foi possível auditar pagamento."); } } }
 
-public sealed class PaymentCheckoutService(IPlanRepository plans, SubscriptionService subscriptions, IPaymentProviderService provider, IPaymentAuditRepository audit, ILogger<PaymentCheckoutService> logger)
+public sealed class PaymentCheckoutService(IPlanRepository plans, IPlanCatalogRepository catalog, SubscriptionService subscriptions, IPaymentProviderService provider, IPaymentAuditRepository audit, ILogger<PaymentCheckoutService> logger)
 {
     public async Task<Result<CheckoutPreference>> StartCheckoutAsync(Guid userId, string email, string name, string planCode, BillingCycle cycle, CancellationToken ct = default)
     {
@@ -64,7 +64,7 @@ public sealed class PaymentCheckoutService(IPlanRepository plans, SubscriptionSe
         catch (Exception ex) { logger.LogError(ex, "Erro ao iniciar checkout"); return Result<CheckoutPreference>.Failure("checkout.error", "Não foi possível iniciar checkout."); }
     }
     public async Task<Result> ValidateCheckoutRequest(string planCode, BillingCycle cycle, CancellationToken ct = default)
-    { if (planCode is not (PlanCodes.Ritmo or PlanCodes.Evolucao)) return Result.Failure("checkout.invalid_plan", "Plano inválido para pagamento."); var p = await plans.GetByCodeAsync(planCode, ct); return p is null || !p.IsActive || !p.IsPublic ? Result.Failure("checkout.invalid_plan", "Plano indisponível.") : Result.Success(); }
+    { var p = await plans.GetByCodeAsync(planCode, ct); return p is null || !await catalog.IsCheckoutEligibleAsync(planCode, cycle.ToString(), ct) ? Result.Failure("checkout.invalid_plan", "Plano indisponível para nova contratação.") : Result.Success(); }
 }
 
 public sealed class PaymentWebhookService(IPaymentWebhookRepository webhooks, ISubscriptionRepository subscriptions, IPaymentTransactionRepository transactions, SubscriptionService subscriptionService, PaymentMetadataSanitizer sanitizer, IPaymentProviderService provider, ILogger<PaymentWebhookService> logger)

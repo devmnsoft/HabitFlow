@@ -10,7 +10,7 @@ public sealed record SuperAdminProvisioningResult(bool Success, string Message, 
 public interface ISuperAdminProvisioningRepository
 {
     Task<User?> FindByEmailAsync(string email, CancellationToken ct);
-    Task<User> CreateOrPromoteAsync(string name, string email, string passwordHash, string actor, string reason, string correlationId, CancellationToken ct);
+    Task<User> CreateOrPromoteAsync(string name, string email, string passwordHash, bool mustChangePassword, string actor, string reason, string correlationId, CancellationToken ct);
     Task<User?> PromoteAsync(string email, string actor, string reason, string correlationId, CancellationToken ct);
     Task ResetPasswordAsync(Guid userId, string passwordHash, string actor, string reason, string correlationId, CancellationToken ct);
 }
@@ -25,12 +25,32 @@ public sealed class CreateSuperAdminHandler(ISuperAdminProvisioningRepository re
         var candidate = current ?? SuperAdminCandidate(command.Name, email);
         var validation = policy.Validate(command.Password, candidate);
         if (validation is not null) return new(false, validation);
-        var user = await repository.CreateOrPromoteAsync(command.Name.Trim(), email, hasher.Hash(command.Password), command.Actor, command.Reason, command.CorrelationId, ct);
+        var user = await repository.CreateOrPromoteAsync(command.Name.Trim(), email, hasher.Hash(command.Password), false, command.Actor, command.Reason, command.CorrelationId, ct);
         return new(true, "Super Administrador provisionado com segurança.", user.Id);
     }
 
     private static User SuperAdminCandidate(string name, string email) => new(Guid.Empty, name.Trim(), email, "!not-a-password-hash!", null,
         UserRole.SuperAdmin, AccountStatus.Active, RiskStatus.Normal, UserPlan.Free, PlanStatus.Active, false, true, null, null, null, null, DateTime.UtcNow, DateTime.UtcNow);
+}
+
+public sealed record CreateDevelopmentSuperAdminCommand(string Name, string Email, string Password, string Actor, string CorrelationId);
+
+/// <summary>Development-only provisioning path. Environment and terminal checks remain at the host boundary.</summary>
+public sealed class CreateDevelopmentSuperAdminHandler(ISuperAdminProvisioningRepository repository, IPasswordPolicy policy, IPasswordHasher hasher)
+{
+    public async Task<SuperAdminProvisioningResult> HandleAsync(CreateDevelopmentSuperAdminCommand command, CancellationToken ct = default)
+    {
+        var email = PasswordRecoveryService.NormalizeEmail(command.Email);
+        var current = await repository.FindByEmailAsync(email, ct);
+        var candidate = current ?? new User(Guid.Empty, command.Name.Trim(), email, "!not-a-password-hash!", null,
+            UserRole.SuperAdmin, AccountStatus.Active, RiskStatus.Normal, UserPlan.Free, PlanStatus.Active, false, true,
+            null, null, null, null, DateTime.UtcNow, DateTime.UtcNow);
+        var validation = policy.Validate(command.Password, candidate);
+        if (validation is not null) return new(false, validation);
+        var user = await repository.CreateOrPromoteAsync(command.Name.Trim(), email, hasher.Hash(command.Password), true,
+            command.Actor, "provisionamento Development", command.CorrelationId, ct);
+        return new(true, "Super Administrador de desenvolvimento provisionado.", user.Id);
+    }
 }
 
 public sealed class ResetSuperAdminPasswordHandler(ISuperAdminProvisioningRepository repository, IPasswordPolicy policy, IPasswordHasher hasher)

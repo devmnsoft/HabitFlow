@@ -1,0 +1,9 @@
+@using System.Globalization
+@model HabitFlow.Domain.PublicPlan
+@{ var monthly=Model.Prices.FirstOrDefault(x=>x.BillingCycle=="Monthly"); var yearly=Model.Prices.FirstOrDefault(x=>x.BillingCycle=="Yearly"); var auth=User.Identity?.IsAuthenticated==true; var pt=CultureInfo.GetCultureInfo("pt-BR"); }
+<article class="hf-premium-card h-100 @(Model.IsFeatured ? "border-success shadow" : "")">
+@if(!string.IsNullOrWhiteSpace(Model.BadgeText)){<span class="hf-plan-badge">@Model.BadgeText</span>}<h2>@Model.PublicName</h2><p class="lead">@Model.Headline</p><p>@Model.Description</p>
+@if(Model.Code==HabitFlow.Domain.PlanCodes.Free){<p class="h3">Grátis</p>}else if(monthly is null){<partial name="_PlanNotAvailable"/>}else{<p class="h3"><span class="js-price" data-monthly="@monthly.Amount.ToString("C",pt)" data-yearly="@(yearly?.Amount.ToString("C",pt) ?? monthly.Amount.ToString("C",pt))">@monthly.Amount.ToString("C",pt)</span><small class="fs-6 text-muted js-period">/mês</small></p>}
+<ul class="list-unstyled">@foreach(var feature in Model.Features.Where(x=>x.BoolValue==true||x.IntValue is not null)){<partial name="_PlanBenefit" model="feature"/>}</ul>
+@if(Model.Code==HabitFlow.Domain.PlanCodes.Free){<a class="btn btn-outline-success w-100" href="@(auth?"/dashboard":"/register")">Começar gratuitamente</a>}else if(monthly is not null&&auth){<form asp-controller="Billing" asp-action="Checkout" method="post">@Html.AntiForgeryToken()<input type="hidden" name="planCode" value="@Model.Code"/><input class="js-cycle-input" type="hidden" name="billingCycle" value="Monthly"/><button class="btn btn-success w-100" type="submit">Escolher @Model.PublicName</button></form>}else if(monthly is not null){<a class="btn btn-success w-100" href="/register?intent=@Model.Code">Escolher @Model.PublicName</a>}
+</article>

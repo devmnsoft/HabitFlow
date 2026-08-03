@@ -1,56 +1,6 @@
-@using System.Globalization
 @model IReadOnlyList<HabitFlow.Domain.PublicPlan>
-@{
-    ViewData["Title"] = "Planos";
-    var isAuth = User?.Identity?.IsAuthenticated == true;
-    var ptBr = CultureInfo.GetCultureInfo("pt-BR");
-}
-<section class="hf-section hf-guided-card text-center">
-  <p class="hf-section-kicker">Seu próximo passo</p>
-  <svg class="mb-3" width="180" height="64" viewBox="0 0 180 64" fill="none" aria-hidden="true">
-    <path d="M12 48C42 48 48 18 76 18s34 30 62 30c14 0 22-7 30-18" stroke="currentColor" stroke-width="4" stroke-linecap="round"/><circle cx="12" cy="48" r="7" fill="currentColor"/><circle cx="76" cy="18" r="7" fill="currentColor"/><circle cx="168" cy="30" r="7" fill="currentColor"/>
-  </svg>
-  <h1>Escolha o ritmo que combina com você.</h1>
-  <p class="lead">Comece gratuitamente e avance quando sentir que sua rotina pede mais.</p>
-  <div class="btn-group" role="group" aria-label="Ciclo de pagamento">
-    <button class="btn btn-success js-cycle active" type="button" data-cycle="Monthly">Mensal</button>
-    <button class="btn btn-outline-success js-cycle" type="button" data-cycle="Yearly">Anual</button>
-  </div>
-</section>
-<div class="row g-3 align-items-stretch">
-@foreach (var plan in Model)
-{
-  var monthly = plan.Prices.FirstOrDefault(x => x.BillingCycle == "Monthly");
-  var yearly = plan.Prices.FirstOrDefault(x => x.BillingCycle == "Yearly");
-  <div class="col-lg-4">
-    <article class="hf-premium-card h-100 @(plan.IsFeatured ? "border-success shadow" : "")">
-      @if (!string.IsNullOrWhiteSpace(plan.BadgeText)) { <span class="hf-plan-badge">@plan.BadgeText</span> }
-      <h2>@plan.PublicName</h2><p class="lead">@plan.Headline</p><p>@plan.Description</p>
-      <p class="h3">
-        <span class="js-price" data-monthly="@(monthly?.Amount.ToString("C", ptBr) ?? "—")" data-yearly="@(yearly?.Amount.ToString("C", ptBr) ?? "—")">@(monthly?.Amount.ToString("C", ptBr) ?? "—")</span>
-        <small class="fs-6 text-muted js-period">/mês</small>
-      </p>
-      <ul class="list-unstyled">
-      @foreach (var feature in plan.Features.Where(x => x.BoolValue == true || x.IntValue is not null))
-      {
-        <li class="mb-2">✓ @feature.Name@if (feature.IntValue is >= 0) { <text>: @feature.IntValue</text> } else if (feature.IntValue is < 0) { <text>: ilimitado</text> }</li>
-      }
-      </ul>
-      @if (plan.Code == HabitFlow.Domain.PlanCodes.Free) { <a class="btn btn-outline-success w-100" href="@(isAuth ? "/dashboard" : "/register")">Começar com leveza</a> }
-      else if (isAuth) { <form asp-controller="Billing" asp-action="Checkout" method="post">@Html.AntiForgeryToken()<input type="hidden" name="planCode" value="@plan.Code"/><input class="js-cycle-input" type="hidden" name="billingCycle" value="Monthly"/><button class="btn btn-success w-100" type="submit">Escolher @plan.PublicName</button></form> }
-      else { <a class="btn btn-success w-100" href="/register?intent=@plan.Code">Escolher @plan.PublicName</a> }
-    </article>
-  </div>
-}
-</div>
-@section Scripts {
-<script>
-document.querySelectorAll('.js-cycle').forEach(button => button.addEventListener('click', () => {
-  document.querySelectorAll('.js-cycle').forEach(x => { x.classList.toggle('active', x === button); x.classList.toggle('btn-success', x === button); x.classList.toggle('btn-outline-success', x !== button); });
-  const yearly = button.dataset.cycle === 'Yearly';
-  document.querySelectorAll('.js-price').forEach(x => x.textContent = yearly ? x.dataset.yearly : x.dataset.monthly);
-  document.querySelectorAll('.js-period').forEach(x => x.textContent = yearly ? '/ano' : '/mês');
-  document.querySelectorAll('.js-cycle-input').forEach(x => x.value = button.dataset.cycle);
-}));
-</script>
-}
+@{ ViewData["Title"]="Planos"; }
+<section class="hf-section hf-guided-card text-center"><p class="hf-section-kicker">Seu próximo passo</p><h1>Escolha o ritmo que combina com você.</h1><p class="lead">Comece gratuitamente e avance quando sua rotina pedir mais.</p><partial name="_PlanBillingToggle"/></section>
+<div class="row g-3 align-items-stretch">@foreach(var plan in Model){<div class="col-lg-6"><partial name="_PlanCard" model="plan"/></div>}</div>
+<partial name="_PlanComparison" model="Model"/><partial name="_PlanQuestions"/>
+@section Scripts {<script src="~/js/plan-catalog.js" asp-append-version="true"></script>}
