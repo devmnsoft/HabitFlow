@@ -1,0 +1,2 @@
+@model HabitFlow.Web.Models.ConfirmationModalViewModel
+<button type="button" class="btn btn-danger" data-hf-modal data-modal-title="@Model.Title" data-modal-message="@Model.Message" data-modal-confirm="@Model.PrimaryLabel" data-modal-cancel="@Model.SecondaryLabel" data-modal-critical="@Model.Critical.ToString().ToLowerInvariant()">@Model.PrimaryLabel</button>
