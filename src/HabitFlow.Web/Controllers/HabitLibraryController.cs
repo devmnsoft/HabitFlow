@@ -6,7 +6,7 @@ using HabitFlow.Web.Models;
 
 namespace HabitFlow.Web.Controllers;
 
-public sealed class HabitLibraryController(HabitLibraryService library, HabitTemplateFavoriteService favorites, IHabitObjectiveRepository objectives, IUserGoalRepository goals, IHabitRepository habits, PlanEntitlementService entitlements, CreateHabitFromTemplateUseCase createFromTemplate, IUserFacingErrorMapper errorMapper, ILogger<HabitLibraryController> logger, HabitTemplateCollectionService collections) : Controller
+public sealed class HabitLibraryController(HabitLibraryService library, HabitTemplateFavoriteService favorites, IHabitObjectiveRepository objectives, IUserGoalRepository goals, IHabitRepository habits, PlanEntitlementService entitlements, CreateHabitFromTemplateUseCase createFromTemplate, IUserFacingErrorMapper errorMapper, ILogger<HabitLibraryController> logger, HabitTemplateCollectionService collections, ActivateHabitCollectionUseCase activateCollection) : Controller
 {
     [HttpGet("/habit-library/collections")]
     public async Task<IActionResult> Collections(CancellationToken ct) => View(await collections.ListAsync(ct));
@@ -24,7 +24,24 @@ public sealed class HabitLibraryController(HabitLibraryService library, HabitTem
     public async Task<IActionResult> CustomizeCollection(string slug, CancellationToken ct)
     {
         var result = await collections.GetAsync(slug, this.CurrentUserId(), ct);
-        return result.IsFailure ? NotFound() : View(result.Value);
+        if(result.IsFailure) return NotFound();
+        return View(await BuildCollectionCustomizationAsync(result.Value!,ct));
+    }
+
+    [Authorize,ValidateAntiForgeryToken]
+    [HttpPost("/habit-library/collection/{slug}/customize")]
+    public async Task<IActionResult> ActivateCollection(string slug, CollectionCustomizationViewModel model, CancellationToken ct)
+    {
+        var details=await collections.GetAsync(slug,this.CurrentUserId(),ct);
+        if(details.IsFailure || details.Value!.Collection.Id!=model.CollectionId) return NotFound();
+        var command=new ActivateHabitCollectionCommand(this.CurrentClientId(),this.CurrentUserId(),details.Value.Collection.Id,
+            model.Items.Select(x=>new HabitCollectionCustomization(x.TemplateId,x.Included,x.Name,x.FrequencyType,x.TargetPerWeek,
+                x.SelectedDays,x.PreferredTime,x.Color,x.Category,x.StartDate)).ToList(),model.ExistingGoalId,model.CreateGoal,
+            model.GoalTitle,model.GoalTargetType,model.GoalTargetValue,model.IdempotencyKey,HttpContext.TraceIdentifier,null,null);
+        var result=await activateCollection.ExecuteAsync(command,ct);
+        if(result.IsFailure){ModelState.AddModelError(string.Empty,errorMapper.ToPublicMessage(result.Error.Code));model=await BuildCollectionCustomizationAsync(details.Value,ct,model);return View("CustomizeCollection",model);}
+        TempData["Success"]=result.Value!.Message;
+        return RedirectToAction("Index","Dashboard");
     }
     [HttpGet("/habit-library")]
     public async Task<IActionResult> Index(CancellationToken ct)
@@ -169,4 +186,17 @@ public sealed class HabitLibraryController(HabitLibraryService library, HabitTem
 
     private static int[] SuggestedDays(HabitTemplate template) => Enumerable.Range(0, 7)
         .Where(day => template.IsSuggestedOn((DayOfWeek)day)).ToArray();
+
+    private async Task<CollectionCustomizationViewModel> BuildCollectionCustomizationAsync(HabitTemplateCollectionDetails details,CancellationToken ct,CollectionCustomizationViewModel? posted=null)
+    {
+        var active=await habits.CountActiveAsync(this.CurrentClientId(),this.CurrentUserId(),ct);
+        var limit=await entitlements.GetIntegerFeatureAsync(this.CurrentUserId(),PlanFeatureCodes.ActiveHabitsLimit,ct);
+        return new CollectionCustomizationViewModel { Details=details, CollectionId=details.Collection.Id, Items=posted?.Items??details.Items.Select(x=>new CollectionCustomizationItemViewModel
+            {TemplateId=x.TemplateId,Included=true,Name=x.Template.Name,FrequencyType=Enum.TryParse<HabitFrequencyType>(x.Template.SuggestedFrequency,true,out var f)?f:HabitFrequencyType.Daily,
+             TargetPerWeek=x.Template.SuggestedTargetPerWeek,SelectedDays=SuggestedDays(x.Template),PreferredTime=x.DefaultReminderTime??x.Template.SuggestedReminderTime,
+             Color=x.Template.SuggestedColor,Category=x.Template.Category,StartDate=DateOnly.FromDateTime(DateTime.UtcNow)}).ToList(),
+            ExistingGoalId=posted?.ExistingGoalId,CreateGoal=posted?.CreateGoal??false,GoalTitle=posted?.GoalTitle,GoalTargetType=posted?.GoalTargetType,
+            GoalTargetValue=posted?.GoalTargetValue,IdempotencyKey=posted?.IdempotencyKey??Guid.NewGuid(),Goals=await goals.ListAsync(this.CurrentClientId(),this.CurrentUserId(),ct),
+            PlanUsage=new(active,limit,limit is null or <0?int.MaxValue:Math.Max(0,limit.Value-active))};
+    }
 }

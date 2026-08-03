@@ -1,0 +1,2 @@
+@model HabitFlow.Web.Models.CollectionCustomizationViewModel
+<section class="hf-summary" aria-labelledby="activation-title"><h2 id="activation-title" class="h5">Resumo da ativação</h2><p><strong data-selected-count>@Model.Items.Count(x=>x.Included)</strong> hábitos · <strong data-time-estimate>@Model.Details!.Items.Where(x=>Model.Items.Any(i=>i.TemplateId==x.TemplateId&&i.Included)).Sum(x=>x.Template.EstimatedTimeMinutes ?? 0)</strong> min estimados</p><p class="small text-body-secondary mb-0">Você poderá ajustar tudo depois em Meus hábitos.</p></section>

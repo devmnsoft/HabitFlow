@@ -14,5 +14,6 @@ public interface IHabitTemplateCollectionRepository
 {
     Task<IReadOnlyList<HabitTemplateCollection>> ListPublishedAsync(CancellationToken ct = default);
     Task<HabitTemplateCollection?> GetPublishedBySlugAsync(string slug, CancellationToken ct = default);
+    Task<HabitTemplateCollection?> GetPublishedAsync(Guid id, CancellationToken ct = default);
     Task<IReadOnlyList<HabitTemplateCollectionItem>> ListItemsAsync(Guid collectionId, CancellationToken ct = default);
 }

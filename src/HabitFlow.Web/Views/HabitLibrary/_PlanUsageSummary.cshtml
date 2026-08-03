@@ -1,0 +1,2 @@
+@model HabitFlow.Application.TemplatePlanUsage
+<section class="hf-summary" aria-labelledby="plan-title"><h2 id="plan-title" class="h6">Espaço no plano</h2><p class="mb-1"><strong data-plan-remaining>@(Model.Limit is null or < 0 ? "Sem limite" : Model.Remaining)</strong> vagas disponíveis</p><small class="text-body-secondary">Você usa @Model.ActiveHabits @(Model.ActiveHabits == 1 ? "hábito" : "hábitos") ativos.</small></section>

@@ -1,0 +1,12 @@
+@model (HabitFlow.Web.Models.CollectionCustomizationItemViewModel Item, HabitFlow.Domain.HabitTemplateCollectionItem Official, int Index)
+@{var i=Model.Index;var item=Model.Item;var official=Model.Official;}
+<fieldset class="hf-editor" data-collection-item data-minutes="@(official.Template.EstimatedTimeMinutes ?? 0)"><legend class="h5">@official.Template.Name</legend>
+ <input type="hidden" name="Items[@i].TemplateId" value="@item.TemplateId" />
+ @if(official.IsRequired){<input type="hidden" name="Items[@i].Included" value="true"/><span class="badge text-bg-primary mb-3">Obrigatório</span>}else{<div class="form-check form-switch mb-3"><input class="form-check-input" type="checkbox" name="Items[@i].Included" value="true" checked="@item.Included" id="include-@i" data-item-toggle aria-controls="options-@i"><label class="form-check-label" for="include-@i">Incluir na rotina</label></div>}
+ <div id="options-@i" data-item-options><div class="row g-3"><div class="col-12"><label class="form-label" for="name-@i">Nome do hábito</label><input class="form-control" id="name-@i" name="Items[@i].Name" value="@item.Name" maxlength="120" required /></div>
+ <div class="col-md-6"><label class="form-label" for="frequency-@i">Frequência</label><select class="form-select" id="frequency-@i" name="Items[@i].FrequencyType" data-frequency><option value="Daily" selected="@(item.FrequencyType==HabitFlow.Domain.HabitFrequencyType.Daily)">Todos os dias</option><option value="CustomWeekly" selected="@(item.FrequencyType==HabitFlow.Domain.HabitFrequencyType.CustomWeekly)">Dias específicos</option></select></div>
+ <div class="col-md-6"><label class="form-label" for="target-@i">Meta semanal</label><input class="form-control" type="number" min="1" max="7" id="target-@i" name="Items[@i].TargetPerWeek" value="@item.TargetPerWeek"/></div>
+ <div class="col-md-6"><label class="form-label" for="time-@i">Melhor horário</label><input class="form-control" type="time" id="time-@i" name="Items[@i].PreferredTime" value="@item.PreferredTime?.ToString("HH:mm")"/></div>
+ <div class="col-md-6"><label class="form-label" for="category-@i">Categoria</label><input class="form-control" id="category-@i" name="Items[@i].Category" value="@item.Category" maxlength="80"/></div>
+ <input type="hidden" name="Items[@i].Color" value="@item.Color"/><input type="hidden" name="Items[@i].StartDate" value="@item.StartDate.ToString("yyyy-MM-dd")"/></div></div>
+</fieldset>

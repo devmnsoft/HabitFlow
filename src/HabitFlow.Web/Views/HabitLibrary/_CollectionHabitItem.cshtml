@@ -1,0 +1,2 @@
+@model HabitFlow.Domain.HabitTemplateCollectionItem
+<li class="hf-habit-row"><div><span class="hf-order">@Model.SortOrder</span><strong>@Model.Template.Name</strong><p class="mb-0 text-body-secondary">@Model.Template.Description</p></div><span class="badge @(Model.IsRequired ? "text-bg-primary" : "text-bg-light")">@(Model.IsRequired ? "Obrigatório" : "Opcional")</span></li>
