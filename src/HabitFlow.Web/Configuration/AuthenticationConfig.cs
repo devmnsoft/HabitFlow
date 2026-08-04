@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication;
 using System.Security.Claims;
 using HabitFlow.Domain;
+using HabitFlow.Application;
 
 namespace HabitFlow.Web.Configuration;
 
@@ -24,6 +25,14 @@ public static class AuthenticationConfig
                 if (!Guid.TryParse(idText, out var id) || !int.TryParse(versionText, out var version)) { context.RejectPrincipal(); return; }
                 var user = await context.HttpContext.RequestServices.GetRequiredService<IUserRepository>().GetByIdAsync(id, context.HttpContext.RequestAborted);
                 if (user is null || user.SessionVersion != version) { context.RejectPrincipal(); await context.HttpContext.SignOutAsync(); }
+                else if (!Guid.TryParse(context.Principal?.FindFirstValue("session_id"), out var sessionId)
+                    || await context.HttpContext.RequestServices.GetRequiredService<IUserSessionRepository>().GetOwnedAsync(sessionId, id, user.ClientId, context.HttpContext.RequestAborted) is not { RevokedAt: null } session
+                    || session.ExpiresAt <= DateTime.UtcNow)
+                {
+                    context.RejectPrincipal();
+                    await context.HttpContext.SignOutAsync();
+                }
+                else await context.HttpContext.RequestServices.GetRequiredService<UserSessionService>().TouchAsync(sessionId, id, context.HttpContext.RequestAborted);
             };
         });
         services.AddAuthorization(options =>

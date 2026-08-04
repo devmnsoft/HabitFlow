@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using HabitFlow.Application;
+using HabitFlow.Domain;
 using HabitFlow.Web.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -7,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace HabitFlow.Web.Controllers;
 
-public class AuthController(AuthService authService, ClientAccountRegistrationService clientRegistration, IWebHostEnvironment env, IUserFacingErrorMapper errorMapper, ILogger<AuthController> logger) : Controller
+public class AuthController(AuthService authService, ClientAccountRegistrationService clientRegistration, UserSessionService sessionService, IConfiguration configuration, IWebHostEnvironment env, IUserFacingErrorMapper errorMapper, ILogger<AuthController> logger) : Controller
 {
     [HttpGet("/login")]
     public IActionResult Login() => View();
@@ -36,6 +37,9 @@ public class AuthController(AuthService authService, ClientAccountRegistrationSe
             {
                 claims.Add(new Claim("client_id", user.ClientId.Value.ToString()));
             }
+            var lifetime = TimeSpan.FromHours(configuration.GetValue("Authentication:CookieHours", 8));
+            var sessionId = await sessionService.StartAsync(user.Id, user.ClientId, Request.Headers.UserAgent, HttpContext.Connection.RemoteIpAddress?.ToString(), lifetime, ct);
+            claims.Add(new Claim("session_id", sessionId.ToString()));
             var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identity));
             if (user.MustChangePassword) return Redirect("/account/security/change-required-password");
@@ -99,7 +103,13 @@ public class AuthController(AuthService authService, ClientAccountRegistrationSe
     [HttpPost("/logout")]
     public async Task<IActionResult> Logout(CancellationToken ct)
     {
-        try { await HttpContext.SignOutAsync(); return RedirectToAction("Index", "Home"); }
+        try
+        {
+            if (Guid.TryParse(User.FindFirstValue("session_id"), out var sessionId))
+                await HttpContext.RequestServices.GetRequiredService<IUserSessionRepository>().RevokeAsync(sessionId, this.CurrentUserId(), "logout", ct);
+            await HttpContext.SignOutAsync();
+            return RedirectToAction("Index", "Home");
+        }
         catch (Exception ex) { logger.LogError(ex, "Erro ao sair"); TempData["Error"] = "Não foi possível encerrar a sessão."; return RedirectToAction("Index", "Dashboard"); }
     }
 }
