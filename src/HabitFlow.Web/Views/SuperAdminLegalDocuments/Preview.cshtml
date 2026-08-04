@@ -1,0 +1,3 @@
+@model HabitFlow.Domain.LegalDocumentVersion
+@{ ViewData["Title"] = "Prévia jurídica"; }
+<main class="container py-4"><div class="alert alert-warning" role="status">Prévia administrativa — conteúdo ainda não publicado.</div><article class="card border-0 shadow-sm p-4"><h1>@Model.Title</h1><p class="lead">@Model.Summary</p><hr/><div>@Html.Raw(Model.SanitizedContent)</div></article></main>

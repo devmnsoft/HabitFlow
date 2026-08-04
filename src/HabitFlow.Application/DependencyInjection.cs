@@ -93,6 +93,12 @@ public static class DependencyInjection
         services.AddScoped<DatabaseDiagnosticsService>();
         services.AddScoped<WhatsAppService>();
         services.AddScoped<LgpdService>();
+        services.AddSingleton<LegalContentSanitizer>();
+        services.AddSingleton<LegalContentHashService>();
+        services.AddSingleton<LegalDocumentVersionComparer>();
+        services.AddScoped<LegalDocumentService>();
+        services.AddScoped<LegalPublicationService>();
+        services.AddScoped<LegalDocumentQueryService>();
         services.AddScoped<BillingService>();
         services.AddScoped<BillingStatusJob>();
         services.AddScoped<EntitlementService>();
