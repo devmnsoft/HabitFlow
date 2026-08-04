@@ -1,0 +1,6 @@
+@model IReadOnlyList<HabitFlow.Domain.LegalDocumentVersion>
+@{ ViewData["Title"] = "Documentos jurídicos"; }
+<main class="container py-4"><div class="d-flex justify-content-between align-items-center mb-4"><div><h1>Documentos jurídicos</h1><p class="text-body-secondary">Publique conteúdo versionado, sanitizado e auditável.</p></div><a class="btn btn-primary" asp-action="Create">Novo documento</a></div>
+<div class="card border-0 shadow-sm"><div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th>Título</th><th>Versão</th><th>Status</th><th>Vigência</th><th></th></tr></thead><tbody>
+@foreach(var item in Model){<tr><td>@item.Title</td><td>@item.Version</td><td><span class="badge text-bg-secondary">@item.Status</span></td><td>@item.EffectiveAt.ToString("dd/MM/yyyy")</td><td><a asp-action="Versions" asp-route-id="@item.DocumentId">Histórico</a></td></tr>}
+</tbody></table></div></div></main>
