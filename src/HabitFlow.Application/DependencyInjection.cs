@@ -20,6 +20,8 @@ public static class DependencyInjection
         services.AddScoped<PasswordRecoveryService>();
         services.AddScoped<PasswordResetService>();
         services.AddScoped<RequiredPasswordChangeService>();
+        services.AddScoped<UserSessionService>();
+        services.AddScoped<SessionRevocationService>();
         services.AddScoped<CreateSuperAdminHandler>();
         services.AddScoped<CreateDevelopmentSuperAdminHandler>();
         services.AddScoped<ResetSuperAdminPasswordHandler>();

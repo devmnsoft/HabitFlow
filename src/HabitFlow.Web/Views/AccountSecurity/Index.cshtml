@@ -1,0 +1,44 @@
+@model HabitFlow.Web.Models.AccountSecurityViewModel
+@{ ViewData["Title"] = "Segurança da conta"; }
+<main class="container py-5" style="max-width:960px">
+  <header class="mb-4">
+    <span class="text-uppercase text-primary fw-semibold small">Conta protegida</span>
+    <h1 class="display-6 fw-bold mt-2">Segurança da conta</h1>
+    <p class="text-secondary">Revise onde sua conta está conectada e encerre acessos que você não reconhece.</p>
+  </header>
+  <section class="card border-0 shadow-sm rounded-4 mb-4" aria-labelledby="identity-title">
+    <div class="card-body p-4">
+      <h2 id="identity-title" class="h5">Identidade</h2>
+      <p class="mb-0"><span class="text-secondary">E-mail</span><br><strong>@Model.Email</strong></p>
+    </div>
+  </section>
+  <section class="card border-0 shadow-sm rounded-4" aria-labelledby="sessions-title">
+    <div class="card-body p-4">
+      <div class="d-flex flex-wrap justify-content-between gap-3 align-items-center mb-3">
+        <div><h2 id="sessions-title" class="h5 mb-1">Sessões ativas</h2><p class="text-secondary mb-0">O endereço IP é mascarado para preservar sua privacidade.</p></div>
+        <span class="badge text-bg-light rounded-pill">@Model.Sessions.Count ativa(s)</span>
+      </div>
+      <div class="vstack gap-3">
+      @foreach (var session in Model.Sessions)
+      {
+        <article class="border rounded-4 p-3 d-flex flex-wrap gap-3 justify-content-between align-items-center">
+          <div>
+            <h3 class="h6 mb-1">@session.Browser em @session.Device @if(session.IsCurrent){<span class="badge text-bg-success ms-1">Atual</span>}</h3>
+            <div class="small text-secondary">IP @session.MaskedIp · atividade @session.LastActivityAt.ToLocalTime().ToString("g")</div>
+          </div>
+          <form method="post" action="/account/security/sessions/revoke" class="d-flex gap-2 flex-wrap">
+            @Html.AntiForgeryToken()<input type="hidden" name="SessionId" value="@session.Id">
+            <label class="visually-hidden" for="password-@session.Id">Senha atual</label><input id="password-@session.Id" name="Password" type="password" required autocomplete="current-password" class="form-control form-control-sm" placeholder="Senha atual">
+            <button class="btn btn-outline-danger btn-sm" type="submit">Encerrar</button>
+          </form>
+        </article>
+      }
+      </div>
+      <form method="post" action="/account/security/sessions/revoke-all" class="border-top mt-4 pt-4 d-flex flex-wrap gap-2">
+        @Html.AntiForgeryToken()<label class="visually-hidden" for="all-password">Senha atual</label><input id="all-password" name="Password" type="password" required autocomplete="current-password" class="form-control" style="max-width:280px" placeholder="Confirme sua senha">
+        <button class="btn btn-danger" type="submit">Sair de todos os dispositivos</button>
+      </form>
+      <div class="visually-hidden" aria-live="polite">@TempData["Success"] @TempData["Error"]</div>
+    </div>
+  </section>
+</main>

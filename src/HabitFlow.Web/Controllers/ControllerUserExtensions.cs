@@ -12,6 +12,9 @@ internal static class ControllerUserExtensions
     public static Guid CurrentClientId(this Controller controller) =>
         Guid.TryParse(controller.User.FindFirstValue("client_id"), out var id) ? id : Guid.Empty;
 
+    public static Guid? CurrentClientIdOrNull(this Controller controller) =>
+        Guid.TryParse(controller.User.FindFirstValue("client_id"), out var id) ? id : null;
+
     public static User CurrentUserSnapshot(this Controller controller) => new(
         controller.CurrentUserId(),
         controller.User.Identity?.Name ?? "Usuário",
