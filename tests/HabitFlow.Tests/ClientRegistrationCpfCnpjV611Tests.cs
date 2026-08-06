@@ -5,7 +5,7 @@ namespace HabitFlow.Tests;
 
 public sealed class ClientRegistrationCpfCnpjV611Tests
 {
-    private static string Read(string path) => File.ReadAllText(Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../", path)));
+    private static string Read(string path) => File.ReadAllText(RepositoryRootLocator.PathTo(path));
 
     [Fact]
     public void DocumentValidator_supports_required_cpf_cnpj_operations()

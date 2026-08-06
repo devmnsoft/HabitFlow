@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication;
 using System.Security.Claims;
 using HabitFlow.Domain;
+using HabitFlow.Application;
 
 namespace HabitFlow.Web.Configuration;
 
@@ -23,7 +24,15 @@ public static class AuthenticationConfig
                 var versionText = context.Principal?.FindFirstValue("session_version");
                 if (!Guid.TryParse(idText, out var id) || !int.TryParse(versionText, out var version)) { context.RejectPrincipal(); return; }
                 var user = await context.HttpContext.RequestServices.GetRequiredService<IUserRepository>().GetByIdAsync(id, context.HttpContext.RequestAborted);
-                if (user is null || user.SessionVersion != version) { context.RejectPrincipal(); await context.HttpContext.SignOutAsync(); }
+                if (user is null || user.SessionVersion != version) { context.RejectPrincipal(); await context.HttpContext.SignOutAsync(); return; }
+                var clock = context.HttpContext.RequestServices.GetRequiredService<TimeProvider>();
+                if (!Guid.TryParse(context.Principal?.FindFirstValue("session_id"), out var sessionId)
+                    || await context.HttpContext.RequestServices.GetRequiredService<IUserSessionRepository>().GetActiveOwnedAsync(sessionId, id, user.ClientId, clock.GetUtcNow().UtcDateTime, context.HttpContext.RequestAborted) is null)
+                {
+                    context.RejectPrincipal();
+                    await context.HttpContext.SignOutAsync();
+                }
+                else await context.HttpContext.RequestServices.GetRequiredService<UserSessionService>().TouchAsync(sessionId, id, user.ClientId, context.HttpContext.RequestAborted);
             };
         });
         services.AddAuthorization(options =>

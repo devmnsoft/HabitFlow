@@ -19,6 +19,15 @@ public static class DependencyInjection
         services.AddScoped<PasswordResetTokenService>();
         services.AddScoped<PasswordRecoveryService>();
         services.AddScoped<PasswordResetService>();
+        services.AddScoped<RequiredPasswordChangeService>();
+        services.AddScoped<UserSessionService>();
+        services.AddScoped<SessionRevocationService>();
+        services.AddSingleton<TotpSecretProtector>();
+        services.AddSingleton<TotpValidationService>();
+        services.AddScoped<TotpEnrollmentService>();
+        services.AddScoped<RecoveryCodeService>();
+        services.AddScoped<MfaChallengeService>();
+        services.AddScoped<SuperAdminMfaRequirementService>();
         services.AddScoped<CreateSuperAdminHandler>();
         services.AddScoped<CreateDevelopmentSuperAdminHandler>();
         services.AddScoped<ResetSuperAdminPasswordHandler>();
@@ -92,6 +101,12 @@ public static class DependencyInjection
         services.AddScoped<DatabaseDiagnosticsService>();
         services.AddScoped<WhatsAppService>();
         services.AddScoped<LgpdService>();
+        services.AddSingleton<LegalContentSanitizer>();
+        services.AddSingleton<LegalContentHashService>();
+        services.AddSingleton<LegalDocumentVersionComparer>();
+        services.AddScoped<LegalDocumentService>();
+        services.AddScoped<LegalPublicationService>();
+        services.AddScoped<LegalDocumentQueryService>();
         services.AddScoped<BillingService>();
         services.AddScoped<BillingStatusJob>();
         services.AddScoped<EntitlementService>();

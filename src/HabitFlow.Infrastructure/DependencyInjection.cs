@@ -16,6 +16,8 @@ public static class DependencyInjection
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<UnitOfWork>();
         services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IUserSessionRepository, UserSessionRepository>();
+        services.AddScoped<IUserMfaRepository, UserMfaRepository>();
         services.AddScoped<ISuperAdminProvisioningRepository, SuperAdminProvisioningRepository>();
         services.AddScoped<IPasswordResetTokenRepository, PasswordResetTokenRepository>();
         services.AddScoped<IPasswordResetRequestRepository, PasswordResetRequestRepository>();
@@ -50,6 +52,7 @@ public static class DependencyInjection
         services.AddScoped<ISettingsRepository, SettingsRepository>();
         services.AddScoped<ISupportRepository, SupportRepository>();
         services.AddScoped<ILgpdRepository, LgpdRepository>();
+        services.AddScoped<ILegalDocumentRepository, LegalDocumentRepository>();
         services.AddScoped<IBillingRepository, BillingRepository>();
         services.AddScoped<IBillingStatusRepository, BillingStatusRepository>();
         services.AddScoped<IPlanRepository, PlanRepository>();

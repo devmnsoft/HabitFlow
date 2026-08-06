@@ -18,6 +18,8 @@ public static class MiddlewareConfig
         app.UseAuthorization();
         app.UseMiddleware<ClientBindingMiddleware>();
         app.UseMiddleware<AccountStatusMiddleware>();
+        app.UseMiddleware<RequiredPasswordChangeMiddleware>();
+        app.UseMiddleware<SuperAdminMfaMiddleware>();
         app.MapControllerRoute("login", "login", new { controller = "Auth", action = "Login" });
         app.MapControllerRoute("register", "register", new { controller = "Auth", action = "Register" });
         app.MapControllerRoute("default", "{controller=Home}/{action=Index}/{id?}");
