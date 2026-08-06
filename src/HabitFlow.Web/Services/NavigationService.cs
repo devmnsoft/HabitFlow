@@ -22,8 +22,8 @@ public sealed class NavigationService(INavigationAccessEvaluator? accessEvaluato
 
         new(
             Code: "demo",
-            Label: "Demonstração",
-            Description: "Veja como funciona",
+            Label: "Como funciona",
+            Description: "Veja o HabitFlow em ação",
             Icon: "demo",
             Url: "/demo",
             Context: NavigationContext.Public,
@@ -35,7 +35,7 @@ public sealed class NavigationService(INavigationAccessEvaluator? accessEvaluato
         new(
             Code: "library",
             Label: "Biblioteca",
-            Description: "Encontre um primeiro passo",
+            Description: "Ideias prontas para começar",
             Icon: "library",
             Url: "/habit-library",
             Context: NavigationContext.Public,
@@ -47,7 +47,7 @@ public sealed class NavigationService(INavigationAccessEvaluator? accessEvaluato
         new(
             Code: "plans",
             Label: "Planos",
-            Description: "Escolha seu ritmo",
+            Description: "Comece grátis ou avance no Ritmo",
             Icon: "premium",
             Url: "/plans",
             Context: NavigationContext.Public,
@@ -65,8 +65,11 @@ public sealed class NavigationService(INavigationAccessEvaluator? accessEvaluato
             Context: NavigationContext.Public,
             RequiredPermission: null,
             RequiredFeature: null,
-            SortOrder: 50,
+            SortOrder: 60,
             IsEnabled: true),
+
+        new("public-privacy", "Privacidade", "Seus dados, suas escolhas", "privacy", "/privacy",
+            NavigationContext.Public, null, null, 50, true),
 
         // Navegação pessoal
         new(
@@ -153,10 +156,14 @@ public sealed class NavigationService(INavigationAccessEvaluator? accessEvaluato
             SortOrder: 50,
             IsEnabled: true),
 
+        new(
+            Code: "personal-library", Label: "Biblioteca", Description: "Ideias prontas para começar", Icon: "library", Url: "/habit-library",
+            Context: NavigationContext.Personal, RequiredPermission: null, RequiredFeature: null, SortOrder: 60, IsEnabled: true),
+
         // Navegação da conta
         new(
             Code: "account",
-            Label: "Sua conta",
+            Label: "Minha conta",
             Description: "Acessos e preferências",
             Icon: "profile",
             Url: "/profile",
@@ -165,6 +172,14 @@ public sealed class NavigationService(INavigationAccessEvaluator? accessEvaluato
             RequiredFeature: null,
             SortOrder: 10,
             IsEnabled: true),
+
+        new(
+            Code: "security", Label: "Segurança", Description: "Senha, sessões e acessos", Icon: "privacy", Url: "/account/security",
+            Context: NavigationContext.Account, RequiredPermission: null, RequiredFeature: null, SortOrder: 15, IsEnabled: true),
+
+        new(
+            Code: "preferences", Label: "Preferências", Description: "Acessibilidade e experiência", Icon: "settings", Url: "/profile/accessibility",
+            Context: NavigationContext.Account, RequiredPermission: null, RequiredFeature: null, SortOrder: 65, IsEnabled: true),
 
         new(
             Code: "people",
@@ -219,7 +234,7 @@ public sealed class NavigationService(INavigationAccessEvaluator? accessEvaluato
             Label: "Privacidade",
             Description: "Controle seus dados",
             Icon: "privacy",
-            Url: "/privacy",
+            Url: "/account/privacy",
             Context: NavigationContext.Account,
             RequiredPermission: null,
             RequiredFeature: null,

@@ -883,3 +883,4 @@ create table if not exists habitflow.user_onboarding_progress (
 \i database/migrations/057_legal_document_immutability.sql
 \i database/migrations/058_user_sessions.sql
 \i database/migrations/059_superadmin_mfa.sql
+\i database/migrations/060_public_privacy_notice.sql

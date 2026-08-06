@@ -1,0 +1,2 @@
+@model IReadOnlyList<HabitFlow.Web.Models.CommercialPlanBenefitViewModel>
+<section class="plans-section" aria-labelledby="why-title"><div class="plans-heading"><span>Menos pressão, mais direção</span><h2 id="why-title">Por que assinar o HabitFlow?</h2></div><div class="benefit-grid">@foreach(var item in Model){<article><span class="benefit-icon" aria-hidden="true">✓</span><h3>@item.Title</h3><p>@item.Description</p></article>}</div></section>

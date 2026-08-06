@@ -26,6 +26,7 @@ public static class DependencyInjection
         services.AddScoped<INavigationAccessEvaluator, NavigationAccessEvaluator>();
         services.AddScoped<RequestPlanAccessContext>();
         services.AddScoped<NavigationService>();
+        services.AddScoped<PlanLandingPageService>();
         services.AddSingleton<LayoutContextResolver>();
         services.AddHostedService<BillingCommunicationJob>();
         services.AddHostedService<TransactionalEmailHostedService>();

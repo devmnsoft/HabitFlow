@@ -1,17 +1,5 @@
 @model HabitFlow.Domain.LegalDocumentVersion
 @{ ViewData["Title"] = Model.Title; }
-<main class="container py-5 legal-document">
-  <article class="card border-0 shadow-sm mx-auto" style="max-width: 920px">
-    <header class="card-body p-4 p-lg-5 border-bottom">
-      <span class="badge text-bg-primary mb-3">Versão @Model.Version</span>
-      <h1 class="display-6 fw-bold">@Model.Title</h1>
-      <p class="lead text-body-secondary mb-2">@Model.Summary</p>
-      <small class="text-body-secondary">Vigente desde @Model.EffectiveAt.ToString("dd/MM/yyyy") · leitura aproximada de @Math.Max(1, Model.SanitizedContent.Split(' ').Length / 200) min</small>
-    </header>
-    <div class="card-body p-4 p-lg-5 legal-content">@Html.Raw(Model.SanitizedContent)</div>
-    <footer class="card-body p-4 border-top d-flex flex-wrap gap-2">
-      <button class="btn btn-outline-primary" type="button" onclick="window.print()">Imprimir</button>
-      <a class="btn btn-link" href="mailto:@(ViewBag.PrivacyContactEmail)">Contato de privacidade</a>
-    </footer>
-  </article>
-</main>
+@section Styles { <link rel="stylesheet" href="~/css/legal-pages.css" asp-append-version="true" /> }
+<div class="legal-page"><header class="legal-hero"><div><span class="legal-eyebrow">Documento oficial publicado</span><h1>@Model.Title</h1><p>@Model.Summary</p><div class="legal-actions"><button class="btn btn-outline-success" data-legal-print>Imprimir</button>@if(User.Identity?.IsAuthenticated==true&&Model.Title.Contains("Privacidade",StringComparison.OrdinalIgnoreCase)){<a class="btn btn-success" href="/account/privacy">Gerenciar meus dados</a>}</div></div><div class="legal-version"><span>Versão @Model.Version</span><strong>Vigente desde @Model.EffectiveAt.ToString("dd/MM/yyyy")</strong><small>Leitura aproximada: @Math.Max(1, Model.SanitizedContent.Split(' ').Length / 200) min</small></div></header><article class="legal-article legal-published">@Html.Raw(Model.SanitizedContent)<footer class="legal-contact"><a href="/terms">Termos</a> · <a href="/legal/cookies">Cookies</a>@if(!string.IsNullOrWhiteSpace((string?)ViewBag.PrivacyContactEmail)){<span> · <a href="mailto:@ViewBag.PrivacyContactEmail">Contato de privacidade</a></span>}</footer></article></div>
+@section Scripts { <script src="~/js/legal-pages.js" asp-append-version="true"></script> }

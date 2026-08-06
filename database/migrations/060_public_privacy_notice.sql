@@ -1,0 +1,15 @@
+-- v6.10.5: baseline public notice. Runtime fallback remains available when migrations are pending.
+BEGIN;
+INSERT INTO habitflow.legal_documents(id, document_type, created_at)
+VALUES ('61050000-0000-4000-8000-000000000001', 'PrivacyNotice', now())
+ON CONFLICT (document_type) DO NOTHING;
+
+WITH document AS (SELECT id FROM habitflow.legal_documents WHERE document_type='PrivacyNotice'), content AS (
+ SELECT '<h2>Quem somos</h2><p>O HabitFlow é oferecido por MNSOLUÇÕES TECNOLÓGICAS &amp; CONSULTORIA LTDA, nome comercial MNSOFT, CNPJ 18.160.057/0001-13.</p><h2>Dados tratados</h2><p>Tratamos dados cadastrais; login e segurança; hábitos, objetivos e progresso; plano, pagamento e assinatura; suporte; e dados técnicos de uso.</p><h2>Finalidades e bases legais</h2><p>Usamos dados para prestar e proteger o serviço, executar a assinatura, atender solicitações, prevenir fraude, cumprir obrigações legais e melhorar o produto. Conforme o caso, usamos execução do contrato, obrigação legal, legítimo interesse avaliado e consentimento para escolhas opcionais.</p><h2>Fornecedores</h2><p>Compartilhamos somente o necessário com fornecedores de infraestrutura, autenticação, comunicação, pagamento e suporte, ou quando a lei exigir. Não vendemos dados pessoais.</p><h2>Segurança e retenção</h2><p>Aplicamos controles de acesso, proteção de credenciais e registros de segurança. Mantemos dados enquanto necessários ao serviço, às obrigações legais e à defesa de direitos; depois, excluímos ou anonimizamos.</p><h2>Seus direitos</h2><p>Você pode solicitar confirmação, acesso, correção, portabilidade, informações, anonimização ou exclusão aplicável e revisão de consentimentos. A identidade será confirmada para sua proteção.</p><h2>Como solicitar</h2><p>Use a Central de Privacidade da conta ou o canal de suporte configurado no produto. Cancelar a assinatura não exclui os dados automaticamente.</p><h2>Cookies</h2><p>Cookies necessários mantêm sessão, preferências e segurança. Consulte o Aviso de Cookies para detalhes.</p><h2>Contato</h2><p>Use o contato de privacidade configurado ou, se indisponível, o canal oficial de suporte exibido no produto. Nenhum endereço ou encarregado é presumido.</p><p><strong>Aviso:</strong> este conteúdo inicial deve passar por revisão jurídica antes do uso em produção.</p>'::text value)
+INSERT INTO habitflow.legal_document_versions(id,document_id,version,locale,title,summary,sanitized_content,content_hash,effective_at,published_at,requires_reacceptance,status,created_by_user_id,created_at,updated_at)
+SELECT '61050000-0000-4000-8000-000000000002', document.id, '1.0', 'pt-BR', 'Política de Privacidade',
+ 'Como a MNSOFT trata dados no HabitFlow e como você pode exercer seus direitos.', content.value,
+ md5(content.value)||md5(content.value), timestamptz '2026-08-06 00:00:00+00', now(), false, 'Published', null, now(), now()
+FROM document, content WHERE NOT EXISTS (SELECT 1 FROM habitflow.legal_document_versions v WHERE v.document_id=document.id AND v.locale='pt-BR' AND v.status='Published')
+ON CONFLICT (document_id,version,locale) DO NOTHING;
+COMMIT;
