@@ -35,7 +35,7 @@ public sealed class AccountSecurityController(RequiredPasswordChangeService serv
     public async Task<IActionResult> RevokeAll(RevokeAllSessionsViewModel model, CancellationToken ct)
     {
         if (!ModelState.IsValid) return RedirectToAction(nameof(Index));
-        var result = await revocationService.RevokeAllAsync(this.CurrentUserId(), model.Password, ct);
+        var result = await revocationService.RevokeAllAsync(this.CurrentUserId(), model.Password, ct: ct);
         if (result.IsFailure) { TempData["Error"] = result.Error.Message; return RedirectToAction(nameof(Index)); }
         await HttpContext.SignOutAsync();
         TempData["Success"] = "Todas as sessões foram encerradas.";

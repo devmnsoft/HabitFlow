@@ -13,4 +13,5 @@ CREATE TABLE IF NOT EXISTS habitflow.user_sessions (
     revocation_reason varchar(80)
 );
 CREATE INDEX IF NOT EXISTS ix_user_sessions_owner_active ON habitflow.user_sessions(user_id,client_id,last_activity_at DESC) WHERE revoked_at IS NULL;
+CREATE INDEX IF NOT EXISTS ix_user_sessions_expiration ON habitflow.user_sessions(expires_at) WHERE revoked_at IS NULL;
 COMMIT;

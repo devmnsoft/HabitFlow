@@ -3,9 +3,15 @@ using HabitFlow.Shared;
 
 namespace HabitFlow.Application;
 
+public sealed class SessionSecurityOptions
+{
+    public int LifetimeDays { get; set; } = 30;
+    public int TouchIntervalMinutes { get; set; } = 5;
+}
+
 public sealed record AccountSession(Guid Id, string Device, string Browser, string MaskedIp, DateTime CreatedAt, DateTime LastActivityAt, bool IsCurrent);
 
-public sealed class UserSessionService(IUserSessionRepository sessions, TimeProvider clock)
+public sealed class UserSessionService(IUserSessionRepository sessions, TimeProvider clock, Microsoft.Extensions.Options.IOptions<SessionSecurityOptions> options)
 {
     public async Task<Guid> StartAsync(Guid userId, Guid? clientId, string? userAgent, string? ipAddress, TimeSpan lifetime, CancellationToken ct = default)
     {
@@ -18,7 +24,7 @@ public sealed class UserSessionService(IUserSessionRepository sessions, TimeProv
     public async Task<IReadOnlyList<AccountSession>> ListAsync(Guid userId, Guid? clientId, Guid? currentId, CancellationToken ct = default) =>
         (await sessions.ListActiveAsync(userId, clientId, ct)).Select(x => new AccountSession(x.Id, Device(x.UserAgent), Browser(x.UserAgent), MaskIp(x.IpAddress), x.CreatedAt, x.LastActivityAt, x.Id == currentId)).ToList();
 
-    public Task TouchAsync(Guid id, Guid userId, CancellationToken ct = default) => sessions.TouchAsync(id, userId, clock.GetUtcNow().UtcDateTime, ct);
+    public Task TouchAsync(Guid id, Guid userId, Guid? clientId, CancellationToken ct = default) => sessions.TouchAsync(id, userId, clientId, clock.GetUtcNow().UtcDateTime, TimeSpan.FromMinutes(Math.Clamp(options.Value.TouchIntervalMinutes, 1, 60)), ct);
 
     private static string Limit(string? value, int max) => string.IsNullOrWhiteSpace(value) ? "Não informado" : value.Trim()[..Math.Min(value.Trim().Length, max)];
     private static string Device(string ua) => ua.Contains("Mobile", StringComparison.OrdinalIgnoreCase) ? "Dispositivo móvel" : "Computador";
@@ -47,12 +53,12 @@ public sealed class SessionRevocationService(IUserSessionRepository sessions, IU
         return Result.Success();
     }
 
-    public async Task<Result> RevokeAllAsync(Guid userId, string password, CancellationToken ct = default)
+    public async Task<Result> RevokeAllAsync(Guid userId, string password, Guid? exceptSessionId = null, CancellationToken ct = default)
     {
         var user = await users.GetByIdAsync(userId, ct);
         if (user is null || !passwords.Verify(password, user.PasswordHash)) return Result.Failure("security.current_password_invalid", "A senha atual não confere.");
-        await sessions.RevokeAllAsync(userId, null, "user_revoked_all", ct);
-        await sessions.IncrementSessionVersionAsync(userId, ct);
+        await sessions.RevokeAllAsync(userId, exceptSessionId, "user_revoked_all", ct);
+        if (exceptSessionId is null) await users.IncrementSessionVersionAsync(userId, ct);
         await audit.LogAsync("all_sessions_revoked", "Todas as sessões foram encerradas pelo titular.", AuditSeverity.Warning, userId, user.Email, ct: ct);
         return Result.Success();
     }

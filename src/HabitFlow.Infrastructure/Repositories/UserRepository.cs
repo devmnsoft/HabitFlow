@@ -13,6 +13,8 @@ public sealed class UserRepository(SqlExecutor db) : IUserRepository
     public Task UpdateAsync(User u, CancellationToken ct = default) => db.ExecuteAsync("update habitflow.users set name=@Name, photo_url=@PhotoUrl, role=@Role, account_status=@AccountStatus, risk_status=@RiskStatus, plan=@Plan, plan_status=@PlanStatus, updated_at=@UpdatedAt, client_id=@ClientId where id=@Id", ToParameters(u), ct);
     public Task UpdatePasswordAndSessionVersionAsync(Guid userId, string passwordHash, CancellationToken ct = default) =>
         db.ExecuteAsync("update habitflow.users set password_hash=@passwordHash, session_version=session_version+1, must_change_password=false, updated_at=now() where id=@userId", new { userId, passwordHash }, ct);
+    public Task IncrementSessionVersionAsync(Guid userId, CancellationToken ct = default) =>
+        db.ExecuteAsync("update habitflow.users set session_version=session_version+1,updated_at=now() where id=@userId", new { userId }, ct);
     private static object ToParameters(User u) => new
     {
         u.Id,
