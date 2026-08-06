@@ -1,0 +1,8 @@
+@model HabitFlow.Web.Models.MfaChallengeViewModel
+@{ ViewData["Title"] = "Confirme sua identidade"; }
+<main class="container py-5"><section class="card border-0 shadow-sm rounded-4 p-4 mx-auto" style="max-width:520px" aria-labelledby="challenge-title">
+    <h1 id="challenge-title" class="h2">Confirme sua identidade</h1><p class="text-secondary">Informe o código temporário para continuar no painel administrativo.</p>
+    <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+    <form method="post" action="/account/security/mfa/challenge">@Html.AntiForgeryToken()<input type="hidden" asp-for="ChallengeId" /><label class="form-label" asp-for="Code">Código de 6 dígitos</label><input class="form-control form-control-lg mb-2" asp-for="Code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" autofocus /><span asp-validation-for="Code" class="text-danger"></span><button class="btn btn-success w-100 mt-3">Verificar</button></form>
+    <details class="mt-4"><summary>Usar código de recuperação</summary><form method="post" action="/account/security/mfa/recovery-code" class="mt-3">@Html.AntiForgeryToken()<input type="hidden" asp-for="ChallengeId" /><label class="form-label" for="recovery">Código de recuperação</label><input id="recovery" name="Code" class="form-control" autocomplete="one-time-code" required /><button class="btn btn-outline-success w-100 mt-2">Usar código</button></form></details>
+</section></main>

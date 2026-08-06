@@ -1,0 +1,26 @@
+@model HabitFlow.Web.Models.MfaSettingsViewModel
+@{ ViewData["Title"] = "Autenticação em duas etapas"; }
+<main class="container py-5 hf-mfa" aria-labelledby="mfa-title">
+    <div class="mx-auto" style="max-width:720px">
+        <header class="mb-4"><span class="text-success fw-semibold">SEGURANÇA DA CONTA</span><h1 id="mfa-title" class="display-6 fw-bold">Autenticação em duas etapas</h1><p class="text-secondary">Proteja ações administrativas com um código temporário do seu aplicativo autenticador.</p></header>
+        <section class="card border-0 shadow-sm rounded-4 p-4">
+        @if (Model.RecoveryCodes is not null) {
+            <div class="alert alert-warning" role="status"><strong>Salve estes códigos agora.</strong> Eles não serão exibidos novamente.</div>
+            <ul class="row list-unstyled font-monospace" aria-label="Códigos de recuperação">@foreach (var code in Model.RecoveryCodes) { <li class="col-6 mb-2"><code>@code</code></li> }</ul>
+            <a class="btn btn-success" href="/account/security/mfa">Concluí</a>
+        } else if (!Model.IsEnabled && Model.ManualKey is null) {
+            <h2 class="h4">Ative a proteção</h2><p>Você precisará do autenticador para entrar nas áreas críticas.</p>
+            <form method="post" action="/account/security/mfa/start">@Html.AntiForgeryToken()<button class="btn btn-success" type="submit">Configurar autenticador</button></form>
+        } else if (!Model.IsEnabled) {
+            <h2 class="h4">Adicione ao autenticador</h2><p>Use o link de configuração ou informe a chave manual. A chave aparece somente nesta etapa.</p>
+            <p class="text-break"><a class="btn btn-outline-success" href="@Model.OtpAuthUri">Abrir no autenticador</a></p>
+            <label class="form-label" for="manual-key">Chave manual</label><input id="manual-key" class="form-control font-monospace mb-3" readonly value="@Model.ManualKey" />
+            <form method="post" action="/account/security/mfa/confirm">@Html.AntiForgeryToken()<label class="form-label" for="confirm-code">Código de 6 dígitos</label><input id="confirm-code" name="Code" class="form-control mb-3" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" required /><button class="btn btn-success" type="submit">Confirmar e gerar códigos</button></form>
+        } else {
+            <div class="d-flex align-items-center gap-3 mb-4"><span class="badge text-bg-success">Ativa</span><div><h2 class="h4 mb-0">Sua conta está protegida</h2><small class="text-secondary">Ativada em @Model.EnabledAt?.ToLocalTime().ToString("g")</small></div></div>
+            <form method="post" action="/account/security/mfa/recovery-codes" class="mb-4">@Html.AntiForgeryToken()<label class="form-label" for="recovery-code">Código atual para renovar códigos de recuperação</label><div class="input-group"><input id="recovery-code" name="Code" class="form-control" inputmode="numeric" maxlength="6" required /><button class="btn btn-outline-success">Renovar códigos</button></div></form>
+            <form method="post" action="/account/security/mfa/disable">@Html.AntiForgeryToken()<label class="form-label" for="disable-code">Código atual para desativar</label><div class="input-group"><input id="disable-code" name="Code" class="form-control" inputmode="numeric" maxlength="6" required /><button class="btn btn-outline-danger">Desativar</button></div></form>
+        }
+        </section>
+    </div>
+</main>

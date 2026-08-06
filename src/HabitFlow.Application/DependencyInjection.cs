@@ -22,6 +22,12 @@ public static class DependencyInjection
         services.AddScoped<RequiredPasswordChangeService>();
         services.AddScoped<UserSessionService>();
         services.AddScoped<SessionRevocationService>();
+        services.AddSingleton<TotpSecretProtector>();
+        services.AddSingleton<TotpValidationService>();
+        services.AddScoped<TotpEnrollmentService>();
+        services.AddScoped<RecoveryCodeService>();
+        services.AddScoped<MfaChallengeService>();
+        services.AddScoped<SuperAdminMfaRequirementService>();
         services.AddScoped<CreateSuperAdminHandler>();
         services.AddScoped<CreateDevelopmentSuperAdminHandler>();
         services.AddScoped<ResetSuperAdminPasswordHandler>();
