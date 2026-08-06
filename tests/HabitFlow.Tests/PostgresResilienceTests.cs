@@ -82,6 +82,7 @@ public class PostgresResilienceTests
             string passwordHash,
             CancellationToken ct = default)
             => throw MissingDatabaseException();
+        public Task IncrementSessionVersionAsync(Guid userId, CancellationToken ct = default) => throw MissingDatabaseException();
         public Task AddLoginAttemptAsync(LoginAttempt attempt, CancellationToken ct = default) => throw MissingDatabaseException();
     }
 

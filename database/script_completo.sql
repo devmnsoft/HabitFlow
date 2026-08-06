@@ -880,3 +880,5 @@ create table if not exists habitflow.user_onboarding_progress (
 
 -- v6.10.0 additive legal/privacy/catalog governance
 \i database/migrations/056_secure_admin_honest_plans_legal_privacy.sql
+\i database/migrations/057_legal_document_immutability.sql
+\i database/migrations/058_user_sessions.sql

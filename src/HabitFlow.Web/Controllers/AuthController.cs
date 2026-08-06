@@ -5,10 +5,11 @@ using HabitFlow.Web.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 
 namespace HabitFlow.Web.Controllers;
 
-public class AuthController(AuthService authService, ClientAccountRegistrationService clientRegistration, UserSessionService sessionService, IConfiguration configuration, IWebHostEnvironment env, IUserFacingErrorMapper errorMapper, ILogger<AuthController> logger) : Controller
+public class AuthController(AuthService authService, ClientAccountRegistrationService clientRegistration, UserSessionService sessionService, IOptions<SessionSecurityOptions> sessionOptions, IWebHostEnvironment env, IUserFacingErrorMapper errorMapper, ILogger<AuthController> logger) : Controller
 {
     [HttpGet("/login")]
     public IActionResult Login() => View();
@@ -37,7 +38,7 @@ public class AuthController(AuthService authService, ClientAccountRegistrationSe
             {
                 claims.Add(new Claim("client_id", user.ClientId.Value.ToString()));
             }
-            var lifetime = TimeSpan.FromHours(configuration.GetValue("Authentication:CookieHours", 8));
+            var lifetime = TimeSpan.FromDays(Math.Clamp(sessionOptions.Value.LifetimeDays, 1, 365));
             var sessionId = await sessionService.StartAsync(user.Id, user.ClientId, Request.Headers.UserAgent, HttpContext.Connection.RemoteIpAddress?.ToString(), lifetime, ct);
             claims.Add(new Claim("session_id", sessionId.ToString()));
             var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
