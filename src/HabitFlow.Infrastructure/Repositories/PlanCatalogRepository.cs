@@ -13,7 +13,19 @@ public sealed class PlanCatalogRepository(SqlExecutor db, ILogger<PlanCatalogRep
     {
         var plans = (await db.QueryAsync<PlanRow>("""
             select id, code, public_name, headline, description, audience_text, badge_text, is_featured, sort_order
-            from habitflow.plans where is_active and is_public order by sort_order, public_name
+            from habitflow.plans p
+            where p.is_active and p.is_public and (
+              p.code = 'free' or (
+                p.is_sellable and p.sales_status = 'Available'
+                and exists (select 1 from habitflow.plan_prices pp where pp.plan_id=p.id and pp.is_active
+                  and pp.amount > 0 and pp.currency='BRL' and pp.billing_cycle in ('Monthly','Yearly')
+                  and pp.valid_from <= now() and (pp.valid_until is null or pp.valid_until > now()))
+                and not exists (
+                  select 1 from habitflow.plan_features pf join habitflow.feature_catalog f on f.code=pf.feature_code
+                  where pf.plan_id=p.id and f.is_public
+                    and (f.implementation_status <> 'Implemented' or not f.is_marketable))
+              ))
+            order by p.sort_order, p.public_name
             """, null, ct)).ToList();
         var result = new List<PublicPlan>(plans.Count);
         foreach (var plan in plans)
@@ -21,7 +33,9 @@ public sealed class PlanCatalogRepository(SqlExecutor db, ILogger<PlanCatalogRep
             var prices = (await db.QueryAsync<PlanPrice>("""
                 select distinct on (billing_cycle) id, billing_cycle, amount, currency
                 from habitflow.plan_prices
-                where plan_id=@id and is_active and valid_from <= now() and (valid_until is null or valid_until > now())
+                where plan_id=@id and is_active and amount > 0 and currency='BRL'
+                  and billing_cycle in ('Monthly','Yearly')
+                  and valid_from <= now() and (valid_until is null or valid_until > now())
                 order by billing_cycle, valid_from desc
                 """, new { plan.Id }, ct)).ToList();
             var features = (await GetFeaturesAsync(plan.Code, ct)).Values.ToList();

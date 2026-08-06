@@ -1,6 +1,14 @@
-@model IReadOnlyList<HabitFlow.Domain.PublicPlan>
-@{ ViewData["Title"]="Planos"; }
-<section class="hf-section hf-guided-card text-center"><p class="hf-section-kicker">Seu próximo passo</p><h1>Escolha o ritmo que combina com você.</h1><p class="lead">Comece gratuitamente e avance quando sua rotina pedir mais.</p><partial name="_PlanBillingToggle"/></section>
-<div class="row g-3 align-items-stretch">@foreach(var plan in Model){<div class="col-lg-6"><partial name="_PlanCard" model="plan"/></div>}</div>
-<partial name="_PlanComparison" model="Model"/><partial name="_PlanQuestions"/>
-@section Scripts {<script src="~/js/plan-catalog.js" asp-append-version="true"></script>}
+@model HabitFlow.Web.Models.PlanLandingPageViewModel
+@{ ViewData["Title"] = "Planos para construir consistência"; }
+@section Styles { <link rel="stylesheet" href="~/css/plans-premium.css" asp-append-version="true" /> }
+<div class="plans-landing">
+  <partial name="Partials/_PlansHero" model="Model" />
+  <partial name="Partials/_PlanPainGain" model="Model.Benefits" />
+  <section class="plans-section" id="planos" aria-labelledby="plans-title"><div class="plans-heading"><span>Escolha com clareza</span><h2 id="plans-title">Um plano para cada momento da sua rotina</h2><p>Comece com o essencial e avance apenas quando fizer sentido.</p></div><partial name="_PlanBillingToggle"/><div class="plans-grid">@foreach(var plan in Model.Plans){<partial name="Partials/_CommercialPlanCard" model="plan"/>}</div></section>
+  <partial name="Partials/_PlanComparisonTable" model="Model.Comparison" />
+  <partial name="Partials/_PlanTrustSignals" model="Model.TrustSignals" />
+  <partial name="Partials/_PlanFaq" model="Model.Faq" />
+  <partial name="Partials/_PlanFinalCta" model="Model.Conversion" />
+</div>
+<div class="plans-mobile-cta"><a href="/register" class="btn btn-success">Começar grátis</a><a href="#planos" class="btn btn-outline-success">Ver planos</a></div>
+@section Scripts { <script src="~/js/plans-premium.js" asp-append-version="true"></script> }

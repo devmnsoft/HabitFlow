@@ -32,6 +32,7 @@
   <link rel="stylesheet" href="~/css/feedback.css" asp-append-version="true">
   <link rel="stylesheet" href="~/css/layout-premium.css" asp-append-version="true">
   <link rel="stylesheet" href="~/css/layout-stabilization.css" asp-append-version="true">
+  <link rel="stylesheet" href="~/css/navigation-premium.css" asp-append-version="true">
   <link rel="stylesheet" href="~/css/@contextualStylesheet" asp-append-version="true">
   <link rel="stylesheet" href="~/css/accessibility.css" asp-append-version="true">
   <link rel="stylesheet" href="~/css/responsive.css" asp-append-version="true">
@@ -64,8 +65,12 @@
           </button>
           <ul class="dropdown-menu dropdown-menu-end hf-profile-menu">
             @if (!string.IsNullOrWhiteSpace(userEmail)) { <li><span class="dropdown-item-text hf-user-email">@userEmail</span></li><li><hr class="dropdown-divider"></li> }
-            <li><a class="dropdown-item" href="/account/plan">Meu plano</a></li>
-            <li><a class="dropdown-item" href="/profile">Sua conta</a></li>
+            <li><h2 class="dropdown-header">Minha conta</h2></li>
+            <li><a class="dropdown-item" href="/profile">Minha conta</a></li>
+            <li><a class="dropdown-item" href="/account/security">Segurança</a></li>
+            <li><a class="dropdown-item" href="/account/privacy">Gerenciar privacidade</a></li>
+            <li><a class="dropdown-item" href="/account/plan/usage">Meu plano</a></li>
+            <li><a class="dropdown-item" href="/billing">Pagamentos</a></li>
             <li><a class="dropdown-item" href="/profile/accessibility">Preferências</a></li>
             @if (Navigation.HasPlatformAccess(User!)) { <li><a class="dropdown-item" href="/superadmin">Gestão da Plataforma</a></li> }
             <li><button type="button" class="dropdown-item" data-pwa-install hidden>Instalar HabitFlow</button></li>
@@ -110,7 +115,7 @@
 </div>
 @if (navigationContext == NavigationContext.Public)
 {
-  <footer class="hf-footer hf-public-footer" data-footer-context="public"><div class="hf-shell hf-footer-grid"><div>@await Html.PartialAsync("~/Views/Shared/Partials/_MNSOFTBrandBadge.cshtml", null, new ViewDataDictionary(ViewData) { ["Compact"] = "true" })</div><div><h2>HabitFlow</h2><p>Hábitos, rotina e progresso em um só lugar.</p></div><nav aria-label="Produto"><h2>Produto</h2><a href="/demo">Demonstração</a><a href="/habit-library">Biblioteca</a><a href="/plans">Planos</a></nav><nav aria-label="Suporte"><h2>Suporte</h2><a href="/help">Ajuda</a><a href="/privacy">Privacidade</a><a href="/terms">Termos</a><a href="/lgpd">LGPD</a></nav></div><div class="hf-shell hf-footer-bottom">© 2026 MNSOFT — CNPJ 18.160.057/0001-13</div></footer>
+  <footer class="hf-footer hf-public-footer" data-footer-context="public"><div class="hf-shell hf-footer-grid"><div>@await Html.PartialAsync("~/Views/Shared/Partials/_MNSOFTBrandBadge.cshtml", null, new ViewDataDictionary(ViewData) { ["Compact"] = "true" })</div><div><h2>HabitFlow</h2><p>Hábitos, rotina e progresso em um só lugar.</p></div><nav aria-label="Produto"><h2>Produto</h2><a href="/demo">Como funciona</a><a href="/habit-library">Biblioteca</a><a href="/plans">Planos</a></nav><nav aria-label="Suporte e legal"><h2>Confiança</h2><a href="/help">Ajuda</a><a href="/privacy">Privacidade</a><a href="/terms">Termos</a><a href="/legal/cookies">Cookies</a><a href="/lgpd">LGPD</a></nav></div><div class="hf-shell hf-footer-bottom">© 2026 MNSOFT — CNPJ 18.160.057/0001-13</div></footer>
 }
 else if (navigationContext == NavigationContext.Platform)
 {
@@ -118,7 +123,7 @@ else if (navigationContext == NavigationContext.Platform)
 }
 else
 {
-  <footer class="hf-footer hf-compact-footer" data-footer-context="@contextName"><div class="hf-shell">HabitFlow · <a href="/help">Ajuda</a> · <a href="/privacy">Privacidade</a> · v@version · MNSOFT</div></footer>
+  <footer class="hf-footer hf-compact-footer" data-footer-context="@contextName"><div class="hf-shell">HabitFlow · <a href="/help">Ajuda</a> · <a href="/privacy">Política de Privacidade</a> · <a href="/account/privacy">Gerenciar privacidade</a> · <a href="/account/security">Segurança</a> · <a href="/account/plan/usage">Plano</a> · v@version · MNSOFT</div></footer>
 }
 @if (navigationContext == NavigationContext.Personal)
 {
@@ -134,6 +139,7 @@ else
 <script src="~/js/form-validation.js" asp-append-version="true"></script>
 <script src="~/js/guided-tour.js" asp-append-version="true"></script>
 <script src="~/js/pwa.js" asp-append-version="true"></script>
+<script src="~/js/navigation-premium.js" asp-append-version="true"></script>
 @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

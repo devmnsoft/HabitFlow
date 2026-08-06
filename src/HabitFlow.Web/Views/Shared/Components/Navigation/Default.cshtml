@@ -20,7 +20,11 @@
     };
 }
 <nav class="@cssClass" aria-label="@((Model.Context is NavigationContext.Account or NavigationContext.Platform) ? "Navegação contextual" : "Navegação principal")" data-navigation-variant="@Model.Variant">
-    @if (isSidebar && Model.Context == NavigationContext.Platform)
+    @if (isSidebar && Model.Context == NavigationContext.Account)
+    {
+        @await Html.PartialAsync("~/Views/Shared/Partials/_AccountMenuGroups.cshtml", Model.Items)
+    }
+    else if (isSidebar && Model.Context == NavigationContext.Platform)
     {
         @foreach (var group in Model.Items.GroupBy(Group))
         {
@@ -38,6 +42,10 @@
         @foreach (var item in Model.Items)
         {
             @await Html.PartialAsync("~/Views/Shared/Components/Navigation/_Link.cshtml", item, new ViewDataDictionary(ViewData) { ["ShowDescription"] = isSidebar })
+        }
+        @if (Model.Context == NavigationContext.Public && Model.Variant == NavigationVariant.MobileDrawer)
+        {
+            @await Html.PartialAsync("~/Views/Shared/Partials/_PublicNavCta.cshtml")
         }
     }
 </nav>

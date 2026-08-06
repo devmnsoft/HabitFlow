@@ -1,0 +1,1 @@
+(() => { const drawer=document.getElementById('primaryDrawer'); if(!drawer)return; drawer.querySelectorAll('a').forEach(link=>link.addEventListener('click',()=>bootstrap.Offcanvas.getInstance(drawer)?.hide())); })();
