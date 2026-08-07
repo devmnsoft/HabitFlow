@@ -33,6 +33,8 @@
   <link rel="stylesheet" href="~/css/layout-premium.css" asp-append-version="true">
   <link rel="stylesheet" href="~/css/layout-stabilization.css" asp-append-version="true">
   <link rel="stylesheet" href="~/css/navigation-premium.css" asp-append-version="true">
+  <link rel="stylesheet" href="~/css/app-shell-premium.css" asp-append-version="true">
+  <link rel="stylesheet" href="~/css/global-search.css" asp-append-version="true">
   <link rel="stylesheet" href="~/css/@contextualStylesheet" asp-append-version="true">
   <link rel="stylesheet" href="~/css/accessibility.css" asp-append-version="true">
   <link rel="stylesheet" href="~/css/responsive.css" asp-append-version="true">
@@ -58,6 +60,7 @@
     @if (isAuthenticated)
     {
       <div class="hf-header-actions">
+        @await Html.PartialAsync("~/Views/Shared/Partials/_AuthenticatedTopbar.cshtml")
         @if (navigationContext == NavigationContext.Personal) { @await Html.PartialAsync("~/Views/Shared/Partials/_NotificationBell.cshtml") }
         <div class="dropdown">
           <button class="btn hf-profile-trigger dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Abrir menu de @userName">
@@ -131,6 +134,7 @@ else
 }
 @await Html.PartialAsync("~/Views/Shared/Partials/_ToastHost.cshtml")
 @await Html.PartialAsync("~/Views/Shared/Partials/_FeedbackModal.cshtml")
+@if (isAuthenticated) { @await Html.PartialAsync("~/Views/Shared/Partials/_GlobalSearchModal.cshtml") }
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="~/js/site.js" asp-append-version="true"></script>
 <script src="~/js/design-system.js" asp-append-version="true"></script>
@@ -140,6 +144,8 @@ else
 <script src="~/js/guided-tour.js" asp-append-version="true"></script>
 <script src="~/js/pwa.js" asp-append-version="true"></script>
 <script src="~/js/navigation-premium.js" asp-append-version="true"></script>
+<script src="~/js/app-shell-premium.js" asp-append-version="true"></script>
+<script src="~/js/global-search.js" asp-append-version="true"></script>
 @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
