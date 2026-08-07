@@ -1,0 +1,19 @@
+<div class="hf-search" id="globalSearch" hidden aria-hidden="true">
+  <div class="hf-search-backdrop" data-search-close></div>
+  <section class="hf-search-dialog" role="dialog" aria-modal="true" aria-labelledby="globalSearchTitle" aria-describedby="globalSearchHint">
+    <header class="hf-search-header">
+      <div><span class="hf-search-kicker">Busca rápida</span><h2 id="globalSearchTitle">Onde você quer chegar?</h2></div>
+      <button type="button" class="btn-close" data-search-close aria-label="Fechar busca"></button>
+    </header>
+    <label class="hf-search-field" for="globalSearchInput">
+      <span aria-hidden="true">⌕</span>
+      <input id="globalSearchInput" type="search" maxlength="80" autocomplete="off" placeholder="Busque hábitos, objetivos, relatórios…" aria-controls="globalSearchResults" aria-autocomplete="list">
+      <kbd>Esc</kbd>
+    </label>
+    <p id="globalSearchHint" class="hf-search-hint">Digite pelo menos 2 caracteres. Use ↑ ↓ para navegar e Enter para abrir.</p>
+    <div id="globalSearchStatus" class="visually-hidden" role="status" aria-live="polite"></div>
+    <div id="globalSearchResults" class="hf-search-results" role="listbox" aria-label="Resultados">
+      <div class="hf-search-welcome"><strong>Vá direto ao que importa.</strong><span>Experimente “meditar”, “objetivos” ou “privacidade”.</span></div>
+    </div>
+  </section>
+</div>
