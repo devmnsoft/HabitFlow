@@ -42,4 +42,15 @@ public sealed class PublicPagesV6105Tests
         foreach (var asset in new[] { "src/HabitFlow.Web/wwwroot/js/legal-pages.js", "src/HabitFlow.Web/wwwroot/js/plans-premium.js" })
         { var js=Read(asset); Assert.Contains("createElement",js); Assert.Contains("aria-describedby",js); Assert.DoesNotContain("innerHTML",js); Assert.DoesNotMatch(new Regex(@"\b(alert|confirm|prompt)\s*\("),js); }
     }
+
+    [Fact] public void Published_privacy_keeps_commercial_actions_summary_and_support_fallback()
+    {
+        var view = Read("src/HabitFlow.Web/Views/Legal/Document.cshtml");
+        Assert.Contains("LegalDocumentType.PrivacyNotice", view);
+        Assert.Contains("ViewBag.LegalDocumentType = type", Read("src/HabitFlow.Web/Controllers/LegalController.cs"));
+        Assert.Contains("Criar conta com confiança", view);
+        Assert.Contains("Sumário da política", view);
+        Assert.Contains("ViewBag.SupportEmail", view);
+        Assert.Contains("Como pedir exclusão?", view);
+    }
 }

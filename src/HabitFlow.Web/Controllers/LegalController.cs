@@ -13,6 +13,7 @@ public sealed class LegalController(LegalDocumentQueryService documents, IConfig
     private async Task<IActionResult> Document(LegalDocumentType type, string fallbackView, CancellationToken ct)
     {
         var published = await documents.PublishedAsync(type, ct);
+        ViewBag.LegalDocumentType = type;
         ViewBag.CompanyName = configuration["Legal:CompanyName"] ?? configuration["Legal__CompanyName"] ?? "MNSOLUÇÕES TECNOLÓGICAS & CONSULTORIA LTDA";
         ViewBag.TradeName = configuration["Legal:TradeName"] ?? configuration["Legal__TradeName"] ?? "MNSOFT";
         ViewBag.Cnpj = configuration["Legal:Cnpj"] ?? configuration["Legal__Cnpj"] ?? "18.160.057/0001-13";
