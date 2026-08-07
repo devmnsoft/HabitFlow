@@ -1,0 +1,5 @@
+@model DailyRoutinePlan
+<section class="dashboard-card dashboard-card--wide" aria-labelledby="today-habits-title"><div class="card-heading"><div><p class="dashboard-kicker">Rotina</p><h2 id="today-habits-title">Hábitos de hoje</h2></div><a href="/my-day">Ver todos</a></div>
+@if (Model.Items.Count == 0) { <p>Nenhum hábito previsto. Seu dia está livre.</p> }
+else { <ul class="habit-preview-list">@foreach(var item in Model.Items.Take(4)) { <li><span class="habit-dot" style="--habit-color:@item.Color"></span><span><strong>@item.Name</strong><small>@(item.PreferredTime?.ToString("HH:mm") ?? "Quando puder")</small></span><span class="habit-state">@(item.Status == DailyRoutineItemStatus.Completed ? "Concluído" : "Pendente")</span></li> }</ul> }
+</section>

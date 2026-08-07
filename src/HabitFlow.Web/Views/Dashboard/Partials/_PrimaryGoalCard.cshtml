@@ -1,0 +1,5 @@
+@model DashboardGoal?
+<section class="dashboard-card" aria-labelledby="goal-title"><p class="dashboard-kicker">Objetivo principal</p>
+@if(Model is null){<h2 id="goal-title">Dê direção aos seus hábitos</h2><p>Crie um objetivo para conectar suas pequenas ações a algo importante.</p><a href="/goals/create">Criar objetivo</a>}
+else{<h2 id="goal-title">@Model.Title</h2><div class="progress" role="progressbar" aria-label="Progresso do objetivo" aria-valuenow="@Model.Percentage" aria-valuemin="0" aria-valuemax="100"><div class="progress-bar" style="width:@Model.Percentage%"></div></div><p>@Model.Percentage% · @Model.Recommendation</p><a href="/goals/@Model.Id">Ver objetivo</a>}
+</section>

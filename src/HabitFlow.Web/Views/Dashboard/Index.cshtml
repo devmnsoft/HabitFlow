@@ -1,17 +1,20 @@
-@model HabitFlow.Application.TodayDashboardViewModel?
-@{ ViewData["Title"] = "Dashboard"; var progress = Model?.Progress; var habits = progress?.Habits ?? Array.Empty<HabitFlow.Application.HabitDto>(); }
-<header class="hf-page-header" data-tour="today"><div><p class="hf-section-kicker">@Model?.LocalDate</p><h1>Seu dia no HabitFlow, @Model?.Name</h1><p>Veja seus hábitos previstos e mantenha sua sequência.</p></div><a class="btn btn-success btn-lg" href="/habit-library">Ver biblioteca de hábitos</a></header>
-<div id="dashboard-status" class="visually-hidden" aria-live="polite"></div>
-@if (!habits.Any()) { <section class="hf-empty-state mb-4"><h2>Você não tem hábitos previstos para hoje.</h2><a class="btn btn-success" href="/habit-library">Ver biblioteca</a></section> }
-else if (progress?.NextHabit is not null) { <section class="hf-guided-card mb-4"><p class="hf-section-kicker">Próximo passo</p><h2 id="next-habit">@progress.NextHabit.Name</h2></section> }
-<section class="hf-grid mb-4" id="today-kpis">
- <div class="hf-col-3 hf-metric-card"><span>Previstos</span><strong data-kpi="scheduled">@(progress?.Daily.Scheduled ?? 0)</strong></div>
- <div class="hf-col-3 hf-metric-card"><span>Concluídos</span><strong data-kpi="completed">@(progress?.Daily.Completed ?? 0)</strong></div>
- <div class="hf-col-3 hf-metric-card"><span>Pendentes</span><strong data-kpi="pending">@(progress?.Daily.Pending ?? 0)</strong></div>
- <div class="hf-col-3 hf-metric-card"><span>Progresso</span><strong data-kpi="percentage">@(progress?.Daily.Percentage ?? 0)%</strong></div>
- <div class="hf-col-3 hf-metric-card"><span>Sequência atual</span><strong data-kpi="current-streak">@(progress?.CurrentStreak ?? 0)</strong></div>
- <div class="hf-col-3 hf-metric-card"><span>Melhor sequência</span><strong data-kpi="best-streak">@(progress?.BestStreak ?? 0)</strong></div>
-</section>
-<p>Plano efetivo: <strong>@Model?.EffectivePlan</strong> · @Model?.PlanUsage</p>
-<section class="d-grid gap-3">@foreach (var h in habits) { <article class="hf-habit-card" data-habit-id="@h.Id"><div><h2 class="h5">@h.Name</h2><p data-state>@(h.DoneToday ? "Concluído hoje" : "Pendente hoje")</p></div><form data-dashboard-habit method="post" action="/habits/@h.Id/@(h.DoneToday ? "undo-completion" : "complete")">@Html.AntiForgeryToken()<button class="btn btn-success" type="submit">@(h.DoneToday ? "Desmarcar" : "Marcar")</button></form></article> }</section>
-<script src="~/js/today-dashboard.js" asp-append-version="true"></script>
+@model DashboardViewModel?
+@{ ViewData["Title"] = "Dashboard"; }
+@section Styles { <link rel="stylesheet" href="~/css/dashboard-v4.css" asp-append-version="true" /> }
+<main class="dashboard-v4" data-dashboard>
+  @if (Model is null) { <partial name="Partials/_DashboardEmptyState" /> }
+  else {
+    <partial name="Partials/_DashboardHero" model="Model" />
+    <div class="dashboard-v4__grid">
+      <partial name="Partials/_TodayFocusCard" model="Model" />
+      <partial name="Partials/_DailyProgressRing" model="Model.Today" />
+      <partial name="Partials/_TodayHabitsPreview" model="Model.Today" />
+      <partial name="Partials/_WeeklyMomentumCard" model="Model" />
+      <partial name="Partials/_PrimaryGoalCard" model="Model.PrimaryGoal" />
+      <partial name="Partials/_PlanUsageMiniCard" model="Model.Plan" />
+      @if (Model.Security.IsVisible) { <partial name="Partials/_SecurityPrivacyAlertCard" model="Model.Security" /> }
+    </div>
+    <div class="visually-hidden" aria-live="polite" data-dashboard-status></div>
+  }
+</main>
+@section Scripts { <script src="~/js/dashboard-v4.js" asp-append-version="true"></script> }

@@ -1,0 +1,5 @@
+@model DailyRoutinePlan
+<section class="dashboard-card dashboard-card--progress" aria-labelledby="progress-title">
+ <div class="progress-ring" style="--progress:@Model.Percentage" role="progressbar" aria-valuenow="@Model.Percentage" aria-valuemin="0" aria-valuemax="100"><span>@Model.Percentage%</span></div>
+ <div><p class="dashboard-kicker">Hoje</p><h2 id="progress-title">Seu progresso</h2><p>@Model.Completed concluídos · @Model.Pending pendentes</p></div>
+</section>

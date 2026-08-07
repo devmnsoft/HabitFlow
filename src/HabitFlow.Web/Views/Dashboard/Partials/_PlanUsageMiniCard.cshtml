@@ -1,0 +1,2 @@
+@model DashboardPlanAlert
+<section class="dashboard-card" aria-labelledby="plan-title"><p class="dashboard-kicker">Plano @Model.PlanCode</p><h2 id="plan-title">Uso do plano</h2><p>@Model.ActiveHabits hábitos ativos@(Model.Limit.HasValue ? $" de {Model.Limit}" : "")</p>@if(Model.IsNearLimit){<p class="plan-alert">Você está perto do limite. Seus dados nunca serão apagados.</p>}<a href="/account/plan/usage">Entender meu uso</a></section>
