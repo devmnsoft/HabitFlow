@@ -1,0 +1,5 @@
+@model DashboardViewModel
+<section class="dashboard-card dashboard-card--focus" aria-labelledby="today-focus-title">
+  <p class="dashboard-kicker">Faça agora</p><h2 id="today-focus-title">@Model.NextAction.Title</h2>
+  <p>@Model.NextAction.Description</p><a class="btn btn-success" href="@Model.NextAction.Url">@Model.NextAction.Label</a>
+</section>

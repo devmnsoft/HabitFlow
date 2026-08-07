@@ -58,6 +58,12 @@ public static class DependencyInjection
         services.AddScoped<CompleteHabitUseCase>();
         services.AddScoped<UndoHabitCompletionUseCase>();
         services.AddScoped<TodayDashboardService>();
+        services.AddScoped<DashboardOverviewService>();
+        services.AddScoped<DashboardNextActionService>();
+        services.AddScoped<DashboardInsightService>();
+        services.AddScoped<DashboardProgressService>();
+        services.AddScoped<DashboardPlanAlertService>();
+        services.AddScoped<DashboardSecurityAlertService>();
         services.AddSingleton<HabitLibraryFallbackProvider>();
         services.AddScoped<HabitLibraryService>();
         services.AddSingleton<HabitTemplateCustomizationValidator>();

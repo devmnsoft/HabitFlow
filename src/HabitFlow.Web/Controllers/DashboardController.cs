@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace HabitFlow.Web.Controllers;
 
 [Authorize]
-public class DashboardController(TodayDashboardService dashboard, ILogger<DashboardController> logger, CurrentUserContext currentUser, ClientOnboardingService onboarding) : Controller
+public class DashboardController(DashboardOverviewService dashboard, ILogger<DashboardController> logger, CurrentUserContext currentUser, ClientOnboardingService onboarding) : Controller
 {
     public async Task<IActionResult> Index(CancellationToken ct)
     {

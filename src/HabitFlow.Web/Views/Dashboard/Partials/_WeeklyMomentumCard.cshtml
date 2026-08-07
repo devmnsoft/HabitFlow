@@ -1,0 +1,2 @@
+@model DashboardViewModel
+<section class="dashboard-card" aria-labelledby="momentum-title"><p class="dashboard-kicker">Leitura do momento</p><h2 id="momentum-title">Ritmo de hoje</h2><p>@Model.WeeklyInsight</p>@if(Model.ShouldReviewWeek){<a href="/weekly-review">Fazer revisão semanal</a>}</section>
