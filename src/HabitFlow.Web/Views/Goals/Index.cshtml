@@ -1,5 +1,8 @@
-@model IReadOnlyList<HabitFlow.Domain.UserGoal>
+@model GoalListViewModel
 @{ViewData["Title"]="Objetivos";}
-<header class="hf-page-header"><div><p class="hf-section-kicker">Sua direção</p><h1>Objetivos pessoais</h1><p>Conecte pequenos hábitos ao que importa para você.</p></div><a class="btn btn-success" href="/goals/create">Criar objetivo</a></header>
-@if(!Model.Any()){<section class="hf-empty-state"><h2>Escolha algo que deseja cuidar.</h2><p>Comece com uma meta possível e ajuste no seu ritmo.</p><a class="btn btn-success" href="/goals/create">Criar meu primeiro objetivo</a></section>}
-<div class="row g-3">@foreach(var goal in Model){var percent=Math.Min(100,goal.TargetValue==0?0:goal.CurrentValue*100/goal.TargetValue);<div class="col-md-6"><article class="hf-card h-100"><span class="badge text-bg-light">@goal.Status</span><h2 class="h4 mt-2"><a href="/goals/@goal.Id">@goal.Title</a></h2><p>@goal.Description</p><div class="progress" role="progressbar" aria-label="Progresso de @goal.Title: @percent%"><div class="progress-bar bg-success" style="width:@percent%">@percent%</div></div></article></div>}</div>
+@section Styles{<link rel="stylesheet" href="~/css/goals-v5.css" asp-append-version="true">}
+<partial name="Partials/_GoalHero" model="Model" />
+<partial name="Partials/_GoalFilters" model="Model" />
+@if(Model.Goals.Count==0){<partial name="Partials/_GoalEmptyState" />}
+else{<section class="hf-goal-grid" aria-label="Objetivos encontrados">@foreach(var item in Model.Goals){<partial name="Partials/_GoalCard" model="item" />}</section>}
+@section Scripts{<script src="~/js/goals-v5.js" asp-append-version="true"></script>}

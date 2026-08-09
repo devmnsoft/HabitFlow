@@ -1,13 +1,4 @@
-@model HabitFlow.Domain.UserGoal
+@model GoalEditorViewModel
 @{ViewData["Title"]="Editar objetivo";}
-<header class="hf-page-header"><div><p class="hf-section-kicker">Ajuste sua direção</p><h1>Editar objetivo</h1><p>Você pode adaptar a meta sem perder seu progresso.</p></div></header>
-<form method="post" action="/goals/@Model.Id/edit" class="hf-card mx-auto" style="max-width:44rem">
- @Html.AntiForgeryToken()<div asp-validation-summary="All" class="text-danger"></div>
- <div class="mb-3"><label class="form-label" for="title">Título</label><input class="form-control" id="title" name="title" maxlength="160" value="@Model.Title" required></div>
- <div class="mb-3"><label class="form-label" for="description">Por que isso importa?</label><textarea class="form-control" id="description" name="description" rows="3">@Model.Description</textarea></div>
- <div class="row g-3"><div class="col-md-6"><label class="form-label" for="targetType">Como acompanhar</label><select class="form-select" id="targetType" name="targetType"><option value="HabitCompletions" selected="@(Model.TargetType=="HabitCompletions")">Conclusões de hábitos</option><option value="ActiveDays" selected="@(Model.TargetType=="ActiveDays")">Dias presentes</option><option value="StreakDays" selected="@(Model.TargetType=="StreakDays")">Dias em sequência</option><option value="WeeklyCompletions" selected="@(Model.TargetType=="WeeklyCompletions")">Conclusões por semana</option><option value="Custom" selected="@(Model.TargetType=="Custom")">Valor personalizado</option></select></div>
- <div class="col-md-6"><label class="form-label" for="targetValue">Meta</label><input class="form-control" id="targetValue" name="targetValue" type="number" min="1" value="@Model.TargetValue" required></div>
- <div class="col-md-6"><label class="form-label" for="startDate">Início</label><input class="form-control" id="startDate" name="startDate" type="date" value="@Model.StartDate.ToString("yyyy-MM-dd")" required></div>
- <div class="col-md-6"><label class="form-label" for="endDate">Prazo opcional</label><input class="form-control" id="endDate" name="endDate" type="date" value="@(Model.EndDate?.ToString("yyyy-MM-dd"))"></div></div>
- <div class="d-flex gap-2 mt-4"><button class="btn btn-success">Salvar alterações</button><a class="btn btn-outline-secondary" href="/goals/@Model.Id">Cancelar</a></div>
-</form>
+@section Styles{<link rel="stylesheet" href="~/css/goals-v5.css" asp-append-version="true">}
+<header class="hf-page-header"><div><p class="hf-section-kicker">Ajuste de rota</p><h1>Editar objetivo</h1><p>Adapte a meta sem perder o histórico conquistado.</p></div></header><partial name="Partials/_GoalEditor" model="Model" />
