@@ -1,11 +1,22 @@
-@model DailyRoutinePlan
-@{ ViewData["Title"]="Meu dia"; }
-@section Styles { <link rel="stylesheet" href="~/css/my-day.css" asp-append-version="true" /> }
-<main class="my-day container" data-my-day>
-  <header class="my-day__header"><div><span class="eyebrow">Sua rotina, no seu ritmo</span><h1>Meu dia</h1><p>@Model.LocalDate.ToString("dddd, dd 'de' MMMM")</p></div><a class="btn btn-outline-success" href="/weekly-review">Revisar semana</a></header>
-  <section class="progress-card" aria-labelledby="daily-progress"><div><h2 id="daily-progress">Progresso de hoje</h2><strong>@Model.Completed de @Model.Scheduled</strong></div><div class="progress" role="progressbar" aria-valuenow="@Model.Percentage" aria-valuemin="0" aria-valuemax="100" aria-label="@Model.Percentage% concluído"><div class="progress-bar" style="width:@Model.Percentage%"></div></div><span aria-live="polite">@Model.Percentage% concluído</span></section>
-  @if(Model.Items.Count==0){<section class="daily-empty"><h2>Seu dia está livre</h2><p>Nenhum hábito está previsto. Aproveite a pausa ou organize um próximo passo.</p><a class="btn btn-success" href="/Habits">Ver hábitos</a></section>}
-  else {<section class="timeline" aria-label="Linha do tempo de hábitos"><h2>Próximos passos</h2>@foreach(var item in Model.Items){<partial name="_DailyRoutineItem" model="item" />}</section>}
-  <div class="visually-hidden" aria-live="polite" data-routine-status></div>
+@model DailyRoutineViewModel
+@{ ViewData["Title"] = "Meu dia"; }
+@section Styles { <link rel="stylesheet" href="~/css/my-day-v3.css" asp-append-version="true" /> }
+<main class="my-day-v3 container" data-my-day>
+  <partial name="Partials/_MyDayHero" model="Model" />
+  <partial name="Partials/_RoutineProgressSummary" model="Model" />
+  @if (Model.Groups.Count == 0)
+  {
+    <partial name="Partials/_RoutineEmptyState" />
+  }
+  else
+  {
+    <div class="routine-timeline" aria-label="Linha do tempo de hoje">
+      @foreach (var group in Model.Groups) { <partial name="Partials/_RoutinePeriodGroup" model="group" /> }
+    </div>
+  }
+  <partial name="Partials/_RoutineMoveModal" />
+  <partial name="Partials/_RoutinePauseModal" />
+  <partial name="Partials/_RoutineRestoreModal" />
+  <div class="visually-hidden" aria-live="polite" aria-atomic="true" data-routine-status></div>
 </main>
-@section Scripts { <script src="~/js/my-day.js" asp-append-version="true"></script> }
+@section Scripts { <script src="~/js/my-day-v3.js" asp-append-version="true"></script> }

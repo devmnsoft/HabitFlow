@@ -12,6 +12,7 @@ public interface IDailyRoutineOverrideRepository
 {
     Task<IReadOnlyList<DailyRoutineOverride>> ListAsync(Guid clientId, Guid userId, DateOnly localDate, CancellationToken ct = default);
     Task UpsertAsync(DailyRoutineOverride value, int expectedVersion, CancellationToken ct = default);
+    Task<bool> DeleteAsync(Guid clientId, Guid userId, Guid habitId, DateOnly localDate, int expectedVersion, CancellationToken ct = default);
 }
 
 public interface IWeeklyReviewRepository

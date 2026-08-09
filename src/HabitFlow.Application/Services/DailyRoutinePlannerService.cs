@@ -5,7 +5,7 @@ namespace HabitFlow.Application;
 
 public enum DailyRoutineItemStatus { Upcoming, Available, Completed, Excused, Moved, Missed }
 public sealed record DailyRoutineQuery(Guid ClientId, Guid UserId, DateOnly LocalDate);
-public sealed record DailyRoutineItem(Guid HabitId, string Name, string Color, string? Category, TimeOnly? PreferredTime, int EstimatedMinutes, DailyRoutineItemStatus Status, int SortOrder, int Version, string NextAction);
+public sealed record DailyRoutineItem(Guid HabitId, string Name, string Color, string? Category, string? IconCode, Guid? ObjectiveId, TimeOnly? PreferredTime, int EstimatedMinutes, DailyRoutineItemStatus Status, int SortOrder, int Version, string NextAction);
 public sealed record DailyRoutinePlan(DateOnly LocalDate, IReadOnlyList<DailyRoutineItem> Items, int Scheduled, int Completed, int Percentage)
 {
     public int Pending => Scheduled - Completed;
@@ -40,7 +40,7 @@ public sealed class DailyRoutinePlannerService(IHabitRepository habits, IHabitWe
                 _ => DailyRoutineItemStatus.Available
             };
             var action = status switch { DailyRoutineItemStatus.Completed => "Desfazer", DailyRoutineItemStatus.Excused or DailyRoutineItemStatus.Moved => "Restaurar", _ => "Concluir" };
-            return new DailyRoutineItem(h.Id,h.Name,h.Color,h.Category,preferred,h.EstimatedTimeMinutes ?? 10,status,custom?.SortOrder ?? h.SortOrder,occurrence.ExceptionVersion > 0 ? occurrence.ExceptionVersion : custom?.Version ?? 0,action);
+            return new DailyRoutineItem(h.Id,h.Name,h.Color,h.Category,h.IconCode,h.ObjectiveId,preferred,h.EstimatedTimeMinutes ?? 10,status,custom?.SortOrder ?? h.SortOrder,occurrence.ExceptionVersion > 0 ? occurrence.ExceptionVersion : custom?.Version ?? 0,action);
         }).OrderBy(x => x.PreferredTime.HasValue ? 0 : 1).ThenBy(x => x.PreferredTime).ThenBy(x => x.SortOrder).ThenBy(x => x.Name).ToList();
         var done = items.Count(x => x.Status == DailyRoutineItemStatus.Completed);
         var scheduled = effective.EffectiveOccurrences.Count;
@@ -48,6 +48,48 @@ public sealed class DailyRoutinePlannerService(IHabitRepository habits, IHabitWe
     }
 
     private static ProgressHabitRow ToProgressRow(Habit h) => new() { Id=h.Id,Name=h.Name,Category=h.Category,IsArchived=h.IsArchived,ArchivedAt=h.ArchivedAt,CreatedAt=h.StartDate?.ToDateTime(TimeOnly.MinValue) ?? h.CreatedAt,FrequencyTypeCode=h.FrequencyType.ToString(),ReminderTime=h.ReminderTime };
+}
+
+public sealed record RoutineActionResultViewModel(bool Succeeded, string Message, string? ErrorCode = null);
+
+public sealed class DailyRoutineActionService(
+    IHabitRepository habits,
+    IDailyRoutineOverrideRepository overrides,
+    HabitScheduleExceptionService scheduleExceptions,
+    TimeProvider clock)
+{
+    public async Task<RoutineActionResultViewModel> ChangeTimeAsync(Guid clientId, Guid userId, Guid habitId, DateOnly date, TimeOnly preferredTime, int expectedVersion, CancellationToken ct = default)
+    {
+        var habit = await habits.GetAsync(clientId, userId, habitId, ct);
+        if (habit is null) return new(false, "Hábito não encontrado.", "habit.not_found");
+        var current = (await overrides.ListAsync(clientId, userId, date, ct)).SingleOrDefault(x => x.HabitId == habitId);
+        if ((current?.Version ?? 0) != expectedVersion) return new(false, "A rotina mudou em outra sessão. Atualize a página e tente novamente.", "routine.conflict");
+        var now = clock.GetUtcNow();
+        await overrides.UpsertAsync(new(current?.Id ?? Guid.NewGuid(), clientId, userId, habitId, date, preferredTime, current?.SortOrder ?? habit.SortOrder, current?.Version ?? 0, current?.CreatedAt ?? now, now), expectedVersion, ct);
+        return new(true, $"Horário de hoje alterado para {preferredTime:HH\\:mm}.");
+    }
+
+    public async Task<RoutineActionResultViewModel> ReorderAsync(Guid clientId, Guid userId, Guid habitId, DateOnly date, int sortOrder, int expectedVersion, CancellationToken ct = default)
+    {
+        if (sortOrder is < 0 or > 1000) return new(false, "A posição informada é inválida.", "routine.invalid_order");
+        var habit = await habits.GetAsync(clientId, userId, habitId, ct);
+        if (habit is null) return new(false, "Hábito não encontrado.", "habit.not_found");
+        var current = (await overrides.ListAsync(clientId, userId, date, ct)).SingleOrDefault(x => x.HabitId == habitId);
+        if ((current?.Version ?? 0) != expectedVersion) return new(false, "A rotina mudou em outra sessão. Atualize a página e tente novamente.", "routine.conflict");
+        var now = clock.GetUtcNow();
+        await overrides.UpsertAsync(new(current?.Id ?? Guid.NewGuid(), clientId, userId, habitId, date, current?.PreferredTime ?? habit.ReminderTime, sortOrder, current?.Version ?? 0, current?.CreatedAt ?? now, now), expectedVersion, ct);
+        return new(true, "Ordem de hoje atualizada.");
+    }
+
+    public async Task<RoutineActionResultViewModel> RestoreAsync(Guid clientId, Guid userId, Guid habitId, DateOnly date, int exceptionVersion, int overrideVersion, CancellationToken ct = default)
+    {
+        if (await habits.GetAsync(clientId, userId, habitId, ct) is null) return new(false, "Hábito não encontrado.", "habit.not_found");
+        var exception = await scheduleExceptions.RestoreOriginalScheduleAsync(clientId, userId, habitId, date, exceptionVersion, ct);
+        var custom = (await overrides.ListAsync(clientId, userId, date, ct)).SingleOrDefault(x => x.HabitId == habitId);
+        var overrideRestored = custom is null || await overrides.DeleteAsync(clientId, userId, habitId, date, overrideVersion, ct);
+        if (!exception.IsSuccess && custom is null) return new(false, exception.Error.Message, exception.Error.Code);
+        return overrideRestored ? new(true, "A agenda original foi restaurada.") : new(false, "A rotina mudou em outra sessão. Atualize a página.", "routine.conflict");
+    }
 }
 
 public sealed class HabitScheduleExceptionService(IHabitRepository habits, IHabitScheduleExceptionRepository exceptions, TimeProvider clock)

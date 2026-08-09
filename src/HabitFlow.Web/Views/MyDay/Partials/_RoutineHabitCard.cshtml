@@ -1,0 +1,20 @@
+@model RoutineHabitCardViewModel
+<article class="routine-card routine-card--@Model.Status.ToString().ToLowerInvariant()" data-routine-card data-habit-id="@Model.HabitId">
+ <div class="routine-card__accent" style="--habit-color:@Model.Color" aria-hidden="true"></div>
+ <div class="routine-card__icon" aria-hidden="true">@Model.IconCode</div>
+ <div class="routine-card__body">
+  <div class="routine-card__heading"><h3>@Model.Name</h3><span class="routine-status">@Model.StatusLabel</span></div>
+  <div class="routine-card__meta"><span>@(Model.PreferredTime?.ToString("HH:mm") ?? "Quando puder")</span><span>@Model.EstimatedMinutes min</span><span>@Model.Category</span></div>
+  @if (Model.ObjectiveId.HasValue) { <a class="routine-card__goal" href="/goals/@Model.ObjectiveId">Ver objetivo vinculado</a> }
+ </div>
+ <div class="routine-card__actions">
+  @if (Model.Status == DailyRoutineItemStatus.Completed) {
+   <form method="post" action="/my-day/@Model.HabitId/undo" data-routine-form><input type="hidden" name="idempotencyKey" value="@Guid.NewGuid().ToString("N")" /><button class="btn btn-outline-success" type="submit">Desfazer</button></form>
+  } else if (Model.Status is DailyRoutineItemStatus.Excused or DailyRoutineItemStatus.Moved) {
+   <button class="btn btn-outline-success" type="button" data-routine-modal="restore" data-habit="@Model.HabitId" data-version="@Model.Version" data-name="@Model.Name">Restaurar</button>
+  } else {
+   <form method="post" action="/my-day/@Model.HabitId/complete" data-routine-form><input type="hidden" name="idempotencyKey" value="@Guid.NewGuid().ToString("N")" /><button class="btn btn-success" type="submit">Concluir</button></form>
+  }
+  <partial name="Partials/_RoutineActionMenu" model="Model" />
+ </div>
+</article>

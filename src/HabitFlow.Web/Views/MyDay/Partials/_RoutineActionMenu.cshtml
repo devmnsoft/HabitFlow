@@ -1,0 +1,13 @@
+@model RoutineHabitCardViewModel
+<div class="dropdown routine-menu">
+ <button class="btn btn-icon dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Mais ações para @Model.Name">•••</button>
+ <ul class="dropdown-menu dropdown-menu-end">
+  <li><a class="dropdown-item" href="/habits/@Model.HabitId">Abrir detalhes</a></li>
+  @if (Model.CanComplete) {
+   <li><button class="dropdown-item" type="button" data-routine-modal="move" data-habit="@Model.HabitId" data-name="@Model.Name">Mover para amanhã</button></li>
+   <li><button class="dropdown-item" type="button" data-routine-modal="pause" data-habit="@Model.HabitId" data-name="@Model.Name">Pausar só hoje</button></li>
+   <li><form method="post" action="/my-day/@Model.HabitId/time" data-routine-form class="routine-inline-form"><input type="hidden" name="version" value="@Model.Version" /><label>Horário só hoje <input type="time" name="preferredTime" value="@Model.PreferredTime?.ToString("HH:mm")" required /></label><button type="submit">Salvar horário</button></form></li>
+   <li><form method="post" action="/my-day/@Model.HabitId/reorder" data-routine-form class="routine-inline-form"><input type="hidden" name="version" value="@Model.Version" /><label>Posição <input type="number" name="sortOrder" value="@Model.SortOrder" min="0" max="1000" required /></label><button type="submit">Reordenar</button></form></li>
+  }
+ </ul>
+</div>

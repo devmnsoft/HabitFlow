@@ -110,6 +110,10 @@ public sealed class DailyRoutineOverrideRepository(SqlExecutor db) : IDailyRouti
         on conflict(client_id,user_id,habit_id,local_date) do update set preferred_time=excluded.preferred_time,sort_order=excluded.sort_order,version=habitflow.daily_routine_overrides.version+1,updated_at=excluded.updated_at where habitflow.daily_routine_overrides.version=@expectedVersion
         """, new { value.Id,value.ClientId,value.UserId,value.HabitId,value.LocalDate,value.PreferredTime,value.SortOrder,value.CreatedAt,value.UpdatedAt,expectedVersion }, ct);
 
+    public async Task<bool> DeleteAsync(Guid clientId, Guid userId, Guid habitId, DateOnly localDate, int expectedVersion, CancellationToken ct = default) =>
+        await db.ExecuteAsync("delete from habitflow.daily_routine_overrides where client_id=@clientId and user_id=@userId and habit_id=@habitId and local_date=@localDate and version=@expectedVersion",
+            new { clientId, userId, habitId, localDate, expectedVersion }, ct) == 1;
+
     private static DailyRoutineOverride MapDailyRoutineOverride(DailyRoutineOverrideRow row) =>
         new(row.Id, row.ClientId, row.UserId, row.HabitId, row.LocalDate, row.PreferredTime,
             row.SortOrder, row.Version, ToUtcOffset(row.CreatedAt), ToUtcOffset(row.UpdatedAt));
