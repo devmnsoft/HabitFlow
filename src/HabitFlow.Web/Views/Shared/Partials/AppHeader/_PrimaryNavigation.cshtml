@@ -1,0 +1,2 @@
+@model HabitFlow.Web.Models.HeaderNavigationViewModel
+<nav class="app-nav-v2" aria-label="Navegação principal">@foreach(var item in Model.Primary){<a class="app-nav-v2__link @(item.IsActive?"is-active":"")" href="@item.Url" aria-current="@(item.IsActive?"page":null)">@item.Label</a>}@foreach(var group in Model.Secondary){<partial name="~/Views/Shared/Partials/AppHeader/_NavigationGroupDropdown.cshtml" model="group"/>}</nav>

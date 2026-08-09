@@ -1,0 +1,14 @@
+@model HabitFlow.Web.Models.AppHeaderViewModel
+<header class="app-header-v2" data-app-header data-layout-region="header">
+ <div class="app-header-v2__desktop hf-shell">
+  <partial name="~/Views/Shared/Partials/AppHeader/_Brand.cshtml" model="Model" />
+  <partial name="~/Views/Shared/Partials/AppHeader/_PrimaryNavigation.cshtml" model="Model.Navigation" />
+  <div class="app-header-v2__actions">
+   @if(Model.IsAuthenticated){<partial name="~/Views/Shared/Partials/AppHeader/_HeaderSearch.cshtml"/><partial name="~/Views/Shared/Partials/AppHeader/_QuickCreateMenu.cshtml" model="Model.QuickActions"/><partial name="~/Views/Shared/Partials/AppHeader/_HeaderNotifications.cshtml" model="Model.Notifications"/><partial name="~/Views/Shared/Partials/AppHeader/_PlanStatusPill.cshtml" model="Model"/><partial name="~/Views/Shared/Partials/AppHeader/_UserMenu.cshtml" model="Model"/>}
+   else {<div class="app-header-v2__auth"><a class="btn btn-sm btn-outline-success" href="/login">Entrar</a><a class="btn btn-sm btn-success" href="/register">Começar grátis</a></div>}
+  </div>
+ </div>
+ <partial name="~/Views/Shared/Partials/AppHeader/_MobileHeader.cshtml" model="Model" />
+</header>
+<partial name="~/Views/Shared/Partials/AppHeader/_MobileDrawer.cshtml" model="Model" />
+@if(Model.IsAuthenticated){<partial name="~/Views/Shared/Partials/AppHeader/_MobileBottomNav.cshtml" model="Model.Navigation"/>}

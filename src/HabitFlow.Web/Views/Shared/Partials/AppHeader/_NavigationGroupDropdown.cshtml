@@ -1,0 +1,2 @@
+@model HabitFlow.Web.Models.HeaderNavigationGroup
+<div class="dropdown"><button class="app-nav-v2__link dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">@Model.Label</button><ul class="dropdown-menu app-nav-v2__menu">@foreach(var item in Model.Items){<li><a class="dropdown-item @(item.IsActive?"active":"")" href="@item.Url"><strong>@item.Label</strong><small>@item.Description</small></a></li>}</ul></div>
