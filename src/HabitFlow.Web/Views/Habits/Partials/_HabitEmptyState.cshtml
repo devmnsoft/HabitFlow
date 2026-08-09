@@ -1,0 +1,2 @@
+@model HabitFlow.Application.HabitListViewModel
+<section class="hf-empty"><div class="hf-empty-mark" aria-hidden="true"></div><h2>Nenhum hábito neste filtro</h2><p>@(string.IsNullOrWhiteSpace(Model.Query.Search) ? "Crie uma prática pequena e possível para começar a construir seu histórico." : "Tente outro termo ou limpe os filtros para encontrar seus hábitos.")</p><div><a asp-action="Create" class="btn btn-success">Criar hábito</a><a asp-action="Index" class="btn btn-outline-secondary">Limpar filtros</a></div></section>

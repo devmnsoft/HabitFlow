@@ -1,0 +1,2 @@
+@model HabitFlow.Domain.Habit
+@if(Model.IsArchived){<span class="hf-status is-archived">Arquivado</span>}else if(Model.IsPaused){<span class="hf-status is-paused">Pausado</span>}else{<span class="hf-status is-active">Ativo</span>}

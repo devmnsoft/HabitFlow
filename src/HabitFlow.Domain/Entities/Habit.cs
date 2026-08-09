@@ -25,7 +25,9 @@ public sealed record Habit(
     DateOnly? StartDate = null,
     int? TemplateContentVersion = null,
     bool IsTemplateVariation = false,
-    Guid? TemplateIdempotencyKey = null)
+    Guid? TemplateIdempotencyKey = null,
+    bool IsPaused = false,
+    DateTime? PausedAt = null)
 {
     public bool BelongsTo(Guid userId) => UserId == userId;
 
