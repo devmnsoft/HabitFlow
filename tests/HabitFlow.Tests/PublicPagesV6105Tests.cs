@@ -5,7 +5,7 @@ namespace HabitFlow.Tests;
 
 public sealed class PublicPagesV6105Tests
 {
-    private static readonly string Root = RepositoryRootLocator.Find();
+    private static readonly string Root = RepositoryRootLocator.Root;
     private static string Read(string path) => File.ReadAllText(Path.Combine(Root, path));
 
     [Fact] public void Public_catalog_enforces_sellability_price_and_implemented_features()

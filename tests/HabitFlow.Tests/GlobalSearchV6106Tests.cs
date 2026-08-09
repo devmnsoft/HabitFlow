@@ -1,5 +1,6 @@
 using HabitFlow.Application;
 using HabitFlow.Domain;
+using Xunit;
 
 namespace HabitFlow.Tests;
 
@@ -75,5 +76,10 @@ public sealed class GlobalSearchV6106Tests
         public Task SetStatusAsync(Guid id, Guid clientId, Guid userId, string status, CancellationToken ct = default) => throw new NotSupportedException();
         public Task LinkHabitAsync(Guid goalId, Guid habitId, Guid clientId, Guid userId, CancellationToken ct = default) => throw new NotSupportedException();
         public Task UnlinkHabitAsync(Guid goalId, Guid habitId, Guid clientId, Guid userId, CancellationToken ct = default) => throw new NotSupportedException();
+        public Task<IReadOnlyList<Habit>> ListLinkedHabitsAsync(Guid goalId, Guid clientId, Guid userId, CancellationToken ct = default)
+    => Task.FromResult((IReadOnlyList<Habit>)Array.Empty<Habit>());
+
+public Task<IReadOnlyList<GoalTimelineEntry>> ListTimelineAsync(Guid goalId, Guid clientId, Guid userId, CancellationToken ct = default)
+    => Task.FromResult((IReadOnlyList<GoalTimelineEntry>)Array.Empty<GoalTimelineEntry>());
     }
 }
