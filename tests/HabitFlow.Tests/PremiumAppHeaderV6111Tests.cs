@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using HabitFlow.Web.Models;
 using HabitFlow.Web.Services;
+using Xunit;
 
 namespace HabitFlow.Tests;
 
