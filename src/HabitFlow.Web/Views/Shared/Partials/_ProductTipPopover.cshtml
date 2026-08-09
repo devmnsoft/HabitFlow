@@ -1,0 +1,12 @@
+@model HabitFlow.Domain.ProductTip
+<aside class="hf-product-tip" data-product-tip data-tip-id="@Model.Id" data-target="@Model.TargetSelector" role="dialog" aria-labelledby="product-tip-title" aria-describedby="product-tip-content" hidden>
+  @Html.AntiForgeryToken()
+  <span class="hf-product-tip__eyebrow">Guia de primeiro uso</span>
+  <h2 id="product-tip-title">@Model.Title</h2>
+  <p id="product-tip-content">@Model.Content</p>
+  <div class="hf-product-tip__actions">
+    <button class="btn btn-sm btn-outline-secondary" type="button" data-tip-dismiss>Dispensar</button>
+    <button class="btn btn-sm btn-primary" type="button" data-tip-understood>Entendi</button>
+  </div>
+  <span class="visually-hidden" aria-live="polite" data-tip-status></span>
+</aside>
