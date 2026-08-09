@@ -52,5 +52,13 @@
 \i database/migrations/050_goal_progress_activation_core.sql
 \i database/migrations/051_system_settings_contract.sql
 \i database/migrations/052_library_v2_onboarding.sql
-
+\i database/migrations/053_persistent_onboarding_drafts.sql
+\i database/migrations/054_onboarding_engagement_notification_center.sql
+\i database/migrations/055_routine_planner_weekly_review.sql
 \i database/migrations/056_secure_admin_honest_plans_legal_privacy.sql
+\i database/migrations/057_legal_document_immutability.sql
+\i database/migrations/058_user_sessions.sql
+\i database/migrations/059_superadmin_mfa.sql
+\i database/migrations/060_public_privacy_notice.sql
+\i database/migrations/061_habit_lifecycle.sql
+\i database/migrations/062_product_tips.sql
