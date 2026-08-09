@@ -13,6 +13,7 @@ public sealed record AppHeaderViewModel(
     string UserName,
     string UserEmail,
     string Initial,
+    string CurrentPath,
     string PlanName,
     bool HasPlatformAccess,
     bool HasBillingAccess,

@@ -15,9 +15,19 @@ public sealed class ReportsController(ReportService reports, AuditService audit,
         return View(await reports.BuildWeeklyReportAsync(tenant.RequireCurrentClientId(), this.CurrentUserId(), today, ct));
     }
     [HttpGet("reports/weekly")]
-    public async Task<IActionResult> Weekly(CancellationToken ct) => Json(await reports.BuildWeeklyReportAsync(tenant.RequireCurrentClientId(), this.CurrentUserId(), timeZones.Today(), ct));
+    public async Task<IActionResult> Weekly(CancellationToken ct)
+    {
+        ViewData["ReportPeriod"] = "weekly";
+        return View("Index", await reports.BuildWeeklyReportAsync(tenant.RequireCurrentClientId(), this.CurrentUserId(), timeZones.Today(), ct));
+    }
     [HttpGet("reports/monthly")]
-    public async Task<IActionResult> Monthly(CancellationToken ct) { var now = timeZones.Today(); return Json(await reports.BuildMonthlyReportAsync(tenant.RequireCurrentClientId(), this.CurrentUserId(), now.Year, now.Month, ct)); }
+    public async Task<IActionResult> Monthly(CancellationToken ct)
+    {
+        var now = timeZones.Today();
+        ViewData["ReportPeriod"] = "monthly";
+        return View("Index", await reports.BuildMonthlyReportAsync(tenant.RequireCurrentClientId(), this.CurrentUserId(), now.Year, now.Month, ct));
+    }
+    [HttpGet("reports/export")]
     [HttpGet("reports/export-csv")]
     public async Task<IActionResult> ExportCsv(CancellationToken ct) { var end = timeZones.Today(); var result = await reports.ExportPersonalReportCsvAsync(tenant.RequireCurrentClientId(), this.CurrentUserId(), end.AddDays(-30), end, ct); if (result.IsFailure) return BadRequest(result.Error.Message); return File(result.Value!, "text/csv; charset=utf-8", $"habitflow-relatorio-{end:yyyy-MM}.csv"); }
     [HttpGet("reports/print")]
