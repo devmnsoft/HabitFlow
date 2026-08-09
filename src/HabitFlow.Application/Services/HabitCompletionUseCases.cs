@@ -64,7 +64,7 @@ public sealed class CompleteHabitUseCase(IUserRepository users, IHabitRepository
         try
         {
             var user = await users.GetByIdAsync(command.UserId, ct);
-            var habit = await habits.GetAsync(command.HabitId, ct);
+            var habit = await habits.GetAsync(command.ClientId, command.UserId, command.HabitId, ct);
             if (user is null || user.ClientId != command.ClientId || habit is null || !habit.BelongsTo(command.UserId)) { await unitOfWork.RollbackAsync(ct); return Result<HabitCompletionResult>.Failure("habit.not_found", "Este hábito não foi encontrado."); }
             if (habit.IsArchived) { await unitOfWork.RollbackAsync(ct); return Result<HabitCompletionResult>.Failure("habit.archived", "Um hábito arquivado não pode ser concluído."); }
             var mutation = await completions.AddIfMissingAsync(command.ClientId, user.Id, habit.Id,
@@ -101,7 +101,7 @@ public sealed class UndoHabitCompletionUseCase(IUserRepository users, IHabitRepo
         await unitOfWork.BeginTransactionAsync(ct);
         try
         {
-            var user = await users.GetByIdAsync(command.UserId, ct); var habit = await habits.GetAsync(command.HabitId, ct);
+            var user = await users.GetByIdAsync(command.UserId, ct); var habit = await habits.GetAsync(command.ClientId, command.UserId, command.HabitId, ct);
             if (user is null || user.ClientId != command.ClientId || habit is null || !habit.BelongsTo(command.UserId)) { await unitOfWork.RollbackAsync(ct); return Result<HabitCompletionResult>.Failure("habit.not_found", "Este hábito não foi encontrado."); }
             var mutation = await completions.DeleteIfExistsAsync(command.ClientId, user.Id, habit.Id, command.LocalDate, ct);
             var snapshot = await snapshots.BuildDayAsync(command.ClientId, command.UserId, command.LocalDate, ct);

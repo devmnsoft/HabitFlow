@@ -1,0 +1,12 @@
+@model HabitFlow.Application.HabitEditorViewModel
+@{ ViewData["Title"] = Model.Id.HasValue ? "Editar hábito" : "Criar hábito"; }
+<header class="hf-habit-editor-hero"><a asp-action="Index" class="hf-back-link">Voltar aos hábitos</a><p class="hf-eyebrow">Rotina sustentável</p><h1>@ViewData["Title"]</h1><p>Defina um passo claro e ajuste a agenda à sua vida real.</p></header>
+<form method="post" class="hf-editor-layout" novalidate data-habit-editor>
+@Html.AntiForgeryToken()
+<div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+<partial name="Partials/_HabitEditor" model="Model" />
+<aside><partial name="Partials/_HabitScheduleEditor" model="Model" /><partial name="Partials/_HabitReminderEditor" model="Model" /></aside>
+<div class="hf-form-actions"><a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a><button class="btn btn-success" type="submit" data-submit>Salvar hábito</button></div>
+</form>
+@section Styles { <link rel="stylesheet" href="~/css/habits-v4.css" asp-append-version="true" /> }
+@section Scripts { <script src="~/js/habits-v4.js" asp-append-version="true"></script> }

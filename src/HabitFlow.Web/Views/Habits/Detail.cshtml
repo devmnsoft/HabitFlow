@@ -1,6 +1,8 @@
-@model HabitFlow.Domain.Habit
-@{ ViewData["Title"] = Model?.Name ?? "Detalhe do hábito"; var today = DateOnly.FromDateTime(DateTime.UtcNow); }
-<header class="hf-page-header"><div><p class="hf-eyebrow">Detalhe do hábito</p><h1>@Model.Name</h1><p>@(Model.Category ?? "Rotina") · @Model.FrequencyType · criado em @Model.CreatedAt.ToString("dd/MM/yyyy")</p></div><div class="d-flex gap-2 flex-wrap"><form method="post" action="/Habits/Complete/@Model.Id">@Html.AntiForgeryToken()<button class="btn btn-success">Marcar hoje</button></form><a class="btn btn-outline-secondary" href="/Habits">Voltar</a></div></header>
-<section class="hf-grid mb-4"><div class="hf-col-4 hf-metric-card"><span>Streak atual</span><strong>—</strong><small>em breve calculado pelo relatório</small></div><div class="hf-col-4 hf-metric-card"><span>Maior streak</span><strong>—</strong><small>recorde pessoal</small></div><div class="hf-col-4 hf-metric-card"><span>Total de conclusões</span><strong>—</strong><small>histórico</small></div></section>
-<section class="hf-card mb-3"><h2>Calendário do mês</h2><div class="month-grid">@for(var i=1;i<=DateTime.DaysInMonth(today.Year,today.Month);i++){var cls=i==today.Day?"today":"";<span class="day @cls">@i</span>}</div></section>
-@if(!string.IsNullOrWhiteSpace(Model.Notes)){<section class="hf-card"><h2>Observações</h2><p class="mb-0">@Model.Notes</p></section>}
+@model HabitFlow.Application.HabitDetailsViewModel
+@{ ViewData["Title"] = Model.Habit.Name; }
+<header class="hf-habit-detail-hero" style="--habit-color:@Model.Habit.Color"><div><a asp-action="Index" class="hf-back-link">Voltar aos hábitos</a><div class="d-flex gap-2 mt-3"><partial name="Partials/_HabitStatusBadge" model="Model.Habit" /><span class="hf-category">@(Model.Habit.Category ?? "Rotina pessoal")</span></div><h1>@Model.Habit.Name</h1><p>@(string.IsNullOrWhiteSpace(Model.Habit.Notes) ? "Acompanhe sua prática e mantenha o ritmo possível." : Model.Habit.Notes)</p></div><a asp-action="Edit" asp-route-id="@Model.Habit.Id" class="btn btn-light">Editar hábito</a></header>
+<partial name="Partials/_HabitMetricsPanel" model="Model" />
+<div class="hf-detail-grid"><partial name="Partials/_HabitCalendarHeatmap" model="Model" /><partial name="Partials/_HabitTimeline" model="Model" /></div>
+<partial name="Partials/_HabitLifecycleActions" model="Model.Habit" />
+@section Styles { <link rel="stylesheet" href="~/css/habits-v4.css" asp-append-version="true" /> }
+@section Scripts { <script src="~/js/habits-v4.js" asp-append-version="true"></script> }

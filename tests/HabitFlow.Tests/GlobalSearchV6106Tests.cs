@@ -55,13 +55,13 @@ public sealed class GlobalSearchV6106Tests
         public Task<IReadOnlyList<Habit>> ListActiveAsync(Guid clientId, Guid userId, CancellationToken ct = default) { LastScope = (clientId, userId); return Task.FromResult(values); }
         public Task<int> CountActiveByUserAsync(Guid userId, CancellationToken ct = default) => throw new NotSupportedException();
         public Task<IReadOnlyList<Habit>> ListByUserAsync(Guid userId, CancellationToken ct = default) => throw new NotSupportedException();
+        public Task<IReadOnlyList<Habit>> ListAsync(Guid clientId, Guid userId, CancellationToken ct = default) => throw new NotSupportedException();
         public Task<Habit?> FindByIdempotencyKeyAsync(Guid clientId, Guid userId, Guid idempotencyKey, CancellationToken ct = default) => throw new NotSupportedException();
         public Task<Habit?> FindActiveBySourceTemplateAsync(Guid clientId, Guid userId, Guid templateId, bool includeVariations, CancellationToken ct = default) => throw new NotSupportedException();
         public Task<int> CountActiveAsync(Guid clientId, Guid userId, CancellationToken ct = default) => throw new NotSupportedException();
         public Task<Habit?> GetAsync(Guid clientId, Guid userId, Guid habitId, CancellationToken ct = default) => throw new NotSupportedException();
-        public Task<Habit?> GetAsync(Guid id, CancellationToken ct = default) => throw new NotSupportedException();
         public Task CreateAsync(Habit habit, CancellationToken ct = default) => throw new NotSupportedException();
-        public Task UpdateAsync(Habit habit, CancellationToken ct = default) => throw new NotSupportedException();
+        public Task<bool> UpdateAsync(Guid clientId, Guid userId, Habit habit, CancellationToken ct = default) => throw new NotSupportedException();
     }
 
     private sealed class GoalRepositoryStub(IReadOnlyList<UserGoal> values) : IUserGoalRepository

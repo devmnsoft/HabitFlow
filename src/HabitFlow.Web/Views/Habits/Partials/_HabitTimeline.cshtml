@@ -1,0 +1,2 @@
+@model HabitFlow.Application.HabitDetailsViewModel
+<section class="hf-panel"><h2>Histórico recente</h2><ol class="hf-timeline">@foreach(var item in Model.Timeline){<li><span></span><div><strong>@item.Title</strong><p>@item.Description</p><time datetime="@item.At.ToString("O")">@item.At.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</time></div></li>}</ol></section>

@@ -1,0 +1,2 @@
+@model HabitFlow.Application.HabitDetailsViewModel
+<section class="hf-metrics" aria-label="Métricas reais do hábito"><article><span>Consistência</span><strong>@Model.Consistency.ToString("0.#")%</strong><small>@Model.CompletedCount de @Model.ScheduledCount oportunidades</small></article><article><span>Sequência atual</span><strong>@Model.CurrentStreak dias</strong><small>Somente dias agendados contam</small></article><article><span>Melhor sequência</span><strong>@Model.BestStreak dias</strong><small>Nos últimos 84 dias</small></article></section>

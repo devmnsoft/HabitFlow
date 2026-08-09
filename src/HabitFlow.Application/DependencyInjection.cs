@@ -50,6 +50,9 @@ public static class DependencyInjection
         services.AddScoped<UserInviteService>();
         services.AddScoped<ClientService>();
         services.AddScoped<HabitService>();
+        services.AddScoped<HabitQueryService>();
+        services.AddScoped<HabitEditorService>();
+        services.AddScoped<HabitLifecycleService>();
         services.AddScoped<ProgressSnapshotService>();
         services.AddScoped<GoalProgressCalculator>();
         services.AddScoped<GoalProgressEngine>();

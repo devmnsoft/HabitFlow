@@ -19,7 +19,7 @@ public sealed class HabitService(IHabitRepository habits, IHabitCompletionReposi
             var can = policy.CanCreate(user, active);
             if (can.IsFailure) return Result<Habit>.Failure(can.Error.Code, can.Error.Message);
             var now = DateTime.UtcNow;
-            var habit = new Habit(Guid.NewGuid(), user.Id, name.Trim(), color, category, false, null, now, now, frequencyType, targetPerWeek, reminderTime, notes, 0);
+            var habit = new Habit(Guid.NewGuid(), user.Id, name.Trim(), color, category, false, null, now, now, frequencyType, targetPerWeek, reminderTime, notes, 0, user.ClientId);
             await habits.CreateAsync(habit, ct);
             if (frequencyType == HabitFrequencyType.CustomWeekly) await weekDays.ReplaceAsync(habit.Id, selectedDays, ct);
             await audit.LogAsync("habit_created", "Hábito criado", AuditSeverity.Info, user.Id, user.Email, new { name, frequencyType }, ct);
