@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using HabitFlow.Application;
 using HabitFlow.Domain;
 
 namespace HabitFlow.Web.Models;
