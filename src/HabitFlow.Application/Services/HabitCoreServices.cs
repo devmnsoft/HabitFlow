@@ -31,7 +31,8 @@ public sealed class HabitQueryService(IHabitRepository habits, IHabitCompletionR
         var done = await completions.ListAsync(clientId, userId, from, to, ct);
         var dayMap = await weekDays.ListByHabitsAsync(selected.Select(x => x.Id).ToArray(), ct);
         var configured = dayMap.ToDictionary(x => x.Key, x => (IReadOnlySet<int>)x.Value.Select(y => y.DayOfWeek).ToHashSet());
-        var planned = await occurrences.ListScheduledForPeriodAsync(selected, configured, from, to, clock.Resolve());
+        var progressRows = selected.Select(ToProgressRow).ToList();
+        var planned = await occurrences.ListScheduledForPeriodAsync(progressRows, configured, from, to, clock.Resolve());
         var items = selected.Select(h => { var scheduled = planned.Count(x => x.Habit.Id == h.Id); var completed = done.Count(x => x.HabitId == h.Id); return new HabitListItem(h, completed, scheduled, scheduled == 0 ? 0 : Math.Round(completed * 100m / scheduled, 1)); }).ToList();
         return new(items, all.Select(x => x.Category).Where(x => !string.IsNullOrWhiteSpace(x)).Distinct(StringComparer.OrdinalIgnoreCase).Order().Cast<string>().ToList(), query with { Page = page, PageSize = pageSize }, total, (int)Math.Ceiling(total / (double)pageSize));
     }
@@ -42,7 +43,7 @@ public sealed class HabitQueryService(IHabitRepository habits, IHabitCompletionR
         var from = clock.Today().AddDays(-83); var to = clock.Today(); var done = await completions.ListAsync(clientId, userId, from, to, ct);
         var dayMap = await weekDays.ListByHabitsAsync([habit.Id], ct);
         var configured = (dayMap.TryGetValue(habit.Id, out var configuredDays) ? configuredDays : Array.Empty<HabitWeekDay>()).Select(x => x.DayOfWeek).ToHashSet();
-        var planned = await occurrences.ListScheduledForPeriodAsync([habit], new Dictionary<Guid, IReadOnlySet<int>> { [habit.Id] = configured }, from, to, clock.Resolve());
+        var planned = await occurrences.ListScheduledForPeriodAsync([ToProgressRow(habit)], new Dictionary<Guid, IReadOnlySet<int>> { [habit.Id] = configured }, from, to, clock.Resolve());
         var completedDates = done.Where(x => x.HabitId == habit.Id).Select(x => x.CompletedDate).ToHashSet();
         var calendar = Enumerable.Range(0, 84).Select(i => from.AddDays(i)).Select(d => new HabitCalendarDay(d, planned.Any(x => x.Date == d), completedDates.Contains(d))).ToList();
         var streaks = CalculateStreak(calendar, to);
@@ -50,6 +51,17 @@ public sealed class HabitQueryService(IHabitRepository habits, IHabitCompletionR
         timeline.Add(new(habit.CreatedAt, "Hábito criado", "A jornada começou aqui."));
         return new(habit, completedDates.Count, planned.Count, planned.Count == 0 ? 0 : Math.Round(completedDates.Count * 100m / planned.Count, 1), streaks.Current, streaks.Best, calendar, timeline.OrderByDescending(x => x.At).ToList());
     }
+    private static ProgressHabitRow ToProgressRow(Habit habit) => new()
+    {
+        Id = habit.Id,
+        Name = habit.Name,
+        Category = habit.Category,
+        IsArchived = habit.IsArchived,
+        ArchivedAt = habit.ArchivedAt,
+        CreatedAt = habit.StartDate?.ToDateTime(TimeOnly.MinValue) ?? habit.CreatedAt,
+        FrequencyTypeCode = habit.FrequencyType.ToString(),
+        ReminderTime = habit.ReminderTime
+    };
     private static bool MatchesStatus(Habit h, string status) => status switch { "archived" => h.IsArchived, "paused" => h.IsPaused && !h.IsArchived, "all" => true, _ => !h.IsArchived && !h.IsPaused };
     private static (int Current, int Best) CalculateStreak(IReadOnlyList<HabitCalendarDay> days, DateOnly today) { var current = 0; var best = 0; var run = 0; foreach (var d in days.Where(x => x.Scheduled)) { run = d.Completed ? run + 1 : 0; best = Math.Max(best, run); if (d.Date <= today) current = run; } return (current, best); }
 }
