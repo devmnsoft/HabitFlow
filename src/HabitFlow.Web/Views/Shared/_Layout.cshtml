@@ -1,17 +1,12 @@
-@using System.Security.Claims
 @using HabitFlow.Web.Models
-@inject HabitFlow.Web.Services.NavigationService Navigation
 @inject HabitFlow.Web.Services.LayoutContextResolver ContextResolver
 @inject IWebHostEnvironment HostEnvironment
 @{
     var isAuthenticated = User?.Identity?.IsAuthenticated == true;
-    var userName = User?.FindFirst(ClaimTypes.Name)?.Value ?? User?.Identity?.Name ?? "Visitante";
-    var userEmail = User?.FindFirst(ClaimTypes.Email)?.Value ?? string.Empty;
     var title = ViewData["Title"] as string ?? "HabitFlow";
     var navigationContext = ContextResolver.Resolve(Context, ViewContext.RouteData, ViewData);
     var contextName = navigationContext.ToString().ToLowerInvariant();
     var contextualStylesheet = $"{contextName}.css";
-    var topVariant = navigationContext == NavigationContext.Public ? NavigationVariant.PublicTop : NavigationVariant.PersonalTop;
     var sidebarVariant = navigationContext == NavigationContext.Account ? NavigationVariant.AccountSidebar : NavigationVariant.PlatformSidebar;
     var hasSidebar = navigationContext is NavigationContext.Account or NavigationContext.Platform;
     var version = typeof(Program).Assembly.GetName().Version?.ToString(3) ?? "6.5.1";
@@ -35,6 +30,8 @@
   <link rel="stylesheet" href="~/css/navigation-premium.css" asp-append-version="true">
   <link rel="stylesheet" href="~/css/app-shell-premium.css" asp-append-version="true">
   <link rel="stylesheet" href="~/css/global-search.css" asp-append-version="true">
+  <link rel="stylesheet" href="~/css/app-header-v2.css" asp-append-version="true">
+  <link rel="stylesheet" href="~/css/navigation-v2.css" asp-append-version="true">
   <link rel="stylesheet" href="~/css/@contextualStylesheet" asp-append-version="true">
   <link rel="stylesheet" href="~/css/accessibility.css" asp-append-version="true">
   <link rel="stylesheet" href="~/css/responsive.css" asp-append-version="true">
@@ -43,66 +40,7 @@
 </head>
 <body class="hf-contrast-default hf-font-normal hf-context-@contextName" data-navigation-context="@contextName">
 <a class="visually-hidden-focusable hf-skip" href="#conteudo">Ir para o conteúdo</a>
-<header class="hf-topbar" data-layout-region="header">
-  <div class="hf-shell hf-header-inner">
-    <a class="hf-brand" href="@(isAuthenticated ? "/dashboard" : "/")" aria-label="HabitFlow — página inicial">
-      <span class="hf-brand-mark" aria-hidden="true">✓</span><span><strong>HabitFlow</strong><small>Consistência diária</small></span>
-    </a>
-    @if (!hasSidebar)
-    {
-      <div class="hf-desktop-navigation">@await Component.InvokeAsync("Navigation", new { context = navigationContext, variant = topVariant })</div>
-      <button class="btn btn-outline-success hf-drawer-trigger" type="button" data-bs-toggle="offcanvas" data-bs-target="#primaryDrawer" aria-controls="primaryDrawer" aria-label="Abrir menu principal">Menu</button>
-    }
-    @if (hasSidebar)
-    {
-      <button class="btn btn-outline-success hf-drawer-trigger" type="button" data-bs-toggle="offcanvas" data-bs-target="#contextDrawer" aria-controls="contextDrawer" aria-label="Abrir navegação contextual">Menu @(navigationContext == NavigationContext.Account ? "da conta" : "da plataforma")</button>
-    }
-    @if (isAuthenticated)
-    {
-      <div class="hf-header-actions">
-        @await Html.PartialAsync("~/Views/Shared/Partials/_AuthenticatedTopbar.cshtml")
-        @if (navigationContext == NavigationContext.Personal) { @await Html.PartialAsync("~/Views/Shared/Partials/_NotificationBell.cshtml") }
-        <div class="dropdown">
-          <button class="btn hf-profile-trigger dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Abrir menu de @userName">
-            <span class="hf-avatar" aria-hidden="true">@userName[..1].ToUpperInvariant()</span><span class="hf-profile-name">@userName</span>
-          </button>
-          <ul class="dropdown-menu dropdown-menu-end hf-profile-menu">
-            @if (!string.IsNullOrWhiteSpace(userEmail)) { <li><span class="dropdown-item-text hf-user-email">@userEmail</span></li><li><hr class="dropdown-divider"></li> }
-            <li><h2 class="dropdown-header">Minha conta</h2></li>
-            <li><a class="dropdown-item" href="/profile">Minha conta</a></li>
-            <li><a class="dropdown-item" href="/account/security">Segurança</a></li>
-            <li><a class="dropdown-item" href="/account/privacy">Gerenciar privacidade</a></li>
-            <li><a class="dropdown-item" href="/account/plan/usage">Meu plano</a></li>
-            <li><a class="dropdown-item" href="/billing">Pagamentos</a></li>
-            <li><a class="dropdown-item" href="/profile/accessibility">Preferências</a></li>
-            @if (Navigation.HasPlatformAccess(User!)) { <li><a class="dropdown-item" href="/superadmin">Gestão da Plataforma</a></li> }
-            <li><button type="button" class="dropdown-item" data-pwa-install hidden>Instalar HabitFlow</button></li>
-            <li><hr class="dropdown-divider"></li>
-            <li><form method="post" action="/logout">@Html.AntiForgeryToken()<button class="dropdown-item" data-loading-text="Saindo...">Sair</button></form></li>
-          </ul>
-        </div>
-      </div>
-    }
-    else
-    {
-      <div class="hf-auth-actions"><a class="btn btn-outline-success" href="/login">Entrar</a><a class="btn btn-success" href="/register">Começar grátis</a></div>
-    }
-  </div>
-</header>
-@if (!hasSidebar)
-{
-  <div class="offcanvas offcanvas-start hf-context-drawer" tabindex="-1" id="primaryDrawer" aria-labelledby="primaryDrawerLabel">
-    <div class="offcanvas-header"><h2 class="offcanvas-title h5" id="primaryDrawerLabel">Menu principal</h2><button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Fechar menu"></button></div>
-    <div class="offcanvas-body">@await Component.InvokeAsync("Navigation", new { context = navigationContext, variant = NavigationVariant.MobileDrawer })</div>
-  </div>
-}
-@if (hasSidebar)
-{
-  <div class="offcanvas offcanvas-start hf-context-drawer" tabindex="-1" id="contextDrawer" aria-labelledby="contextDrawerLabel">
-    <div class="offcanvas-header"><h2 class="offcanvas-title h5" id="contextDrawerLabel">@(navigationContext == NavigationContext.Account ? "Menu da conta" : "Menu da plataforma")</h2><button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Fechar menu"></button></div>
-    <div class="offcanvas-body">@await Component.InvokeAsync("Navigation", new { context = navigationContext, variant = NavigationVariant.MobileDrawer })</div>
-  </div>
-}
+@await Component.InvokeAsync("AppHeader")
 <div class="hf-page @(hasSidebar ? "hf-page-with-sidebar" : null)">
   @if (hasSidebar)
   {
@@ -128,10 +66,6 @@ else
 {
   <footer class="hf-footer hf-compact-footer" data-footer-context="@contextName"><div class="hf-shell">HabitFlow · <a href="/help">Ajuda</a> · <a href="/privacy">Política de Privacidade</a> · <a href="/account/privacy">Gerenciar privacidade</a> · <a href="/account/security">Segurança</a> · <a href="/account/plan/usage">Plano</a> · v@version · MNSOFT</div></footer>
 }
-@if (navigationContext == NavigationContext.Personal)
-{
-  @await Component.InvokeAsync("Navigation", new { context = navigationContext, variant = NavigationVariant.MobileBottom })
-}
 @await Html.PartialAsync("~/Views/Shared/Partials/_ToastHost.cshtml")
 @await Html.PartialAsync("~/Views/Shared/Partials/_FeedbackModal.cshtml")
 @if (isAuthenticated) { @await Html.PartialAsync("~/Views/Shared/Partials/_GlobalSearchModal.cshtml") }
@@ -146,6 +80,7 @@ else
 <script src="~/js/navigation-premium.js" asp-append-version="true"></script>
 <script src="~/js/app-shell-premium.js" asp-append-version="true"></script>
 <script src="~/js/global-search.js" asp-append-version="true"></script>
+<script src="~/js/app-header-v2.js" asp-append-version="true"></script>
 @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
