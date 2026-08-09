@@ -127,6 +127,12 @@ public static class DependencyInjection
         services.AddSingleton<PlanCatalogValidationService>();
         services.AddScoped<FeatureAccessService>();
         services.AddScoped<GoalService>();
+        services.AddScoped<GoalProgressService>();
+        services.AddScoped<GoalInsightsService>();
+        services.AddScoped<GoalRecommendationService>();
+        services.AddScoped<GoalQueryService>();
+        services.AddScoped<GoalLifecycleService>();
+        services.AddScoped<GoalLinkedHabitService>();
         services.AddScoped<SuperAdminService>();
         services.AddSingleton<PaymentMetadataSanitizer>();
         services.AddScoped<PlanService>();

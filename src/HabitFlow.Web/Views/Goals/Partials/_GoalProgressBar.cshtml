@@ -1,0 +1,2 @@
+@model GoalProgressViewModel
+<div class="hf-goal-progress"><div class="hf-goal-progress-label"><span>Progresso</span><strong>@Model.Percentage%</strong></div><div class="progress" role="progressbar" aria-label="@Model.AccessibleLabel" aria-valuenow="@Model.Percentage" aria-valuemin="0" aria-valuemax="100"><div class="progress-bar" style="--goal-progress:@Model.Percentage%"></div></div><small>@Model.CurrentValue de @Model.TargetValue</small></div>
