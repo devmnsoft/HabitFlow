@@ -2,15 +2,16 @@ using HabitFlow.Application;
 using HabitFlow.Domain;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using HabitFlow.Web.Models;
 
 namespace HabitFlow.Web.Controllers;
 
 [Authorize]
 [Route("my-day")]
-public sealed class MyDayController(DailyRoutinePlannerService planner,HabitScheduleExceptionService schedule,CompleteHabitUseCase complete,UndoHabitCompletionUseCase undo,UserTimeZoneService timeZone) : Controller
+public sealed class MyDayController(DailyRoutinePlannerService planner,HabitScheduleExceptionService schedule,DailyRoutineActionService actions,CompleteHabitUseCase complete,UndoHabitCompletionUseCase undo,UserTimeZoneService timeZone) : Controller
 {
     [HttpGet("")]
-    public async Task<IActionResult> Index(CancellationToken ct) => View(await planner.BuildAsync(new(this.CurrentClientId(),this.CurrentUserId(),timeZone.Today()),ct));
+    public async Task<IActionResult> Index(CancellationToken ct) => View(DailyRoutineViewModelMapper.From(await planner.BuildAsync(new(this.CurrentClientId(),this.CurrentUserId(),timeZone.Today()),ct)));
 
     [HttpPost("{habitId:guid}/complete"),ValidateAntiForgeryToken]
     public async Task<IActionResult> Complete(Guid habitId,string idempotencyKey,CancellationToken ct)
@@ -30,5 +31,13 @@ public sealed class MyDayController(DailyRoutinePlannerService planner,HabitSche
 
     [HttpPost("{habitId:guid}/restore"),ValidateAntiForgeryToken]
     public async Task<IActionResult> Restore(Guid habitId,int version,CancellationToken ct)
-    { var result=await schedule.RestoreOriginalScheduleAsync(this.CurrentClientId(),this.CurrentUserId(),habitId,timeZone.Today(),version,ct); TempData[result.IsSuccess?"Success":"Error"]=result.IsSuccess?"Alteração desfeita. O horário original voltou.":result.Error.Message; return RedirectToAction(nameof(Index)); }
+    { var result=await actions.RestoreAsync(this.CurrentClientId(),this.CurrentUserId(),habitId,timeZone.Today(),version,version,ct); TempData[result.Succeeded?"Success":"Error"]=result.Message; return RedirectToAction(nameof(Index)); }
+
+    [HttpPost("{habitId:guid}/time"),ValidateAntiForgeryToken]
+    public async Task<IActionResult> ChangeTime(Guid habitId,TimeOnly preferredTime,int version,CancellationToken ct)
+    { var result=await actions.ChangeTimeAsync(this.CurrentClientId(),this.CurrentUserId(),habitId,timeZone.Today(),preferredTime,version,ct); TempData[result.Succeeded?"Success":"Error"]=result.Message; return RedirectToAction(nameof(Index)); }
+
+    [HttpPost("{habitId:guid}/reorder"),ValidateAntiForgeryToken]
+    public async Task<IActionResult> Reorder(Guid habitId,int sortOrder,int version,CancellationToken ct)
+    { var result=await actions.ReorderAsync(this.CurrentClientId(),this.CurrentUserId(),habitId,timeZone.Today(),sortOrder,version,ct); TempData[result.Succeeded?"Success":"Error"]=result.Message; return RedirectToAction(nameof(Index)); }
 }

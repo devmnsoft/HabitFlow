@@ -1,0 +1,5 @@
+@model RoutinePeriodGroupViewModel
+<section class="routine-period" aria-labelledby="period-@Model.Key">
+ <header class="routine-period__header"><span class="routine-period__icon" aria-hidden="true">@Model.Icon</span><div><h2 id="period-@Model.Key">@Model.Title <span>@Model.Habits.Count</span></h2><p>@Model.Description</p></div></header>
+ <div class="routine-period__list">@foreach (var habit in Model.Habits) { <partial name="Partials/_RoutineHabitCard" model="habit" /> }</div>
+</section>
