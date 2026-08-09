@@ -21,6 +21,7 @@ public sealed class AppHeaderViewComponent(
         var email = principal.FindFirst(ClaimTypes.Email)?.Value ?? string.Empty;
         var model = new AppHeaderViewModel(authenticated, context, name, email,
             name.Length > 0 ? name[..1].ToUpperInvariant() : "H",
+            HttpContext.Request.Path.Value ?? "/",
             actions.ResolvePlanName(principal), legacyNavigation.HasPlatformAccess(principal), actions.HasBillingAccess(principal),
             await navigation.BuildAsync(context, principal, HttpContext.Request.Path, HttpContext.RequestAborted),
             quickActions.Build(principal), new(authenticated && context == NavigationContext.Personal));
