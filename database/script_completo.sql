@@ -142,7 +142,7 @@ create table if not exists habitflow.lgpd_requests (
     created_at timestamp not null default now(),
     updated_at timestamp not null default now(),
     completed_at timestamp null,
-    constraint ck_habitflow_lgpd_requests_type check (type in ('Export', 'Delete')),
+    constraint ck_habitflow_lgpd_requests_type check (type in ('Export', 'Delete', 'Anonymize')),
     constraint ck_habitflow_lgpd_requests_status check (status in ('Requested', 'InReview', 'Processing', 'Completed', 'Rejected', 'Canceled'))
 );
 
