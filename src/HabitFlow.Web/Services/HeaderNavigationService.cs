@@ -11,9 +11,13 @@ public sealed class HeaderNavigationService(NavigationService navigation, Active
         var items = source.Select(x => new HeaderNavigationItem(x.Code, x.Label, x.Description, x.Icon, x.Url, matcher.Matches(path, x.Url))).ToArray();
         var primaryCodes = context == NavigationContext.Public
             ? new[] { "home", "demo", "library", "plans" }
-            : new[] { "today", "my-day", "habits", "goals", "progress" };
+            : new[] { "today", "my-day", "habits", "goals" };
         var primary = items.Where(x => primaryCodes.Contains(x.Code)).ToArray();
-        var secondary = items.Where(x => !primaryCodes.Contains(x.Code)).ToArray();
+        // Compact desktop keeps these destinations in "Mais" after their links
+        // are progressively hidden from the horizontal navigation.
+        var compactMoreCodes = new[] { "habits", "goals" };
+        var secondary = items.Where(x => !primaryCodes.Contains(x.Code) ||
+            (context == NavigationContext.Personal && compactMoreCodes.Contains(x.Code))).ToArray();
         IReadOnlyList<HeaderNavigationGroup> groups = secondary.Length == 0 ? [] : [new("Mais", secondary)];
         var bottomCodes = new[] { "today", "my-day", "habits", "progress" };
         var bottom = items.Where(x => bottomCodes.Contains(x.Code)).ToList();

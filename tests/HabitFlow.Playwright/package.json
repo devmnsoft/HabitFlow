@@ -1,6 +1,11 @@
 {
   "name": "habitflow-layout-visual-tests",
   "private": true,
-  "scripts": { "test": "playwright test" },
-  "devDependencies": { "@playwright/test": "1.54.1" }
+  "scripts": {
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.54.1"
+  },
+  "type": "module"
 }
