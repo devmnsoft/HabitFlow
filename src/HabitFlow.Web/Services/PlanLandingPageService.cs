@@ -12,6 +12,7 @@ public sealed class PlanLandingPageService(IPlanCatalogRepository repository)
     {
         var catalog = await repository.GetPublicCatalogAsync(ct);
         var cards = catalog.Select(ToCard).ToArray();
+        if (cards.Length == 0) return BuildFallback();
         return new(cards,
         [
             new("Clareza todos os dias", "Veja quais hábitos importam hoje e o que pode esperar.", "calendar"),
@@ -28,6 +29,16 @@ public sealed class PlanLandingPageService(IPlanCatalogRepository repository)
             new("Cancelamento simples", "Ao cancelar, seus dados não são apagados automaticamente.", "check")
         ], new("Comece pequeno. Evolua no seu ritmo.", "Crie sua conta grátis e descubra uma rotina mais clara, sem cartão.", "Começar grátis", "/register"));
     }
+
+    public static PlanLandingPageViewModel BuildFallback() => new(
+        [new(PlanCodes.Free, "Gratuito", "Para começar com o essencial", "Organize sua rotina e acompanhe o que importa hoje.", null, false, null, null, null,
+            ["Comece sem cartão", "Hábitos e objetivos em um só lugar", "Privacidade sob seu controle"], "Começar grátis", "/register", true)],
+        [new("Mais clareza no dia", "Organize os próximos passos sem transformar sua rotina em pressão.", "calendar"),
+         new("Evolução sem perder dados", "Seus dados não são apagados quando sua assinatura muda.", "shield")],
+        [new("Começar", "Hábitos e objetivos essenciais", "Mais limites e recursos quando disponíveis"),
+         new("Privacidade", "Central de Privacidade incluída", "Central de Privacidade incluída")], BuildFaq(),
+        [new("Privacidade por padrão", "Você controla seus dados pela Central de Privacidade.", "shield")],
+        new("Comece gratuitamente", "Os detalhes das assinaturas estão sendo atualizados. O plano gratuito continua disponível.", "Começar grátis", "/register"));
 
     private static CommercialPlanCardViewModel ToCard(PublicPlan plan)
     {

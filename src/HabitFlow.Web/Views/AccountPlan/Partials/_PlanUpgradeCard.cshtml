@@ -1,0 +1,2 @@
+@model HabitFlow.Web.Models.PlanUsageViewModel
+@if(Model.Upgrade is not null){<aside class="card border-success"><div class="card-body p-4"><h2 class="h4">@Model.Upgrade.Title</h2><p>@Model.Upgrade.Description</p><a class="btn btn-success" href="@Model.Upgrade.Url">Comparar planos</a></div></aside>}

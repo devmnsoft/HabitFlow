@@ -9,7 +9,6 @@ namespace HabitFlow.Web.Controllers;
 public sealed class BillingController(SubscriptionService subscriptions, PaymentCheckoutService checkout, IPaymentTransactionRepository transactions) : Controller
 {
     [HttpGet("billing")]
-    [HttpGet("account/plan")]
     public async Task<IActionResult> Index(CancellationToken ct)
     { var userId = this.CurrentUserId(); ViewBag.Subscription = await subscriptions.GetUserSubscriptionAsync(userId, ct); return View(await transactions.ListByUserAsync(userId, ct)); }
 

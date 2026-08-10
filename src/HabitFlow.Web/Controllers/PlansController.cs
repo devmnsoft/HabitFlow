@@ -18,7 +18,7 @@ public sealed class PlansController(HabitFlow.Web.Services.PlanLandingPageServic
         catch (Exception exception)
         {
             logger.LogError(exception, "Não foi possível carregar o catálogo público de planos");
-            result = new([], [], [], [], [], new("Comece gratuitamente", "O catálogo está sendo atualizado.", "Começar grátis", "/register"));
+            result = HabitFlow.Web.Services.PlanLandingPageService.BuildFallback();
             TempData["Warning"] = "Os detalhes dos planos estão temporariamente indisponíveis. Você ainda pode começar gratuitamente.";
         }
 
