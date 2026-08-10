@@ -14,4 +14,8 @@ public sealed class HabitReminderRepository(SqlExecutor db) : IHabitReminderRepo
     public async Task CreateAsync(HabitReminder r, CancellationToken ct = default) => _ = await db.ExecuteAsync("insert into habitflow.habit_reminders(id,client_id,user_id,habit_id,reminder_time,timezone,days_of_week,is_active,next_trigger_at,created_at,updated_at) values(@Id,@ClientId,@UserId,@HabitId,@ReminderTime,@Timezone,@DaysOfWeek,@IsActive,@NextTriggerAt,@CreatedAt,@UpdatedAt)", r, ct);
     public async Task<bool> SetActiveAsync(Guid clientId, Guid userId, Guid id, bool active, DateTimeOffset? next, CancellationToken ct = default) =>
         await db.ExecuteAsync("update habitflow.habit_reminders set is_active=@active,next_trigger_at=@next,updated_at=now() where id=@id and client_id=@clientId and user_id=@userId", new { clientId,userId,id,active,next }, ct) == 1;
+    public async Task<bool> SnoozeAsync(Guid clientId, Guid userId, Guid id, DateTimeOffset next, CancellationToken ct = default) =>
+        await db.ExecuteAsync("update habitflow.habit_reminders set next_trigger_at=@next,updated_at=now() where id=@id and client_id=@clientId and user_id=@userId and is_active", new { clientId,userId,id,next }, ct) == 1;
+    public async Task<bool> DeleteAsync(Guid clientId, Guid userId, Guid id, CancellationToken ct = default) =>
+        await db.ExecuteAsync("delete from habitflow.habit_reminders where id=@id and client_id=@clientId and user_id=@userId", new { clientId,userId,id }, ct) == 1;
 }
