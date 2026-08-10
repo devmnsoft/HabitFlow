@@ -1,0 +1,2 @@
+@model HabitFlow.Web.Models.AccountPrivacyViewModel
+<div class="privacy-summary" aria-label="Resumo da conta"><article><span>Conta protegida</span><strong>@Model.Email</strong><small>Somente seus dados são exibidos</small></article><article><span>Consentimentos opcionais</span><strong>@Model.Consents.Count(x => x.Key != "essential" && x.Granted) de 2 ativos</strong><small>Você pode mudar quando quiser</small></article><article><span>Solicitações</span><strong>@Model.Requests.Count</strong><small>Histórico auditável da sua conta</small></article></div>

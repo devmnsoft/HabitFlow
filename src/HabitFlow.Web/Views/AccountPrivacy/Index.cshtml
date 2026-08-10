@@ -1,0 +1,19 @@
+@model HabitFlow.Web.Models.AccountPrivacyViewModel?
+@{ ViewData["Title"] = "Central de Privacidade"; }
+<section class="privacy-center" aria-labelledby="privacy-title">
+  @if (Model is null) { <div class="alert alert-warning" role="alert"><h1 id="privacy-title">Central de Privacidade</h1><p>Não foi possível carregar seus dados agora. Nenhum dado da conta foi alterado.</p></div> }
+  else {
+    <partial name="Partials/_PrivacyHero" model="Model" />
+    <partial name="Partials/_PrivacySummaryCards" model="Model" />
+    <div class="privacy-center__grid">
+      <div class="privacy-center__main">
+        <partial name="Partials/_ConsentPanel" model="Model" />
+        <partial name="Partials/_DataExportPanel" model="Model" />
+        <partial name="Partials/_DataDeletionPanel" model="Model" />
+      </div>
+      <aside><partial name="Partials/_PrivacyHelpCard" model="Model" /></aside>
+    </div>
+    <partial name="Partials/_PrivacyActivityTimeline" model="Model" />
+  }
+</section>
+@section Styles { <link rel="stylesheet" href="~/css/account-privacy-v1.css" asp-append-version="true" /> }

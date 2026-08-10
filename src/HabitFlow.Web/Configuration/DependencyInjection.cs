@@ -23,6 +23,8 @@ public static class DependencyInjection
         services.AddHabitFlowAuthentication(configuration, environment);
         services.AddScoped<ApplicationFeedbackService>();
         services.AddScoped<FeedbackService>();
+        services.AddScoped<UserFeedbackService>();
+        services.AddScoped<AccountPrivacyService>();
         services.AddScoped<INavigationAccessEvaluator, NavigationAccessEvaluator>();
         services.AddScoped<RequestPlanAccessContext>();
         services.AddScoped<NavigationService>();
