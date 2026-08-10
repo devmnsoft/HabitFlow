@@ -1,0 +1,2 @@
+@model HabitFlow.Web.Models.PlanUsageViewModel
+@if(Model.BlockedFeatures.Count>0){<section class="mb-4" aria-labelledby="blocked-title"><h2 id="blocked-title" class="h3">Recursos não incluídos</h2><p>Você pode continuar usando tudo o que já está disponível. Compare os planos quando precisar de mais.</p><ul>@foreach(var item in Model.BlockedFeatures){<li><strong>@item.Name:</strong> @item.Description</li>}</ul></section>}

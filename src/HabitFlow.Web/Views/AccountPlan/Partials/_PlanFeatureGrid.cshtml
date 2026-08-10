@@ -1,0 +1,2 @@
+@model HabitFlow.Web.Models.PlanUsageViewModel
+<section class="mb-4" aria-labelledby="features-title"><h2 id="features-title" class="h3">Recursos do seu plano</h2><p>@Model.HistoryDescription</p><div class="row g-3">@foreach(var feature in Model.Features){<div class="col-md-4"><article class="card h-100"><div class="card-body"><h3 class="h5">@feature.Name</h3><p class="mb-0">@feature.Description</p></div></article></div>}</div></section>

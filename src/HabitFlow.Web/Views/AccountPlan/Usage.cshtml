@@ -1,0 +1,9 @@
+@model HabitFlow.Web.Models.PlanUsageViewModel
+@{ ViewData["Title"] = "Uso do plano"; }
+<main class="container py-4 plan-usage-page">
+  <partial name="Partials/_PlanUsageHero" model="Model" />
+  <partial name="Partials/_PlanUsageMeters" model="Model" />
+  <partial name="Partials/_PlanFeatureGrid" model="Model" />
+  <partial name="Partials/_PlanBlockedFeatures" model="Model" />
+  <partial name="Partials/_PlanUpgradeCard" model="Model" />
+</main>

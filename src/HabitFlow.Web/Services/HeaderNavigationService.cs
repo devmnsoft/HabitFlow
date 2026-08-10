@@ -14,7 +14,7 @@ public sealed class HeaderNavigationService(NavigationService navigation, Active
             : new[] { "today", "my-day", "habits", "goals", "progress" };
         var primary = items.Where(x => primaryCodes.Contains(x.Code)).ToArray();
         var secondary = items.Where(x => !primaryCodes.Contains(x.Code)).ToArray();
-        IReadOnlyList<HeaderNavigationGroup> groups = secondary.Length == 0 ? [] : [new(context == NavigationContext.Public ? "Mais" : "Explorar", secondary)];
+        IReadOnlyList<HeaderNavigationGroup> groups = secondary.Length == 0 ? [] : [new("Mais", secondary)];
         var bottomCodes = new[] { "today", "my-day", "habits", "progress" };
         var bottom = items.Where(x => bottomCodes.Contains(x.Code)).ToList();
         if (user.Identity?.IsAuthenticated == true)

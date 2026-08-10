@@ -1,0 +1,2 @@
+@model HabitFlow.Web.Models.PlanChangeImpactViewModel
+<section aria-labelledby="impact-title"><h2 id="impact-title" class="h5">O que acontece</h2><p>@Model.ConfirmationMessage</p><ul>@foreach(var change in Model.Changes){<li>@change</li>}</ul>@if(Model.IsCurrent){<p class="alert alert-info">Este já é o seu plano atual.</p>}</section>

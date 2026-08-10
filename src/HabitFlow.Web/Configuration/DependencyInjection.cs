@@ -32,6 +32,7 @@ public static class DependencyInjection
         services.AddScoped<HeaderActionService>();
         services.AddScoped<HeaderQuickActionService>();
         services.AddScoped<PlanLandingPageService>();
+        services.AddScoped<PlanUsageService>();
         services.AddSingleton<LayoutContextResolver>();
         services.AddHostedService<BillingCommunicationJob>();
         services.AddHostedService<TransactionalEmailHostedService>();
