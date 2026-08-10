@@ -36,7 +36,20 @@ public sealed class RemindersController(HabitReminderService reminders) : Contro
     [ValidateAntiForgeryToken, HttpPost("/reminders/{id:guid}/resume")]
     public Task<IActionResult> Resume(Guid id, CancellationToken ct) => Change(id, true, ct);
     [ValidateAntiForgeryToken, HttpPost("/reminders/{id:guid}/delete")]
-    public Task<IActionResult> Delete(Guid id, CancellationToken ct) => Change(id, false, ct);
+    public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
+    {
+        var result = await reminders.DeleteAsync(this.CurrentClientId(), this.CurrentUserId(), id, ct);
+        TempData[result.IsSuccess ? "Success" : "Error"] = result.IsSuccess ? "Lembrete excluído." : result.Error.Message;
+        return RedirectToAction(nameof(Index));
+    }
+
+    [ValidateAntiForgeryToken, HttpPost("/reminders/{id:guid}/snooze")]
+    public async Task<IActionResult> Snooze(Guid id, [FromForm] int minutes = 15, CancellationToken ct = default)
+    {
+        var result = await reminders.SnoozeAsync(this.CurrentClientId(), this.CurrentUserId(), id, minutes, ct);
+        TempData[result.IsSuccess ? "Success" : "Error"] = result.IsSuccess ? $"Lembrete adiado por {minutes} minutos." : result.Error.Message;
+        return RedirectToAction(nameof(Index));
+    }
 
     private async Task<IActionResult> Change(Guid id, bool active, CancellationToken ct)
     {

@@ -27,7 +27,7 @@ public sealed class ReminderScheduleCalculator(TimeProvider timeProvider)
     }
 }
 
-public sealed class HabitReminderService(IHabitReminderRepository repository, ReminderScheduleCalculator schedules)
+public sealed class HabitReminderService(IHabitReminderRepository repository, ReminderScheduleCalculator schedules, TimeProvider timeProvider)
 {
     public Task<IReadOnlyList<HabitReminder>> ListAsync(Guid clientId, Guid userId, Guid? habitId, CancellationToken ct = default) =>
         repository.ListAsync(clientId, userId, habitId, ct);
@@ -54,4 +54,20 @@ public sealed class HabitReminderService(IHabitReminderRepository repository, Re
         return await repository.SetActiveAsync(clientId, userId, id, active, next, ct)
             ? Result.Success() : Result.Failure("reminder.conflict", "O lembrete foi alterado. Atualize a página.");
     }
+
+    public async Task<Result> SnoozeAsync(Guid clientId, Guid userId, Guid id, int minutes, CancellationToken ct = default)
+    {
+        if (minutes is < 5 or > 1440)
+            return Result.Failure("reminder.snooze_range", "Escolha um adiamento entre 5 minutos e 24 horas.");
+        var reminder = await repository.GetOwnedAsync(clientId, userId, id, ct);
+        if (reminder is null) return Result.Failure("reminder.not_found", "Lembrete não encontrado.");
+        if (!reminder.IsActive) return Result.Failure("reminder.paused", "Reative o lembrete antes de adiá-lo.");
+        var next = timeProvider.GetUtcNow().AddMinutes(minutes);
+        return await repository.SnoozeAsync(clientId, userId, id, next, ct)
+            ? Result.Success() : Result.Failure("reminder.conflict", "O lembrete foi alterado. Atualize a página.");
+    }
+
+    public async Task<Result> DeleteAsync(Guid clientId, Guid userId, Guid id, CancellationToken ct = default) =>
+        await repository.DeleteAsync(clientId, userId, id, ct)
+            ? Result.Success() : Result.Failure("reminder.not_found", "Lembrete não encontrado.");
 }

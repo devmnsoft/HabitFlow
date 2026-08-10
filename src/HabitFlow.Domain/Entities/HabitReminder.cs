@@ -11,4 +11,6 @@ public interface IHabitReminderRepository
     Task<bool> HabitBelongsToUserAsync(Guid clientId, Guid userId, Guid habitId, CancellationToken ct = default);
     Task CreateAsync(HabitReminder reminder, CancellationToken ct = default);
     Task<bool> SetActiveAsync(Guid clientId, Guid userId, Guid id, bool active, DateTimeOffset? next, CancellationToken ct = default);
+    Task<bool> SnoozeAsync(Guid clientId, Guid userId, Guid id, DateTimeOffset next, CancellationToken ct = default);
+    Task<bool> DeleteAsync(Guid clientId, Guid userId, Guid id, CancellationToken ct = default);
 }
