@@ -24,25 +24,60 @@
     request?.abort(); root.hidden = true; root.setAttribute('aria-hidden', 'true');
     document.body.classList.remove('hf-search-open'); returnFocus?.focus();
   };
-  const escape = value => { const node = document.createElement('span'); node.textContent = value ?? ''; return node.innerHTML; };
+  const element = (tag, className, text) => {
+    const node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text !== undefined) node.textContent = text;
+    return node;
+  };
+  const replaceResults = node => results.replaceChildren(node);
+  const message = (className, title, description) => {
+    const container = element('div', className);
+    container.append(element('strong', '', title), element('span', '', description));
+    return container;
+  };
   const render = data => {
     activeIndex = -1; input.removeAttribute('aria-activedescendant');
     if (!data.groups.length) {
-      results.innerHTML = '<div class="hf-search-empty"><strong>Nada por aqui ainda.</strong><span>Tente outra palavra ou confira a ortografia.</span></div>';
+      replaceResults(message('hf-search-empty', 'Nada por aqui ainda.', 'Tente outra palavra ou confira a ortografia.'));
       status.textContent = 'Nenhum resultado encontrado.'; return;
     }
     const groups = data.groups.reduce((all, item) => { (all[item.type] ??= []).push(item); return all; }, {});
     let number = 0;
-    results.innerHTML = Object.entries(groups).map(([type, entries]) => `<section><h3 class="hf-search-group-title">${escape(type)}</h3>${entries.map(item => { const id = `hf-search-result-${number++}`; return `<a id="${id}" class="hf-search-item" role="option" aria-selected="false" href="${escape(item.url)}"><span class="hf-search-icon" aria-hidden="true">${item.icon === 'target' ? '◎' : item.icon === 'book' ? '▤' : '✓'}</span><span class="hf-search-copy"><strong>${escape(item.title)}</strong><span>${escape(item.description)}</span></span><span aria-hidden="true">→</span></a>`; }).join('')}</section>`).join('');
+    const fragment = document.createDocumentFragment();
+    Object.entries(groups).forEach(([type, entries]) => {
+      const section = document.createElement('section');
+      section.append(element('h3', 'hf-search-group-title', type));
+      entries.forEach(item => {
+        const link = element('a', 'hf-search-item');
+        link.id = `hf-search-result-${number++}`;
+        link.setAttribute('role', 'option');
+        link.setAttribute('aria-selected', 'false');
+        link.href = typeof item.url === 'string' && item.url.startsWith('/') ? item.url : '#';
+        const icon = element('span', 'hf-search-icon', item.icon === 'target' ? '◎' : item.icon === 'book' ? '▤' : '✓');
+        icon.setAttribute('aria-hidden', 'true');
+        const copy = element('span', 'hf-search-copy');
+        copy.append(element('strong', '', item.title), element('span', '', item.description));
+        const arrow = element('span', '', '→');
+        arrow.setAttribute('aria-hidden', 'true');
+        link.append(icon, copy, arrow);
+        section.append(link);
+      });
+      fragment.append(section);
+    });
+    results.replaceChildren(fragment);
     status.textContent = `${data.groups.length} resultados encontrados.`;
   };
   const search = async () => {
     const query = input.value.trim();
-    if (query.length < 2) { results.innerHTML = '<div class="hf-search-welcome"><strong>Continue digitando…</strong><span>Use pelo menos 2 caracteres.</span></div>'; return; }
+    if (query.length < 2) { replaceResults(message('hf-search-welcome', 'Continue digitando…', 'Use pelo menos 2 caracteres.')); return; }
     request?.abort(); request = new AbortController();
-    results.innerHTML = '<div class="hf-search-loading" aria-hidden="true"><span></span><span></span><span></span></div>'; status.textContent = 'Buscando…';
+    const loading = element('div', 'hf-search-loading');
+    loading.setAttribute('aria-hidden', 'true');
+    loading.append(document.createElement('span'), document.createElement('span'), document.createElement('span'));
+    replaceResults(loading); status.textContent = 'Buscando…';
     try { const response = await fetch(`/global-search?q=${encodeURIComponent(query)}`, { signal: request.signal, headers: { Accept: 'application/json' } }); if (!response.ok) throw new Error(); render(await response.json()); }
-    catch (error) { if (error.name !== 'AbortError') { results.innerHTML = '<div class="hf-search-empty"><strong>Não foi possível buscar agora.</strong><span>Tente novamente em instantes.</span></div>'; status.textContent = 'Erro ao buscar.'; } }
+    catch (error) { if (error.name !== 'AbortError') { replaceResults(message('hf-search-empty', 'Não foi possível buscar agora.', 'Tente novamente em instantes.')); status.textContent = 'Erro ao buscar.'; } }
   };
   document.querySelectorAll('[data-search-open]').forEach(trigger => trigger.addEventListener('click', () => open(trigger)));
   root.querySelectorAll('[data-search-close]').forEach(trigger => trigger.addEventListener('click', close));
