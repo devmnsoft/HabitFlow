@@ -3,8 +3,15 @@
     const registration = await navigator.serviceWorker.register('/service-worker.js');
     registration.addEventListener('updatefound', () => {
       const worker = registration.installing;
-      worker?.addEventListener('statechange', () => {
-        if (worker.state === 'installed' && navigator.serviceWorker.controller && window.confirm('Uma atualização do HabitFlow está pronta. Atualizar agora?')) worker.postMessage({ type: 'SKIP_WAITING' });
+      worker?.addEventListener('statechange', async () => {
+        if (worker.state !== 'installed' || !navigator.serviceWorker.controller) return;
+        const accepted = await window.HabitFlowFeedback?.confirm({
+          title: 'Atualização disponível',
+          message: 'Uma atualização do HabitFlow está pronta. Atualizar agora?',
+          confirmLabel: 'Atualizar agora',
+          cancelLabel: 'Mais tarde'
+        });
+        if (accepted) worker.postMessage({ type: 'SKIP_WAITING' });
       });
     });
     navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload());
