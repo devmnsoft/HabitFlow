@@ -78,7 +78,7 @@ else
 @await Html.PartialAsync("~/Views/Shared/Partials/_FeedbackModal.cshtml")
 @await Html.PartialAsync("~/Views/Shared/Partials/_ConfirmationDialog.cshtml")
 @if (productTip is not null) { @await Html.PartialAsync("~/Views/Shared/Partials/_ProductTipPopover.cshtml", productTip) }
-@if (isAuthenticated) { @await Html.PartialAsync("~/Views/Shared/Partials/_GlobalSearchModal.cshtml") }
+@if (isAuthenticated && navigationContext != NavigationContext.Public) { @await Html.PartialAsync("~/Views/Shared/Partials/_GlobalSearchModal.cshtml") }
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="~/js/site.js" asp-append-version="true"></script>
 <script src="~/js/design-system.js" asp-append-version="true"></script>

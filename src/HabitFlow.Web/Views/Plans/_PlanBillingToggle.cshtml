@@ -1,4 +1,8 @@
+@model HabitFlow.Web.Models.PlanLandingPageViewModel
+@if (Model.HasMonthlyBilling || Model.HasYearlyBilling)
+{
 <div class="btn-group" role="group" aria-label="Ciclo de pagamento">
-  <button class="btn btn-success js-cycle active" type="button" data-cycle="Monthly">Mensal</button>
-  <button class="btn btn-outline-success js-cycle" type="button" data-cycle="Yearly">Anual</button>
+  @if (Model.HasMonthlyBilling) { <button class="btn btn-success js-cycle active" type="button" data-cycle="Monthly" aria-pressed="true">Mensal</button> }
+  @if (Model.HasYearlyBilling) { <button class="btn @(Model.HasMonthlyBilling ? "btn-outline-success" : "btn-success active") js-cycle" type="button" data-cycle="Yearly" aria-pressed="@(!Model.HasMonthlyBilling).ToString().ToLowerInvariant()">Anual</button> }
 </div>
+}

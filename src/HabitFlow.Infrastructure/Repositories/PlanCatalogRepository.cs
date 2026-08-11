@@ -23,6 +23,7 @@ public sealed class PlanCatalogRepository(SqlExecutor db, ILogger<PlanCatalogRep
                 and not exists (
                   select 1 from habitflow.plan_features pf join habitflow.feature_catalog f on f.code=pf.feature_code
                   where pf.plan_id=p.id and f.is_public
+                    and (coalesce(pf.bool_value, false) or pf.int_value is not null or nullif(pf.string_value, '') is not null)
                     and (f.implementation_status <> 'Implemented' or not f.is_marketable))
               ))
             order by p.sort_order, p.public_name
@@ -115,8 +116,23 @@ public sealed class PlanCatalogRepository(SqlExecutor db, ILogger<PlanCatalogRep
                 and (pp.valid_until is null or pp.valid_until > now())
                 and not exists (
                   select 1 from habitflow.plan_features pf join habitflow.feature_catalog f on f.code=pf.feature_code
-                  where pf.plan_id=p.id and f.is_public and (f.implementation_status <> 'Implemented' or not f.is_marketable)))
+                  where pf.plan_id=p.id and f.is_public
+                    and (coalesce(pf.bool_value, false) or pf.int_value is not null or nullif(pf.string_value, '') is not null)
+                    and (f.implementation_status <> 'Implemented' or not f.is_marketable)))
             """, new { planCode, billingCycle }, ct);
+
+    public async Task<IReadOnlyList<PlanIntegrityCatalogItem>> GetIntegrityCatalogAsync(CancellationToken ct = default) =>
+        (await db.QueryAsync<PlanIntegrityCatalogItem>("""
+            select p.code, p.public_name, p.is_public, p.is_sellable, p.sales_status,
+                   pp.billing_cycle, pp.amount, f.code as feature_code, f.name as feature_name,
+                   f.implementation_status, f.is_marketable, pf.bool_value, pf.int_value, pf.string_value
+            from habitflow.plans p
+            left join habitflow.plan_prices pp on pp.plan_id=p.id and pp.is_active
+              and pp.valid_from <= now() and (pp.valid_until is null or pp.valid_until > now())
+            left join habitflow.plan_features pf on pf.plan_id=p.id
+            left join habitflow.feature_catalog f on f.code=pf.feature_code and f.is_active
+            order by p.sort_order, pp.billing_cycle, f.code
+            """, null, ct)).ToList();
 
     private sealed record PlanRow(Guid Id, string Code, string PublicName, string? Headline, string? Description, string? AudienceText, string? BadgeText, bool IsFeatured, int SortOrder);
     internal sealed class ClientPlanAccessRow

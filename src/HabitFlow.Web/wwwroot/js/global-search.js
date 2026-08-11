@@ -16,6 +16,7 @@
     links[activeIndex].scrollIntoView({ block: 'nearest' });
   };
   const open = trigger => {
+    if (!root.hidden) return;
     returnFocus = trigger;
     root.hidden = false; root.setAttribute('aria-hidden', 'false');
     document.body.classList.add('hf-search-open'); input.focus();
@@ -79,7 +80,14 @@
     try { const response = await fetch(`/global-search?q=${encodeURIComponent(query)}`, { signal: request.signal, headers: { Accept: 'application/json' } }); if (!response.ok) throw new Error(); render(await response.json()); }
     catch (error) { if (error.name !== 'AbortError') { replaceResults(message('hf-search-empty', 'Não foi possível buscar agora.', 'Tente novamente em instantes.')); status.textContent = 'Erro ao buscar.'; } }
   };
-  document.querySelectorAll('[data-search-open]').forEach(trigger => trigger.addEventListener('click', () => open(trigger)));
+  const openTriggers = document.querySelectorAll('[data-search-open], [data-global-search-open]');
+  openTriggers.forEach(trigger => trigger.addEventListener('click', () => open(trigger)));
+  document.addEventListener('keydown', event => {
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+      event.preventDefault();
+      open(document.activeElement instanceof HTMLElement ? document.activeElement : openTriggers[0]);
+    }
+  });
   root.querySelectorAll('[data-search-close]').forEach(trigger => trigger.addEventListener('click', close));
   input.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(search, 250); });
   root.addEventListener('keydown', event => {
