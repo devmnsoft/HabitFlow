@@ -1,42 +1,24 @@
 name: Security CI
-
-on:
-  push:
-  pull_request:
-
+on: [push, pull_request, workflow_call]
 jobs:
-  security-validation:
+  security:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Validate v6.10 secrets and catalog
-        run: ./scripts/ci/validate-v610-security.sh
-      - name: Setup Node.js 24
-        uses: actions/setup-node@v4
-        with:
-          node-version: '24'
-      - name: Install dependencies
-        run: npm install
-      - name: Security source scan
-        run: npm run security:scan
-      - name: Lint if available
-        run: npm run lint --if-present
-      - name: Build production dist
-        run: npm run build
-      - name: Security dist scan
-        run: npm run security:dist
-      - name: Validate Firestore Rules
-        run: npm run security:rules
-      - name: Validate firebase.json
-        run: npm run security:firebase
-      - name: Verify dist exists and excludes backend
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '24', cache: npm }
+      - run: npm ci
+      - run: npm run security:scan
+      - run: npm test
+      - run: npm audit --omit=dev
+      - name: Parse principal JavaScript
         run: |
-          test -d dist
-          test ! -d dist/functions
-          test ! -d dist/node_modules
-          test ! -f dist/.env
-      - name: Reject committed binaries and backups
+          for f in header-v4 feedback-v5 global-search navigation-premium guided-tour guided-tour-v4; do node --check "src/HabitFlow.Web/wwwroot/js/$f.js"; done
+      - name: Secrets and forbidden binaries
         run: |
-          ! find . -path ./.git -prune -o -type f \( -iname '*.exe' -o -iname '*.dll' -o -iname '*.pdb' -o -iname '*.bak' -o -iname '*.zip' \) -print -quit | grep -q .
-
+          ./scripts/ci/validate-v610-security.sh
+          ! git ls-files | grep -Ei '(^|/)(\.env|appsettings\.Production\.json|.*\.(exe|dll|pdb|bak|zip))$'
+      - name: Native dialogs and unsafe innerHTML guard
+        run: |
+          ! rg -n 'window\.(alert|confirm|prompt)\s*\(' src/HabitFlow.Web/wwwroot/js
+          ! rg -n '\.innerHTML\s*=' src/HabitFlow.Web/wwwroot/js

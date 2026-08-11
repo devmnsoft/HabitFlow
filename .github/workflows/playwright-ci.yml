@@ -1,0 +1,54 @@
+name: Playwright CI
+on: [push, pull_request, workflow_call]
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        env: { POSTGRES_USER: postgres, POSTGRES_PASSWORD: postgres, POSTGRES_DB: habitflow }
+        ports: ['5432:5432']
+        options: --health-cmd "pg_isready -U postgres -d habitflow" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      PGHOST: localhost
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: habitflow
+      ASPNETCORE_ENVIRONMENT: Development
+      HABITFLOW_BASE_URL: http://127.0.0.1:5097
+      HABITFLOW_EXTERNAL_SERVER: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with: { dotnet-version: '10.0.x' }
+      - uses: actions/setup-node@v4
+        with: { node-version: '24' }
+      - run: dotnet restore HabitFlow.sln && dotnet build HabitFlow.sln -c Release --no-restore
+      - run: ./scripts/database/run-migrations.sh
+      - working-directory: tests/HabitFlow.Playwright
+        run: npm ci && npx playwright install --with-deps chromium
+      - name: Restore authenticated browser state
+        env: { AUTH_STATE_B64: '${{ secrets.HABITFLOW_AUTH_STORAGE_B64 }}' }
+        run: |
+          test -n "$AUTH_STATE_B64" || { echo 'HABITFLOW_AUTH_STORAGE_B64 secret is required for authenticated release tests'; exit 1; }
+          mkdir -p playwright/.auth
+          printf '%s' "$AUTH_STATE_B64" | base64 --decode > playwright/.auth/ci.json
+          echo "HABITFLOW_AUTH_STORAGE=$GITHUB_WORKSPACE/playwright/.auth/ci.json" >> "$GITHUB_ENV"
+      - name: Start ASP.NET application
+        run: nohup dotnet run --no-build -c Release --project src/HabitFlow.Web --urls http://127.0.0.1:5097 > /tmp/habitflow.log 2>&1 &
+      - name: Wait for health
+        run: for i in {1..60}; do curl -fsS http://127.0.0.1:5097/health && exit 0; sleep 2; done; cat /tmp/habitflow.log; exit 1
+      - name: Execute real Playwright suites
+        working-directory: tests/HabitFlow.Playwright
+        run: npx playwright test
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-evidence
+          if-no-files-found: error
+          path: |
+            artifacts/v6120/screenshots
+            artifacts/v6120/visual-report.md
+            tests/HabitFlow.Playwright/test-results
+            tests/HabitFlow.Playwright/playwright-report
+            /tmp/habitflow.log

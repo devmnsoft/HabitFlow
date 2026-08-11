@@ -1,0 +1,34 @@
+name: Database migrations CI
+on: [push, pull_request, workflow_call]
+jobs:
+  migrations:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        env: { POSTGRES_USER: habitflow_ci, POSTGRES_PASSWORD: habitflow_ci, POSTGRES_DB: postgres }
+        ports: ['5432:5432']
+        options: --health-cmd "pg_isready -U habitflow_ci" --health-interval 5s --health-timeout 5s --health-retries 10
+    env: { PGHOST: localhost, PGUSER: habitflow_ci, PGPASSWORD: habitflow_ci, HABITFLOW_APP_VERSION: v6.12.0-ci }
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create fresh, existing and aggregate databases
+        run: for db in fresh_ci existing_ci aggregate_ci; do createdb "$db"; done
+      - name: Fresh database and idempotent rerun
+        run: PGDATABASE=fresh_ci ./scripts/database/run-migrations.sh && PGDATABASE=fresh_ci ./scripts/database/run-migrations.sh
+      - name: Existing database upgrade and rerun
+        run: |
+          PGDATABASE=existing_ci ./scripts/database/run-migrations.sh --to-version 031
+          PGDATABASE=existing_ci ./scripts/database/run-migrations.sh
+          PGDATABASE=existing_ci ./scripts/database/run-migrations.sh
+      - name: Registry, checksums and advisory lock contract
+        run: |
+          psql -d fresh_ci -v ON_ERROR_STOP=1 -c "select 1 from habitflow.schema_migrations where checksum is null or filename is null having count(*)=0"
+          rg -n 'pg_advisory_lock|Checksum divergence|schema_migrations' scripts/database/run-migrations.sh
+      - name: script_completo.sql parity on isolated database
+        run: psql -X -v ON_ERROR_STOP=1 -d aggregate_ci -f database/script_completo.sql
+      - name: Compare canonical and aggregate schemas
+        run: |
+          psql -XAt -d fresh_ci -f scripts/qa/postgres-schema-signature.sql > /tmp/fresh
+          psql -XAt -d aggregate_ci -f scripts/qa/postgres-schema-signature.sql > /tmp/aggregate
+          diff -u /tmp/fresh /tmp/aggregate

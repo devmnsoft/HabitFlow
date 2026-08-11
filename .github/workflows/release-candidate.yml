@@ -1,0 +1,22 @@
+name: Release candidate
+on:
+  pull_request:
+  workflow_dispatch:
+jobs:
+  dotnet: { uses: ./.github/workflows/dotnet-ci.yml }
+  security: { uses: ./.github/workflows/security-ci.yml }
+  migrations: { uses: ./.github/workflows/database-migrations-ci.yml }
+  playwright:
+    uses: ./.github/workflows/playwright-ci.yml
+    secrets: inherit
+  report:
+    needs: [dotnet, security, migrations, playwright]
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          cat > release-report.md <<'EOF'
+          # HabitFlow v6.12.0 release candidate
+          Todas as validações obrigatórias (.NET, segurança, migrations e navegador real) concluíram com sucesso.
+          EOF
+      - uses: actions/upload-artifact@v4
+        with: { name: release-candidate-report, path: release-report.md, if-no-files-found: error }

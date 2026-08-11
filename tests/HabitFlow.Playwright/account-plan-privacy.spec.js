@@ -1,0 +1,2 @@
+import { test, expect } from '@playwright/test';
+test.describe('account plan and privacy',()=>{test.skip(!process.env.HABITFLOW_AUTH_STORAGE,'auth storage required');for(const route of ['/account/privacy','/account/plan/usage'])test(route,async({page})=>{const response=await page.goto(route);expect(response.status()).toBeLessThan(400);await expect(page.locator('main')).toBeVisible();expect(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth+1)).toBeTruthy()})});
