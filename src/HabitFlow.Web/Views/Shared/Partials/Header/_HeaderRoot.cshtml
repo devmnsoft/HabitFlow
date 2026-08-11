@@ -1,0 +1,11 @@
+@model HabitFlow.Web.Models.AppHeaderViewModel
+@using HabitFlow.Web.Models
+@{ var density = Model.Context == NavigationContext.Public ? "public" : Model.Context == NavigationContext.Account ? "account" : "app"; }
+<div data-header-context="@Model.Context.ToString().ToLowerInvariant()" data-header-authenticated="@Model.IsAuthenticated.ToString().ToLowerInvariant()" data-header-density="@density">
+@if (Model.Context == NavigationContext.Public)
+{ <partial name="~/Views/Shared/Partials/Header/_PublicHeader.cshtml" model="Model" /> }
+else if (Model.Context == NavigationContext.Account)
+{ <partial name="~/Views/Shared/Partials/Header/_AccountHeader.cshtml" model="Model" /> }
+else
+{ <partial name="~/Views/Shared/Partials/Header/_AppHeader.cshtml" model="Model" /> }
+</div>

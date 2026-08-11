@@ -1,0 +1,2 @@
+@model HabitFlow.Web.Models.HeaderNavigationViewModel
+<nav class="mobile-bottom-nav-v4" aria-label="Atalhos principais">@foreach(var item in Model.MobileBottom.Take(5)){<a class="@(item.IsActive?"is-active":"")" href="@item.Url" aria-current="@(item.IsActive?"page":null)"><span aria-hidden="true"></span>@item.Label</a>}</nav>
