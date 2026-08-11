@@ -1,0 +1,3 @@
+import { test, expect } from '@playwright/test';
+const sizes=[[1600,900],[1440,900],[1366,768],[1280,720],[1180,820],[1024,768],[912,1368],[820,1180],[768,1024],[430,932],[414,896],[390,844],[375,812],[360,800],[320,568],[280,653],[240,320],[192,256]];
+for(const [width,height] of sizes)test(`public layout ${width}x${height}`,async({page})=>{await page.setViewportSize({width,height});await page.goto('/');expect(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth+1)).toBeTruthy();const header=page.locator('[data-header-root]');await expect(header).toBeVisible();const box=await header.boundingBox();expect(box.x).toBeGreaterThanOrEqual(0);expect(box.x+box.width).toBeLessThanOrEqual(width+1)});

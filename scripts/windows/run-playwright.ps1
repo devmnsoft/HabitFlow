@@ -1,0 +1,4 @@
+[CmdletBinding()] param([ValidateSet('all','header','feedback','global-search','routes','responsive')][string]$Suite='all',[string]$BaseUrl='http://localhost:5097',[switch]$SkipBrowserInstall)
+$ErrorActionPreference='Stop';. "$PSScriptRoot/_common.ps1";$root=Get-RepoRoot;$dir=Join-Path $root 'tests/HabitFlow.Playwright'
+$patterns=@{header='header-*.spec.js';feedback='feedback-*.spec.js';'global-search'='global-search*.spec.js';routes='routes-smoke.spec.js';responsive='responsive-core-pages.spec.js'};$env:HABITFLOW_BASE_URL=$BaseUrl
+Push-Location $dir;try{npm ci;if($LASTEXITCODE){throw 'npm ci falhou.'};if(-not $SkipBrowserInstall){npx playwright install;if($LASTEXITCODE){throw 'Instalação dos browsers falhou.'}};$a=@('playwright','test');if($Suite-ne'all'){$a+=$patterns[$Suite]};& npx @a;if($LASTEXITCODE){throw "Playwright '$Suite' falhou."}}finally{Pop-Location}
