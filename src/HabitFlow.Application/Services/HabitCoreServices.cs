@@ -9,7 +9,7 @@ public sealed record HabitListItem(Habit Habit, int CompletedCount, int Schedule
 public sealed record HabitListViewModel(IReadOnlyList<HabitListItem> Items, IReadOnlyList<string> Categories, HabitListQuery Query, int Total, int TotalPages);
 public sealed record HabitEditorViewModel(Guid? Id, string Name, string Color, string? Category, string IconCode,
     HabitFrequencyType FrequencyType, int? TargetPerWeek, TimeOnly? ReminderTime, string? Notes,
-    IReadOnlyList<int> SelectedDays, Guid? ObjectiveId, int? EstimatedTimeMinutes, HabitDifficulty? Difficulty);
+    IReadOnlyList<int>? SelectedDays, Guid? ObjectiveId, int? EstimatedTimeMinutes, HabitDifficulty? Difficulty);
 public sealed record HabitCalendarDay(DateOnly Date, bool Scheduled, bool Completed);
 public sealed record HabitTimelineItem(DateTime At, string Title, string Description);
 public sealed record HabitDetailsViewModel(Habit Habit, int CompletedCount, int ScheduledCount, decimal Consistency,
@@ -81,28 +81,37 @@ public sealed class HabitLifecycleService(IHabitRepository habits, AuditService 
     }
 }
 
-public sealed class HabitEditorService(IHabitRepository habits, IHabitWeekDayRepository weekDays, HabitScheduleService schedule, HabitPolicy policy, AuditService audit)
+public sealed class HabitEditorService(IHabitRepository habits, IHabitWeekDayRepository weekDays, HabitScheduleNormalizer scheduleNormalizer, HabitPolicy policy, AuditService audit, IUserGoalRepository goals)
 {
     private static readonly Regex HexColor = new("^#[0-9a-fA-F]{6}$", RegexOptions.Compiled);
     public async Task<HabitEditorViewModel?> LoadAsync(Guid clientId, Guid userId, Guid id, CancellationToken ct = default)
     {
         var h = await habits.GetAsync(clientId, userId, id, ct); if (h is null) return null;
         var days = await weekDays.ListByHabitAsync(id, ct);
-        return new(h.Id, h.Name, h.Color, h.Category, h.IconCode ?? "check-circle", h.FrequencyType, h.TargetPerWeek, h.ReminderTime, h.Notes, days.Select(x => x.DayOfWeek).ToList(), h.ObjectiveId, h.EstimatedTimeMinutes, h.Difficulty);
+        return new(h.Id, h.Name, h.Color, h.Category, h.IconCode ?? "check-circle", h.FrequencyType, h.TargetPerWeek, h.ReminderTime, h.Notes, days.Select(x => x.DayOfWeek).Distinct().Order().ToList(), h.ObjectiveId, h.EstimatedTimeMinutes, h.Difficulty);
     }
     public async Task<Result<Habit>> SaveAsync(User user, HabitEditorViewModel input, CancellationToken ct = default)
     {
         if (!user.ClientId.HasValue) return Result<Habit>.Failure("client.required", "Conta inválida.");
-        if (string.IsNullOrWhiteSpace(input.Name) || input.Name.Trim().Length > 120) return Result<Habit>.Failure("habit.name", "Informe um nome com até 120 caracteres.");
-        if (!HexColor.IsMatch(input.Color ?? "")) return Result<Habit>.Failure("habit.color", "Selecione uma cor válida.");
+        var name = input.Name?.Trim() ?? "";
+        var color = string.IsNullOrWhiteSpace(input.Color) ? "#10B981" : input.Color.Trim();
+        var icon = Clean(input.IconCode, 40) ?? "check-circle";
+        if (name.Length is 0 or > 120) return Result<Habit>.Failure("habit.name", "Informe um nome com até 120 caracteres.");
+        if (!HexColor.IsMatch(color)) return Result<Habit>.Failure("habit.color", "Selecione uma cor válida.");
         if (input.EstimatedTimeMinutes is < 1 or > 1440) return Result<Habit>.Failure("habit.duration", "A duração deve ficar entre 1 e 1440 minutos.");
-        var frequency = schedule.ValidateFrequency(input.FrequencyType, input.TargetPerWeek, input.SelectedDays); if (frequency.IsFailure) return Result<Habit>.Failure(frequency.Error.Code, frequency.Error.Message);
+        if (input.Difficulty.HasValue && !Enum.IsDefined(input.Difficulty.Value)) return Result<Habit>.Failure("habit.difficulty", "Escolha uma dificuldade válida.");
+        if (input.ObjectiveId == Guid.Empty) return Result<Habit>.Failure("habit.objective_not_found", "Objetivo não encontrado.");
+        var schedule = scheduleNormalizer.Normalize(new(input.FrequencyType, input.TargetPerWeek, input.SelectedDays));
+        if (schedule.IsFailure) return Result<Habit>.Failure(schedule.Error.Code, schedule.Error.Message);
+        var normalized = schedule.Value!;
+        if (input.ObjectiveId.HasValue && await goals.GetAsync(input.ObjectiveId.Value, user.ClientId.Value, user.Id, ct) is null)
+            return Result<Habit>.Failure("habit.objective_not_found", "Objetivo não encontrado.");
         var current = input.Id.HasValue ? await habits.GetAsync(user.ClientId.Value, user.Id, input.Id.Value, ct) : null;
         if (input.Id.HasValue && current is null) return Result<Habit>.Failure("habit.not_found", "Hábito não encontrado.");
         if (current is null) { var count = await habits.CountActiveAsync(user.ClientId.Value, user.Id, ct); var allowed = policy.CanCreate(user, count); if (allowed.IsFailure) return Result<Habit>.Failure(allowed.Error.Code, allowed.Error.Message); }
-        var now = DateTime.UtcNow; var habit = (current ?? new Habit(Guid.NewGuid(), user.Id, input.Name.Trim(), input.Color, input.Category, false, null, now, now, ClientId: user.ClientId)) with { Name = input.Name.Trim(), Color = input.Color, Category = Clean(input.Category, 80), IconCode = Clean(input.IconCode, 40) ?? "check-circle", FrequencyType = input.FrequencyType, TargetPerWeek = input.TargetPerWeek, ReminderTime = input.ReminderTime, Notes = Clean(input.Notes, 2000), ObjectiveId = input.ObjectiveId, EstimatedTimeMinutes = input.EstimatedTimeMinutes, Difficulty = input.Difficulty, UpdatedAt = now };
+        var now = DateTime.UtcNow; var habit = (current ?? new Habit(Guid.NewGuid(), user.Id, name, color, Clean(input.Category, 80), false, null, now, now, ClientId: user.ClientId)) with { Name = name, Color = color, Category = Clean(input.Category, 80), IconCode = icon, FrequencyType = normalized.FrequencyType, TargetPerWeek = normalized.TargetPerWeek, ReminderTime = input.ReminderTime, Notes = Clean(input.Notes, 2000), ObjectiveId = input.ObjectiveId, EstimatedTimeMinutes = input.EstimatedTimeMinutes, Difficulty = input.Difficulty, UpdatedAt = now };
         if (current is null) await habits.CreateAsync(habit, ct); else if (!await habits.UpdateAsync(user.ClientId.Value, user.Id, habit, ct)) return Result<Habit>.Failure("habit.concurrent_update", "Não foi possível salvar a alteração.");
-        await weekDays.ReplaceAsync(habit.Id, input.FrequencyType == HabitFrequencyType.CustomWeekly ? input.SelectedDays : [], ct);
+        await weekDays.ReplaceAsync(habit.Id, normalized.FrequencyType == HabitFrequencyType.CustomWeekly ? normalized.SelectedDays : [], ct);
         await audit.LogAsync(current is null ? "habit_created" : "habit_updated", current is null ? "Hábito criado" : "Hábito atualizado", AuditSeverity.Info, user.Id, user.Email, new { habitId = habit.Id }, ct);
         return Result<Habit>.Success(habit);
     }
