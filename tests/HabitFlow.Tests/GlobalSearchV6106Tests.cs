@@ -10,6 +10,17 @@ public sealed class GlobalSearchV6106Tests
     private readonly Guid _userId = Guid.NewGuid();
 
     [Fact]
+    public void Browser_renderer_builds_results_with_dom_nodes_instead_of_html_strings()
+    {
+        var script = File.ReadAllText(Path.Combine(
+            RepositoryRootLocator.Root, "src", "HabitFlow.Web", "wwwroot", "js", "global-search.js"));
+
+        Assert.DoesNotContain("innerHTML", script, StringComparison.Ordinal);
+        Assert.Contains("results.replaceChildren", script, StringComparison.Ordinal);
+        Assert.Contains("link.href = typeof item.url === 'string' && item.url.startsWith('/')", script, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task Search_rejects_missing_tenant_context_without_querying_repositories()
     {
         var habits = new HabitRepositoryStub([]);
