@@ -36,6 +36,8 @@ public static class DependencyInjection
         services.AddScoped<HeaderContextResolver>();
         services.AddScoped<HeaderCompositionService>();
         services.AddScoped<PlanLandingPageService>();
+        services.AddScoped<PlanFeatureImplementationVerifier>();
+        services.AddScoped<PlanIntegrityService>();
         services.AddScoped<PlanUsageService>();
         services.AddSingleton<LayoutContextResolver>();
         services.AddHostedService<BillingCommunicationJob>();

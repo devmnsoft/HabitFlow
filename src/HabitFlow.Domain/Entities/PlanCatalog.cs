@@ -41,3 +41,6 @@ public sealed record PlanPublicBenefit(string PlanCode, string FeatureCode, stri
 public sealed record PlanPrice(Guid Id, string BillingCycle, decimal Amount, string Currency);
 public sealed record PublicPlan(Guid Id, string Code, string PublicName, string? Headline, string? Description, string? AudienceText, string? BadgeText, bool IsFeatured, int SortOrder, IReadOnlyList<PlanPrice> Prices, IReadOnlyList<PlanFeatureValue> Features);
 public sealed record ClientPlanAccess(Guid ClientId, string ContractedPlanCode, string EffectivePlanCode, string BenefitsStatus, DateOnly? GracePeriodUntil);
+public sealed record PlanIntegrityCatalogItem(string Code, string PublicName, bool IsPublic, bool IsSellable, string SalesStatus,
+    string? BillingCycle, decimal? Amount, string? FeatureCode, string? FeatureName, string? ImplementationStatus, bool? IsMarketable,
+    bool? BoolValue, int? IntValue, string? StringValue);

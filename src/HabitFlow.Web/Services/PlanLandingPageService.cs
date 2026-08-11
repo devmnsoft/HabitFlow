@@ -45,7 +45,7 @@ public sealed class PlanLandingPageService(IPlanCatalogRepository repository)
         var monthly = plan.Prices.FirstOrDefault(x => x.BillingCycle.Equals("Monthly", StringComparison.OrdinalIgnoreCase));
         var yearly = plan.Prices.FirstOrDefault(x => x.BillingCycle.Equals("Yearly", StringComparison.OrdinalIgnoreCase));
         var saving = monthly is not null && yearly is not null && yearly.Amount < monthly.Amount * 12
-            ? $"Economize {(1 - yearly.Amount / (monthly.Amount * 12)):P0}" : null;
+            ? $"Economize cerca de {(1 - yearly.Amount / (monthly.Amount * 12)):P0}" : null;
         var free = plan.Code.Equals(PlanCodes.Free, StringComparison.OrdinalIgnoreCase);
         var benefits = plan.Features.Take(7).Select(DescribeFeature).Where(x => x is not null).Cast<string>().ToArray();
         return new(plan.Code, plan.PublicName, plan.AudienceText ?? (free ? "Para começar com o essencial" : "Para transformar intenção em consistência"),
@@ -53,7 +53,7 @@ public sealed class PlanLandingPageService(IPlanCatalogRepository repository)
             plan.IsFeatured || plan.Code.Equals(PlanCodes.Ritmo, StringComparison.OrdinalIgnoreCase),
             monthly is null ? null : monthly.Amount.ToString("C", PtBr) + "/mês",
             yearly is null ? null : yearly.Amount.ToString("C", PtBr) + "/ano", saving, benefits,
-            free ? "Começar grátis" : "Assinar Ritmo", free ? "/register" : $"/register?intent={Uri.EscapeDataString(plan.Code)}",
+            free ? "Começar grátis" : "Assinar Ritmo", free ? "/register" : $"/register?intent={Uri.EscapeDataString(plan.Code)}&cycle=Monthly",
             free || monthly is not null || yearly is not null);
     }
 
@@ -67,17 +67,19 @@ public sealed class PlanLandingPageService(IPlanCatalogRepository repository)
 
     private static IReadOnlyList<PlanComparisonRowViewModel> BuildComparison(IReadOnlyList<PublicPlan> plans)
     {
-        string Value(string code, string feature, string fallback) {
+        string Value(string code, string feature, string unavailable, Func<PlanFeatureValue, string>? format = null) {
             var value = plans.FirstOrDefault(p => p.Code.Equals(code, StringComparison.OrdinalIgnoreCase))?.Features.FirstOrDefault(f => f.Code == feature);
-            return value?.IntValue?.ToString(PtBr) ?? (value?.BoolValue == true ? "Incluído" : value?.StringValue) ?? fallback;
+            if (value is null) return unavailable;
+            if (format is not null) return format(value);
+            return value.IntValue?.ToString(PtBr) ?? (value.BoolValue == true ? "Incluído" : value.StringValue) ?? unavailable;
         }
         return [
-            new("Hábitos ativos", Value(PlanCodes.Free, PlanFeatureCodes.ActiveHabitsLimit, "Limite essencial"), Value(PlanCodes.Ritmo, PlanFeatureCodes.ActiveHabitsLimit, "Limite ampliado")),
-            new("Objetivos ativos", Value(PlanCodes.Free, PlanFeatureCodes.ActiveGoalsLimit, "Limitado"), Value(PlanCodes.Ritmo, PlanFeatureCodes.ActiveGoalsLimit, "Ampliado")),
-            new("Histórico", Value(PlanCodes.Free, PlanFeatureCodes.HistoryDaysLimit, "Recente"), Value(PlanCodes.Ritmo, PlanFeatureCodes.FullHistory, "Completo"), "Histórico completo mantém sua evolução disponível para consultas e relatórios."),
-            new("Biblioteca", Value(PlanCodes.Free, PlanFeatureCodes.FullHabitLibrary, "Seleção inicial"), Value(PlanCodes.Ritmo, PlanFeatureCodes.FullHabitLibrary, "Completa")),
-            new("Relatórios", Value(PlanCodes.Free, PlanFeatureCodes.BasicReports, "Básicos"), Value(PlanCodes.Ritmo, PlanFeatureCodes.AdvancedReports, "Ampliados")),
-            new("Exportação", Value(PlanCodes.Free, PlanFeatureCodes.ReportExportCsv, "Não incluída"), Value(PlanCodes.Ritmo, PlanFeatureCodes.ReportExportCsv, "Quando habilitada")),
+            new("Hábitos ativos", Value(PlanCodes.Free, PlanFeatureCodes.ActiveHabitsLimit, "Não informado"), Value(PlanCodes.Ritmo, PlanFeatureCodes.ActiveHabitsLimit, "Não informado")),
+            new("Objetivos ativos", Value(PlanCodes.Free, PlanFeatureCodes.ActiveGoalsLimit, "Não informado"), Value(PlanCodes.Ritmo, PlanFeatureCodes.ActiveGoalsLimit, "Não informado")),
+            new("Histórico", Value(PlanCodes.Free, PlanFeatureCodes.HistoryDaysLimit, "Não informado", x => x.IntValue is null ? "Não informado" : $"{x.IntValue} dias"), Value(PlanCodes.Ritmo, PlanFeatureCodes.FullHistory, "Não incluído", _ => "Histórico completo")),
+            new("Biblioteca", Value(PlanCodes.Free, PlanFeatureCodes.FullHabitLibrary, "Não incluída"), Value(PlanCodes.Ritmo, PlanFeatureCodes.FullHabitLibrary, "Não incluída")),
+            new("Relatórios", Value(PlanCodes.Free, PlanFeatureCodes.BasicReports, "Não incluídos", _ => "Resumo semanal básico"), Value(PlanCodes.Ritmo, PlanFeatureCodes.BasicReports, "Não incluídos", _ => "Relatórios disponíveis implementados")),
+            new("Exportação", Value(PlanCodes.Free, PlanFeatureCodes.ReportExportCsv, "Não incluída", _ => "Exportação CSV"), Value(PlanCodes.Ritmo, PlanFeatureCodes.ReportExportCsv, "Não incluída", _ => "Exportação CSV")),
             new("Segurança da conta", "Incluída", "Incluída"), new("Central de Privacidade", "Incluída", "Incluída")];
     }
 

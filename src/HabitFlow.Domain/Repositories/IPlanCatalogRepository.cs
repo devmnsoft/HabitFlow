@@ -7,4 +7,5 @@ public interface IPlanCatalogRepository
     Task<Guid?> GetClientIdForUserAsync(Guid userId, CancellationToken ct = default);
     Task<IReadOnlyDictionary<string, PlanFeatureValue>> GetFeaturesAsync(string planCode, CancellationToken ct = default);
     Task<bool> IsCheckoutEligibleAsync(string planCode, string billingCycle, CancellationToken ct = default);
+    Task<IReadOnlyList<PlanIntegrityCatalogItem>> GetIntegrityCatalogAsync(CancellationToken ct = default);
 }
