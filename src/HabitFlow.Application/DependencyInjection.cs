@@ -36,6 +36,7 @@ public static class DependencyInjection
         services.AddScoped<CurrentTenantService>();
         services.AddScoped<GlobalSearchService>();
         services.AddScoped<HabitPolicy>();
+        services.AddScoped<HabitScheduleNormalizer>();
         services.AddScoped<ProgressService>();
         services.AddScoped<HabitOccurrenceService>();
         services.AddScoped<EffectiveHabitScheduleService>();

@@ -18,15 +18,26 @@ public sealed class HabitsController(HabitQueryService queries, HabitEditorServi
     }
 
     [HttpGet("create")]
-    public IActionResult Create() => View("Editor", EmptyEditor());
+    public IActionResult Create() => TryIdentity(out _, out _) ? View("Editor", EmptyEditor()) : Forbid();
 
     [HttpPost("create"), ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(HabitEditorViewModel model, CancellationToken ct)
     {
-        var result = await editor.SaveAsync(this.CurrentUserSnapshot(), model with { Id = null }, ct);
-        if (result.IsFailure) { ModelState.AddModelError(string.Empty, result.Error.Message); return View("Editor", model); }
-        TempData["Success"] = "Hábito criado. O próximo passo já pode começar.";
-        return RedirectToAction(nameof(Detail), new { id = result.Value!.Id });
+        if (!TryIdentity(out _, out _)) return Forbid();
+        try
+        {
+            var result = await editor.SaveAsync(this.CurrentUserSnapshot(), model with { Id = null }, ct);
+            if (result.IsFailure) { AddEditorError(result.Error.Code, result.Error.Message); return View("Editor", model); }
+            TempData["Success"] = "Hábito criado. O próximo passo já pode começar.";
+            TempData["HabitCreated"] = "true";
+            return RedirectToAction(nameof(Detail), new { id = result.Value!.Id });
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Falha inesperada ao criar hábito. CorrelationId={CorrelationId}", HttpContext.TraceIdentifier);
+            ModelState.AddModelError(string.Empty, "Não foi possível salvar o hábito agora. Tente novamente.");
+            return View("Editor", model);
+        }
     }
 
     [HttpGet("{id:guid}")]
@@ -48,9 +59,19 @@ public sealed class HabitsController(HabitQueryService queries, HabitEditorServi
     [HttpPost("{id:guid}/edit"), ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(Guid id, HabitEditorViewModel model, CancellationToken ct)
     {
-        var result = await editor.SaveAsync(this.CurrentUserSnapshot(), model with { Id = id }, ct);
-        if (result.IsFailure) { if (result.Error.Code == "habit.not_found") return NotFound(); ModelState.AddModelError(string.Empty, result.Error.Message); return View("Editor", model with { Id = id }); }
-        TempData["Success"] = "Alterações salvas."; return RedirectToAction(nameof(Detail), new { id });
+        if (!TryIdentity(out _, out _)) return Forbid();
+        try
+        {
+            var result = await editor.SaveAsync(this.CurrentUserSnapshot(), model with { Id = id }, ct);
+            if (result.IsFailure) { if (result.Error.Code == "habit.not_found") return NotFound(); AddEditorError(result.Error.Code, result.Error.Message); return View("Editor", model with { Id = id }); }
+            TempData["Success"] = "Alterações salvas."; return RedirectToAction(nameof(Detail), new { id });
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Falha inesperada ao editar hábito {HabitId}. CorrelationId={CorrelationId}", id, HttpContext.TraceIdentifier);
+            ModelState.AddModelError(string.Empty, "Não foi possível salvar o hábito agora. Tente novamente.");
+            return View("Editor", model with { Id = id });
+        }
     }
 
     [HttpPost("{id:guid}/{actionName:regex(^pause|resume|archive|restore$)}"), ValidateAntiForgeryToken]
@@ -85,6 +106,11 @@ public sealed class HabitsController(HabitQueryService queries, HabitEditorServi
     }
 
     private bool TryIdentity(out Guid clientId, out Guid userId) { clientId = this.CurrentClientId(); userId = this.CurrentUserId(); return clientId != Guid.Empty && userId != Guid.Empty; }
+    private void AddEditorError(string code, string message)
+    {
+        var field = code switch { "habit.custom_days_required" or "habit.weekday_invalid" => "SelectedDays", "habit.target_invalid" => "TargetPerWeek", "habit.frequency_invalid" => "FrequencyType", "habit.name" => "Name", "habit.color" => "Color", "habit.duration" => "EstimatedTimeMinutes", "habit.difficulty" => "Difficulty", "habit.objective_not_found" => "ObjectiveId", _ => string.Empty };
+        ModelState.AddModelError(field, message);
+    }
     private static HabitEditorViewModel EmptyEditor() => new(null, "", "#10B981", null, "check-circle", HabitFlow.Domain.HabitFrequencyType.Daily, null, null, null, [], null, 10, null);
     private static object ToPayload(HabitCompletionResult value, string message) => new
     {

@@ -4,5 +4,6 @@
 <partial name="Partials/_HabitMetricsPanel" model="Model" />
 <div class="hf-detail-grid"><partial name="Partials/_HabitCalendarHeatmap" model="Model" /><partial name="Partials/_HabitTimeline" model="Model" /></div>
 <partial name="Partials/_HabitLifecycleActions" model="Model.Habit" />
+@if (TempData["HabitCreated"] as string == "true") { <nav class="hf-post-create" aria-label="Próximos passos"><strong>Qual é o próximo passo?</strong><a href="/habits/@Model.Habit.Id/reminders" class="btn btn-outline-success">Adicionar lembrete</a><a href="/my-day" class="btn btn-success">Abrir Meu Dia</a><a asp-action="Create" class="btn btn-outline-secondary">Criar outro hábito</a></nav> }
 @section Styles { <link rel="stylesheet" href="~/css/habits-v4.css" asp-append-version="true" /> }
 @section Scripts { <script src="~/js/habits-v4.js" asp-append-version="true"></script> }

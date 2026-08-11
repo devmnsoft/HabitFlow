@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 
 namespace HabitFlow.Application;
 
-public sealed class HabitScheduleService(IHabitRepository habits, IHabitWeekDayRepository weekDays, ILogger<HabitScheduleService> logger)
+public sealed class HabitScheduleService(IHabitRepository habits, IHabitWeekDayRepository weekDays, ILogger<HabitScheduleService> logger, HabitScheduleNormalizer normalizer)
 {
     public bool IsHabitDueOnDate(Habit habit, DateOnly date, IReadOnlyCollection<HabitWeekDay> selectedDays)
     {
@@ -31,12 +31,10 @@ public sealed class HabitScheduleService(IHabitRepository habits, IHabitWeekDayR
         catch (Exception ex) { logger.LogError(ex, "Erro ao carregar hábitos devidos para {UserId}", userId); return Array.Empty<Habit>(); }
     }
 
-    public Result ValidateFrequency(HabitFrequencyType frequencyType, int? targetPerWeek, IReadOnlyCollection<int> selectedDays)
+    public Result ValidateFrequency(HabitFrequencyType frequencyType, int? targetPerWeek, IReadOnlyCollection<int>? selectedDays)
     {
-        if (targetPerWeek is < 1 or > 7) return Result.Failure("habit.target_invalid", "A meta semanal deve estar entre 1 e 7.");
-        if (selectedDays.Any(x => x is < 0 or > 6)) return Result.Failure("habit.weekday_invalid", "Selecione dias da semana válidos.");
-        if (frequencyType == HabitFrequencyType.CustomWeekly && selectedDays.Count == 0) return Result.Failure("habit.custom_days_required", "Selecione pelo menos um dia personalizado.");
-        return Result.Success();
+        var result = normalizer.Normalize(new(frequencyType, targetPerWeek, selectedDays));
+        return result.IsSuccess ? Result.Success() : Result.Failure(result.Error.Code, result.Error.Message);
     }
 
     public Task<IReadOnlyList<HabitWeekDay>> GetWeekDaysForHabit(Guid habitId, CancellationToken ct = default) => weekDays.ListByHabitAsync(habitId, ct);

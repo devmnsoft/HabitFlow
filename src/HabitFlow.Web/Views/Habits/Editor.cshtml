@@ -4,6 +4,7 @@
 <form method="post" class="hf-editor-layout" novalidate data-habit-editor>
 @Html.AntiForgeryToken()
 <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+@if (!Model.Id.HasValue) { <section class="hf-quick-templates" aria-labelledby="quickTemplatesTitle"><div><p class="hf-eyebrow">Comece rápido</p><h2 id="quickTemplatesTitle">Templates de hábitos</h2></div><div class="hf-template-list">@foreach (var template in new[]{("Beber água","Daily",7,"droplet"),("Caminhar","CustomWeekly",3,"activity"),("Ler 10 minutos","Daily",7,"book-open"),("Dormir mais cedo","Daily",7,"moon"),("Organizar o dia","Weekdays",5,"calendar")}) { <button type="button" class="hf-template" data-habit-template data-name="@template.Item1" data-frequency="@template.Item2" data-target="@template.Item3" data-icon="@template.Item4">@template.Item1</button> }</div></section> }
 <partial name="Partials/_HabitEditor" model="Model" />
 <aside><partial name="Partials/_HabitScheduleEditor" model="Model" /><partial name="Partials/_HabitReminderEditor" model="Model" /></aside>
 <div class="hf-form-actions"><a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a><button class="btn btn-success" type="submit" data-submit>Salvar hábito</button></div>
