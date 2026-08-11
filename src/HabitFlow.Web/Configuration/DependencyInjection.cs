@@ -33,6 +33,8 @@ public static class DependencyInjection
         services.AddScoped<HeaderNavigationService>();
         services.AddScoped<HeaderActionService>();
         services.AddScoped<HeaderQuickActionService>();
+        services.AddScoped<HeaderContextResolver>();
+        services.AddScoped<HeaderCompositionService>();
         services.AddScoped<PlanLandingPageService>();
         services.AddScoped<PlanUsageService>();
         services.AddSingleton<LayoutContextResolver>();

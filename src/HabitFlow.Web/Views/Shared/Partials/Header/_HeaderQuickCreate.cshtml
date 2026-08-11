@@ -1,0 +1,2 @@
+@model IReadOnlyList<HabitFlow.Web.Models.HeaderQuickActionViewModel>
+<div class="dropdown header-v4__create"><button class="btn btn-success dropdown-toggle" type="button" data-bs-toggle="dropdown"><span class="header-v4__create-plus">＋</span><span class="header-v4__create-label">Novo</span></button><div class="dropdown-menu dropdown-menu-end">@foreach(var action in Model){<a class="dropdown-item" href="@action.Url"><strong>@action.Label</strong><small>@action.Description</small></a>}</div></div>

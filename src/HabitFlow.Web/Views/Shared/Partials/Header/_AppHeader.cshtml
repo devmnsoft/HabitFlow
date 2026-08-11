@@ -1,0 +1,7 @@
+@model HabitFlow.Web.Models.AppHeaderViewModel
+<header class="header-v4 header-v4--app" data-header-root data-layout-region="header"><div class="header-v4__bar hf-shell">
+ <button class="header-v4__icon header-v4__menu" type="button" data-bs-toggle="offcanvas" data-bs-target="#headerDrawer" aria-controls="headerDrawer" aria-label="Abrir menu principal"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+ <div data-header-zone="brand"><partial name="~/Views/Shared/Partials/Header/_HeaderBrand.cshtml" model="Model" /></div>
+ <nav class="navigation-v4" aria-label="Navegação do aplicativo" data-header-zone="navigation">@foreach(var item in Model.Navigation.Primary){<a class="nav-@item.Code @(item.IsActive?"is-active":"")" href="@item.Url" aria-current="@(item.IsActive?"page":null)">@item.Label</a>}@foreach(var group in Model.Navigation.Secondary){<div class="dropdown"><button class="navigation-v4__more dropdown-toggle @(group.Items.Any(x=>x.IsActive)?"is-active":"")" data-bs-toggle="dropdown" type="button">Mais</button><div class="dropdown-menu dropdown-menu-end">@foreach(var item in group.Items){<a class="dropdown-item @(item.IsActive?"active":"")" href="@item.Url">@item.Label</a>}</div></div>}</nav>
+ <partial name="~/Views/Shared/Partials/Header/_HeaderActions.cshtml" model="Model" />
+</div></header><partial name="~/Views/Shared/Partials/Header/_HeaderDrawer.cshtml" model="Model" /><partial name="~/Views/Shared/Partials/Header/_MobileBottomNav.cshtml" model="Model.Navigation" />
