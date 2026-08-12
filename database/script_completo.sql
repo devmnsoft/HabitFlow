@@ -884,3 +884,6 @@ create table if not exists habitflow.user_onboarding_progress (
 \i database/migrations/058_user_sessions.sql
 \i database/migrations/059_superadmin_mfa.sql
 \i database/migrations/060_public_privacy_notice.sql
+
+-- v6.12.3 CRUD/domain contract stabilization
+\i database/migrations/065_v6123_crud_contract_backfill.sql

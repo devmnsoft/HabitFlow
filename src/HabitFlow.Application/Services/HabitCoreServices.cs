@@ -9,7 +9,8 @@ public sealed record HabitListItem(Habit Habit, int CompletedCount, int Schedule
 public sealed record HabitListViewModel(IReadOnlyList<HabitListItem> Items, IReadOnlyList<string> Categories, HabitListQuery Query, int Total, int TotalPages);
 public sealed record HabitEditorViewModel(Guid? Id, string Name, string Color, string? Category, string IconCode,
     HabitFrequencyType FrequencyType, int? TargetPerWeek, TimeOnly? ReminderTime, string? Notes,
-    IReadOnlyList<int>? SelectedDays, Guid? ObjectiveId, int? EstimatedTimeMinutes, HabitDifficulty? Difficulty);
+    IReadOnlyList<int>? SelectedDays, Guid? ObjectiveId, int? EstimatedTimeMinutes, HabitDifficulty? Difficulty,
+    DateOnly? StartDate = null);
 public sealed record HabitCalendarDay(DateOnly Date, bool Scheduled, bool Completed);
 public sealed record HabitTimelineItem(DateTime At, string Title, string Description);
 public sealed record HabitDetailsViewModel(Habit Habit, int CompletedCount, int ScheduledCount, decimal Consistency,
@@ -81,14 +82,14 @@ public sealed class HabitLifecycleService(IHabitRepository habits, AuditService 
     }
 }
 
-public sealed class HabitEditorService(IHabitRepository habits, IHabitWeekDayRepository weekDays, HabitScheduleNormalizer scheduleNormalizer, HabitPolicy policy, AuditService audit, IUserGoalRepository goals)
+public sealed class HabitEditorService(IHabitRepository habits, IHabitWeekDayRepository weekDays, HabitScheduleNormalizer scheduleNormalizer, HabitPolicy policy, AuditService audit, IUserGoalRepository goals, UserTimeZoneService clock, IUnitOfWork unitOfWork)
 {
     private static readonly Regex HexColor = new("^#[0-9a-fA-F]{6}$", RegexOptions.Compiled);
     public async Task<HabitEditorViewModel?> LoadAsync(Guid clientId, Guid userId, Guid id, CancellationToken ct = default)
     {
         var h = await habits.GetAsync(clientId, userId, id, ct); if (h is null) return null;
         var days = await weekDays.ListByHabitAsync(id, ct);
-        return new(h.Id, h.Name, h.Color, h.Category, h.IconCode ?? "check-circle", h.FrequencyType, h.TargetPerWeek, h.ReminderTime, h.Notes, days.Select(x => x.DayOfWeek).Distinct().Order().ToList(), h.ObjectiveId, h.EstimatedTimeMinutes, h.Difficulty);
+        return new(h.Id, h.Name, h.Color, h.Category, h.IconCode ?? "check-circle", h.FrequencyType, h.TargetPerWeek, h.ReminderTime, h.Notes, days.Select(x => x.DayOfWeek).Distinct().Order().ToList(), h.ObjectiveId, h.EstimatedTimeMinutes, h.Difficulty, h.StartDate);
     }
     public async Task<Result<Habit>> SaveAsync(User user, HabitEditorViewModel input, CancellationToken ct = default)
     {
@@ -109,11 +110,23 @@ public sealed class HabitEditorService(IHabitRepository habits, IHabitWeekDayRep
         var current = input.Id.HasValue ? await habits.GetAsync(user.ClientId.Value, user.Id, input.Id.Value, ct) : null;
         if (input.Id.HasValue && current is null) return Result<Habit>.Failure("habit.not_found", "Hábito não encontrado.");
         if (current is null) { var count = await habits.CountActiveAsync(user.ClientId.Value, user.Id, ct); var allowed = policy.CanCreate(user, count); if (allowed.IsFailure) return Result<Habit>.Failure(allowed.Error.Code, allowed.Error.Message); }
-        var now = DateTime.UtcNow; var habit = (current ?? new Habit(Guid.NewGuid(), user.Id, name, color, Clean(input.Category, 80), false, null, now, now, ClientId: user.ClientId)) with { Name = name, Color = color, Category = Clean(input.Category, 80), IconCode = icon, FrequencyType = normalized.FrequencyType, TargetPerWeek = normalized.TargetPerWeek, ReminderTime = input.ReminderTime, Notes = Clean(input.Notes, 2000), ObjectiveId = input.ObjectiveId, EstimatedTimeMinutes = input.EstimatedTimeMinutes, Difficulty = input.Difficulty, UpdatedAt = now };
-        if (current is null) await habits.CreateAsync(habit, ct); else if (!await habits.UpdateAsync(user.ClientId.Value, user.Id, habit, ct)) return Result<Habit>.Failure("habit.concurrent_update", "Não foi possível salvar a alteração.");
-        await weekDays.ReplaceAsync(habit.Id, normalized.FrequencyType == HabitFrequencyType.CustomWeekly ? normalized.SelectedDays : [], ct);
-        await audit.LogAsync(current is null ? "habit_created" : "habit_updated", current is null ? "Hábito criado" : "Hábito atualizado", AuditSeverity.Info, user.Id, user.Email, new { habitId = habit.Id }, ct);
-        return Result<Habit>.Success(habit);
+        var now = DateTime.UtcNow;
+        var startDate = current?.StartDate ?? input.StartDate ?? clock.Today();
+        var habit = (current ?? new Habit(Guid.NewGuid(), user.Id, name, color, Clean(input.Category, 80), false, null, now, now, ClientId: user.ClientId, StartDate: startDate)) with { Name = name, Color = color, Category = Clean(input.Category, 80), IconCode = icon, FrequencyType = normalized.FrequencyType, TargetPerWeek = normalized.TargetPerWeek, ReminderTime = input.ReminderTime, Notes = Clean(input.Notes, 2000), ObjectiveId = input.ObjectiveId, EstimatedTimeMinutes = input.EstimatedTimeMinutes, Difficulty = input.Difficulty, StartDate = startDate, UpdatedAt = now };
+        await unitOfWork.BeginTransactionAsync(ct);
+        try
+        {
+            if (current is null) await habits.CreateAsync(habit, ct); else if (!await habits.UpdateAsync(user.ClientId.Value, user.Id, habit, ct)) { await unitOfWork.RollbackAsync(ct); return Result<Habit>.Failure("habit.concurrent_update", "Não foi possível salvar a alteração."); }
+            await weekDays.ReplaceAsync(habit.Id, normalized.FrequencyType == HabitFrequencyType.CustomWeekly ? normalized.SelectedDays : [], ct);
+            await audit.LogAsync(current is null ? "habit_created" : "habit_updated", current is null ? "Hábito criado" : "Hábito atualizado", AuditSeverity.Info, user.Id, user.Email, new { habitId = habit.Id }, ct);
+            await unitOfWork.CommitAsync(ct);
+            return Result<Habit>.Success(habit);
+        }
+        catch
+        {
+            await unitOfWork.RollbackAsync(ct);
+            throw;
+        }
     }
     private static string? Clean(string? value, int max) => string.IsNullOrWhiteSpace(value) ? null : value.Trim()[..Math.Min(value.Trim().Length, max)];
 }
