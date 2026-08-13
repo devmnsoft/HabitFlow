@@ -160,6 +160,14 @@ public sealed class NavigationService(INavigationAccessEvaluator? accessEvaluato
             Code: "personal-library", Label: "Biblioteca", Description: "Ideias prontas para começar", Icon: "library", Url: "/habit-library",
             Context: NavigationContext.Personal, RequiredPermission: null, RequiredFeature: null, SortOrder: 60, IsEnabled: true),
 
+        new(
+            Code: "reminders", Label: "Lembretes", Description: "Organize os avisos da sua rotina", Icon: IconCodes.Reminders, Url: "/reminders",
+            Context: NavigationContext.Personal, RequiredPermission: null, RequiredFeature: null, SortOrder: 70, IsEnabled: true),
+
+        new(
+            Code: "notifications", Label: "Notificações", Description: "Acompanhe novidades e próximos passos", Icon: IconCodes.Notifications, Url: "/notifications",
+            Context: NavigationContext.Personal, RequiredPermission: null, RequiredFeature: null, SortOrder: 80, IsEnabled: true),
+
         // Navegação da conta
         new(
             Code: "account",
