@@ -1,4 +1,10 @@
 @model IReadOnlyList<HabitFlow.Domain.HabitObjective>
-@{ ViewData["Title"] = "Onboarding guiado"; }
-<section class="hf-section hf-guided-card"><p class="hf-section-kicker">Primeiro passo</p><h1>O que você quer melhorar primeiro?</h1><p>O HabitFlow ajuda pessoas a transformarem pequenas ações diárias em rotina. Escolha um objetivo para ver hábitos prontos.</p></section>
-<div class="row g-3">@foreach (var objective in Model) {<div class="col-md-6 col-xl-4"><form method="post" action="/onboarding/select-objective" class="h-100">@Html.AntiForgeryToken()<input type="hidden" name="slug" value="@objective.Slug" /><button class="hf-objective-card h-100 w-100 text-start" type="submit"><span class="hf-card-icon">@objective.Icon</span><strong>@objective.Name</strong><span>@objective.Description</span></button></form></div>}</div>
+@{ ViewData["Title"] = "Primeiros passos"; var version = (int?)ViewData["OnboardingVersion"]; }
+<main class="hf-onboarding" aria-labelledby="onboarding-title">
+  <header class="hf-onboarding-hero"><div><p class="hf-section-kicker">Sua primeira rotina</p><h1 id="onboarding-title">Vamos criar um começo que caiba no seu dia?</h1><p>Você escolhe o foco e confirma cada hábito antes de criar. Leva poucos minutos e tudo pode ser ajustado depois.</p></div><span class="hf-step-count">Etapa 1 de 6</span></header>
+  <div class="hf-progress-track" role="progressbar" aria-label="Progresso da configuração" aria-valuemin="1" aria-valuemax="6" aria-valuenow="1"><span style="width:16.67%"></span></div>
+  <section aria-labelledby="focus-title"><h2 id="focus-title">Qual é seu foco principal agora?</h2><p class="text-readable-muted">Escolha apenas um para receber sugestões mais relevantes.</p><div class="hf-focus-grid">
+  @foreach (var objective in Model) {<form method="post" action="/onboarding/focus" class="h-100">@Html.AntiForgeryToken()<input type="hidden" name="slug" value="@objective.Slug" /><button class="hf-focus-card" type="submit"><span class="hf-card-icon" aria-hidden="true">@objective.Icon</span><strong>@objective.Name</strong><span>@objective.Description</span><small>Ver sugestões →</small></button></form>}
+  </div></section>
+  <footer class="hf-onboarding-footer"><p>Prefere explorar sozinho? Isso não bloqueia nenhuma área.</p><form method="post" action="/onboarding/skip">@Html.AntiForgeryToken()<input type="hidden" name="version" value="@version"/><button class="btn btn-link" type="submit">Pular por agora</button></form></footer>
+</main>

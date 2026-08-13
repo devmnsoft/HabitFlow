@@ -2,6 +2,7 @@ namespace HabitFlow.Domain;
 
 public interface IHabitTemplateRepository
 {
+    Task<IReadOnlyList<HabitTemplate>> ListActiveAsync(CancellationToken ct = default);
     Task<IReadOnlyList<HabitTemplate>> ListActiveByObjectiveAsync(Guid objectiveId, CancellationToken ct = default);
     Task<HabitTemplate?> GetAsync(Guid id, CancellationToken ct = default);
     Task<IReadOnlyList<HabitTemplate>> ListAllForAdminAsync(CancellationToken ct = default);

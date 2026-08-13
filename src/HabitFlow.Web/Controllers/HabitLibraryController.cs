@@ -44,11 +44,17 @@ public sealed class HabitLibraryController(HabitLibraryService library, HabitTem
         return RedirectToAction("Index","Dashboard");
     }
     [HttpGet("/habit-library")]
-    public async Task<IActionResult> Index(CancellationToken ct)
+    public async Task<IActionResult> Index(string? focus, string? category, string? difficulty, string? duration, string? frequency, string? minimumPlan, bool favoritesOnly, CancellationToken ct)
     {
-        var result = await library.GetObjectivesAsync(ct);
-        if (result.IsFailure) { TempData["Warning"] = errorMapper.ToPublicMessage(result.Error.Code, "habit-library"); ViewData["UsingFallback"] = true; }
-        return View(result.Value?.Any() == true ? result.Value : HabitLibraryFallback.Objectives);
+        var objectivesResult = await library.GetObjectivesAsync(ct);
+        var templatesResult = await library.GetTemplatesAsync(ct);
+        if (objectivesResult.IsFailure || templatesResult.IsFailure) { TempData["Warning"] = "A biblioteca completa não pôde ser carregada agora."; ViewData["UsingFallback"] = true; }
+        var objectivesList = objectivesResult.Value?.Any() == true ? objectivesResult.Value : HabitLibraryFallback.Objectives;
+        var templatesList = templatesResult.Value ?? [];
+        IReadOnlySet<Guid> favoriteIds = new HashSet<Guid>();
+        if (User.Identity?.IsAuthenticated == true && this.CurrentClientId() != Guid.Empty && this.CurrentUserId() != Guid.Empty)
+            favoriteIds = (await favorites.ListAsync(this.CurrentClientId(), this.CurrentUserId(), ct)).Select(x => x.Id).ToHashSet();
+        return View(new HabitLibraryIndexViewModel(objectivesList, templatesList, favoriteIds, focus, category, difficulty, duration, frequency, minimumPlan, favoritesOnly));
     }
 
     [HttpGet("/habit-library/template/{id:guid}")]
@@ -63,16 +69,31 @@ public sealed class HabitLibraryController(HabitLibraryService library, HabitTem
         return View(new HabitTemplateDetailsViewModel(result.Value, favorite));
     }
 
+    [HttpGet("/habit-library/templates/{id:guid}")]
+    public Task<IActionResult> TemplateDetails(Guid id, CancellationToken ct) => Details(id, ct);
+
+    [Authorize, HttpGet("/habit-library/templates/{id:guid}/customize")]
+    public Task<IActionResult> TemplateCustomize(Guid id, bool onboarding, CancellationToken ct) => Customize(id, onboarding, ct);
+
+    [Authorize, ValidateAntiForgeryToken, HttpPost("/habit-library/templates/{id:guid}/use")]
+    public IActionResult Use(Guid id) => RedirectToAction(nameof(Customize), new { id });
+
+    [Authorize, ValidateAntiForgeryToken, HttpPost("/habit-library/templates/{id:guid}/favorite")]
+    public Task<IActionResult> TemplateFavorite(Guid id, CancellationToken ct) => SetFavorite(id, true, ct);
+
     [Authorize]
     [HttpGet("/habit-library/template/{id:guid}/customize")]
-    public async Task<IActionResult> Customize(Guid id, CancellationToken ct)
+    public async Task<IActionResult> Customize(Guid id, bool onboarding, CancellationToken ct)
     {
         var clientId = this.CurrentClientId();
         var userId = this.CurrentUserId();
         if (clientId == Guid.Empty || userId == Guid.Empty) return Forbid();
         var result = await library.GetTemplateAsync(id, ct);
         if (result.IsFailure || result.Value!.PublishedAt is null) return NotFound();
-        return View(await BuildCustomizationAsync(result.Value, clientId, userId, ct));
+        var model = await BuildCustomizationAsync(result.Value, clientId, userId, ct);
+        model.IsOnboarding = onboarding;
+        model.ReturnUrl = onboarding ? "/onboarding" : "/habit-library";
+        return View(model);
     }
 
     [Authorize]
