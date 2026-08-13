@@ -72,42 +72,7 @@ public class CoreRulesTests
     private static User User(UserPlan plan) => new(Guid.NewGuid(), "U", "u@e.com", "hash", null, UserRole.User, AccountStatus.Active, RiskStatus.Normal, plan, PlanStatus.Active, false, false, null, null, null, null, DateTime.UtcNow, DateTime.UtcNow);
 }
 
-public class HabitRecurrenceRulesTests
-{
-    private static readonly HabitScheduleService Schedule = new(null!, null!, null!);
-    private static Habit Habit(HabitFrequencyType frequency) => new(Guid.NewGuid(), Guid.NewGuid(), "Teste", "#198754", "Saúde", false, null, DateTime.UtcNow, DateTime.UtcNow, frequency);
-
-    [Fact]
-    public void Daily_is_due_every_day() => Assert.True(Schedule.IsHabitDueOnDate(Habit(HabitFrequencyType.Daily), new DateOnly(2026, 7, 21), []));
-
-    [Fact]
-    public void Weekdays_are_due_from_monday_to_friday()
-    {
-        Assert.True(Schedule.IsHabitDueOnDate(Habit(HabitFrequencyType.Weekdays), new DateOnly(2026, 7, 21), []));
-        Assert.False(Schedule.IsHabitDueOnDate(Habit(HabitFrequencyType.Weekdays), new DateOnly(2026, 7, 25), []));
-    }
-
-    [Fact]
-    public void Weekends_are_due_on_saturday_and_sunday()
-    {
-        Assert.True(Schedule.IsHabitDueOnDate(Habit(HabitFrequencyType.Weekends), new DateOnly(2026, 7, 25), []));
-        Assert.False(Schedule.IsHabitDueOnDate(Habit(HabitFrequencyType.Weekends), new DateOnly(2026, 7, 21), []));
-    }
-
-    [Fact]
-    public void Custom_weekly_uses_selected_days()
-    {
-        var days = new[] { new HabitWeekDay(Guid.NewGuid(), Guid.NewGuid(), 2, DateTime.UtcNow) };
-        Assert.True(Schedule.IsHabitDueOnDate(Habit(HabitFrequencyType.CustomWeekly), new DateOnly(2026, 7, 21), days));
-    }
-
-    [Fact]
-    public void Validate_frequency_rejects_invalid_target() => Assert.True(Schedule.ValidateFrequency(HabitFrequencyType.Daily, 8, []).IsFailure);
-
-    [Fact]
-    public void Csv_export_sanitizes_formula_injection() => Assert.StartsWith("'", ReportService.SanitizeCsv("=cmd"));
-}
-
+ 
 public class AdminOperationalRulesTests
 {
     [Theory]

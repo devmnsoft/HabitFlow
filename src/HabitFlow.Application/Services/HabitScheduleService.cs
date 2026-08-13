@@ -6,6 +6,12 @@ namespace HabitFlow.Application;
 
 public sealed class HabitScheduleService(IHabitRepository habits, IHabitWeekDayRepository weekDays, ILogger<HabitScheduleService> logger, HabitScheduleNormalizer normalizer)
 {
+    private object value1;
+    private object value2;
+    private object value3;
+
+    
+
     public bool IsHabitDueOnDate(Habit habit, DateOnly date, IReadOnlyCollection<HabitWeekDay> selectedDays)
     {
         if (habit.IsArchived) return false;
