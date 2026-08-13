@@ -1,8 +1,36 @@
-@model IReadOnlyList<HabitFlow.Domain.HabitObjective>
-@{ ViewData["Title"] = "Biblioteca de hábitos"; }
-<section class="hf-section hf-guided-card"><p class="hf-section-kicker">Sua rotina pode começar pequena</p><h1>Por onde você quer começar?</h1><p class="lead text-muted">Escolha um objetivo e encontre pequenas ações que podem fazer parte da sua rotina.</p></section>
-@await Html.PartialAsync("~/Views/Shared/Partials/_QuickHelpCard.cshtml", null, new ViewDataDictionary(ViewData){{"Text","A biblioteca de hábitos ajuda você a começar rápido. Escolha uma categoria e adicione hábitos prontos à sua rotina."}})
-@if ((bool?)ViewData["UsingFallback"] == true) { <div class="alert alert-info">Estamos usando sugestões básicas enquanto a biblioteca completa é preparada.</div> }
-<section class="row g-3" aria-label="Objetivos disponíveis">@foreach (var objective in Model) { <div class="col-md-6 col-xl-4"><article class="hf-objective-card h-100">@await Html.PartialAsync("~/Views/Shared/Partials/Icons/_Icon.cshtml", null, new ViewDataDictionary(ViewData){{"Name",objective.Icon ?? "habit"},{"Class","hf-icon-lg"}})<h2 class="h4">@objective.Name</h2><p>@objective.Description</p><p><span class="hf-chip">Tempo curto</span> <span class="hf-chip">Fácil de iniciar</span></p><a class="btn btn-success" href="/habit-library/objective/@objective.Slug">Ver hábitos prontos</a></article></div>}</section>
+@model HabitFlow.Web.Models.HabitLibraryIndexViewModel
+@using HabitFlow.Domain
+@{ ViewData["Title"] = "Biblioteca de hábitos"; var categories = Model.Templates.Select(x => x.Category).Where(x => !string.IsNullOrWhiteSpace(x)).Distinct(StringComparer.OrdinalIgnoreCase).Order().ToArray(); }
+@section Styles { <link rel="stylesheet" href="~/css/habit-library.css" asp-append-version="true" /> }
+<main class="hf-library-page" data-library>
+  <header class="hf-library-hero">
+    <div><p class="hf-section-kicker">Comece pequeno, do seu jeito</p><h1>Biblioteca guiada de hábitos</h1><p>Encontre uma ação possível para sua rotina, entenda por que ela ajuda e personalize antes de criar.</p></div>
+    @if (User.Identity?.IsAuthenticated == true) { <a class="btn btn-outline-success" href="/habit-library/favorites">Meus favoritos</a> }
+  </header>
 
-@if ((bool?)ViewData["UsingFallback"] == true) { <section class="hf-empty-state mt-4"><h2>Não foi possível carregar os objetivos</h2><p>Tente novamente em instantes. Enquanto isso, você pode explorar hábitos sugeridos acima.</p><div class="d-flex justify-content-center gap-2 flex-wrap"><a class="btn btn-success" href="/habit-library">Tentar novamente</a><a class="btn btn-outline-success" href="/demo">Ver demonstração</a><a class="btn btn-outline-secondary" href="/help">Ir para ajuda</a></div></section> }
+  <form class="hf-library-filters" method="get" action="/habit-library" data-library-filters aria-label="Filtrar hábitos prontos">
+    <div><label for="focus">Foco</label><select id="focus" name="focus" class="form-select"><option value="">Todos os focos</option>@foreach(var objective in Model.Objectives){<option value="@objective.Id" selected="@(Model.Focus == objective.Id.ToString() ? "selected" : null)">@objective.Name</option>}</select></div>
+    <div><label for="category">Categoria</label><select id="category" name="category" class="form-select"><option value="">Todas</option>@foreach(var category in categories){<option selected="@(Model.Category == category ? "selected" : null)">@category</option>}</select></div>
+    <div><label for="difficulty">Dificuldade</label><select id="difficulty" name="difficulty" class="form-select"><option value="">Todas</option>@foreach(var value in Enum.GetNames<HabitDifficulty>()){<option selected="@(Model.Difficulty == value ? "selected" : null)">@value</option>}</select></div>
+    <div><label for="duration">Tempo</label><select id="duration" name="duration" class="form-select"><option value="">Qualquer tempo</option>@foreach(var minutes in new[]{5,15,30}){<option value="@minutes" selected="@(Model.Duration == minutes.ToString() ? "selected" : null)">Até @minutes min</option>}</select></div>
+    <div><label for="frequency">Frequência</label><select id="frequency" name="frequency" class="form-select"><option value="">Todas</option>@foreach(var item in new[]{("Daily","Diária"),("Weekdays","Dias úteis"),("Weekends","Fim de semana"),("CustomWeekly","Personalizada")}){<option value="@item.Item1" selected="@(Model.Frequency == item.Item1 ? "selected" : null)">@item.Item2</option>}</select></div>
+    <div><label for="minimumPlan">Disponibilidade</label><select id="minimumPlan" name="minimumPlan" class="form-select"><option value="">Todos</option><option value="free" selected="@(Model.MinimumPlan == "free" ? "selected" : null)">Plano Gratuito</option><option value="ritmo" selected="@(Model.MinimumPlan == "ritmo" ? "selected" : null)">Plano Ritmo</option></select></div>
+    @if(User.Identity?.IsAuthenticated == true){<label class="hf-filter-check"><input type="checkbox" name="favoritesOnly" value="true" checked="@Model.FavoritesOnly" /> Somente favoritos</label>}
+    <div class="hf-filter-actions"><button class="btn btn-success" type="submit">Aplicar filtros</button><a class="btn btn-link" href="/habit-library">Limpar</a></div>
+  </form>
+
+  @if ((bool?)ViewData["UsingFallback"] == true) { <div class="alert alert-info">Estamos mostrando sugestões seguras enquanto a biblioteca completa fica disponível.</div> }
+  <p class="hf-library-count" role="status" aria-live="polite" data-library-count>@Model.Templates.Count sugestões encontradas</p>
+  <section class="hf-template-grid" aria-label="Hábitos prontos">
+  @foreach(var template in Model.Templates){ var favorite = Model.FavoriteTemplateIds.Contains(template.Id); var free = template.MinimumPlanCode.Equals(PlanCodes.Free, StringComparison.OrdinalIgnoreCase);
+    <article class="hf-template-card" data-template data-focus="@template.ObjectiveId" data-category="@template.Category" data-difficulty="@template.Difficulty" data-duration="@(template.EstimatedTimeMinutes ?? 999)" data-frequency="@template.SuggestedFrequency" data-plan="@template.MinimumPlanCode" data-favorite="@favorite.ToString().ToLowerInvariant()">
+      <div class="hf-template-card__top"><span class="hf-chip">@template.Category</span><span class="hf-chip">@template.Difficulty</span>@if(template.EstimatedTimeMinutes is not null){<span class="hf-chip">@template.EstimatedTimeMinutes min</span>}</div>
+      <h2>@template.Name</h2><p>@template.Description</p>
+      <dl><div><dt>Por que ajuda</dt><dd>@(template.WhyItHelps ?? template.BenefitText)</dd></div><div><dt>Primeiro passo</dt><dd>@(template.FirstAction ?? template.HowToStart)</dd></div><div><dt>Ritmo sugerido</dt><dd>@template.SuggestedFrequency · @(template.SuggestedTargetPerWeek?.ToString() ?? "flexível")x/semana</dd></div></dl>
+      @if(!free){<p class="hf-plan-note">Disponível com o plano Ritmo. Veja os detalhes antes de decidir.</p>}
+      <footer><a class="btn btn-outline-success" href="/habit-library/templates/@template.Id">Ver detalhes</a>@if(User.Identity?.IsAuthenticated == true){<a class="btn btn-success" href="/habit-library/templates/@template.Id/customize">@(free ? "Usar hábito" : "Ver disponibilidade")</a>}else{<a class="btn btn-success" href="/login?returnUrl=/habit-library/templates/@template.Id/customize">Entrar para usar</a>}</footer>
+    </article>}
+  </section>
+  <section class="hf-library-empty" data-library-empty hidden><h2>Nenhum hábito combina com estes filtros ainda</h2><p>Limpe os filtros ou comece pelo foco Saúde, uma escolha simples e popular.</p><div><button class="btn btn-success" type="button" data-clear-filters>Limpar filtros</button><a class="btn btn-outline-success" href="/habit-library?focus=@Model.Objectives.FirstOrDefault(x => x.Slug.Contains("saude"))?.Id">Explorar Saúde</a></div></section>
+</main>
+@section Scripts { <script src="~/js/habit-library.js" asp-append-version="true" defer></script> }

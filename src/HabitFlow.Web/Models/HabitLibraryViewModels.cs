@@ -5,6 +5,18 @@ namespace HabitFlow.Web.Models;
 
 public sealed record HabitTemplateDetailsViewModel(HabitTemplate Template, bool IsFavorite);
 
+public sealed record HabitLibraryIndexViewModel(
+    IReadOnlyList<HabitObjective> Objectives,
+    IReadOnlyList<HabitTemplate> Templates,
+    IReadOnlySet<Guid> FavoriteTemplateIds,
+    string? Focus,
+    string? Category,
+    string? Difficulty,
+    string? Duration,
+    string? Frequency,
+    string? MinimumPlan,
+    bool FavoritesOnly);
+
 public sealed class CustomizeHabitTemplateViewModel
 {
     public Guid TemplateId { get; set; }

@@ -13,6 +13,13 @@ public sealed class HabitLibraryService(IHabitObjectiveRepository objectives, IH
         catch (Exception ex) { logger.LogError(ex, "Erro ao listar objetivos"); return Result<IReadOnlyList<HabitObjective>>.Failure("library.objectives_error", "Não foi possível carregar os objetivos agora."); }
     }
 
+    public async Task<Result<IReadOnlyList<HabitTemplate>>> GetTemplatesAsync(CancellationToken ct = default)
+    {
+        try { return Result<IReadOnlyList<HabitTemplate>>.Success(await templates.ListActiveAsync(ct)); }
+        catch (Exception ex) when (IsMissingTable(ex)) { logger.LogWarning(ex, "Habit Library sem tabelas; usando fallback completo"); return Result<IReadOnlyList<HabitTemplate>>.Success(fallback.GetObjectives().SelectMany(x => fallback.GetTemplatesBySlug(x.Slug)).DistinctBy(x => x.Id).ToArray()); }
+        catch (Exception ex) { logger.LogError(ex, "Erro ao listar templates"); return Result<IReadOnlyList<HabitTemplate>>.Failure("library.templates_error", "Não foi possível carregar os hábitos prontos agora."); }
+    }
+
     public async Task<Result<IReadOnlyList<HabitTemplate>>> GetTemplatesByObjectiveAsync(string slug, CancellationToken ct = default)
     {
         try
