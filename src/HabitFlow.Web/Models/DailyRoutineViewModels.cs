@@ -7,7 +7,13 @@ public sealed record DailyRoutineViewModel(
     int Scheduled,
     int Completed,
     int Percentage,
-    IReadOnlyList<RoutinePeriodGroupViewModel> Groups);
+    IReadOnlyList<RoutinePeriodGroupViewModel> Groups,
+    string Greeting,
+    string Motivation,
+    string? FocusHabitName)
+{
+    public int Pending => Math.Max(0, Scheduled - Completed);
+}
 
 public sealed record RoutinePeriodGroupViewModel(
     string Key,
@@ -25,6 +31,7 @@ public sealed record RoutineHabitCardViewModel(
     Guid? ObjectiveId,
     TimeOnly? PreferredTime,
     int EstimatedMinutes,
+    string FrequencyLabel,
     DailyRoutineItemStatus Status,
     int SortOrder,
     int Version,
@@ -37,13 +44,11 @@ public static class DailyRoutineViewModelMapper
 {
     private static readonly (string Key, string Title, string Description, string Icon)[] Sections =
     [
-        ("morning", "Manhã", "Comece com passos leves e intencionais.", "sunrise"),
-        ("afternoon", "Tarde", "Retome o foco sem cobrar perfeição.", "sun"),
-        ("evening", "Noite", "Feche o dia cuidando do que importa.", "moon"),
-        ("flexible", "Quando puder", "Hábitos flexíveis para encaixar no seu ritmo.", "clock"),
+        ("now", "Agora", "Comece pelo próximo passo possível.", "play"),
+        ("next", "Próximos", "O que pode esperar fica organizado aqui.", "clock"),
         ("completed", "Concluídos", "Cada passo conta. Muito bem.", "check-circle"),
         ("paused", "Pausados hoje", "Uma pausa consciente também protege sua rotina.", "pause-circle"),
-        ("moved", "Movidos", "Estes passos já estão organizados para outro momento.", "calendar")
+        ("moved", "Não programados hoje", "Estes passos já estão organizados para outro momento.", "calendar")
     ];
 
     public static DailyRoutineViewModel From(DailyRoutinePlan plan)
@@ -51,15 +56,27 @@ public static class DailyRoutineViewModelMapper
         var cards = plan.Items.Select(ToCard).ToList();
         var groups = Sections.Select(section => new RoutinePeriodGroupViewModel(
                 section.Key, section.Title, section.Description, section.Icon,
-                cards.Where(card => GroupKey(card) == section.Key).OrderBy(card => card.SortOrder).ThenBy(card => card.PreferredTime).ToList()))
+                cards.Where(card => GroupKey(card) == section.Key)
+                    .OrderBy(card => card.PreferredTime.HasValue ? 0 : 1).ThenBy(card => card.PreferredTime)
+                    .ThenBy(card => card.ObjectiveId.HasValue ? 0 : 1).ThenBy(card => card.EstimatedMinutes)
+                    .ThenBy(card => card.SortOrder).ThenBy(card => card.Name).ToList()))
             .Where(group => group.Habits.Count > 0)
             .ToList();
-        return new(plan.LocalDate, plan.Scheduled, plan.Completed, plan.Percentage, groups);
+        var focus = cards.FirstOrDefault(x => x.CanComplete && x.ObjectiveId.HasValue)?.Name;
+        var motivation = plan.Scheduled switch
+        {
+            0 => "Seu dia está livre. Escolha o próximo passo com calma.",
+            _ when plan.Completed == plan.Scheduled => "Você cuidou do que planejou. Consistência também é saber encerrar.",
+            _ when plan.Percentage >= 50 => "Você já concluiu metade do dia. Continue no seu ritmo.",
+            _ when plan.Pending <= 2 => $"Hoje está leve: {plan.Pending} passos importantes.",
+            _ => "Seu foco hoje é manter consistência, não perfeição."
+        };
+        return new(plan.LocalDate, plan.Scheduled, plan.Completed, plan.Percentage, groups, "Olá", motivation, focus);
     }
 
     private static RoutineHabitCardViewModel ToCard(DailyRoutineItem item) => new(
         item.HabitId, item.Name, item.Color, item.Category ?? "Sem categoria", item.IconCode ?? "check",
-        item.ObjectiveId, item.PreferredTime, item.EstimatedMinutes, item.Status, item.SortOrder, item.Version,
+        item.ObjectiveId, item.PreferredTime, item.EstimatedMinutes, Frequency(item.Frequency), item.Status, item.SortOrder, item.Version,
         item.Status switch
         {
             DailyRoutineItemStatus.Completed => "Concluído",
@@ -75,7 +92,14 @@ public static class DailyRoutineViewModelMapper
         if (item.Status == DailyRoutineItemStatus.Completed) return "completed";
         if (item.Status == DailyRoutineItemStatus.Excused) return "paused";
         if (item.Status == DailyRoutineItemStatus.Moved) return "moved";
-        if (!item.PreferredTime.HasValue) return "flexible";
-        return item.PreferredTime.Value.Hour switch { < 12 => "morning", < 18 => "afternoon", _ => "evening" };
+        return item.Status == DailyRoutineItemStatus.Upcoming ? "next" : "now";
     }
+
+    private static string Frequency(HabitFlow.Domain.HabitFrequencyType frequency) => frequency switch
+    {
+        HabitFlow.Domain.HabitFrequencyType.Daily => "Todos os dias",
+        HabitFlow.Domain.HabitFrequencyType.Weekdays => "Dias úteis",
+        HabitFlow.Domain.HabitFrequencyType.Weekends => "Fins de semana",
+        _ => "Dias escolhidos"
+    };
 }

@@ -1,5 +1,5 @@
 @model DailyRoutineViewModel
 <header class="my-day-hero">
-  <div><span class="my-day-eyebrow">Sua rotina, no seu ritmo</span><h1>Meu dia</h1><p>@Model.LocalDate.ToString("dddd, dd 'de' MMMM")</p></div>
+  <div><span class="my-day-eyebrow">@Model.Greeting · sua rotina, no seu ritmo</span><h1>Meu dia</h1><p>@Model.LocalDate.ToString("dddd, dd 'de' MMMM")</p><p class="my-day-hero__motivation">@Model.Motivation</p></div>
   <div class="my-day-hero__actions"><a class="btn btn-outline-success" href="/habits">Organizar hábitos</a><a class="btn btn-success" href="/weekly-review">Revisar semana</a></div>
 </header>

@@ -5,7 +5,7 @@ namespace HabitFlow.Application;
 
 public enum DailyRoutineItemStatus { Upcoming, Available, Completed, Excused, Moved, Missed }
 public sealed record DailyRoutineQuery(Guid ClientId, Guid UserId, DateOnly LocalDate);
-public sealed record DailyRoutineItem(Guid HabitId, string Name, string Color, string? Category, string? IconCode, Guid? ObjectiveId, TimeOnly? PreferredTime, int EstimatedMinutes, DailyRoutineItemStatus Status, int SortOrder, int Version, string NextAction);
+public sealed record DailyRoutineItem(Guid HabitId, string Name, string Color, string? Category, string? IconCode, Guid? ObjectiveId, TimeOnly? PreferredTime, int EstimatedMinutes, HabitFrequencyType Frequency, DailyRoutineItemStatus Status, int SortOrder, int Version, string NextAction);
 public sealed record DailyRoutinePlan(DateOnly LocalDate, IReadOnlyList<DailyRoutineItem> Items, int Scheduled, int Completed, int Percentage)
 {
     public int Pending => Scheduled - Completed;
@@ -40,8 +40,11 @@ public sealed class DailyRoutinePlannerService(IHabitRepository habits, IHabitWe
                 _ => DailyRoutineItemStatus.Available
             };
             var action = status switch { DailyRoutineItemStatus.Completed => "Desfazer", DailyRoutineItemStatus.Excused or DailyRoutineItemStatus.Moved => "Restaurar", _ => "Concluir" };
-            return new DailyRoutineItem(h.Id,h.Name,h.Color,h.Category,h.IconCode,h.ObjectiveId,preferred,h.EstimatedTimeMinutes ?? 10,status,custom?.SortOrder ?? h.SortOrder,occurrence.ExceptionVersion > 0 ? occurrence.ExceptionVersion : custom?.Version ?? 0,action);
-        }).OrderBy(x => x.PreferredTime.HasValue ? 0 : 1).ThenBy(x => x.PreferredTime).ThenBy(x => x.SortOrder).ThenBy(x => x.Name).ToList();
+            return new DailyRoutineItem(h.Id,h.Name,h.Color,h.Category,h.IconCode,h.ObjectiveId,preferred,h.EstimatedTimeMinutes ?? 10,h.FrequencyType,status,custom?.SortOrder ?? h.SortOrder,occurrence.ExceptionVersion > 0 ? occurrence.ExceptionVersion : custom?.Version ?? 0,action);
+        }).OrderBy(x => x.Status == DailyRoutineItemStatus.Completed ? 1 : 0)
+          .ThenBy(x => x.PreferredTime.HasValue ? 0 : 1).ThenBy(x => x.PreferredTime)
+          .ThenBy(x => x.ObjectiveId.HasValue ? 0 : 1).ThenBy(x => x.EstimatedMinutes)
+          .ThenBy(x => x.SortOrder).ThenBy(x => x.Name).ToList();
         var done = items.Count(x => x.Status == DailyRoutineItemStatus.Completed);
         var scheduled = effective.EffectiveOccurrences.Count;
         return new(query.LocalDate,items,scheduled,done,scheduled == 0 ? 0 : (int)Math.Round(done * 100d / scheduled));
