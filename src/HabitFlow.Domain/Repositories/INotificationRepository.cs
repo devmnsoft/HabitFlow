@@ -10,6 +10,8 @@ public interface INotificationRepository
     Task<NotificationPage> SearchAsync(NotificationQuery query, CancellationToken ct = default);
     Task<bool> SetReadAsync(Guid clientId, Guid userId, Guid notificationId, bool read, DateTime now, CancellationToken ct = default);
     Task<bool> SetArchivedAsync(Guid clientId, Guid userId, Guid notificationId, bool archived, DateTime now, CancellationToken ct = default);
+    Task<int> MarkAllAsReadAsync(Guid clientId, Guid userId, DateTime readAt, CancellationToken ct = default);
+    Task<int> ArchiveReadAsync(Guid clientId, Guid userId, DateTime archivedAt, CancellationToken ct = default);
 }
 
 public sealed record NotificationQuery(Guid ClientId, Guid UserId, string Filter = "all", string? Category = null,

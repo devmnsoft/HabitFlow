@@ -1,8 +1,8 @@
 # Inventário v6.12.8
 
-- **SHA inicial:** `74d5a63026ee29e1a003fc2cd428d4e9273c1e23`.
-- **PR anterior detectado:** PR #129 (`Merge pull request #129`, evolução de Meu Dia e ações de hábito).
+- **SHA inicial:** `3eaf23a3bf87dcd65c985502092aa6a96c9b3102`.
+- **PR anterior detectado:** PR #130 no HEAD (`Merge pull request #130`), que já incorporava a primeira entrega v6.12.8 após o PR #129.
 - **Branch de trabalho:** `feature/v6128-dashboard-goals-reminders-reports-premium-ux`.
-- **Telas priorizadas:** `/dashboard`, `/goals`, `/goals/{id}`, `/reminders` e `/reports`; notificações e biblioteca foram inventariadas e preservadas por já possuírem inbox/templates funcionais.
+- **Telas priorizadas:** `/dashboard`, `/goals`, `/goals/{id}`, `/reminders`, `/notifications` e `/reports`; biblioteca foi inventariada e preservada por já possuir filtros/templates funcionais.
 - **Arquivos principais:** `DashboardOverviewService.cs`, `GoalExperienceServices.cs`, views/partials de Dashboard, Goals, Reminders e Reports, além dos estilos específicos existentes.
 - **Ambiente:** SDK .NET indisponível (`dotnet: command not found`), impedindo build, publish e execução autenticada. PostgreSQL, navegador autenticado e dados de usuário não foram disponibilizados. Node/npm estão disponíveis.
