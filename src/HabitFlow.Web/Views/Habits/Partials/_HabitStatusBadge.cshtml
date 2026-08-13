@@ -1,2 +1,27 @@
 @model HabitFlow.Domain.Habit
-@if(Model.IsArchived){<span class="hf-status is-archived">Arquivado</span>}else if(Model.IsPaused){<span class="hf-status is-paused">Pausado</span>}else{<span class="hf-status is-active">Ativo</span>}
+@{
+    var statusClass = "hf-habit-status-active";
+    var statusText = "Ativo";
+
+    if (Model is null)
+    {
+        statusClass = "hf-habit-status-unavailable";
+        statusText = "Indisponível";
+    }
+    else if (Model.IsArchived)
+    {
+        statusClass = "hf-habit-status-archived";
+        statusText = "Arquivado";
+    }
+    else if (Model.IsPaused)
+    {
+        statusClass = "hf-habit-status-paused";
+        statusText = "Pausado";
+    }
+    else if (Model.StartDate is { } startDate && startDate > DateOnly.FromDateTime(DateTime.UtcNow))
+    {
+        statusClass = "hf-habit-status-scheduled";
+        statusText = "Agendado";
+    }
+}
+<span class="hf-habit-status @statusClass">@statusText</span>
