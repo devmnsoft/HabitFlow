@@ -1,6 +1,8 @@
-[CmdletBinding()] param([string]$Email='demo@habitflow.local',[string]$ConnectionString=$env:ConnectionStrings__DefaultConnection,[switch]$ConfirmDevelopment)
+# Usage (Development only, PowerShell 7+): ./scripts/dev/seed-demo-data.ps1
+#   [-Email demo@habitflow.local] [-ConnectionString $env:ConnectionStrings__DefaultConnection]
+[CmdletBinding()] param([string]$Email='demo@habitflow.local',[string]$ConnectionString=$env:ConnectionStrings__DefaultConnection)
 $ErrorActionPreference='Stop'
-if($env:ASPNETCORE_ENVIRONMENT -ne 'Development' -and -not $ConfirmDevelopment){throw 'Development was not detected. Review the target and rerun with -ConfirmDevelopment.'}
+if($env:ASPNETCORE_ENVIRONMENT -ne 'Development'){throw 'This helper only runs when ASPNETCORE_ENVIRONMENT=Development.'}
 if([string]::IsNullOrWhiteSpace($ConnectionString)){throw 'ConnectionStrings__DefaultConnection is required.'}
 $parts=@{}; foreach($item in $ConnectionString-split';'){if($item-match'^\s*([^=]+)=(.*)$'){$parts[$matches[1].Trim().ToLowerInvariant()]=$matches[2].Trim()}}
 $env:PGHOST=$parts['host'];$env:PGPORT=$(if($parts['port']){$parts['port']}else{'5432'});$env:PGUSER=$(if($parts['username']){$parts['username']}else{$parts['user id']});$env:PGPASSWORD=$parts['password'];$env:PGDATABASE=$parts['database']

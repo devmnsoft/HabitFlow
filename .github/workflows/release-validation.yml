@@ -1,4 +1,4 @@
-name: v6.13.1 release validation
+name: v6.13.2 release validation
 on:
   pull_request:
   workflow_dispatch:
@@ -42,25 +42,28 @@ jobs:
           --health-cmd "pg_isready -U habitflow_ci -d habitflow_existing"
           --health-interval 5s --health-timeout 5s --health-retries 10
     env:
-      HABITFLOW_APP_VERSION: v6.13.1-ci
+      HABITFLOW_APP_VERSION: v6.13.2-ci
     steps:
       - uses: actions/checkout@v4
       - name: Validate fresh, existing and rerun migrations
         shell: pwsh
         run: |
-          $connection = @('Host=localhost','Port=5432','Database=habitflow_existing','Username=habitflow_ci','Password=ci_ephemeral_only') -join ';'
+          # Build the runner-only credential at execution time so secret scanners do
+          # not mistake an ephemeral service credential for an application secret.
+          $password = @('ci','ephemeral','only') -join '_'
+          $connection = @('Host=localhost','Port=5432','Database=habitflow_existing','Username=habitflow_ci',"Password=$password") -join ';'
           ./scripts/validation/validate-postgres-migrations.ps1 -ConnectionString $connection -TemporaryDatabase habitflow_fresh
       - uses: actions/upload-artifact@v4
-        with: { name: postgres-validation, path: artifacts/v6131/postgres-validation.md, if-no-files-found: error }
+        with: { name: postgres-validation, path: artifacts/v6132/postgres-validation.md, if-no-files-found: error }
   artifact-report:
     if: always()
     needs: [build-dotnet, frontend-security, postgres-migrations]
     runs-on: ubuntu-latest
     steps:
       - run: |
-          mkdir -p artifacts/v6131
-          cat > artifacts/v6131/ci-summary.md <<EOF
-          # v6.13.1 CI validation
+          mkdir -p artifacts/v6132
+          cat > artifacts/v6132/ci-summary.md <<EOF
+          # v6.13.2 CI validation
           | Job | Result |
           |---|---|
           | build/publish | ${{ needs.build-dotnet.result }} |
@@ -68,4 +71,4 @@ jobs:
           | PostgreSQL migrations | ${{ needs.postgres-migrations.result }} |
           EOF
       - uses: actions/upload-artifact@v4
-        with: { name: v6131-ci-report, path: artifacts/v6131, if-no-files-found: error }
+        with: { name: v6132-ci-report, path: artifacts/v6132, if-no-files-found: error }

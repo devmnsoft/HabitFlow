@@ -1,3 +1,5 @@
+# Usage (Development only, PowerShell 7+): ./scripts/dev/provision-dev-user.ps1
+#   [-BaseUrl http://localhost:5097] [-Email demo@habitflow.local] [-Password (Read-Host -AsSecureString)]
 [CmdletBinding()] param([string]$BaseUrl='http://localhost:5097',[string]$Email='demo@habitflow.local',[Security.SecureString]$Password)
 $ErrorActionPreference='Stop'
 if($env:ASPNETCORE_ENVIRONMENT -ne 'Development'){throw 'This helper only runs when ASPNETCORE_ENVIRONMENT=Development.'}
