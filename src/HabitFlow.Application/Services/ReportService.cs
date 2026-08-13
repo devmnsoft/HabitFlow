@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 
 namespace HabitFlow.Application;
 
-public sealed record PersonalReport(DateOnly PeriodStart, DateOnly PeriodEnd, int TotalCompletions, int ActiveDays, double CompletionRate, string Insight);
+public sealed record PersonalReport(DateOnly PeriodStart, DateOnly PeriodEnd, int Planned, int TotalCompletions, int ActiveDays, double CompletionRate, string Insight);
 
 public sealed class ReportService(IHabitRepository habits, IHabitCompletionRepository completions, IHabitWeekDayRepository weekDays,
     HabitOccurrenceService occurrences, UserTimeZoneService timeZones, IUserReportRepository reports, AuditService audit,
@@ -56,8 +56,8 @@ public sealed class ReportService(IHabitRepository habits, IHabitCompletionRepos
         {
             var r = await BuildAsync(clientId, userId, periodStart, periodEnd, ct);
             var culture = CultureInfo.GetCultureInfo("pt-BR");
-            var csv = $"Período inicial;Período final;Conclusões;Dias ativos;Taxa;Insight\r\n" +
-                      $"{r.PeriodStart:dd/MM/yyyy};{r.PeriodEnd:dd/MM/yyyy};{r.TotalCompletions};{r.ActiveDays};{r.CompletionRate.ToString("N1", culture)}%;\"{SanitizeCsv(r.Insight)}\"\r\n";
+            var csv = $"Período inicial;Período final;Planejados;Conclusões;Dias ativos;Taxa;Insight\r\n" +
+                      $"{r.PeriodStart:dd/MM/yyyy};{r.PeriodEnd:dd/MM/yyyy};{r.Planned};{r.TotalCompletions};{r.ActiveDays};{r.CompletionRate.ToString("N1", culture)}%;\"{SanitizeCsv(r.Insight)}\"\r\n";
             var encoding = new UTF8Encoding(true);
             var body = encoding.GetBytes(csv);
             var bytes = encoding.GetPreamble().Concat(body).ToArray();
@@ -77,7 +77,7 @@ public sealed class ReportService(IHabitRepository habits, IHabitCompletionRepos
         var period = await snapshots.BuildPeriodAsync(clientId, userId, start, end, ct);
         var insight = period.Scheduled < 3 ? "Ainda não há dados suficientes para gerar uma comparação." :
             period.Percentage >= 70 ? "Você manteve uma boa regularidade no período." : "Escolha um hábito pequeno para retomar hoje.";
-        return new(start, end, period.Completed, period.ActiveDays, (double)period.Percentage, insight);
+        return new(start, end, period.Scheduled, period.Completed, period.ActiveDays, (double)period.Percentage, insight);
     }
     private async Task<PersonalReport> BuildAsync(Guid userId, DateOnly start, DateOnly end, CancellationToken ct)
     {
@@ -92,7 +92,7 @@ public sealed class ReportService(IHabitRepository habits, IHabitCompletionRepos
         var completed = (await completions.ListByUserAsync(userId, start, ct)).Where(x => x.CompletedDate <= historicalEnd)
             .Select(x => (x.HabitId, x.CompletedDate)).Distinct().Count(valid.Contains);
         var rate = valid.Count == 0 ? 0 : Math.Round(completed * 100d / valid.Count, 1);
-        return new(start, end, completed, valid.Select(x => x.Date).Distinct().Count(), rate,
+        return new(start, end, valid.Count, completed, valid.Select(x => x.Date).Distinct().Count(), rate,
             rate >= 70 ? "Você manteve uma ótima consistência." : "Escolha um hábito pequeno para retomar hoje.");
     }
     public static string SanitizeCsv(string value) => string.IsNullOrWhiteSpace(value) ? string.Empty : ("=+-@".Contains(value[0]) ? "'" + value : value).Replace("\"", "\"\"");

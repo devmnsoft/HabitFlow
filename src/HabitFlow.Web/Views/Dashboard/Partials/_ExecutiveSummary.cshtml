@@ -1,0 +1,20 @@
+@model DashboardViewModel
+<section class="executive-summary" aria-labelledby="executive-title">
+  <div class="executive-heading"><div><p class="dashboard-kicker">Visão executiva</p><h2 id="executive-title">Sua rotina em números</h2></div><p>@Model.Executive.Recommendation</p></div>
+  <div class="executive-kpis" aria-label="Indicadores principais">
+    <article><span>Hábitos ativos</span><strong>@Model.Executive.ActiveHabits</strong></article>
+    <article><span>Concluídos hoje</span><strong>@Model.Executive.CompletedToday</strong></article>
+    <article><span>Pendentes hoje</span><strong>@Model.Executive.PendingToday</strong></article>
+    <article><span>Objetivos ativos</span><strong>@Model.Executive.ActiveGoals</strong></article>
+    <article><span>Progresso semanal</span><strong>@Model.Executive.WeeklyPercentage%</strong></article>
+    <article><span>Consistência · 7 dias</span><strong>@Model.Executive.WeeklyPercentage%</strong></article>
+  </div>
+  @if (Model.Executive.ActiveHabits == 0) {
+    <div class="dashboard-onboarding"><div><h3>Comece com algo simples</h3><p>Escolha um hábito pequeno ou adapte um template antes de ativá-lo.</p></div><div class="dashboard-onboarding__actions"><a class="btn btn-success" href="/habits/create">Criar primeiro hábito</a><a class="btn btn-outline-success" href="/habit-library">Explorar biblioteca</a><a class="btn btn-outline-secondary" href="/goals/create">Criar objetivo</a></div><ul aria-label="Templates rápidos"><li>Beber água</li><li>Caminhar</li><li>Ler 10 minutos</li><li>Organizar o dia</li><li>Dormir melhor</li></ul></div>
+  }
+  <div class="weekly-chart">
+    <div class="card-heading"><h3>Últimos 7 dias</h3><span>Planejados × concluídos</span></div>
+    @if (Model.Executive.Days.All(x => x.Planned == 0)) { <p class="weekly-chart__empty">Ainda não há hábitos planejados neste período.</p> }
+    else { <div class="weekly-bars">@foreach (var day in Model.Executive.Days) {<div class="weekly-bar" title="@day.Completed de @day.Planned concluídos"><div class="weekly-bar__track"><span style="height:@day.Percentage%"></span></div><strong>@day.Percentage%</strong><small>@day.Date.ToString("ddd")</small></div>}</div> }
+  </div>
+</section>

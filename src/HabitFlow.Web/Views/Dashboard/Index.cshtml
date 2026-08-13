@@ -5,6 +5,7 @@
   @if (Model is null) { <partial name="Partials/_DashboardEmptyState" /> }
   else {
     <partial name="Partials/_DashboardHero" model="Model" />
+    <partial name="Partials/_ExecutiveSummary" model="Model" />
     <div class="dashboard-v4__grid">
       <partial name="Partials/_TodayFocusCard" model="Model" />
       <partial name="Partials/_DailyProgressRing" model="Model.Today" />

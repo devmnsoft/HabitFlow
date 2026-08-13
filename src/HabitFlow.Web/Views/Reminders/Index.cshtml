@@ -3,4 +3,14 @@
 @section Styles { <link rel="stylesheet" href="~/css/reminders.css" asp-append-version="true" /> }
 <header class="reminder-heading"><div><span class="eyebrow">Sua rotina</span><h1>Lembretes</h1><p>Pequenos sinais, no seu horário, para manter o que importa em movimento.</p></div></header>
 @if (Model.Reminders.Count == 0) { <partial name="_ReminderEmptyState" /> }
-else { <div class="reminder-grid">@foreach (var item in Model.Reminders) { <partial name="_ReminderCard" model="item" /> }</div> }
+else {
+  var today = DateTimeOffset.UtcNow.Date;
+  var groups = new[] {
+    new { Title = "Hoje", Items = Model.Reminders.Where(x => x.IsActive && x.NextTriggerAt?.UtcDateTime.Date == today).ToList() },
+    new { Title = "Próximos", Items = Model.Reminders.Where(x => x.IsActive && x.NextTriggerAt?.UtcDateTime.Date > today).ToList() },
+    new { Title = "Ativos", Items = Model.Reminders.Where(x => x.IsActive && x.NextTriggerAt is null).ToList() },
+    new { Title = "Pausados", Items = Model.Reminders.Where(x => !x.IsActive).ToList() }
+  };
+  <nav class="reminder-summary" aria-label="Resumo de lembretes"><span>@Model.Reminders.Count(x=>x.IsActive) ativos</span><span>@Model.Reminders.Count(x=>!x.IsActive) pausados</span></nav>
+  @foreach (var group in groups.Where(x => x.Items.Count > 0)) { <section class="reminder-group"><h2>@group.Title <small>@group.Items.Count</small></h2><div class="reminder-grid">@foreach (var item in group.Items) { <partial name="_ReminderCard" model="item" /> }</div></section> }
+}

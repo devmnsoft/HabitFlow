@@ -5,13 +5,16 @@
         <h2>@Model.HabitName</h2><p class="reminder-time">@Model.ReminderTime.ToString("HH:mm")</p>
         <p>@string.Join(", ", Model.DaysOfWeek.Select(x => new[]{"Dom","Seg","Ter","Qua","Qui","Sex","Sáb"}[x])) · @Model.Timezone.Replace('_',' ')</p>
         <span class="status">@(Model.IsActive ? "Ativo" : "Pausado")</span>
+        <small class="next-trigger">@(Model.NextTriggerAt.HasValue ? $"Próximo disparo: {Model.NextTriggerAt.Value:dd/MM HH:mm}" : "Próximo disparo será calculado ao ativar")</small>
     </div>
     <div class="d-flex flex-wrap gap-2">
         @if (Model.IsActive)
         {
             <form method="post" action="/reminders/@Model.Id/snooze">@Html.AntiForgeryToken()<input type="hidden" name="minutes" value="15" /><button class="btn btn-outline-primary" type="submit" aria-label="Adiar lembrete de @Model.HabitName por 15 minutos">Adiar 15 min</button></form>
+            <form method="post" action="/reminders/@Model.Id/snooze">@Html.AntiForgeryToken()<input type="hidden" name="minutes" value="60" /><button class="btn btn-outline-primary" type="submit" aria-label="Adiar lembrete de @Model.HabitName por uma hora">Adiar 1 hora</button></form>
         }
         <form method="post" action="/reminders/@Model.Id/@(Model.IsActive ? "pause" : "resume")">@Html.AntiForgeryToken()<button class="btn btn-outline-secondary" type="submit">@(Model.IsActive ? "Pausar" : "Reativar")</button></form>
         <form method="post" action="/reminders/@Model.Id/delete" data-confirm="Excluir este lembrete permanentemente?">@Html.AntiForgeryToken()<button class="btn btn-outline-danger" type="submit">Excluir</button></form>
+        <a class="btn btn-outline-success" href="/habits/@Model.HabitId">Abrir hábito</a>
     </div>
 </article>
