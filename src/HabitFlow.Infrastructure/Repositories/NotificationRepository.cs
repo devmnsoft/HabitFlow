@@ -22,4 +22,8 @@ public sealed class NotificationRepository(SqlExecutor db) : INotificationReposi
         await db.ExecuteAsync("update habitflow.notifications n set is_read=@read,read_at=case when @read then @now else null end from habitflow.users u where n.user_id=u.id and n.id=@notificationId and n.user_id=@userId and u.client_id=@clientId", new {clientId,userId,notificationId,read,now},ct)==1;
     public async Task<bool> SetArchivedAsync(Guid clientId, Guid userId, Guid notificationId, bool archived, DateTime now, CancellationToken ct = default) =>
         await db.ExecuteAsync("update habitflow.notifications n set is_archived=@archived,archived_at=case when @archived then @now else null end from habitflow.users u where n.user_id=u.id and n.id=@notificationId and n.user_id=@userId and u.client_id=@clientId", new {clientId,userId,notificationId,archived,now},ct)==1;
+    public Task<int> MarkAllAsReadAsync(Guid clientId, Guid userId, DateTime readAt, CancellationToken ct = default) =>
+        db.ExecuteAsync("update habitflow.notifications n set is_read=true,read_at=@readAt from habitflow.users u where n.user_id=u.id and n.user_id=@userId and u.client_id=@clientId and n.is_read=false and coalesce(n.is_archived,false)=false", new {clientId,userId,readAt},ct);
+    public Task<int> ArchiveReadAsync(Guid clientId, Guid userId, DateTime archivedAt, CancellationToken ct = default) =>
+        db.ExecuteAsync("update habitflow.notifications n set is_archived=true,archived_at=@archivedAt from habitflow.users u where n.user_id=u.id and n.user_id=@userId and u.client_id=@clientId and n.is_read=true and coalesce(n.is_archived,false)=false", new {clientId,userId,archivedAt},ct);
 }

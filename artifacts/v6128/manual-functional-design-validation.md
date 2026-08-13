@@ -12,7 +12,7 @@
 | `/goals` | busca/status/ordenação | revisão estática concluída | faltava ordenação | seis opções e cards acionáveis | testar consultas reais |
 | `/goals/{id}` | vínculo e próxima ação | revisão estática concluída | âncora de vínculo ausente | CTA e destino sem Guid manual | validar antiforgery em runtime |
 | `/reminders` | grupos e ações | revisão estática concluída | faltavam agrupamento e adiar 1h | Hoje/Próximos/Ativos/Pausados, próximo disparo e ações | validar timezone/disparo |
-| `/notifications` | inbox e POST | preservado | nenhum nesta etapa | nenhuma | abrir com lista vazia/cheia |
+| `/notifications` | inbox, ações individuais e em lote | revisão estática concluída | ação de arquivar lidas ausente; restore indisponível na UI; feedback de item inexistente ausente | ação em lote tenant-scoped, restore, datas relativas, tipos visuais e feedback amigável | abrir com lista vazia/cheia e sessão autenticada |
 | `/reports` | semanal/mensal/CSV/print | revisão estática concluída | planejados não eram exibidos | métrica honesta e insight acionável | conferir dados e impressão |
 | `/habit-library` | filtros/customização | preservado | nenhum nesta etapa | integração via dashboard | validar limite/duplicidade |
 | `/plans` | integridade comercial | revisão estática | nenhum nesta etapa | nenhuma mudança comercial | checkout externo |

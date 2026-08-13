@@ -5,11 +5,12 @@
 - Dashboard executivo com seis KPIs, resumo de sequência, recomendação determinística, gráfico dos últimos sete dias e onboarding com cinco templates rápidos.
 - Objetivos com busca, cinco estados de filtro, seis ordenações, prazo, valor atual/alvo e próxima ação nos cards; atalho acessível para vincular hábito.
 - Lembretes agrupados em Hoje, Próximos, Ativos e Pausados, com próximo disparo, pausar/reativar, adiar 15/60 minutos, excluir e abrir hábito.
+- Notificações agora oferecem arquivamento em lote das lidas, restauração pela inbox arquivada, feedback para ações indisponíveis, datas relativas e distinção visual por tipo, sempre sob escopo de tenant/usuário.
 - Relatórios básicos passaram a expor planejados, conclusões, dias ativos, consistência e recomendação honesta; CSV inclui a métrica planejada e mantém neutralização de fórmula.
 
 ## Design e telas
 
-Foram alteradas `/dashboard`, `/goals`, `/goals/{id}`, `/reminders` e `/reports`. Cards, chips, estados vazios e breakpoints móveis foram refinados nos CSS já existentes, sem introduzir uma camada concorrente de estilos. `/my-day`, hábitos, notificações, biblioteca, planos e privacidade foram preservados.
+Foram alteradas `/dashboard`, `/goals`, `/goals/{id}`, `/reminders`, `/notifications` e `/reports`. Cards, chips, estados vazios e breakpoints móveis foram refinados nos CSS já existentes, sem introduzir uma camada concorrente de estilos. `/my-day`, hábitos, biblioteca, planos e privacidade foram preservados.
 
 ## Regras preservadas
 

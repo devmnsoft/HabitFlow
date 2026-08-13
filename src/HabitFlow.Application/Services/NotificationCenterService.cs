@@ -15,5 +15,7 @@ public sealed class NotificationCenterService(INotificationRepository repository
     public Task<int> UnreadCountAsync(Guid userId,CancellationToken ct=default)=>repository.CountUnreadAsync(userId,ct);
     public Task<bool> SetReadAsync(Guid clientId,Guid userId,Guid id,bool read,CancellationToken ct=default)=>repository.SetReadAsync(clientId,userId,id,read,clock.GetUtcNow().UtcDateTime,ct);
     public Task<bool> SetArchivedAsync(Guid clientId,Guid userId,Guid id,bool archived,CancellationToken ct=default)=>repository.SetArchivedAsync(clientId,userId,id,archived,clock.GetUtcNow().UtcDateTime,ct);
+    public Task<int> MarkAllAsReadAsync(Guid clientId,Guid userId,CancellationToken ct=default)=>repository.MarkAllAsReadAsync(clientId,userId,clock.GetUtcNow().UtcDateTime,ct);
+    public Task<int> ArchiveReadAsync(Guid clientId,Guid userId,CancellationToken ct=default)=>repository.ArchiveReadAsync(clientId,userId,clock.GetUtcNow().UtcDateTime,ct);
     public string? SafeAction(string? actionUrl)=>urls.IsSafe(actionUrl)?actionUrl:null;
 }

@@ -1,7 +1,7 @@
 @model HabitFlow.Domain.NotificationPage
 @{ ViewData["Title"]="Notificações"; }
 @section Styles { <link rel="stylesheet" href="~/css/notifications-v2.css" asp-append-version="true" /> }
-<header class="notification-header"><div><span>Seu espaço de atualizações</span><h1>Notificações</h1><p>Acompanhe lembretes, progresso e conquistas sem perder o foco.</p></div><form method="post" action="/notifications/read-all">@Html.AntiForgeryToken()<button class="btn btn-outline-success">Marcar todas como lidas</button></form></header>
+<header class="notification-header"><div><span>Seu espaço de atualizações</span><h1>Notificações</h1><p>Acompanhe lembretes, progresso e conquistas sem perder o foco.</p></div><div class="notification-bulk-actions"><form method="post" action="/notifications/read-all">@Html.AntiForgeryToken()<button class="btn btn-outline-success">Marcar todas como lidas</button></form><form method="post" action="/notifications/archive-read">@Html.AntiForgeryToken()<button class="btn btn-outline-secondary">Arquivar lidas</button></form></div></header>
 <partial name="_NotificationToolbar" />
 <section class="notification-list" aria-label="Notificações" aria-live="polite">
  @if(Model.Items.Count==0){<partial name="_NotificationEmptyState" />}
