@@ -1,12 +1,14 @@
 [CmdletBinding()]
+# Usage (PowerShell 7+): ./scripts/validation/validate-postgres-migrations.ps1
+#   -ConnectionString $env:ConnectionStrings__DefaultConnection [-SkipCreateDatabase]
 param(
   [string]$ConnectionString = $env:ConnectionStrings__DefaultConnection,
-  [string]$TemporaryDatabase = ("habitflow_v6131_{0}" -f (Get-Date -Format 'yyyyMMddHHmmss')),
+  [string]$TemporaryDatabase = ("habitflow_v6132_{0}" -f (Get-Date -Format 'yyyyMMddHHmmss')),
   [switch]$SkipCreateDatabase
 )
 $ErrorActionPreference = 'Stop'
 $root = (Resolve-Path (Join-Path $PSScriptRoot '../..')).Path
-$report = Join-Path $root 'artifacts/v6131/postgres-validation.md'
+$report = Join-Path $root 'artifacts/v6132/postgres-validation.md'
 New-Item -ItemType Directory -Force (Split-Path $report) | Out-Null
 
 function Convert-Connection([string]$value) {
@@ -34,6 +36,7 @@ function Assert-Equal($actual,$expected,$name) { if("$actual" -ne "$expected"){t
 if (-not (Get-Command psql -ErrorAction SilentlyContinue)) { throw 'psql was not found in PATH.' }
 if (-not (Get-Command bash -ErrorAction SilentlyContinue)) { throw 'bash (Git for Windows or equivalent) was not found in PATH.' }
 $settings = Convert-Connection $ConnectionString
+if ($TemporaryDatabase -notmatch '^[a-zA-Z_][a-zA-Z0-9_]{0,62}$') { throw 'TemporaryDatabase must be a valid PostgreSQL identifier (maximum 63 characters).' }
 $results = [System.Collections.Generic.List[string]]::new()
 try {
   if (-not $SkipCreateDatabase) {
@@ -60,9 +63,9 @@ try {
     Assert-Equal $missingTables 0 'required tables'
     $results.Add('| Sanidade e schema drift | Aprovado | registro 001–065, tabelas e regras comerciais validados |')
   }
-  @("# Validação PostgreSQL v6.13.1",'',"Executado em: $(Get-Date -Format o)",'','| Cenário | Status | Evidência |','|---|---|---|') + $results | Set-Content $report -Encoding utf8
+  @("# Validação PostgreSQL v6.13.2",'',"Executado em: $(Get-Date -Format o)",'','| Cenário | Status | Evidência |','|---|---|---|') + $results | Set-Content $report -Encoding utf8
 } catch {
-  @('# Validação PostgreSQL v6.13.1','',"Executado em: $(Get-Date -Format o)",'',"**Falhou:** $($_.Exception.Message)") | Set-Content $report -Encoding utf8
+  @('# Validação PostgreSQL v6.13.2','',"Executado em: $(Get-Date -Format o)",'',"**Falhou:** $($_.Exception.Message)") | Set-Content $report -Encoding utf8
   throw
 } finally {
   if(-not $SkipCreateDatabase){ try { Use-Database $settings 'postgres' { Invoke-Psql "select pg_terminate_backend(pid) from pg_stat_activity where datname='$TemporaryDatabase' and pid<>pg_backend_pid()"|Out-Null; Invoke-Psql "drop database if exists \"$TemporaryDatabase\""|Out-Null } } catch { Write-Warning 'Temporary database cleanup failed.' } }
