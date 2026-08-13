@@ -1,12 +1,12 @@
-@model HabitFlow.Application.HabitEditorViewModel
-@{ ViewData["Title"] = Model.Id.HasValue ? "Editar hábito" : "Criar hábito"; }
+@model HabitFlow.Application.HabitEditorPageViewModel
+@{ ViewData["Title"] = Model.Editor.Id.HasValue ? "Editar hábito" : "Criar hábito"; }
 <header class="hf-habit-editor-hero"><a asp-action="Index" class="hf-back-link">Voltar aos hábitos</a><p class="hf-eyebrow">Rotina sustentável</p><h1>@ViewData["Title"]</h1><p>Defina um passo claro e ajuste a agenda à sua vida real.</p></header>
 <form method="post" class="hf-editor-layout" novalidate data-habit-editor>
 @Html.AntiForgeryToken()
 <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
-@if (!Model.Id.HasValue) { <section class="hf-quick-templates" aria-labelledby="quickTemplatesTitle"><div><p class="hf-eyebrow">Comece rápido</p><h2 id="quickTemplatesTitle">Templates de hábitos</h2></div><div class="hf-template-list">@foreach (var template in new[]{("Beber água","Daily",7,"droplet"),("Caminhar","CustomWeekly",3,"activity"),("Ler 10 minutos","Daily",7,"book-open"),("Dormir mais cedo","Daily",7,"moon"),("Organizar o dia","Weekdays",5,"calendar")}) { <button type="button" class="hf-template" data-habit-template data-name="@template.Item1" data-frequency="@template.Item2" data-target="@template.Item3" data-icon="@template.Item4">@template.Item1</button> }</div></section> }
+@if (!Model.Editor.Id.HasValue) { <section class="hf-quick-templates" aria-labelledby="quickTemplatesTitle"><div><p class="hf-eyebrow">Comece rápido</p><h2 id="quickTemplatesTitle">Templates de hábitos</h2></div><div class="hf-template-list">@foreach (var template in new[]{("Beber água","Daily",7,"droplet"),("Caminhar","CustomWeekly",3,"activity"),("Ler 10 minutos","Daily",7,"book-open"),("Dormir mais cedo","Daily",7,"moon"),("Organizar o dia","Weekdays",5,"calendar")}) { <button type="button" class="hf-template" data-habit-template data-name="@template.Item1" data-frequency="@template.Item2" data-target="@template.Item3" data-icon="@template.Item4">@template.Item1</button> }</div></section> }
 <partial name="Partials/_HabitEditor" model="Model" />
-<aside><partial name="Partials/_HabitScheduleEditor" model="Model" /><partial name="Partials/_HabitReminderEditor" model="Model" /></aside>
+<aside><partial name="Partials/_HabitScheduleEditor" model="Model.Editor" /><partial name="Partials/_HabitReminderEditor" model="Model.Editor" /><section class="hf-form-card hf-editor-preview" data-editor-preview aria-live="polite"><p class="hf-eyebrow">Prévia</p><h2 data-preview-name>Seu novo hábito</h2><dl><div><dt>Categoria</dt><dd data-preview-category>Sem categoria</dd></div><div><dt>Objetivo</dt><dd data-preview-goal>Sem objetivo vinculado</dd></div><div><dt>Duração</dt><dd data-preview-duration>10 min</dd></div></dl></section></aside>
 <div class="hf-form-actions"><a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a><button class="btn btn-success" type="submit" data-submit>Salvar hábito</button></div>
 </form>
 @section Styles { <link rel="stylesheet" href="~/css/habits-v4.css" asp-append-version="true" /> }

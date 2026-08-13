@@ -11,6 +11,9 @@ public sealed record HabitEditorViewModel(Guid? Id, string Name, string Color, s
     HabitFrequencyType FrequencyType, int? TargetPerWeek, TimeOnly? ReminderTime, string? Notes,
     IReadOnlyList<int>? SelectedDays, Guid? ObjectiveId, int? EstimatedTimeMinutes, HabitDifficulty? Difficulty,
     DateOnly? StartDate = null);
+public sealed record GoalOptionViewModel(Guid Id, string Title, string Status, string? Description, decimal ProgressPercentage);
+public sealed record HabitEditorPageViewModel(HabitEditorViewModel Editor, IReadOnlyList<string> CategorySuggestions,
+    IReadOnlyList<GoalOptionViewModel> GoalOptions);
 public sealed record HabitCalendarDay(DateOnly Date, bool Scheduled, bool Completed);
 public sealed record HabitTimelineItem(DateTime At, string Title, string Description);
 public sealed record HabitDetailsViewModel(Habit Habit, int CompletedCount, int ScheduledCount, decimal Consistency,
@@ -84,12 +87,24 @@ public sealed class HabitLifecycleService(IHabitRepository habits, AuditService 
 
 public sealed class HabitEditorService(IHabitRepository habits, IHabitWeekDayRepository weekDays, HabitScheduleNormalizer scheduleNormalizer, HabitPolicy policy, AuditService audit, IUserGoalRepository goals, UserTimeZoneService clock, IUnitOfWork unitOfWork)
 {
+    private static readonly string[] DefaultCategories = ["Saúde", "Movimento", "Estudo", "Trabalho", "Casa", "Finanças", "Sono", "Alimentação", "Leitura", "Espiritualidade", "Bem-estar"];
     private static readonly Regex HexColor = new("^#[0-9a-fA-F]{6}$", RegexOptions.Compiled);
     public async Task<HabitEditorViewModel?> LoadAsync(Guid clientId, Guid userId, Guid id, CancellationToken ct = default)
     {
         var h = await habits.GetAsync(clientId, userId, id, ct); if (h is null) return null;
         var days = await weekDays.ListByHabitAsync(id, ct);
         return new(h.Id, h.Name, h.Color, h.Category, h.IconCode ?? "check-circle", h.FrequencyType, h.TargetPerWeek, h.ReminderTime, h.Notes, days.Select(x => x.DayOfWeek).Distinct().Order().ToList(), h.ObjectiveId, h.EstimatedTimeMinutes, h.Difficulty, h.StartDate);
+    }
+    public async Task<HabitEditorPageViewModel> PreparePageAsync(Guid clientId, Guid userId, HabitEditorViewModel editor, CancellationToken ct = default)
+    {
+        var categories = (await habits.ListAsync(clientId, userId, ct)).Select(x => x.Category).Concat(DefaultCategories)
+            .Where(x => !string.IsNullOrWhiteSpace(x)).Select(x => x!.Trim()).Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(x => x, StringComparer.CurrentCultureIgnoreCase).Take(30).ToList();
+        var options = (await goals.ListAsync(clientId, userId, ct)).Where(x => x.Status is "Active" or "Paused" || x.Id == editor.ObjectiveId)
+            .OrderBy(x => x.Status == "Active" ? 0 : 1).ThenByDescending(x => x.CreatedAt).ThenBy(x => x.Title)
+            .Select(x => new GoalOptionViewModel(x.Id, x.Title, x.Status, x.Description,
+                x.TargetValue <= 0 ? 0 : Math.Round(Math.Clamp(x.CurrentValue * 100m / x.TargetValue, 0, 100), 1))).ToList();
+        return new(editor, categories, options);
     }
     public async Task<Result<Habit>> SaveAsync(User user, HabitEditorViewModel input, CancellationToken ct = default)
     {
