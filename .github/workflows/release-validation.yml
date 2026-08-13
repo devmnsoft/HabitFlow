@@ -1,0 +1,71 @@
+name: v6.13.1 release validation
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build-dotnet:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with: { dotnet-version: '10.0.x' }
+      - run: dotnet restore HabitFlow.sln
+      - run: dotnet build HabitFlow.sln --configuration Release --no-restore
+      - run: dotnet publish src/HabitFlow.Web/HabitFlow.Web.csproj --configuration Release --no-build --output artifacts/v6131-publish
+      - uses: actions/upload-artifact@v4
+        with: { name: v6131-publish, path: artifacts/v6131-publish, if-no-files-found: error }
+  frontend-security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22', cache: npm }
+      - run: npm install
+      - run: npm run security:scan
+      - run: npm test
+      - run: npm audit --omit=dev
+      - name: JavaScript syntax
+        run: |
+          for file in habits-v4.js my-day-v3.js habit-library.js notifications-v2.js global-search.js header-v4.js feedback-v5.js guided-tour-v4.js; do
+            node --check "src/HabitFlow.Web/wwwroot/js/$file"
+          done
+  postgres-migrations:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env: { POSTGRES_USER: habitflow_ci, POSTGRES_PASSWORD: ci_ephemeral_only, POSTGRES_DB: habitflow_existing }
+        ports: [ '5432:5432' ]
+        options: >-
+          --health-cmd "pg_isready -U habitflow_ci -d habitflow_existing"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      HABITFLOW_APP_VERSION: v6.13.1-ci
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate fresh, existing and rerun migrations
+        shell: pwsh
+        run: |
+          $connection = @('Host=localhost','Port=5432','Database=habitflow_existing','Username=habitflow_ci','Password=ci_ephemeral_only') -join ';'
+          ./scripts/validation/validate-postgres-migrations.ps1 -ConnectionString $connection -TemporaryDatabase habitflow_fresh
+      - uses: actions/upload-artifact@v4
+        with: { name: postgres-validation, path: artifacts/v6131/postgres-validation.md, if-no-files-found: error }
+  artifact-report:
+    if: always()
+    needs: [build-dotnet, frontend-security, postgres-migrations]
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          mkdir -p artifacts/v6131
+          cat > artifacts/v6131/ci-summary.md <<EOF
+          # v6.13.1 CI validation
+          | Job | Result |
+          |---|---|
+          | build/publish | ${{ needs.build-dotnet.result }} |
+          | frontend/security | ${{ needs.frontend-security.result }} |
+          | PostgreSQL migrations | ${{ needs.postgres-migrations.result }} |
+          EOF
+      - uses: actions/upload-artifact@v4
+        with: { name: v6131-ci-report, path: artifacts/v6131, if-no-files-found: error }
