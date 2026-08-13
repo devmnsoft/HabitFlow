@@ -35,6 +35,24 @@
   weekdays?.addEventListener('change', () => { suggestTarget(); updatePreview(); });
   updatePreview();
 
+  const editorPreview = {
+    name: form?.querySelector('[data-preview-name]'), category: form?.querySelector('[data-preview-category]'),
+    goal: form?.querySelector('[data-preview-goal]'), duration: form?.querySelector('[data-preview-duration]')
+  };
+  const updateEditorPreview = () => {
+    if (!form) return;
+    const name = form.querySelector('#Name')?.value.trim();
+    const category = form.querySelector('#Category')?.value.trim();
+    const goal = form.querySelector('#ObjectiveId')?.selectedOptions[0]?.textContent.trim();
+    const duration = form.querySelector('#EstimatedTimeMinutes')?.value;
+    if (editorPreview.name) editorPreview.name.textContent = name || 'Seu novo hábito';
+    if (editorPreview.category) editorPreview.category.textContent = category || 'Sem categoria';
+    if (editorPreview.goal) editorPreview.goal.textContent = goal || 'Sem objetivo vinculado';
+    if (editorPreview.duration) editorPreview.duration.textContent = duration ? `${duration} min` : 'Não informada';
+  };
+  ['Name', 'Category', 'ObjectiveId', 'EstimatedTimeMinutes'].forEach(id => form?.querySelector(`#${id}`)?.addEventListener('input', updateEditorPreview));
+  updateEditorPreview();
+
   document.querySelectorAll('[data-habit-template]').forEach(button => button.addEventListener('click', () => {
     if (!form || !frequency || !target) return;
     form.querySelector('#Name').value = button.dataset.name ?? '';

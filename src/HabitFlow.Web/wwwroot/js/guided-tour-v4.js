@@ -1,6 +1,9 @@
 (() => {
   const tip = document.querySelector('[data-product-tip]');
   if (!tip) return;
+  const title = tip.querySelector('#product-tip-title')?.textContent.trim();
+  const content = tip.querySelector('#product-tip-content')?.textContent.trim();
+  if (!title || !content || !tip.dataset.tipId) { tip.hidden = true; return; }
   const trigger = document.querySelector(tip.dataset.target || '');
   const place = () => {
     if (!trigger || matchMedia('(max-width: 575.98px)').matches) {
@@ -31,4 +34,3 @@
   tip.querySelector('[data-tip-understood]')?.focus({ preventScroll: true });
   addEventListener('resize', place, { passive: true });
 })();
-

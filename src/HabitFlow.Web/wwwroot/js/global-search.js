@@ -4,6 +4,14 @@
   const input = root.querySelector('#globalSearchInput');
   const results = root.querySelector('#globalSearchResults');
   const status = root.querySelector('#globalSearchStatus');
+  const dialog = root.querySelector('.hf-search-dialog');
+  const backdrop = root.querySelector('.hf-search-backdrop');
+  if (!input || !results || !status || !dialog || !backdrop) {
+    root.hidden = true;
+    root.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('hf-search-open');
+    return;
+  }
   let timer, request, activeIndex = -1, returnFocus;
 
   const items = () => [...results.querySelectorAll('.hf-search-item')];
@@ -16,6 +24,7 @@
     links[activeIndex].scrollIntoView({ block: 'nearest' });
   };
   const open = trigger => {
+    if (!dialog.hasChildNodes()) return;
     if (!root.hidden) return;
     returnFocus = trigger;
     root.hidden = false; root.setAttribute('aria-hidden', 'false');
@@ -89,6 +98,7 @@
     }
   });
   root.querySelectorAll('[data-search-close]').forEach(trigger => trigger.addEventListener('click', close));
+  backdrop.addEventListener('click', close);
   input.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(search, 250); });
   root.addEventListener('keydown', event => {
     if (event.key === 'Escape') { event.preventDefault(); close(); }
@@ -97,4 +107,5 @@
     else if (event.key === 'Enter' && activeIndex >= 0) { event.preventDefault(); items()[activeIndex].click(); }
     else if (event.key === 'Tab') { const focusable = [input, ...items(), ...root.querySelectorAll('[data-search-close]')]; const first = focusable[0], last = focusable.at(-1); if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); } else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); } }
   });
+  close();
 })();

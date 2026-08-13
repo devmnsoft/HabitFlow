@@ -1,2 +1,8 @@
-@model GoalProgressViewModel
-<div class="hf-goal-progress"><div class="hf-goal-progress-label"><span>Progresso</span><strong>@Model.Percentage%</strong></div><div class="progress" role="progressbar" aria-label="@Model.AccessibleLabel" aria-valuenow="@Model.Percentage" aria-valuemin="0" aria-valuemax="100"><div class="progress-bar" style="--goal-progress:@Model.Percentage%"></div></div><small>@Model.CurrentValue de @Model.TargetValue</small></div>
+@model GoalProgressViewModel?
+@{
+    var current = Math.Max(0, Model?.CurrentValue ?? 0);
+    var target = Math.Max(0, Model?.TargetValue ?? 0);
+    var percentage = target == 0 ? 0 : Math.Clamp(Model?.Percentage ?? 0, 0, 100);
+    var label = percentage >= 100 ? "Meta concluída" : target == 0 ? "Progresso ainda não configurado" : $"{current} de {target} conclusões";
+}
+<div class="hf-goal-progress"><div class="hf-goal-progress-label"><span>@label</span><strong>@percentage%</strong></div><div class="progress" role="progressbar" aria-label="@(Model?.AccessibleLabel ?? label)" aria-valuenow="@percentage" aria-valuemin="0" aria-valuemax="100"><div class="progress-bar" style="--goal-progress:@percentage%"></div></div>@if(target > 0){<small>@current de @target</small>}</div>
