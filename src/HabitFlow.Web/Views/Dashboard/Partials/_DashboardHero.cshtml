@@ -1,5 +1,5 @@
 @model DashboardViewModel
 <header class="dashboard-hero">
-  <div><p class="dashboard-kicker">@Model.LocalDate</p><h1>@Model.Greeting, @Model.Name</h1><p>Escolha um próximo passo possível. O seu ritmo conta.</p></div>
+  <div><p class="dashboard-kicker">@Model.LocalDate</p><h1>@Model.Greeting, @Model.Name</h1><p>@Model.Today.Percentage% do dia concluído · sequência atual de @Model.Executive.CurrentStreak dia(s) · melhor sequência de @Model.Executive.BestStreak dia(s).</p><strong class="dashboard-hero__action">Próxima ação: @Model.NextAction.Title</strong></div>
   <a class="btn btn-success btn-lg" href="/my-day">Organizar meu dia</a>
 </header>

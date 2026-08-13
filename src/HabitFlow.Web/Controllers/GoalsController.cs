@@ -7,7 +7,7 @@ namespace HabitFlow.Web.Controllers;
 [Authorize,Route("goals")]
 public sealed class GoalsController(GoalService goals,GoalQueryService query,GoalLifecycleService lifecycle,GoalLinkedHabitService links,CurrentUserContext current):Controller
 {
- [HttpGet("")] public async Task<IActionResult> Index(string? search,string? status,CancellationToken ct)=>current.ClientId is Guid c?View(await query.ListAsync(c,current.UserId,search,status,ct)):Forbid();
+ [HttpGet("")] public async Task<IActionResult> Index(string? search,string? status,string? sort,CancellationToken ct)=>current.ClientId is Guid c?View(await query.ListAsync(c,current.UserId,search,status,sort,ct)):Forbid();
  [HttpGet("create")] public IActionResult Create()=>View(new GoalEditorViewModel(null,DateOnly.FromDateTime(DateTime.UtcNow)));
  [HttpPost("create"),ValidateAntiForgeryToken] public async Task<IActionResult> Create(string title,string? description,string targetType,int targetValue,DateOnly startDate,DateOnly? endDate,CancellationToken ct){if(current.ClientId is not Guid c)return Forbid();var result=await goals.CreateAsync(c,current.UserId,title,description,targetType,targetValue,startDate,endDate,ct);if(result.IsFailure){ModelState.AddModelError("",result.Error.Message);return View(new GoalEditorViewModel(null,startDate));}return RedirectToAction(nameof(Detail),new{id=result.Value!.Id});}
  [HttpGet("{id:guid}")] public async Task<IActionResult> Detail(Guid id,CancellationToken ct)=>current.ClientId is Guid c&&await query.GetAsync(id,c,current.UserId,ct) is {} goal?View(goal):NotFound();
