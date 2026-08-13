@@ -11,7 +11,12 @@ namespace HabitFlow.Web.Controllers;
 public sealed class MyDayController(DailyRoutinePlannerService planner,HabitScheduleExceptionService schedule,DailyRoutineActionService actions,CompleteHabitUseCase complete,UndoHabitCompletionUseCase undo,UserTimeZoneService timeZone) : Controller
 {
     [HttpGet("")]
-    public async Task<IActionResult> Index(CancellationToken ct) => View(DailyRoutineViewModelMapper.From(await planner.BuildAsync(new(this.CurrentClientId(),this.CurrentUserId(),timeZone.Today()),ct)));
+    public async Task<IActionResult> Index(CancellationToken ct)
+    {
+        var model = DailyRoutineViewModelMapper.From(await planner.BuildAsync(new(this.CurrentClientId(),this.CurrentUserId(),timeZone.Today()),ct));
+        var greeting = timeZone.LocalNow().Hour switch { < 12 => "Bom dia", < 18 => "Boa tarde", _ => "Boa noite" };
+        return View(model with { Greeting = greeting });
+    }
 
     [HttpPost("{habitId:guid}/complete"),ValidateAntiForgeryToken]
     public async Task<IActionResult> Complete(Guid habitId,string idempotencyKey,CancellationToken ct)

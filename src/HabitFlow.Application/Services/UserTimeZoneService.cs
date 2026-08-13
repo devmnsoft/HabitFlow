@@ -18,4 +18,5 @@ public sealed class UserTimeZoneService(IConfiguration configuration, TimeProvid
         return TimeZoneInfo.Utc;
     }
     public DateOnly Today() => DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(timeProvider.GetUtcNow(), Resolve()).DateTime);
+    public DateTimeOffset LocalNow() => TimeZoneInfo.ConvertTime(timeProvider.GetUtcNow(), Resolve());
 }

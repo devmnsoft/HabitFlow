@@ -91,6 +91,34 @@ public sealed class HabitsController(HabitQueryService queries, HabitEditorServi
     [HttpPost("{id:guid}/complete"), ValidateAntiForgeryToken]
     public async Task<IActionResult> Complete(Guid id, CancellationToken ct) => await CompletionAsync(id, true, ct);
 
+    [HttpPost("{id:guid}/duplicate"), ValidateAntiForgeryToken]
+    public async Task<IActionResult> Duplicate(Guid id, CancellationToken ct)
+    {
+        if (!TryIdentity(out var clientId, out var userId)) return Forbid();
+        var source = await editor.LoadAsync(clientId, userId, id, ct);
+        if (source is null) return NotFound();
+        var sourceName = source.Name.Length > 111 ? source.Name[..111] : source.Name;
+        var copy = source with { Id = null, Name = $"Cópia de {sourceName}", ReminderTime = null, StartDate = timeZone.Today() };
+        try
+        {
+            var result = await editor.SaveAsync(this.CurrentUserSnapshot(), copy, ct);
+            if (result.IsFailure)
+            {
+                TempData["Error"] = result.Error.Message;
+                return RedirectToAction(nameof(Detail), new { id });
+            }
+            TempData["Success"] = "Hábito duplicado sem copiar conclusões, histórico ou lembretes.";
+            TempData["HabitCreated"] = "true";
+            return RedirectToAction(nameof(Detail), new { id = result.Value!.Id });
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Falha ao duplicar hábito {HabitId}", id);
+            TempData["Error"] = "Não foi possível duplicar o hábito agora.";
+            return RedirectToAction(nameof(Detail), new { id });
+        }
+    }
+
     [HttpPost("{id:guid}/undo-completion"), ValidateAntiForgeryToken]
     public async Task<IActionResult> Undo(Guid id, CancellationToken ct) => await CompletionAsync(id, false, ct);
 
