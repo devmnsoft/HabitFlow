@@ -7,3 +7,9 @@
 
 /* v6.13.2 habit lifecycle badge */
 .hf-habit-status{display:inline-flex;align-items:center;max-width:100%;padding:.25rem .6rem;border:1px solid transparent;border-radius:999px;font-size:.75rem;font-weight:800;line-height:1.2;white-space:nowrap}.hf-habit-status-active{color:#065f46;background:#d1fae5;border-color:#a7f3d0}.hf-habit-status-paused,.hf-habit-status-scheduled{color:#854d0e;background:#fef9c3;border-color:#fde68a}.hf-habit-status-archived,.hf-habit-status-unavailable{color:#334155;background:#f1f5f9;border-color:#cbd5e1}@media(max-width:380px){.hf-card-top{align-items:flex-start;flex-wrap:wrap}}
+/* Adaptive actions deliberately reuse the existing habit visual language. */
+.hf-adaptive-routine{margin:1.5rem 0;padding:clamp(1rem,3vw,1.5rem);border:1px solid #bfe5d5;border-radius:1.25rem;background:linear-gradient(135deg,#f0fdf7,#f8faf9)}
+.hf-adaptive-routine h2{font-size:clamp(1.25rem,3vw,1.65rem);margin:.25rem 0}.hf-adaptive-routine>div>p{color:#53665f;max-width:65ch}
+.hf-adaptive-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem;margin-top:1rem}.hf-adaptive-grid article{padding:1rem;border-radius:1rem;background:#fff;box-shadow:0 8px 24px rgba(17,94,68,.06)}
+.hf-adaptive-grid h3{font-size:1rem}.hf-adaptive-actions{display:flex;flex-wrap:wrap;gap:.5rem}.hf-adaptive-actions form{margin:0}
+@media(max-width:700px){.hf-adaptive-grid{grid-template-columns:1fr}.hf-adaptive-actions,.hf-adaptive-actions form,.hf-adaptive-actions button{width:100%}}

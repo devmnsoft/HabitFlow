@@ -7,6 +7,7 @@ namespace HabitFlow.Web.Controllers;
 [Authorize]
 [Route("habits")]
 public sealed class HabitsController(HabitQueryService queries, HabitEditorService editor, HabitLifecycleService lifecycle,
+    AdaptiveHabitService adaptive,
     CompleteHabitUseCase completeHabit, UndoHabitCompletionUseCase undoHabit, UserTimeZoneService timeZone,
     ILogger<HabitsController> logger) : Controller
 {
@@ -90,6 +91,26 @@ public sealed class HabitsController(HabitQueryService queries, HabitEditorServi
 
     [HttpPost("{id:guid}/complete"), ValidateAntiForgeryToken]
     public async Task<IActionResult> Complete(Guid id, CancellationToken ct) => await CompletionAsync(id, true, ct);
+
+    [HttpPost("{id:guid}/adjust-frequency"), ValidateAntiForgeryToken]
+    public async Task<IActionResult> AdjustFrequency(Guid id, string mode, int[]? selectedDays, CancellationToken ct)
+    {
+        if (!TryIdentity(out var clientId, out var userId)) return Forbid();
+        var result = await adaptive.AdjustFrequencyAsync(clientId, userId, User.Identity?.Name, id, mode, selectedDays, ct);
+        TempData[result.IsSuccess ? "Success" : "Error"] = result.IsSuccess
+            ? "Frequência ajustada. Seu histórico continua intacto." : result.Error.Message;
+        return RedirectToAction(nameof(Detail), new { id });
+    }
+
+    [HttpPost("{id:guid}/adjust-duration"), ValidateAntiForgeryToken]
+    public async Task<IActionResult> AdjustDuration(Guid id, int minutes, CancellationToken ct)
+    {
+        if (!TryIdentity(out var clientId, out var userId)) return Forbid();
+        var result = await adaptive.AdjustDurationAsync(clientId, userId, User.Identity?.Name, id, minutes, ct);
+        TempData[result.IsSuccess ? "Success" : "Error"] = result.IsSuccess
+            ? $"Duração ajustada para {minutes} minutos. Seu histórico continua intacto." : result.Error.Message;
+        return RedirectToAction(nameof(Detail), new { id });
+    }
 
     [HttpPost("{id:guid}/duplicate"), ValidateAntiForgeryToken]
     public async Task<IActionResult> Duplicate(Guid id, CancellationToken ct)

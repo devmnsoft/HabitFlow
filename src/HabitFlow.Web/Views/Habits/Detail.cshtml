@@ -3,6 +3,19 @@
 <header class="hf-habit-detail-hero" style="--habit-color:@Model.Habit.Color"><div><a asp-action="Index" class="hf-back-link">Voltar aos hábitos</a><div class="d-flex gap-2 mt-3"><partial name="Partials/_HabitStatusBadge" model="Model.Habit" /><span class="hf-category">@(Model.Habit.Category ?? "Rotina pessoal")</span></div><h1>@Model.Habit.Name</h1><p>@(string.IsNullOrWhiteSpace(Model.Habit.Notes) ? "Acompanhe sua prática e mantenha o ritmo possível." : Model.Habit.Notes)</p></div><div class="hf-detail-hero-actions"><a asp-action="Edit" asp-route-id="@Model.Habit.Id" class="btn btn-light">Editar hábito</a><form method="post" asp-action="Duplicate" asp-route-id="@Model.Habit.Id">@Html.AntiForgeryToken()<button class="btn btn-outline-light" type="submit">Duplicar hábito</button></form></div></header>
 <partial name="Partials/_HabitMetricsPanel" model="Model" />
 <div class="hf-detail-grid"><partial name="Partials/_HabitCalendarHeatmap" model="Model" /><partial name="Partials/_HabitTimeline" model="Model" /></div>
+<section class="hf-adaptive-routine" id="adaptive-routine" aria-labelledby="adaptive-routine-title">
+    <div><span class="hf-eyebrow">Rotina adaptativa</span><h2 id="adaptive-routine-title">Está pesado? Ajuste sem perder o histórico.</h2><p>Conclusões e sequências anteriores ficam preservadas. Ajustar também não usa uma nova vaga do plano.</p></div>
+    <div class="hf-adaptive-grid">
+        <article><h3>Menos dias</h3><p>Escolha um ritmo simples para as próximas ocorrências.</p><div class="hf-adaptive-actions">
+            <form method="post" asp-action="AdjustFrequency" asp-route-id="@Model.Habit.Id">@Html.AntiForgeryToken()<input type="hidden" name="mode" value="weekdays" /><button class="btn btn-outline-success" type="submit">Somente dias úteis</button></form>
+            <form method="post" asp-action="AdjustFrequency" asp-route-id="@Model.Habit.Id">@Html.AntiForgeryToken()<input type="hidden" name="mode" value="three-per-week" /><button class="btn btn-outline-success" type="submit">Segunda, quarta e sexta</button></form>
+        </div></article>
+        <article><h3>Menos minutos</h3><p>Reduza o tamanho do passo, não a importância dele.</p><div class="hf-adaptive-actions">
+            <form method="post" asp-action="AdjustDuration" asp-route-id="@Model.Habit.Id">@Html.AntiForgeryToken()<input type="hidden" name="minutes" value="5" /><button class="btn btn-outline-success" type="submit">Ajustar para 5 min</button></form>
+            <form method="post" asp-action="AdjustDuration" asp-route-id="@Model.Habit.Id">@Html.AntiForgeryToken()<input type="hidden" name="minutes" value="10" /><button class="btn btn-outline-success" type="submit">Ajustar para 10 min</button></form>
+        </div></article>
+    </div>
+</section>
 <partial name="Partials/_HabitLifecycleActions" model="Model.Habit" />
 @if (TempData["HabitCreated"] as string == "true") { <nav class="hf-post-create" aria-label="Próximos passos"><strong>Qual é o próximo passo?</strong><a href="/habits/@Model.Habit.Id/reminders" class="btn btn-outline-success">Adicionar lembrete</a><a href="/my-day" class="btn btn-success">Abrir Meu Dia</a><a asp-action="Create" class="btn btn-outline-secondary">Criar outro hábito</a><a href="/goals" class="btn btn-outline-secondary">Vincular a objetivo</a></nav> }
 @section Styles { <link rel="stylesheet" href="~/css/habits-v4.css" asp-append-version="true" /> }
