@@ -4,18 +4,31 @@ namespace HabitFlow.Infrastructure;
 
 public sealed class HabitTemplateRepository(SqlExecutor db) : IHabitTemplateRepository
 {
-    public async Task<IReadOnlyList<HabitTemplate>> ListActiveAsync(CancellationToken ct = default) =>
-        (await db.QueryAsync<HabitTemplate>($"select {Columns} from habitflow.habit_templates where is_active=true and published_at is not null order by is_featured desc,sort_order,name", null, ct)).ToList();
-    private const string Columns = "id, objective_id, name, description, category, suggested_frequency, suggested_color, difficulty, estimated_time_minutes, benefit_text, sort_order, is_active, created_at, updated_at, coalesce((select sum(1 << d)::int from unnest(suggested_days) d),127) as suggested_days, suggested_target_per_week, suggested_reminder_time, icon_code, why_it_helps, how_to_start, first_action, tags, minimum_plan_code, is_featured, content_version, published_at";
+    public async Task<IReadOnlyList<HabitTemplate>> ListActiveAsync(CancellationToken ct = default)
+    {
+        var rows = await db.QueryAsync<HabitTemplateRow>(HabitTemplateProjection.Select +
+            " where t.is_active = true and t.published_at is not null order by t.is_featured desc, t.sort_order, t.name", null, ct);
+        return rows.Select(HabitTemplateProjection.Map).ToList();
+    }
 
-    public async Task<IReadOnlyList<HabitTemplate>> ListActiveByObjectiveAsync(Guid objectiveId, CancellationToken ct = default) =>
-        (await db.QueryAsync<HabitTemplate>($"select {Columns} from habitflow.habit_templates where objective_id = @objectiveId and is_active = true order by sort_order, name", new { objectiveId }, ct)).ToList();
+    public async Task<IReadOnlyList<HabitTemplate>> ListActiveByObjectiveAsync(Guid objectiveId, CancellationToken ct = default)
+    {
+        var rows = await db.QueryAsync<HabitTemplateRow>(HabitTemplateProjection.Select +
+            " where t.objective_id = @objectiveId and t.is_active = true order by t.sort_order, t.name", new { objectiveId }, ct);
+        return rows.Select(HabitTemplateProjection.Map).ToList();
+    }
 
-    public Task<HabitTemplate?> GetAsync(Guid id, CancellationToken ct = default) =>
-        db.QuerySingleOrDefaultAsync<HabitTemplate>($"select {Columns} from habitflow.habit_templates where id = @id", new { id }, ct);
+    public async Task<HabitTemplate?> GetAsync(Guid id, CancellationToken ct = default)
+    {
+        var row = await db.QuerySingleOrDefaultAsync<HabitTemplateRow>(HabitTemplateProjection.Select + " where t.id = @id", new { id }, ct);
+        return row is null ? null : HabitTemplateProjection.Map(row);
+    }
 
-    public async Task<IReadOnlyList<HabitTemplate>> ListAllForAdminAsync(CancellationToken ct = default) =>
-        (await db.QueryAsync<HabitTemplate>($"select {Columns} from habitflow.habit_templates order by category, sort_order, name", ct: ct)).ToList();
+    public async Task<IReadOnlyList<HabitTemplate>> ListAllForAdminAsync(CancellationToken ct = default)
+    {
+        var rows = await db.QueryAsync<HabitTemplateRow>(HabitTemplateProjection.Select + " order by t.category, t.sort_order, t.name", ct: ct);
+        return rows.Select(HabitTemplateProjection.Map).ToList();
+    }
 
     public Task ToggleActiveAsync(Guid id, bool isActive, CancellationToken ct = default) =>
         db.ExecuteAsync("update habitflow.habit_templates set is_active = @isActive, updated_at = now() where id = @id", new { id, isActive }, ct);
