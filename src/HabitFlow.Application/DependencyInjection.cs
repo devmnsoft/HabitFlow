@@ -54,6 +54,7 @@ public static class DependencyInjection
         services.AddScoped<HabitQueryService>();
         services.AddScoped<HabitEditorService>();
         services.AddScoped<HabitLifecycleService>();
+        services.AddScoped<AdaptiveHabitService>();
         services.AddScoped<ProgressSnapshotService>();
         services.AddScoped<GoalProgressCalculator>();
         services.AddScoped<GoalProgressEngine>();
@@ -88,6 +89,7 @@ public static class DependencyInjection
         services.AddScoped<HabitScheduleExceptionService>();
         services.AddScoped<DailyRoutineActionService>();
         services.AddScoped<WeeklyReviewService>();
+        services.AddSingleton<RoutineRecommendationService>();
         services.AddScoped<CompleteWeeklyReviewUseCase>();
         services.AddSingleton<ReminderScheduleCalculator>();
         services.AddScoped<ReportService>();
