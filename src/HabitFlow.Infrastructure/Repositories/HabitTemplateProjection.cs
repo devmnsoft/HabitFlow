@@ -4,7 +4,7 @@ namespace HabitFlow.Infrastructure;
 
 internal static class HabitTemplateProjection
 {
-    internal const string Select = """
+    internal const string SelectFromTemplates = """
         select
             t.id as "Id",
             t.objective_id as "ObjectiveId",
@@ -20,7 +20,7 @@ internal static class HabitTemplateProjection
             t.is_active as "IsActive",
             t.created_at as "CreatedAt",
             t.updated_at as "UpdatedAt",
-            coalesce((select sum(1 << d)::int from unnest(t.suggested_days) d), 127) as "SuggestedDays",
+            coalesce((select sum(1 << d)::int from unnest(t.suggested_days) d), 127)::int as "SuggestedDays",
             t.suggested_target_per_week as "SuggestedTargetPerWeek",
             t.suggested_reminder_time as "SuggestedReminderTime",
             t.icon_code as "IconCode",
@@ -29,8 +29,8 @@ internal static class HabitTemplateProjection
             t.first_action as "FirstAction",
             coalesce(t.tags, array[]::text[]) as "Tags",
             coalesce(t.minimum_plan_code, 'free') as "MinimumPlanCode",
-            t.is_featured as "IsFeatured",
-            t.content_version as "ContentVersion",
+            coalesce(t.is_featured, false) as "IsFeatured",
+            coalesce(t.content_version, 1) as "ContentVersion",
             t.published_at as "PublishedAt"
         from habitflow.habit_templates t
         """;
@@ -50,7 +50,7 @@ internal static class HabitTemplateProjection
         row.IsActive,
         row.CreatedAt,
         row.UpdatedAt,
-        (SuggestedWeekDays)row.SuggestedDays,
+        NormalizeSuggestedDays(row.SuggestedDays),
         row.SuggestedTargetPerWeek,
         row.SuggestedReminderTime,
         row.IconCode,
@@ -60,13 +60,16 @@ internal static class HabitTemplateProjection
         row.Tags ?? [],
         string.IsNullOrWhiteSpace(row.MinimumPlanCode) ? "free" : row.MinimumPlanCode,
         row.IsFeatured,
-        row.ContentVersion,
+        row.ContentVersion <= 0 ? 1 : row.ContentVersion,
         row.PublishedAt);
 
     private static HabitDifficulty ParseDifficulty(string? value) =>
         Enum.TryParse<HabitDifficulty>(value, ignoreCase: true, out var parsed)
             ? parsed
             : HabitDifficulty.Easy;
+
+    private static SuggestedWeekDays NormalizeSuggestedDays(int value) =>
+        value <= 0 ? SuggestedWeekDays.EveryDay : (SuggestedWeekDays)value;
 }
 
 internal sealed class HabitTemplateRow
