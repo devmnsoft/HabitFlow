@@ -3,12 +3,12 @@
 #   -ConnectionString $env:ConnectionStrings__DefaultConnection [-SkipCreateDatabase]
 param(
   [string]$ConnectionString = $env:ConnectionStrings__DefaultConnection,
-  [string]$TemporaryDatabase = ("habitflow_v6136_{0}" -f (Get-Date -Format 'yyyyMMddHHmmss')),
+  [string]$TemporaryDatabase = ("habitflow_v6137_{0}" -f (Get-Date -Format 'yyyyMMddHHmmss')),
   [switch]$SkipCreateDatabase
 )
 $ErrorActionPreference = 'Stop'
 $root = (Resolve-Path (Join-Path $PSScriptRoot '../..')).Path
-$report = Join-Path $root 'artifacts/v6136/postgres-runtime-validation.md'
+$report = Join-Path $root 'artifacts/v6137/postgres-migrations-validation.md'
 New-Item -ItemType Directory -Force (Split-Path $report) | Out-Null
 
 function Convert-Connection([string]$value) {
@@ -68,9 +68,9 @@ try {
     Assert-Equal $missingTables 0 'required tables'
     $results.Add('| Sanidade e schema drift | Aprovado | registro 001–065, escopo de lembretes, tabelas e regras comerciais validados |')
   }
-  @("# Validação PostgreSQL v6.13.6",'',"Executado em: $(Get-Date -Format o)",'','| Cenário | Status | Evidência |','|---|---|---|') + $results | Set-Content $report -Encoding utf8
+  @("# Validação PostgreSQL v6.13.7",'',"Executado em: $(Get-Date -Format o)",'','| Cenário | Status | Evidência |','|---|---|---|') + $results | Set-Content $report -Encoding utf8
 } catch {
-  @('# Validação PostgreSQL v6.13.6','',"Executado em: $(Get-Date -Format o)",'',"**Falhou:** $($_.Exception.Message)") | Set-Content $report -Encoding utf8
+  @('# Validação PostgreSQL v6.13.7','',"Executado em: $(Get-Date -Format o)",'',"**Falhou:** $($_.Exception.Message)") | Set-Content $report -Encoding utf8
   throw
 } finally {
   if(-not $SkipCreateDatabase){ try { Use-Database $settings 'postgres' { Invoke-Psql "select pg_terminate_backend(pid) from pg_stat_activity where datname='$TemporaryDatabase' and pid<>pg_backend_pid()"|Out-Null; Invoke-Psql "drop database if exists \"$TemporaryDatabase\""|Out-Null } } catch { Write-Warning 'Temporary database cleanup failed.' } }
