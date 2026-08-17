@@ -15,7 +15,7 @@ public sealed class HabitTemplateFavoriteRepository(SqlExecutor db) : IHabitTemp
 
     public async Task<IReadOnlyList<HabitTemplate>> ListAsync(Guid clientId, Guid userId, CancellationToken ct = default)
     {
-        var rows = await db.QueryAsync<HabitTemplateRow>(HabitTemplateProjection.Select + """
+        var rows = await db.QueryAsync<HabitTemplateRow>(HabitTemplateProjection.SelectFromTemplates + """
             join habitflow.habit_template_favorites f
               on f.template_id = t.id
              and f.client_id = @clientId
