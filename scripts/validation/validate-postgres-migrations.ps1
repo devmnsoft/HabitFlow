@@ -3,12 +3,12 @@
 #   -ConnectionString $env:ConnectionStrings__DefaultConnection [-SkipCreateDatabase]
 param(
   [string]$ConnectionString = $env:ConnectionStrings__DefaultConnection,
-  [string]$TemporaryDatabase = ("habitflow_v6133_{0}" -f (Get-Date -Format 'yyyyMMddHHmmss')),
+  [string]$TemporaryDatabase = ("habitflow_v6136_{0}" -f (Get-Date -Format 'yyyyMMddHHmmss')),
   [switch]$SkipCreateDatabase
 )
 $ErrorActionPreference = 'Stop'
 $root = (Resolve-Path (Join-Path $PSScriptRoot '../..')).Path
-$report = Join-Path $root 'artifacts/v6133/postgres-runtime-validation.md'
+$report = Join-Path $root 'artifacts/v6136/postgres-runtime-validation.md'
 New-Item -ItemType Directory -Force (Split-Path $report) | Out-Null
 
 function Convert-Connection([string]$value) {
@@ -57,18 +57,20 @@ try {
     Assert-Equal $migrationCount 65 'migration registry'
     Assert-Equal (Invoke-Psql 'select count(*) from habitflow.habits where start_date is null') 0 'habits.start_date null count'
     Assert-Equal (Invoke-Psql "select count(*) from habitflow.feature_catalog where implementation_status <> 'Implemented' and is_marketable = true") 0 'non-implemented marketable features'
+    $publishedTemplates=Invoke-Psql 'select count(*) from habitflow.habit_templates where is_active = true and published_at is not null'; if([int]$publishedTemplates -lt 1){throw 'No active published habit template exists.'}
     $activePrices=Invoke-Psql 'select count(*) from habitflow.plan_prices where is_active = true'; if([int]$activePrices -lt 1){throw 'No active plan price exists.'}
     Assert-Equal (Invoke-Psql 'select count(*) from habitflow.habits where client_id is null') 0 'habits.client_id null count'
     Assert-Equal (Invoke-Psql 'select count(*) from habitflow.user_goals where client_id is null') 0 'user_goals.client_id null count'
     Assert-Equal (Invoke-Psql 'select count(*) from habitflow.notifications where user_id is null') 0 'notifications.user_id null count'
     Assert-Equal (Invoke-Psql 'select count(*) from habitflow.habit_reminders where client_id is null or user_id is null') 0 'habit_reminders scope null count'
-    $missingTables=Invoke-Psql "select count(*) from (values('users'),('clients'),('habits'),('user_goals'),('notifications'),('habit_reminders'),('habit_templates'),('plans'),('plan_prices'),('feature_catalog'),('schema_migrations')) v(name) where not exists(select 1 from information_schema.tables t where t.table_schema='habitflow' and t.table_name=v.name)"
+    Assert-Equal (Invoke-Psql 'select count(*) from habitflow.habit_template_favorites where client_id is null or user_id is null') 0 'habit_template_favorites scope null count'
+    $missingTables=Invoke-Psql "select count(*) from (values('users'),('clients'),('habits'),('user_goals'),('notifications'),('habit_reminders'),('habit_templates'),('habit_template_favorites'),('user_onboarding_progress'),('user_onboarding_draft_items'),('plans'),('plan_prices'),('feature_catalog'),('user_reports'),('weekly_reviews'),('schema_migrations')) v(name) where not exists(select 1 from information_schema.tables t where t.table_schema='habitflow' and t.table_name=v.name)"
     Assert-Equal $missingTables 0 'required tables'
     $results.Add('| Sanidade e schema drift | Aprovado | registro 001–065, escopo de lembretes, tabelas e regras comerciais validados |')
   }
-  @("# Validação PostgreSQL v6.13.3",'',"Executado em: $(Get-Date -Format o)",'','| Cenário | Status | Evidência |','|---|---|---|') + $results | Set-Content $report -Encoding utf8
+  @("# Validação PostgreSQL v6.13.6",'',"Executado em: $(Get-Date -Format o)",'','| Cenário | Status | Evidência |','|---|---|---|') + $results | Set-Content $report -Encoding utf8
 } catch {
-  @('# Validação PostgreSQL v6.13.3','',"Executado em: $(Get-Date -Format o)",'',"**Falhou:** $($_.Exception.Message)") | Set-Content $report -Encoding utf8
+  @('# Validação PostgreSQL v6.13.6','',"Executado em: $(Get-Date -Format o)",'',"**Falhou:** $($_.Exception.Message)") | Set-Content $report -Encoding utf8
   throw
 } finally {
   if(-not $SkipCreateDatabase){ try { Use-Database $settings 'postgres' { Invoke-Psql "select pg_terminate_backend(pid) from pg_stat_activity where datname='$TemporaryDatabase' and pid<>pg_backend_pid()"|Out-Null; Invoke-Psql "drop database if exists \"$TemporaryDatabase\""|Out-Null } } catch { Write-Warning 'Temporary database cleanup failed.' } }
