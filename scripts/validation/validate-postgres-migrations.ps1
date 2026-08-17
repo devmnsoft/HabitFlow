@@ -4,11 +4,12 @@
 param(
   [string]$ConnectionString = $env:ConnectionStrings__DefaultConnection,
   [string]$TemporaryDatabase = ("habitflow_v6137_{0}" -f (Get-Date -Format 'yyyyMMddHHmmss')),
+  [string]$ReportPath = 'artifacts/v6137/postgres-migrations-validation.md',
   [switch]$SkipCreateDatabase
 )
 $ErrorActionPreference = 'Stop'
 $root = (Resolve-Path (Join-Path $PSScriptRoot '../..')).Path
-$report = Join-Path $root 'artifacts/v6137/postgres-migrations-validation.md'
+$report = if ([IO.Path]::IsPathRooted($ReportPath)) { $ReportPath } else { Join-Path $root $ReportPath }
 New-Item -ItemType Directory -Force (Split-Path $report) | Out-Null
 
 function Convert-Connection([string]$value) {
