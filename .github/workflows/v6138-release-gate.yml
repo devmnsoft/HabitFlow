@@ -1,10 +1,10 @@
-name: v6.13.8 release gate
+name: v6.13.9 release gate
 
 on:
   pull_request:
   push:
     branches:
-      - feature/v6138-real-ci-release-gate-windows-postgres-smoke-evidence
+      - feature/v6139-execute-release-gate-fix-ci-smoke-authenticated-final-approval
   workflow_dispatch:
 
 permissions:
@@ -25,11 +25,11 @@ jobs:
       - run: dotnet --info
       - run: dotnet restore HabitFlow.sln
       - run: dotnet build HabitFlow.sln --configuration Release --no-restore
-      - run: dotnet publish src/HabitFlow.Web/HabitFlow.Web.csproj --configuration Release --no-build --output artifacts/v6138-publish
+      - run: dotnet publish src/HabitFlow.Web/HabitFlow.Web.csproj --configuration Release --no-build --output artifacts/v6139-publish
       - uses: actions/upload-artifact@v4
         with:
-          name: v6138-publish
-          path: artifacts/v6138-publish
+          name: v6139-publish
+          path: artifacts/v6139-publish
           if-no-files-found: error
 
   frontend-security:
@@ -71,11 +71,11 @@ jobs:
         run: |
           $password = @('ci', 'ephemeral', 'only') -join '_'
           $connection = @('Host=localhost', 'Port=5432', 'Database=habitflow_existing', 'Username=habitflow_ci', "Password=$password") -join ';'
-          ./scripts/validation/validate-postgres-migrations.ps1 -ConnectionString $connection -TemporaryDatabase habitflow_v6138_fresh -ReportPath artifacts/v6138/postgres-migrations-validation.md
+          ./scripts/validation/validate-postgres-migrations.ps1 -ConnectionString $connection -TemporaryDatabase habitflow_v6139_fresh -ReportPath artifacts/v6139/postgres-migrations-validation.md
       - uses: actions/upload-artifact@v4
         with:
-          name: v6138-postgres-validation
-          path: artifacts/v6138/postgres-migrations-validation.md
+          name: v6139-postgres-validation
+          path: artifacts/v6139/postgres-migrations-validation.md
           if-no-files-found: error
 
   runtime-smoke-public:
@@ -103,8 +103,8 @@ jobs:
           dotnet-version: 10.0.x
       - uses: actions/download-artifact@v4
         with:
-          name: v6138-publish
-          path: artifacts/v6138-publish
+          name: v6139-publish
+          path: artifacts/v6139-publish
       - name: Configure ephemeral runtime connection
         shell: pwsh
         run: |
@@ -113,7 +113,7 @@ jobs:
       - run: ./scripts/database/run-migrations.sh
       - name: Start published application
         run: |
-          dotnet artifacts/v6138-publish/HabitFlow.Web.dll --urls http://127.0.0.1:5097 > "$RUNNER_TEMP/habitflow.log" 2>&1 &
+          dotnet artifacts/v6139-publish/HabitFlow.Web.dll --urls http://127.0.0.1:5097 > "$RUNNER_TEMP/habitflow.log" 2>&1 &
           echo $! > "$RUNNER_TEMP/habitflow.pid"
           for attempt in {1..60}; do
             curl --fail --silent --output /dev/null http://127.0.0.1:5097/ && exit 0
@@ -123,12 +123,12 @@ jobs:
           exit 1
       - name: Validate public routes
         run: |
-          mkdir -p artifacts/v6138
-          printf '# Smoke publico v6.13.8\n\n| Rota | HTTP |\n|---|---|\n' > artifacts/v6138/public-smoke-validation.md
+          mkdir -p artifacts/v6139
+          printf '# Smoke publico v6.13.9\n\n| Rota | HTTP |\n|---|---|\n' > artifacts/v6139/public-smoke-validation.md
           for route in / /login /register /plans /service-worker.js /favicon.ico; do
             code="$(curl --silent --show-error --location --output /dev/null --write-out '%{http_code}' "http://127.0.0.1:5097$route")"
             test "$code" -lt 500
-            printf '| `%s` | %s |\n' "$route" "$code" >> artifacts/v6138/public-smoke-validation.md
+            printf '| `%s` | %s |\n' "$route" "$code" >> artifacts/v6139/public-smoke-validation.md
           done
       - name: Reject runtime exceptions
         if: always()
@@ -138,9 +138,9 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: v6138-public-smoke
+          name: v6139-public-smoke
           path: |
-            artifacts/v6138/public-smoke-validation.md
+            artifacts/v6139/public-smoke-validation.md
             ${{ runner.temp }}/habitflow.log
           if-no-files-found: error
 
@@ -151,9 +151,9 @@ jobs:
     steps:
       - name: Write release gate summary
         run: |
-          mkdir -p artifacts/v6138
-          cat > artifacts/v6138/ci-summary.md <<EOF
-          # v6.13.8 CI release gate
+          mkdir -p artifacts/v6139
+          cat > artifacts/v6139/ci-summary.md <<EOF
+          # v6.13.9 CI release gate
 
           | Job | Result |
           |---|---|
@@ -162,9 +162,9 @@ jobs:
           | PostgreSQL migrations | ${{ needs.postgres-migrations.result }} |
           | Public runtime smoke | ${{ needs.runtime-smoke-public.result }} |
           EOF
-          cat artifacts/v6138/ci-summary.md >> "$GITHUB_STEP_SUMMARY"
+          cat artifacts/v6139/ci-summary.md >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
         with:
-          name: v6138-release-gate-summary
-          path: artifacts/v6138/ci-summary.md
+          name: v6139-release-gate-summary
+          path: artifacts/v6139/ci-summary.md
           if-no-files-found: error
