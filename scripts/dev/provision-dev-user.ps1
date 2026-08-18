@@ -12,6 +12,6 @@ try {
   if(-not $token){throw 'Antiforgery token not found. Is HabitFlow running?'}
   $body=@{__RequestVerificationToken=$token;ClientPersonType='NaturalPerson';DocumentType='CPF';Document='52998224725';Name='Usuário Demo';Email=$Email;Password=$plain;ConfirmPassword=$plain;AcceptedTerms='true';AcceptedPrivacy='true'}
   $result=Invoke-WebRequest "$BaseUrl/register" -Method Post -WebSession $session -Body $body -UseBasicParsing -MaximumRedirection 5
-  if($result.Content -match 'CPF/CNPJ|já existe'){Write-Host 'Development identity already exists; no credential was changed.'} else {Write-Host "Development user created: $Email"; if($generated){Write-Host "Generated password (shown once): $plain"}}
+  if($result.Content -match 'CPF/CNPJ|já existe'){Write-Host 'Development identity already exists; no credential was changed.'} else {Write-Host "Development user created: $Email"; if($generated){Write-Host 'A random password was generated in memory and was not displayed.'}}
   Write-Host "Run seed-demo-data.ps1 -Email '$Email' next. The user is tenant-bound and is not SuperAdmin."
 } finally {$plain=$null}
