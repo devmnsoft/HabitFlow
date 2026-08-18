@@ -7,10 +7,15 @@
   [Security.SecureString]$Password,
   [guid]$HabitId,
   [guid]$TemplateId,
-  [guid]$GoalId
+  [guid]$GoalId,
+  [string]$ReportPath='artifacts/v6137/authenticated-smoke-validation.md'
 )
-$ErrorActionPreference='Stop'; $root=(Resolve-Path (Join-Path $PSScriptRoot '../..')).Path; $report=Join-Path $root 'artifacts/v6137/authenticated-smoke-validation.md'; New-Item -ItemType Directory -Force (Split-Path $report)|Out-Null
-if(-not $Password){$Password=Read-Host 'Development user password' -AsSecureString}
+$ErrorActionPreference='Stop'; $root=(Resolve-Path (Join-Path $PSScriptRoot '../..')).Path; $report=if([IO.Path]::IsPathRooted($ReportPath)){$ReportPath}else{Join-Path $root $ReportPath}; New-Item -ItemType Directory -Force (Split-Path $report)|Out-Null
+if(-not $Password -and $env:HABITFLOW_SMOKE_PASSWORD){$Password=ConvertTo-SecureString $env:HABITFLOW_SMOKE_PASSWORD -AsPlainText -Force}
+if(-not $Password){
+  if(-not [Environment]::UserInteractive){throw 'Password is required in non-interactive environments. Pass -Password or set HABITFLOW_SMOKE_PASSWORD.'}
+  $Password=Read-Host 'Development user password' -AsSecureString
+}
 $plain=[Net.NetworkCredential]::new('', $Password).Password; $session=New-Object Microsoft.PowerShell.Commands.WebRequestSession; $rows=[Collections.Generic.List[string]]::new()
 try {
   $login=Invoke-WebRequest "$BaseUrl/login" -WebSession $session -UseBasicParsing
@@ -27,6 +32,6 @@ try {
     try{$r=Invoke-WebRequest "$BaseUrl$route" -WebSession $session -UseBasicParsing -MaximumRedirection 5;if($r.StatusCode -ge 500 -or $r.Content -match '(Internal Server Error|Erro 500|System\.[A-Za-z]+Exception|NpgsqlException)'){throw 'server error or technical exception content'};if($r.BaseResponse.ResponseUri.AbsolutePath -eq '/login'){throw 'route redirected to login'};$reload=Invoke-WebRequest "$BaseUrl$route" -WebSession $session -UseBasicParsing -MaximumRedirection 5;if($reload.StatusCode -ne 200){throw "reload returned HTTP $($reload.StatusCode)"};$rows.Add("| `$route` | Aprovado | HTTP $($r.StatusCode), reload HTTP $($reload.StatusCode) |")}
     catch{$rows.Add("| `$route` | Falhou | $($_.Exception.Message -replace '\|','/') |")}
   }
-  @('# Smoke de rotas autenticadas v6.13.7','',"Executado em: $(Get-Date -Format o)",'','| Rota | Status | Evidência |','|---|---|---|')+$rows|Set-Content $report -Encoding utf8
+  @('# Smoke de rotas autenticadas','',"Executado em: $(Get-Date -Format o)",'','| Rota | Status | Evidência |','|---|---|---|')+$rows|Set-Content $report -Encoding utf8
   if($rows -match 'Falhou'){throw 'One or more authenticated routes failed.'}
 } finally {$plain=$null}
