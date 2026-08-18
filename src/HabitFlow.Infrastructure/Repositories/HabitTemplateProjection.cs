@@ -35,6 +35,14 @@ internal static class HabitTemplateProjection
         from habitflow.habit_templates t
         """;
 
+    internal static string WithClause(string clause)
+    {
+        if (string.IsNullOrWhiteSpace(clause))
+            return SelectFromTemplates;
+
+        return $"{SelectFromTemplates.TrimEnd()}{Environment.NewLine}{clause.TrimStart()}";
+    }
+
     internal static HabitTemplate Map(HabitTemplateRow row) => new(
         row.Id,
         row.ObjectiveId,

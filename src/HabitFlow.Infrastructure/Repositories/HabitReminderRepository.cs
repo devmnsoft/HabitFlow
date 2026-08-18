@@ -28,13 +28,13 @@ public sealed class HabitReminderRepository(SqlExecutor db) : IHabitReminderRepo
 
     public async Task<IReadOnlyList<HabitReminder>> ListAsync(Guid clientId, Guid userId, Guid? habitId = null, CancellationToken ct = default)
     {
-        var rows = await db.QueryAsync<HabitReminderRow>(Select + " where r.client_id=@clientId and r.user_id=@userId and (@habitId is null or r.habit_id=@habitId) order by r.is_active desc,r.next_trigger_at nulls last", new { clientId, userId, habitId }, ct);
+        var rows = await db.QueryAsync<HabitReminderRow>(AppendToSelect("where r.client_id=@clientId and r.user_id=@userId and (@habitId is null or r.habit_id=@habitId) order by r.is_active desc,r.next_trigger_at nulls last"), new { clientId, userId, habitId }, ct);
         return rows.Select(Map).ToList();
     }
 
     public async Task<HabitReminder?> GetOwnedAsync(Guid clientId, Guid userId, Guid id, CancellationToken ct = default)
     {
-        var row = await db.QuerySingleOrDefaultAsync<HabitReminderRow>(Select + " where r.client_id=@clientId and r.user_id=@userId and r.id=@id", new { clientId, userId, id }, ct);
+        var row = await db.QuerySingleOrDefaultAsync<HabitReminderRow>(AppendToSelect("where r.client_id=@clientId and r.user_id=@userId and r.id=@id"), new { clientId, userId, id }, ct);
         return row is null ? null : Map(row);
     }
 
@@ -65,6 +65,8 @@ public sealed class HabitReminderRepository(SqlExecutor db) : IHabitReminderRepo
 
     public async Task<bool> DeleteAsync(Guid clientId, Guid userId, Guid id, CancellationToken ct = default) =>
         await db.ExecuteAsync("delete from habitflow.habit_reminders where id=@id and client_id=@clientId and user_id=@userId", new { clientId,userId,id }, ct) == 1;
+
+    private static string AppendToSelect(string clause) => $"{Select.TrimEnd()}{Environment.NewLine}{clause.TrimStart()}";
 
     private static HabitReminder Map(HabitReminderRow row) => new(row.Id, row.ClientId, row.UserId, row.HabitId,
         row.HabitName, row.ReminderTime, row.Timezone, row.DaysOfWeek ?? [], row.IsActive,
