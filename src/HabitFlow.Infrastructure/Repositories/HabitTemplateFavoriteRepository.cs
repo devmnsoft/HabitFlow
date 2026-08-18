@@ -15,7 +15,7 @@ public sealed class HabitTemplateFavoriteRepository(SqlExecutor db) : IHabitTemp
 
     public async Task<IReadOnlyList<HabitTemplate>> ListAsync(Guid clientId, Guid userId, CancellationToken ct = default)
     {
-        var rows = await db.QueryAsync<HabitTemplateRow>(HabitTemplateProjection.SelectFromTemplates + """
+        var sql = HabitTemplateProjection.WithClause("""
             join habitflow.habit_template_favorites f
               on f.template_id = t.id
              and f.client_id = @clientId
@@ -23,7 +23,9 @@ public sealed class HabitTemplateFavoriteRepository(SqlExecutor db) : IHabitTemp
             where t.is_active = true
               and t.published_at is not null
             order by t.sort_order, t.name
-            """, new { clientId, userId }, ct);
+            """);
+
+        var rows = await db.QueryAsync<HabitTemplateRow>(sql, new { clientId, userId }, ct);
 
         return rows.Select(HabitTemplateProjection.Map).ToList();
     }

@@ -5,19 +5,19 @@ namespace HabitFlow.Infrastructure;
 public sealed class LegalDocumentRepository(SqlExecutor db) : ILegalDocumentRepository
 {
     public async Task<IReadOnlyList<LegalDocumentVersion>> ListLatestAsync(CancellationToken ct = default) =>
-        (await db.QueryAsync<LegalDocumentVersion>(VersionSelect + " order by v.updated_at desc", ct: ct)).ToList();
+        (await db.QueryAsync<LegalDocumentVersion>(AppendToVersionSelect("order by v.updated_at desc"), ct: ct)).ToList();
 
     public Task<LegalDocument?> FindDocumentAsync(Guid documentId, CancellationToken ct = default) =>
         db.QuerySingleOrDefaultAsync<LegalDocument>("select id, document_type, created_at from habitflow.legal_documents where id=@documentId", new { documentId }, ct);
 
     public Task<LegalDocumentVersion?> FindVersionAsync(Guid documentId, Guid versionId, CancellationToken ct = default) =>
-        db.QuerySingleOrDefaultAsync<LegalDocumentVersion>(VersionSelect + " where v.document_id=@documentId and v.id=@versionId", new { documentId, versionId }, ct);
+        db.QuerySingleOrDefaultAsync<LegalDocumentVersion>(AppendToVersionSelect("where v.document_id=@documentId and v.id=@versionId"), new { documentId, versionId }, ct);
 
     public Task<LegalDocumentVersion?> FindPublishedAsync(LegalDocumentType type, string locale, CancellationToken ct = default) =>
-        db.QuerySingleOrDefaultAsync<LegalDocumentVersion>(VersionSelect + " join habitflow.legal_documents d on d.id=v.document_id where d.document_type=@type and v.locale=@locale and v.status='Published' and v.effective_at<=now() order by v.effective_at desc limit 1", new { type = DbEnum.Text(type), locale }, ct);
+        db.QuerySingleOrDefaultAsync<LegalDocumentVersion>(AppendToVersionSelect("join habitflow.legal_documents d on d.id=v.document_id where d.document_type=@type and v.locale=@locale and v.status='Published' and v.effective_at<=now() order by v.effective_at desc limit 1"), new { type = DbEnum.Text(type), locale }, ct);
 
     public async Task<IReadOnlyList<LegalDocumentVersion>> ListVersionsAsync(Guid documentId, CancellationToken ct = default) =>
-        (await db.QueryAsync<LegalDocumentVersion>(VersionSelect + " where v.document_id=@documentId order by v.created_at desc", new { documentId }, ct)).ToList();
+        (await db.QueryAsync<LegalDocumentVersion>(AppendToVersionSelect("where v.document_id=@documentId order by v.created_at desc"), new { documentId }, ct)).ToList();
 
     public async Task CreateDocumentAsync(LegalDocument document, LegalDocumentVersion version, CancellationToken ct = default)
     {
@@ -41,4 +41,5 @@ public sealed class LegalDocumentRepository(SqlExecutor db) : ILegalDocumentRepo
         "update habitflow.legal_document_versions set status='Archived',updated_at=now() where id=@versionId and document_id=@documentId and status in ('Draft','Superseded')", new { documentId, versionId }, ct);
 
     private const string VersionSelect = "select v.id,v.document_id,v.version,v.locale,v.title,v.summary,v.sanitized_content,v.content_hash,v.effective_at,v.published_at,v.requires_reacceptance,v.status,v.created_by_user_id,v.created_at,v.updated_at from habitflow.legal_document_versions v";
+    private static string AppendToVersionSelect(string clause) => $"{VersionSelect.TrimEnd()}{Environment.NewLine}{clause.TrimStart()}";
 }
