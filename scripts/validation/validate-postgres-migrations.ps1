@@ -3,8 +3,8 @@
 #   -ConnectionString $env:ConnectionStrings__DefaultConnection [-SkipCreateDatabase]
 param(
   [string]$ConnectionString = $env:ConnectionStrings__DefaultConnection,
-  [string]$TemporaryDatabase = ("habitflow_v6137_{0}" -f (Get-Date -Format 'yyyyMMddHHmmss')),
-  [string]$ReportPath = 'artifacts/v6137/postgres-migrations-validation.md',
+  [string]$TemporaryDatabase = ("habitflow_v6148_{0}" -f (Get-Date -Format 'yyyyMMddHHmmss')),
+  [string]$ReportPath = 'artifacts/v6148/postgres-migrations-validation.md',
   [switch]$SkipCreateDatabase
 )
 $ErrorActionPreference = 'Stop'
@@ -46,7 +46,7 @@ try {
       if($exists -ne '0'){ Invoke-Psql "select pg_terminate_backend(pid) from pg_stat_activity where datname='$TemporaryDatabase' and pid<>pg_backend_pid()" | Out-Null; Invoke-Psql "drop database \"$TemporaryDatabase\"" | Out-Null }
       Invoke-Psql "create database \"$TemporaryDatabase\"" | Out-Null
     }
-    Use-Database $settings $TemporaryDatabase { Invoke-Migrations; $results.Add('| Banco novo | Aprovado | migrations 001–065 aplicadas; lembretes e catálogo incluídos na sanidade |') }
+    Use-Database $settings $TemporaryDatabase { Invoke-Migrations; $results.Add('| Banco novo | Aprovado | migrations 001–066 aplicadas; lembretes e catálogo incluídos na sanidade |') }
     Use-Database $settings $TemporaryDatabase { Invoke-Migrations; $results.Add('| Rerun | Aprovado | segunda execução idempotente |') }
   } else { $results.Add('| Banco novo | Não executado | `-SkipCreateDatabase` informado |') }
 
@@ -54,8 +54,8 @@ try {
     Invoke-Migrations
     $results.Add('| Banco existente | Aprovado | stream canônico aplicado |')
     Invoke-Migrations
-    $migrationCount=Invoke-Psql "select count(distinct id) from habitflow.schema_migrations where id ~ '^[0-9]{3}$' and id::int between 1 and 65"
-    Assert-Equal $migrationCount 65 'migration registry'
+    $migrationCount=Invoke-Psql "select count(distinct id) from habitflow.schema_migrations where id ~ '^[0-9]{3}$' and id::int between 1 and 66"
+    Assert-Equal $migrationCount 66 'migration registry'
     Assert-Equal (Invoke-Psql 'select count(*) from habitflow.habits where start_date is null') 0 'habits.start_date null count'
     Assert-Equal (Invoke-Psql "select count(*) from habitflow.feature_catalog where implementation_status <> 'Implemented' and is_marketable = true") 0 'non-implemented marketable features'
     $publishedTemplates=Invoke-Psql 'select count(*) from habitflow.habit_templates where is_active = true and published_at is not null'; if([int]$publishedTemplates -lt 1){throw 'No active published habit template exists.'}
@@ -65,13 +65,13 @@ try {
     Assert-Equal (Invoke-Psql 'select count(*) from habitflow.notifications where user_id is null') 0 'notifications.user_id null count'
     Assert-Equal (Invoke-Psql 'select count(*) from habitflow.habit_reminders where client_id is null or user_id is null') 0 'habit_reminders scope null count'
     Assert-Equal (Invoke-Psql 'select count(*) from habitflow.habit_template_favorites where client_id is null or user_id is null') 0 'habit_template_favorites scope null count'
-    $missingTables=Invoke-Psql "select count(*) from (values('users'),('clients'),('habits'),('user_goals'),('notifications'),('habit_reminders'),('habit_templates'),('habit_template_favorites'),('user_onboarding_progress'),('user_onboarding_draft_items'),('plans'),('plan_prices'),('feature_catalog'),('user_reports'),('weekly_reviews'),('schema_migrations')) v(name) where not exists(select 1 from information_schema.tables t where t.table_schema='habitflow' and t.table_name=v.name)"
+    $missingTables=Invoke-Psql "select count(*) from (values('users'),('clients'),('habits'),('user_goals'),('notifications'),('habit_reminders'),('habit_templates'),('habit_template_favorites'),('user_onboarding_progress'),('user_onboarding_draft_items'),('plans'),('plan_prices'),('feature_catalog'),('user_reports'),('weekly_reviews'),('user_privacy_consents'),('privacy_request_events'),('schema_migrations')) v(name) where not exists(select 1 from information_schema.tables t where t.table_schema='habitflow' and t.table_name=v.name)"
     Assert-Equal $missingTables 0 'required tables'
-    $results.Add('| Sanidade e schema drift | Aprovado | registro 001–065, escopo de lembretes, tabelas e regras comerciais validados |')
+    $results.Add('| Sanidade e schema drift | Aprovado | registro 001–066, escopo de lembretes, tabelas e regras comerciais validados |')
   }
-  @("# Validação PostgreSQL v6.13.7",'',"Executado em: $(Get-Date -Format o)",'','| Cenário | Status | Evidência |','|---|---|---|') + $results | Set-Content $report -Encoding utf8
+  @("# Validação PostgreSQL v6.14.8",'',"Executado em: $(Get-Date -Format o)",'','| Cenário | Status | Evidência |','|---|---|---|') + $results | Set-Content $report -Encoding utf8
 } catch {
-  @('# Validação PostgreSQL v6.13.7','',"Executado em: $(Get-Date -Format o)",'',"**Falhou:** $($_.Exception.Message)") | Set-Content $report -Encoding utf8
+  @('# Validação PostgreSQL v6.14.8','',"Executado em: $(Get-Date -Format o)",'',"**Falhou:** $($_.Exception.Message)") | Set-Content $report -Encoding utf8
   throw
 } finally {
   if(-not $SkipCreateDatabase){ try { Use-Database $settings 'postgres' { Invoke-Psql "select pg_terminate_backend(pid) from pg_stat_activity where datname='$TemporaryDatabase' and pid<>pg_backend_pid()"|Out-Null; Invoke-Psql "drop database if exists \"$TemporaryDatabase\""|Out-Null } } catch { Write-Warning 'Temporary database cleanup failed.' } }
