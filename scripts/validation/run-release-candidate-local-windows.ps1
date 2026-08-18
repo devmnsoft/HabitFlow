@@ -111,6 +111,14 @@ try {
 
   $currentPhase='migrations e EXPLAIN'
   Invoke-Step 'migrations' {& (Join-Path $root 'scripts/validation/validate-postgres-migrations.ps1') -ConnectionString $ConnectionString -TemporaryDatabase habitflow_v6146_fresh -ReportPath 'artifacts/v6146/postgres-migrations-validation.md'}
+  foreach ($requiredLgpdTable in @('user_privacy_consents', 'privacy_request_events')) {
+    $tableCount = Invoke-Db "select count(*) from information_schema.tables where table_schema='habitflow' and table_name='$requiredLgpdTable'"
+    if ($tableCount -ne '1') {
+      throw "P0: schema LGPD incompleto. Execute migrations. Tabela ausente: habitflow.$requiredLgpdTable"
+    }
+  }
+  Write-Report 'lgpd-runner-validation.md' @('# Validação do schema LGPD','',"Executado em: $(Get-Date -Format o)",'','- `habitflow.user_privacy_consents`: presente','- `habitflow.privacy_request_events`: presente','- Ausência de qualquer tabela interrompe o runner como P0 antes do runtime.')
+  $results['schema LGPD']='Aprovado'
   $columnTypes=Invoke-Db "select column_name||'|'||data_type||'|'||udt_name from information_schema.columns where table_schema='habitflow' and table_name='habit_templates' and column_name in ('suggested_days','tags','difficulty','suggested_reminder_time','published_at') order by column_name"
   $templateExplain=Invoke-Db @"
 explain select t.id as "Id", coalesce((select sum(1 << d)::int from unnest(t.suggested_days) d),127)::int as "SuggestedDays"
