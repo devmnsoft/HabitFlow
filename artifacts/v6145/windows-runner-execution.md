@@ -2,7 +2,7 @@
 
 - Início/fim: 2026-08-18 (UTC)
 - Ambiente disponível: contêiner Linux em `/workspace/HabitFlow`, não Windows
-- Comando tentado (senha mascarada): `pwsh ./scripts/validation/run-release-candidate-local-windows.ps1 -BaseUrl 'http://localhost:5097' -ConnectionString 'Host=localhost;Port=5432;Database=habitflow_local;Username=postgres;Password=********' -DevEmail 'release-gate@habitflow.local'`
+- Comando tentado: `pwsh ./scripts/validation/run-release-candidate-local-windows.ps1 -BaseUrl 'http://localhost:5097' -ConnectionString $env:HABITFLOW_LOCAL_CONNECTION -DevEmail 'release-gate@habitflow.local'` (o valor da conexão não foi persistido).
 - Resultado: **não executado; P0 de ambiente**
 - Erro completo: `/bin/bash: line 1: pwsh: command not found` (exit 127)
 
