@@ -3,8 +3,8 @@
 #   -ConnectionString $env:ConnectionStrings__DefaultConnection [-SkipCreateDatabase]
 param(
   [string]$ConnectionString = $env:ConnectionStrings__DefaultConnection,
-  [string]$TemporaryDatabase = ("habitflow_v6148_{0}" -f (Get-Date -Format 'yyyyMMddHHmmss')),
-  [string]$ReportPath = 'artifacts/v6148/postgres-migrations-validation.md',
+  [string]$TemporaryDatabase = ("habitflow_v6149_{0}" -f (Get-Date -Format 'yyyyMMddHHmmss')),
+  [string]$ReportPath = 'artifacts/v6149/postgres-migrations-validation.md',
   [switch]$SkipCreateDatabase
 )
 $ErrorActionPreference = 'Stop'
@@ -67,11 +67,14 @@ try {
     Assert-Equal (Invoke-Psql 'select count(*) from habitflow.habit_template_favorites where client_id is null or user_id is null') 0 'habit_template_favorites scope null count'
     $missingTables=Invoke-Psql "select count(*) from (values('users'),('clients'),('habits'),('user_goals'),('notifications'),('habit_reminders'),('habit_templates'),('habit_template_favorites'),('user_onboarding_progress'),('user_onboarding_draft_items'),('plans'),('plan_prices'),('feature_catalog'),('user_reports'),('weekly_reviews'),('user_privacy_consents'),('privacy_request_events'),('schema_migrations')) v(name) where not exists(select 1 from information_schema.tables t where t.table_schema='habitflow' and t.table_name=v.name)"
     Assert-Equal $missingTables 0 'required tables'
+    $consentColumns=Invoke-Psql "select count(*) from (values('user_id','uuid','NO'),('consent_key','character varying','NO'),('granted','boolean','NO'),('updated_at','timestamp without time zone','NO')) expected(column_name,data_type,is_nullable) where not exists(select 1 from information_schema.columns actual where actual.table_schema='habitflow' and actual.table_name='user_privacy_consents' and actual.column_name=expected.column_name and actual.data_type=expected.data_type and actual.is_nullable=expected.is_nullable)"
+    Assert-Equal $consentColumns 0 'user_privacy_consents column contract'
+    Assert-Equal (Invoke-Psql "select count(*) from pg_trigger where tgrelid='habitflow.lgpd_requests'::regclass and tgname='trg_audit_privacy_request' and not tgisinternal") 1 'LGPD request audit trigger'
     $results.Add('| Sanidade e schema drift | Aprovado | registro 001–066, escopo de lembretes, tabelas e regras comerciais validados |')
   }
-  @("# Validação PostgreSQL v6.14.8",'',"Executado em: $(Get-Date -Format o)",'','| Cenário | Status | Evidência |','|---|---|---|') + $results | Set-Content $report -Encoding utf8
+  @("# Validação PostgreSQL v6.14.9",'',"Executado em: $(Get-Date -Format o)",'','| Cenário | Status | Evidência |','|---|---|---|') + $results | Set-Content $report -Encoding utf8
 } catch {
-  @('# Validação PostgreSQL v6.14.8','',"Executado em: $(Get-Date -Format o)",'',"**Falhou:** $($_.Exception.Message)") | Set-Content $report -Encoding utf8
+  @('# Validação PostgreSQL v6.14.9','',"Executado em: $(Get-Date -Format o)",'',"**Falhou:** $($_.Exception.Message)") | Set-Content $report -Encoding utf8
   throw
 } finally {
   if(-not $SkipCreateDatabase){ try { Use-Database $settings 'postgres' { Invoke-Psql "select pg_terminate_backend(pid) from pg_stat_activity where datname='$TemporaryDatabase' and pid<>pg_backend_pid()"|Out-Null; Invoke-Psql "drop database if exists \"$TemporaryDatabase\""|Out-Null } } catch { Write-Warning 'Temporary database cleanup failed.' } }
