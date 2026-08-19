@@ -5,7 +5,7 @@ The GitHub Actions gate validates Release build/publish, PostgreSQL migrations a
 ```powershell
 cd C:\MNSOFT\HabitFlow
 
-$env:HABITFLOW_LOCAL_CONNECTION = "Host=localhost;Port=5432;Database=habitflow_local;Username=postgres;Password=SUA_SENHA_LOCAL"
+$env:HABITFLOW_LOCAL_CONNECTION = "Host=<DB_HOST>;Port=<DB_PORT>;Database=<DB_NAME>;Username=<DB_USER>;Password=<DB_PASSWORD>"
 
 pwsh .\scripts\validation\run-release-candidate-local-windows.ps1 `
   -BaseUrl "http://localhost:5097" `

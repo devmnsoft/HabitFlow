@@ -24,7 +24,7 @@ jobs:
       - name: Registry, checksums and advisory lock contract
         run: |
           psql -d fresh_ci -v ON_ERROR_STOP=1 -c "select 1 from habitflow.schema_migrations where checksum is null or filename is null having count(*)=0"
-          rg -n 'pg_advisory_lock|Checksum divergence|schema_migrations' scripts/database/run-migrations.sh
+          grep -En 'pg_advisory_lock|Checksum divergence|schema_migrations' scripts/database/run-migrations.sh
       - name: script_completo.sql parity on isolated database
         run: psql -X -v ON_ERROR_STOP=1 -d aggregate_ci -f database/script_completo.sql
       - name: Compare canonical and aggregate schemas

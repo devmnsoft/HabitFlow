@@ -728,6 +728,8 @@ COMMIT;
 BEGIN;
 CREATE TABLE IF NOT EXISTS habitflow.habit_reminders (id uuid PRIMARY KEY, client_id uuid NOT NULL REFERENCES habitflow.clients(id), user_id uuid NOT NULL REFERENCES habitflow.users(id), habit_id uuid NOT NULL REFERENCES habitflow.habits(id) ON DELETE CASCADE, reminder_time time NOT NULL, timezone varchar(80) NOT NULL DEFAULT 'America/Sao_Paulo', days_of_week integer[], is_active boolean NOT NULL DEFAULT true, last_triggered_at timestamp, next_trigger_at timestamp, created_at timestamp NOT NULL DEFAULT now(), updated_at timestamp NOT NULL DEFAULT now(), CHECK(days_of_week IS NULL OR days_of_week <@ ARRAY[0,1,2,3,4,5,6]));
 CREATE INDEX IF NOT EXISTS ix_habit_reminders_due ON habitflow.habit_reminders(next_trigger_at) WHERE is_active;
+ALTER TABLE habitflow.habit_reminders ADD COLUMN IF NOT EXISTS locked_by varchar(160) null;
+ALTER TABLE habitflow.habit_reminders ADD COLUMN IF NOT EXISTS locked_until timestamptz null;
 CREATE INDEX IF NOT EXISTS ix_habit_reminders_scope ON habitflow.habit_reminders(client_id,user_id,habit_id);
 CREATE TABLE IF NOT EXISTS habitflow.user_summary_preferences (user_id uuid PRIMARY KEY REFERENCES habitflow.users(id) ON DELETE CASCADE, daily_summary_enabled boolean NOT NULL DEFAULT true, daily_summary_time time NOT NULL DEFAULT '20:00', weekly_summary_enabled boolean NOT NULL DEFAULT true, weekly_summary_day integer NOT NULL DEFAULT 0 CHECK(weekly_summary_day BETWEEN 0 AND 6), weekly_summary_time time NOT NULL DEFAULT '18:00', timezone varchar(80) NOT NULL DEFAULT 'America/Sao_Paulo', updated_at timestamp NOT NULL DEFAULT now());
 COMMIT;
@@ -765,6 +767,30 @@ CREATE TABLE IF NOT EXISTS habitflow.notification_deliveries (
  created_at timestamp NOT NULL DEFAULT now(), UNIQUE(source_type,source_id,channel,scheduled_for)
 );
 CREATE INDEX IF NOT EXISTS ix_notification_deliveries_scope ON habitflow.notification_deliveries(client_id,user_id,scheduled_for DESC);
+COMMIT;
+
+BEGIN;
+ALTER TABLE habitflow.notifications ADD COLUMN IF NOT EXISTS client_id uuid null REFERENCES habitflow.clients(id);
+ALTER TABLE habitflow.notifications ADD COLUMN IF NOT EXISTS category varchar(40) null;
+ALTER TABLE habitflow.notifications ADD COLUMN IF NOT EXISTS deduplication_key varchar(160) null;
+UPDATE habitflow.notifications n SET client_id=u.client_id FROM habitflow.users u WHERE u.id=n.user_id AND n.client_id IS NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS ux_notifications_deduplication ON habitflow.notifications(client_id,user_id,deduplication_key) WHERE deduplication_key IS NOT NULL;
+CREATE TABLE IF NOT EXISTS habitflow.reminder_dispatches(
+ id uuid PRIMARY KEY, client_id uuid NOT NULL REFERENCES habitflow.clients(id), user_id uuid NOT NULL REFERENCES habitflow.users(id),
+ habit_reminder_id uuid NOT NULL REFERENCES habitflow.habit_reminders(id), habit_id uuid NOT NULL REFERENCES habitflow.habits(id),
+ scheduled_for_utc timestamptz NOT NULL, channel varchar(24) NOT NULL DEFAULT 'in_app', status varchar(24) NOT NULL,
+ attempt_count integer NOT NULL DEFAULT 0, processed_at timestamptz NULL, error_code varchar(80) NULL, created_at timestamptz NOT NULL DEFAULT now(),
+ UNIQUE(habit_reminder_id,scheduled_for_utc,channel));
+ALTER TABLE habitflow.reminder_dispatches ADD COLUMN IF NOT EXISTS next_attempt_at timestamptz null;
+ALTER TABLE habitflow.reminder_dispatches ADD COLUMN IF NOT EXISTS locked_by varchar(160) null;
+ALTER TABLE habitflow.reminder_dispatches ADD COLUMN IF NOT EXISTS locked_until timestamptz null;
+ALTER TABLE habitflow.reminder_dispatches ADD COLUMN IF NOT EXISTS last_error_at timestamptz null;
+ALTER TABLE habitflow.reminder_dispatches ADD COLUMN IF NOT EXISTS correlation_id uuid null;
+UPDATE habitflow.reminder_dispatches SET correlation_id=gen_random_uuid() WHERE correlation_id IS NULL;
+ALTER TABLE habitflow.reminder_dispatches ALTER COLUMN correlation_id SET NOT NULL;
+CREATE INDEX IF NOT EXISTS ix_reminder_dispatch_status ON habitflow.reminder_dispatches(status,scheduled_for_utc);
+CREATE INDEX IF NOT EXISTS ix_reminder_dispatch_retry ON habitflow.reminder_dispatches(next_attempt_at,locked_until) WHERE status IN ('Pending','Retry','Processing');
+CREATE INDEX IF NOT EXISTS ix_habit_reminder_lease ON habitflow.habit_reminders(next_trigger_at,locked_until) WHERE is_active;
 COMMIT;
 
 BEGIN;

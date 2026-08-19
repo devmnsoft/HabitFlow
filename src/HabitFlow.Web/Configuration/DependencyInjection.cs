@@ -7,6 +7,10 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddHabitFlowWeb(this IServiceCollection services, IConfiguration configuration, IWebHostEnvironment environment)
     {
+        services.AddOptions<ReminderDispatchOptions>().Bind(configuration.GetSection("ReminderDispatch"))
+            .Validate(x => x.IntervalSeconds is >= 1 and <= 3600 && x.BatchSize is >= 1 and <= 500
+                && x.LeaseSeconds is >= 5 and <= 3600 && x.MaxAttempts is >= 1 and <= 20,
+                "Configuração do processador de lembretes inválida.").ValidateOnStart();
         services.AddOptions<SessionSecurityOptions>().Bind(configuration.GetSection("Security:Sessions"))
             .Validate(x => x.LifetimeDays is >= 1 and <= 365 && x.TouchIntervalMinutes is >= 1 and <= 60, "Configuração de sessões inválida.").ValidateOnStart();
         services.AddControllersWithViews();
@@ -42,6 +46,7 @@ public static class DependencyInjection
         services.AddSingleton<LayoutContextResolver>();
         services.AddHostedService<BillingCommunicationJob>();
         services.AddHostedService<TransactionalEmailHostedService>();
+        services.AddHostedService<ReminderDispatchHostedService>();
         return services;
     }
 }
