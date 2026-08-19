@@ -2,7 +2,7 @@
 
 ## Identificação
 
-- SHA inicial: `9f0278d1c1df1113db59b4af9d7a92bfdc0d5779`.
+- SHA inicial desta retomada: `4efe0df4996fe4b83f8e677f9a7aec81e0c5adbb`.
 - SHA final: commit que contém este relatório.
 - Branch: `feature/v6149-validate-lgpd-runtime-and-release-candidate`.
 
@@ -18,6 +18,7 @@
 
 - O runner ainda gravava evidências em `v6146` e invocava o banco temporário antigo; foi alinhado integralmente a v6.14.9.
 - O validador confirmava somente a presença das tabelas LGPD; agora também falha diante de drift no contrato das colunas de consentimento ou ausência do trigger de auditoria.
+- A validação da trilha LGPD ainda não conferia o contrato de colunas, FK e índice de `privacy_request_events`; essas invariantes agora fazem parte do gate PostgreSQL.
 
 ## Segurança
 

@@ -69,8 +69,12 @@ try {
     Assert-Equal $missingTables 0 'required tables'
     $consentColumns=Invoke-Psql "select count(*) from (values('user_id','uuid','NO'),('consent_key','character varying','NO'),('granted','boolean','NO'),('updated_at','timestamp without time zone','NO')) expected(column_name,data_type,is_nullable) where not exists(select 1 from information_schema.columns actual where actual.table_schema='habitflow' and actual.table_name='user_privacy_consents' and actual.column_name=expected.column_name and actual.data_type=expected.data_type and actual.is_nullable=expected.is_nullable)"
     Assert-Equal $consentColumns 0 'user_privacy_consents column contract'
+    $eventColumns=Invoke-Psql "select count(*) from (values('id','bigint','int8','NO'),('request_id','uuid','uuid','NO'),('event_type','character varying','varchar','NO'),('status','character varying','varchar','NO'),('occurred_at','timestamp without time zone','timestamp','NO')) expected(column_name,data_type,udt_name,is_nullable) where not exists(select 1 from information_schema.columns actual where actual.table_schema='habitflow' and actual.table_name='privacy_request_events' and actual.column_name=expected.column_name and actual.data_type=expected.data_type and actual.udt_name=expected.udt_name and actual.is_nullable=expected.is_nullable)"
+    Assert-Equal $eventColumns 0 'privacy_request_events column contract'
+    Assert-Equal (Invoke-Psql "select count(*) from pg_constraint where conrelid='habitflow.privacy_request_events'::regclass and contype='f' and confrelid='habitflow.lgpd_requests'::regclass") 1 'privacy_request_events request foreign key'
+    Assert-Equal (Invoke-Psql "select count(*) from pg_indexes where schemaname='habitflow' and tablename='privacy_request_events' and indexname='ix_privacy_request_events_request'") 1 'privacy_request_events request index'
     Assert-Equal (Invoke-Psql "select count(*) from pg_trigger where tgrelid='habitflow.lgpd_requests'::regclass and tgname='trg_audit_privacy_request' and not tgisinternal") 1 'LGPD request audit trigger'
-    $results.Add('| Sanidade e schema drift | Aprovado | registro 001–066, escopo de lembretes, tabelas e regras comerciais validados |')
+    $results.Add('| Sanidade e schema drift | Aprovado | registro 001–066, contratos LGPD, auditoria, escopo de lembretes e regras comerciais validados |')
   }
   @("# Validação PostgreSQL v6.14.9",'',"Executado em: $(Get-Date -Format o)",'','| Cenário | Status | Evidência |','|---|---|---|') + $results | Set-Content $report -Encoding utf8
 } catch {
