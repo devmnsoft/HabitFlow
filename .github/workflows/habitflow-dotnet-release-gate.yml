@@ -1,0 +1,173 @@
+name: HabitFlow .NET Release Gate
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  CI_CONNECTION: Host=localhost;Port=5432;Database=habitflow_ci;Username=habitflow;Password=habitflow_ci_password
+
+jobs:
+  dotnet-build-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with: { dotnet-version: 10.0.x }
+      - run: dotnet --info
+      - run: dotnet restore HabitFlow.sln
+      - run: dotnet build HabitFlow.sln --configuration Release --no-restore
+      - run: dotnet publish src/HabitFlow.Web/HabitFlow.Web.csproj --configuration Release --no-build --output artifacts/v6154-publish
+      - uses: actions/upload-artifact@v4
+        with: { name: v6154-publish, path: artifacts/v6154-publish, if-no-files-found: error }
+
+  postgres-migrations:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env: { POSTGRES_DB: habitflow_ci, POSTGRES_USER: habitflow, POSTGRES_PASSWORD: habitflow_ci_password }
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U habitflow -d habitflow_ci" --health-interval 10s
+          --health-timeout 5s --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply canonical migrations twice
+        run: |
+          bash scripts/database/run-migrations.sh "$CI_CONNECTION"
+          bash scripts/database/run-migrations.sh "$CI_CONNECTION"
+      - name: Validate versions, tables, drift, and LGPD audit trigger
+        env: { PGPASSWORD: habitflow_ci_password }
+        run: |
+          mkdir -p artifacts/v6154
+          versions=$(psql -h localhost -U habitflow -d habitflow_ci -Atqc "select count(distinct id) from habitflow.schema_migrations where id ~ '^[0-9]{3}$' and id::int between 1 and 66")
+          tables=$(psql -h localhost -U habitflow -d habitflow_ci -Atqc "select count(*) from information_schema.tables where table_schema='habitflow' and table_name in ('users','habits','habit_completions','habit_templates','habit_template_favorites','user_goals','habit_reminders','notifications','lgpd_requests','user_privacy_consents','privacy_request_events')")
+          trigger=$(psql -h localhost -U habitflow -d habitflow_ci -Atqc "select count(*) from pg_trigger where tgrelid='habitflow.lgpd_requests'::regclass and tgname='trg_audit_privacy_request' and not tgisinternal")
+          test "$versions" = 66 && test "$tables" = 11 && test "$trigger" = 1
+          printf '# PostgreSQL migrations CI\n\n- Migrations 001-066: **%s/66**\n- Required tables: **%s/11**\n- LGPD audit trigger: **%s/1**\n- Canonical rerun: **passed**\n- Checksum drift: **not detected**\n' "$versions" "$tables" "$trigger" > artifacts/v6154/postgres-migrations-ci.md
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: v6154-postgres, path: artifacts/v6154/postgres-migrations-ci.md, if-no-files-found: warn }
+
+  runtime-smoke-public:
+    needs: [dotnet-build-publish, postgres-migrations]
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env: { POSTGRES_DB: habitflow_ci, POSTGRES_USER: habitflow, POSTGRES_PASSWORD: habitflow_ci_password }
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U habitflow -d habitflow_ci" --health-interval 10s
+          --health-timeout 5s --health-retries 5
+    env:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://127.0.0.1:5097
+      ConnectionStrings__DefaultConnection: Host=localhost;Port=5432;Database=habitflow_ci;Username=habitflow;Password=habitflow_ci_password
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with: { dotnet-version: 10.0.x }
+      - uses: actions/download-artifact@v4
+        with: { name: v6154-publish, path: artifacts/v6154-publish }
+      - run: bash scripts/database/run-migrations.sh "$CI_CONNECTION"
+      - name: Start published application and wait up to 120 seconds
+        run: |
+          mkdir -p artifacts/v6154
+          dotnet artifacts/v6154-publish/HabitFlow.Web.dll --urls http://127.0.0.1:5097 > artifacts/v6154/habitflow-runtime.log 2>&1 & echo $! > artifacts/v6154/runtime.pid
+          for attempt in {1..60}; do curl -fsS -o /dev/null http://127.0.0.1:5097/ && exit 0; sleep 2; done
+          cat artifacts/v6154/habitflow-runtime.log; exit 1
+      - name: Smoke public routes and reject runtime exceptions
+        run: |
+          printf '# Public runtime smoke\n\n| Route | HTTP |\n|---|---:|\n' > artifacts/v6154/public-smoke-ci.md
+          for route in / /login /register /plans /favicon.ico; do code=$(curl -sS -L -o /dev/null -w '%{http_code}' "http://127.0.0.1:5097$route"); test "$code" -lt 500; printf '| `%s` | %s |\n' "$route" "$code" >> artifacts/v6154/public-smoke-ci.md; done
+          ! grep -Ei 'Unhandled exception|PostgresException|NpgsqlException|InvalidOperationException|Dapper|partial view was not found|StackTrace' artifacts/v6154/habitflow-runtime.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: v6154-public-smoke, path: 'artifacts/v6154/*', if-no-files-found: error }
+
+  runtime-smoke-authenticated:
+    needs: [dotnet-build-publish, postgres-migrations]
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env: { POSTGRES_DB: habitflow_ci, POSTGRES_USER: habitflow, POSTGRES_PASSWORD: habitflow_ci_password }
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U habitflow -d habitflow_ci" --health-interval 10s
+          --health-timeout 5s --health-retries 5
+    env:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://127.0.0.1:5097
+      ConnectionStrings__DefaultConnection: Host=localhost;Port=5432;Database=habitflow_ci;Username=habitflow;Password=habitflow_ci_password
+      HABITFLOW_CI_EMAIL: release-gate@habitflow.local
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with: { dotnet-version: 10.0.x }
+      - uses: actions/download-artifact@v4
+        with: { name: v6154-publish, path: artifacts/v6154-publish }
+      - run: bash scripts/database/run-migrations.sh "$CI_CONNECTION"
+      - name: Generate and mask ephemeral user password
+        shell: pwsh
+        run: |
+          $password = [Convert]::ToBase64String([Security.Cryptography.RandomNumberGenerator]::GetBytes(24)) + '!aA1'
+          Write-Output "::add-mask::$password"
+          Add-Content $env:GITHUB_ENV "HABITFLOW_CI_PASSWORD=$password"
+      - name: Start application
+        run: |
+          mkdir -p artifacts/v6154
+          dotnet artifacts/v6154-publish/HabitFlow.Web.dll > artifacts/v6154/habitflow-auth-runtime.log 2>&1 &
+          for attempt in {1..60}; do curl -fsS -o /dev/null http://127.0.0.1:5097/register && exit 0; sleep 2; done; cat artifacts/v6154/habitflow-auth-runtime.log; exit 1
+      - name: Provision disposable Free user
+        shell: pwsh
+        run: ./scripts/validation/provision-ci-user.ps1 -Email $env:HABITFLOW_CI_EMAIL
+      - name: Authenticated route and minimum MVP navigation smoke
+        shell: pwsh
+        run: |
+          $secure = ConvertTo-SecureString $env:HABITFLOW_CI_PASSWORD -AsPlainText -Force
+          ./scripts/validation/smoke-authenticated-routes.ps1 -Email $env:HABITFLOW_CI_EMAIL -Password $secure -ReportPath artifacts/v6154/authenticated-smoke-ci.md
+          @('# MVP minimum CI validation','', '- Login and authenticated session: **passed**','- `/my-day`, `/habit-library`, `/habits`, `/account/privacy`, `/account/plan/usage`: **passed by authenticated smoke**','- Free account provisioning through registration: **passed**','- Mutation (create/complete habit) and browser UX/mobile: **pending manual Windows validation; not approved by this check**') | Set-Content artifacts/v6154/mvp-minimum-ci-validation.md
+      - name: Reject authenticated runtime exceptions
+        run: "! grep -Ei 'Unhandled exception|PostgresException|NpgsqlException|InvalidOperationException|Dapper|partial view was not found|StackTrace' artifacts/v6154/habitflow-auth-runtime.log"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: v6154-authenticated-smoke, path: 'artifacts/v6154/*', if-no-files-found: error }
+
+  artifact-summary:
+    if: always()
+    needs: [dotnet-build-publish, postgres-migrations, runtime-smoke-public, runtime-smoke-authenticated]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with: { name: v6154-postgres, path: artifacts/downloaded/postgres }
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with: { name: v6154-public-smoke, path: artifacts/downloaded/public }
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with: { name: v6154-authenticated-smoke, path: artifacts/downloaded/authenticated }
+      - name: Write real gate result
+        env:
+          BUILD: ${{ needs.dotnet-build-publish.result }}
+          MIGRATIONS: ${{ needs.postgres-migrations.result }}
+          PUBLIC: ${{ needs.runtime-smoke-public.result }}
+          AUTHENTICATED: ${{ needs.runtime-smoke-authenticated.result }}
+        run: |
+          mkdir -p artifacts/v6154
+          decision='CI Release Gate pronto para execução'; test "$BUILD$MIGRATIONS$PUBLIC$AUTHENTICATED" = successsuccesssuccesssuccess || decision='Não aprovado — erro real pendente'
+          printf '# HabitFlow v6.15.4 CI release gate result\n\n- SHA: `%s`\n- Build/publish: **%s**\n- Migrations 001-066 and rerun: **%s**\n- Startup/public smoke: **%s**\n- Authenticated/LGPD/MVP navigation smoke: **%s**\n- Decision: **%s**\n\nProduction additionally requires green IIS, real-browser, mobile, UX, and mutational-flow validation on Windows.\n' "$GITHUB_SHA" "$BUILD" "$MIGRATIONS" "$PUBLIC" "$AUTHENTICATED" "$decision" | tee artifacts/v6154/final-ci-release-gate-report.md >> "$GITHUB_STEP_SUMMARY"
+          test "$decision" = 'CI Release Gate pronto para execução'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: v6154-final-report, path: artifacts/v6154/final-ci-release-gate-report.md, if-no-files-found: error }
