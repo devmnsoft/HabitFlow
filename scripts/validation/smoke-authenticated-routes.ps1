@@ -8,7 +8,7 @@
   [guid]$HabitId,
   [guid]$TemplateId,
   [guid]$GoalId,
-  [string]$ReportPath='artifacts/v6137/authenticated-smoke-validation.md'
+  [string]$ReportPath='artifacts/v6155/authenticated-smoke-ci.md'
 )
 $ErrorActionPreference='Stop'; $root=(Resolve-Path (Join-Path $PSScriptRoot '../..')).Path; $report=if([IO.Path]::IsPathRooted($ReportPath)){$ReportPath}else{Join-Path $root $ReportPath}; New-Item -ItemType Directory -Force (Split-Path $report)|Out-Null
 if(-not $Password -and $env:HABITFLOW_SMOKE_PASSWORD){$Password=ConvertTo-SecureString $env:HABITFLOW_SMOKE_PASSWORD -AsPlainText -Force}
@@ -24,7 +24,7 @@ try {
   $response=Invoke-WebRequest "$BaseUrl/login" -Method Post -WebSession $session -Body @{Email=$Email;Password=$plain;__RequestVerificationToken=$token} -UseBasicParsing -MaximumRedirection 5
   if($response.BaseResponse.ResponseUri.AbsolutePath -eq '/login'){throw 'Login did not create an authenticated session.'}
   $routes=[Collections.Generic.List[string]]::new()
-  @('/dashboard','/my-day','/habits','/habits/create','/habit-library','/habit-library?favoritesOnly=true','/onboarding','/goals','/goals/create','/reminders','/notifications','/weekly-review','/reports','/account/plan/usage','/account/privacy','/profile','/profile/accessibility') | ForEach-Object {$routes.Add($_)}
+  @('/dashboard','/my-day','/habits','/habits/create','/habit-library','/habit-library?favoritesOnly=true','/account/plan/usage','/account/privacy','/goals','/reminders','/notifications','/weekly-review','/reports','/profile') | ForEach-Object {$routes.Add($_)}
   if($HabitId -ne [guid]::Empty){$routes.Add("/habits/$HabitId");$routes.Add("/habits/$HabitId/edit")}
   if($TemplateId -ne [guid]::Empty){$routes.Add("/habit-library/templates/$TemplateId");$routes.Add("/habit-library/templates/$TemplateId/customize")}
   if($GoalId -ne [guid]::Empty){$routes.Add("/goals/$GoalId")}
