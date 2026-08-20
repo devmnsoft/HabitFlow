@@ -87,6 +87,7 @@ public static class DependencyInjection
         services.AddScoped<HabitReminderService>();
         services.AddScoped<ReminderDispatchProcessor>();
         services.AddScoped<ReminderDispatchHealthService>();
+        services.AddSingleton<ReminderDispatchRuntimeState>();
         services.AddScoped<DailyRoutinePlannerService>();
         services.AddScoped<HabitScheduleExceptionService>();
         services.AddScoped<DailyRoutineActionService>();

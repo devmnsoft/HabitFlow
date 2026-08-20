@@ -89,7 +89,7 @@ public sealed class ReminderDispatchRepository(DbConnectionFactory connections) 
     }
 
     public async Task<bool> FailAsync(ReminderDispatchCandidate candidate, string errorCode,
-        DateTimeOffset now, DateTimeOffset? nextAttempt, CancellationToken ct = default)
+        DateTimeOffset now, DateTimeOffset? nextAttempt, DateTimeOffset? nextOccurrence, CancellationToken ct = default)
     {
         using var connection = await connections.OpenAsync(ct);
         const string sql = """
@@ -99,14 +99,14 @@ public sealed class ReminderDispatchRepository(DbConnectionFactory connections) 
              where id=@DispatchId and client_id=@ClientId and user_id=@UserId
                and habit_id=@HabitId and habit_reminder_id=@ReminderId;
             update habitflow.habit_reminders set locked_by=null,locked_until=null,
-                   next_trigger_at=coalesce(@nextAttempt,next_trigger_at),updated_at=@now
+                   next_trigger_at=coalesce(@nextAttempt,@nextOccurrence,next_trigger_at),updated_at=@now
              where id=@ReminderId and client_id=@ClientId and user_id=@UserId and habit_id=@HabitId;
             """;
         await connection.ExecuteAsync(new CommandDefinition(sql, new
         {
             candidate.DispatchId, candidate.ClientId, candidate.UserId, candidate.HabitId,
             candidate.ReminderId, errorCode, now = now.UtcDateTime,
-            nextAttempt = nextAttempt?.UtcDateTime, status = nextAttempt is null ? "Failed" : "Retry"
+            nextAttempt = nextAttempt?.UtcDateTime, nextOccurrence = nextOccurrence?.UtcDateTime, status = nextAttempt is null ? "Failed" : "Retry"
         }, cancellationToken: ct));
         return nextAttempt is not null;
     }

@@ -7,6 +7,7 @@ public sealed record HabitReminder(Guid Id, Guid ClientId, Guid UserId, Guid Hab
 public interface IHabitReminderRepository
 {
     Task<IReadOnlyList<HabitReminder>> ListAsync(Guid clientId, Guid userId, Guid? habitId = null, CancellationToken ct = default);
+    Task<int> CountForHabitAsync(Guid clientId, Guid userId, Guid habitId, CancellationToken ct = default);
     Task<HabitReminder?> GetOwnedAsync(Guid clientId, Guid userId, Guid id, CancellationToken ct = default);
     Task<bool> HabitBelongsToUserAsync(Guid clientId, Guid userId, Guid habitId, CancellationToken ct = default);
     Task CreateAsync(HabitReminder reminder, CancellationToken ct = default);

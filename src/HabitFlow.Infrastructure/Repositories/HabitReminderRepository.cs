@@ -32,6 +32,9 @@ public sealed class HabitReminderRepository(SqlExecutor db) : IHabitReminderRepo
         return rows.Select(Map).ToList();
     }
 
+    public Task<int> CountForHabitAsync(Guid clientId, Guid userId, Guid habitId, CancellationToken ct = default) =>
+        db.QuerySingleOrDefaultAsync<int>("select count(*) from habitflow.habit_reminders where client_id=@clientId and user_id=@userId and habit_id=@habitId", new { clientId, userId, habitId }, ct);
+
     public async Task<HabitReminder?> GetOwnedAsync(Guid clientId, Guid userId, Guid id, CancellationToken ct = default)
     {
         var row = await db.QuerySingleOrDefaultAsync<HabitReminderRow>(AppendToSelect("where r.client_id=@clientId and r.user_id=@userId and r.id=@id"), new { clientId, userId, id }, ct);

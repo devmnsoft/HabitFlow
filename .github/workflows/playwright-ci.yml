@@ -37,7 +37,7 @@ jobs:
       - name: Start ASP.NET application
         run: nohup dotnet run --no-build -c Release --project src/HabitFlow.Web --urls http://127.0.0.1:5097 > /tmp/habitflow.log 2>&1 &
       - name: Wait for health
-        run: for i in {1..60}; do curl -fsS http://127.0.0.1:5097/health && exit 0; sleep 2; done; cat /tmp/habitflow.log; exit 1
+        run: for i in {1..60}; do curl -fsS http://127.0.0.1:5097/health/ready && exit 0; sleep 2; done; cat /tmp/habitflow.log; exit 1
       - name: Execute real Playwright suites
         working-directory: tests/HabitFlow.Playwright
         run: npx playwright test
