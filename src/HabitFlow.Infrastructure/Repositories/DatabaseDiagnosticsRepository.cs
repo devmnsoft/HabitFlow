@@ -26,7 +26,9 @@ public sealed class DatabaseDiagnosticsRepository(DbConnectionFactory factory) :
     private static readonly string[] RequiredTables =
     [
         "users", "habits", "habit_completions", "support_tickets", "support_messages", "system_audit_logs",
-        "admin_audit_logs", "system_settings", "lgpd_requests", "billing_events", "notifications", "user_reports"
+        "admin_audit_logs", "system_settings", "lgpd_requests", "billing_events", "notifications", "user_reports",
+        "habit_objectives", "habit_templates", "habit_reminders", "reminder_dispatches", "schema_migrations",
+        "user_privacy_consents", "privacy_request_events"
     ];
 
     private static async Task<int> SafeCount(System.Data.IDbConnection connection, string sql, CancellationToken ct)

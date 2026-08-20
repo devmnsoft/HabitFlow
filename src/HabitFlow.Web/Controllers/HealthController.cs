@@ -9,7 +9,18 @@ public class HealthController(IConfiguration configuration, IWebHostEnvironment 
 {
     [HttpGet("health")]
     [HttpGet("health/ui")]
+    [HttpGet("health/live")]
     public IActionResult Index() => Ok(new { status = "Healthy", app = "HabitFlow" });
+
+    [HttpGet("health/ready")]
+    public async Task<IActionResult> Ready(CancellationToken ct)
+    {
+        var result = await diagnostics.GetAsync(ct);
+        var value = result.Value;
+        if (value is null || value.Status == "unhealthy" || !value.SchemaExists || !value.RequiredTablesOk)
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, new { status = "Unhealthy", code = value?.ErrorCode ?? "schema.incomplete" });
+        return Ok(new { status = "Healthy", schema = "habitflow", checkedAt = value.CheckedAt });
+    }
 
     [HttpGet("health/db")]
     public async Task<IActionResult> Database(CancellationToken ct)

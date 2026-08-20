@@ -56,8 +56,11 @@ public sealed class ReminderDispatchProcessor(
                 var retryAt = attempt < options.MaxAttempts
                     ? clock.GetUtcNow().AddSeconds(Math.Min(300, 5 * Math.Pow(2, attempt - 1)))
                     : (DateTimeOffset?)null;
+                var nextOccurrence = retryAt is null
+                    ? schedules.Next(candidate.ReminderTime, candidate.DaysOfWeek, candidate.Timezone, candidate.ScheduledFor)
+                    : (DateTimeOffset?)null;
                 var willRetry = await repository.FailAsync(candidate, StableErrorCode(exception),
-                    clock.GetUtcNow(), retryAt, ct);
+                    clock.GetUtcNow(), retryAt, nextOccurrence, ct);
                 if (willRetry)
                 {
                     retried++;
@@ -85,25 +88,30 @@ public sealed class ReminderDispatchProcessor(
     };
 }
 
-public sealed class ReminderDispatchHealthService(IReminderDispatchRepository repository, TimeProvider clock)
+public sealed class ReminderDispatchRuntimeState(TimeProvider clock)
 {
     private readonly object sync = new();
     public DateTimeOffset? LastRunAt { get; private set; }
     public DateTimeOffset? LastSuccessfulRunAt { get; private set; }
     public TimeSpan LastDuration { get; private set; }
     public int LastBatchSize { get; private set; }
+    public string? LastErrorCode { get; private set; }
 
-    public void Record(DateTimeOffset started, ReminderDispatchResult? result, bool succeeded)
+    public void Record(DateTimeOffset started, ReminderDispatchResult? result, bool succeeded, string? errorCode = null)
     {
         lock (sync)
         {
             LastRunAt = started;
             LastDuration = clock.GetUtcNow() - started;
             LastBatchSize = result?.Claimed ?? 0;
+            LastErrorCode = errorCode;
             if (succeeded) LastSuccessfulRunAt = clock.GetUtcNow();
         }
     }
+}
 
+public sealed class ReminderDispatchHealthService(IReminderDispatchRepository repository, TimeProvider clock)
+{
     public Task<ReminderDispatchHealth> SnapshotAsync(CancellationToken ct = default) =>
         repository.GetHealthAsync(clock.GetUtcNow(), ct);
 }

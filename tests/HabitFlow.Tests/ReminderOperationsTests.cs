@@ -49,6 +49,7 @@ public sealed class ReminderOperationsTests
         public HabitReminder? Reminder { get; private set; } = reminder;
         public DateTimeOffset? SnoozedUntil { get; private set; }
         public Task<IReadOnlyList<HabitReminder>> ListAsync(Guid clientId, Guid userId, Guid? habitId = null, CancellationToken ct = default) => Task.FromResult<IReadOnlyList<HabitReminder>>([]);
+        public Task<int> CountForHabitAsync(Guid clientId, Guid userId, Guid habitId, CancellationToken ct = default) => Task.FromResult(0);
         public Task<HabitReminder?> GetOwnedAsync(Guid clientId, Guid userId, Guid id, CancellationToken ct = default) => Task.FromResult(Reminder is { } value && value.ClientId == clientId && value.UserId == userId && value.Id == id ? Reminder : null);
         public Task<bool> HabitBelongsToUserAsync(Guid clientId, Guid userId, Guid habitId, CancellationToken ct = default) => Task.FromResult(false);
         public Task CreateAsync(HabitReminder value, CancellationToken ct = default) => Task.CompletedTask;

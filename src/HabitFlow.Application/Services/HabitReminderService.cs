@@ -27,8 +27,29 @@ public sealed class ReminderScheduleCalculator(TimeProvider timeProvider)
     }
 }
 
-public sealed class HabitReminderService(IHabitReminderRepository repository, ReminderScheduleCalculator schedules, TimeProvider timeProvider)
+public sealed class HabitReminderService
 {
+    private readonly IHabitReminderRepository repository;
+    private readonly ReminderScheduleCalculator schedules;
+    private readonly TimeProvider timeProvider;
+    private readonly FeatureAccessService? featureAccess;
+
+    public HabitReminderService(IHabitReminderRepository repository, ReminderScheduleCalculator schedules,
+        TimeProvider timeProvider, FeatureAccessService featureAccess)
+    {
+        this.repository = repository;
+        this.schedules = schedules;
+        this.timeProvider = timeProvider;
+        this.featureAccess = featureAccess;
+    }
+
+    // Kept for focused domain tests; production DI always supplies FeatureAccessService.
+    public HabitReminderService(IHabitReminderRepository repository, ReminderScheduleCalculator schedules, TimeProvider timeProvider)
+    {
+        this.repository = repository;
+        this.schedules = schedules;
+        this.timeProvider = timeProvider;
+    }
     public Task<IReadOnlyList<HabitReminder>> ListAsync(Guid clientId, Guid userId, Guid? habitId, CancellationToken ct = default) =>
         repository.ListAsync(clientId, userId, habitId, ct);
 
@@ -36,6 +57,12 @@ public sealed class HabitReminderService(IHabitReminderRepository repository, Re
     {
         if (!await repository.HabitBelongsToUserAsync(clientId, userId, habitId, ct))
             return Result.Failure("reminder.habit_not_found", "Hábito não encontrado.");
+        if (featureAccess is not null)
+        {
+            var limit = await featureAccess.GetLimitAsync(userId, PlanFeatureCodes.RemindersPerHabit, ct);
+            if (limit is >= 0 && await repository.CountForHabitAsync(clientId, userId, habitId, ct) >= limit.Value)
+                return Result.Failure("reminder.limit", "Você atingiu o limite de lembretes deste hábito. Os lembretes existentes continuam disponíveis.");
+        }
         if (days.Length == 0 || days.Distinct().Any(x => x is < 0 or > 6))
             return Result.Failure("reminder.days", "Escolha ao menos um dia válido.");
         DateTimeOffset next;

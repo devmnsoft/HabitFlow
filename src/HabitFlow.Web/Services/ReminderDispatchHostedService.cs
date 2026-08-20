@@ -5,7 +5,8 @@ using Microsoft.Extensions.Options;
 namespace HabitFlow.Web.Services;
 
 public sealed class ReminderDispatchHostedService(IServiceScopeFactory scopes,
-    IOptions<ReminderDispatchOptions> configured, ILogger<ReminderDispatchHostedService> logger) : BackgroundService
+    IOptions<ReminderDispatchOptions> configured, ReminderDispatchRuntimeState runtimeState,
+    TimeProvider clock, ILogger<ReminderDispatchHostedService> logger) : BackgroundService
 {
     private readonly string workerId = $"{Environment.MachineName}:{Environment.ProcessId}:{Guid.NewGuid():N}";
 
@@ -16,21 +17,20 @@ public sealed class ReminderDispatchHostedService(IServiceScopeFactory scopes,
         using var timer = new PeriodicTimer(TimeSpan.FromSeconds(options.IntervalSeconds));
         do
         {
-            var started = TimeProvider.System.GetUtcNow();
+            var started = clock.GetUtcNow();
             ReminderDispatchResult? result = null;
             try
             {
                 using var scope = scopes.CreateScope();
                 result = await scope.ServiceProvider.GetRequiredService<ReminderDispatchProcessor>()
                     .ProcessAsync(workerId, options, stoppingToken);
-                scope.ServiceProvider.GetRequiredService<ReminderDispatchHealthService>().Record(started, result, true);
+                runtimeState.Record(started, result, true);
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested) { break; }
             catch (Exception exception)
             {
                 logger.LogError(exception, "Reminder dispatch cycle failed for worker {WorkerId}", workerId);
-                using var scope = scopes.CreateScope();
-                scope.ServiceProvider.GetRequiredService<ReminderDispatchHealthService>().Record(started, result, false);
+                runtimeState.Record(started, result, false, "dispatch_cycle_failed");
             }
         } while (await timer.WaitForNextTickAsync(stoppingToken));
     }

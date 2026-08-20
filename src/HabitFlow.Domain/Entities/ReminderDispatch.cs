@@ -17,6 +17,6 @@ public interface IReminderDispatchRepository
     Task CompleteAsync(ReminderDispatchCandidate candidate, DateTimeOffset nextOccurrence,
         DateTimeOffset now, CancellationToken ct = default);
     Task<bool> FailAsync(ReminderDispatchCandidate candidate, string errorCode, DateTimeOffset now,
-        DateTimeOffset? nextAttempt, CancellationToken ct = default);
+        DateTimeOffset? nextAttempt, DateTimeOffset? nextOccurrence, CancellationToken ct = default);
     Task<ReminderDispatchHealth> GetHealthAsync(DateTimeOffset now, CancellationToken ct = default);
 }

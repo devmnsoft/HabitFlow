@@ -13,6 +13,6 @@ if($LASTEXITCODE){throw 'dotnet publish para IIS falhou.'}
 - [ ] identidade do App Pool com leitura/execução; escrita somente nos diretórios operacionais.
 - [ ] stdout log habilitado apenas para diagnóstico e com rotação.
 - [ ] migrations canônicas aplicadas uma única vez antes do switch.
-- [ ] `GET /health` validado após o deploy.
+- [ ] `GET /health/ready` validado após o deploy.
 '@|Set-Content (Join-Path $target 'IIS-CHECKLIST.md') -Encoding utf8
 Write-Check OK "Pacote IIS criado: $target"
