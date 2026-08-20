@@ -1,14 +1,16 @@
 @model HabitFlow.Application.HabitListViewModel
 @{ ViewData["Title"] = "Hábitos"; }
+<div class="hf-habits-page">
 <partial name="Partials/_HabitListHero" model="Model" />
 <partial name="Partials/_HabitFilters" model="Model" />
 @if (Model.Items.Count == 0) { <partial name="Partials/_HabitEmptyState" model="Model" /> }
 else {
-<section class="hf-habit-grid" aria-label="Hábitos encontrados">
+<section class="hf-habits-list" aria-label="Hábitos encontrados">
 @foreach (var item in Model.Items) { <partial name="Partials/_HabitCard" model="item" /> }
 </section>
 @if (Model.TotalPages > 1) { <nav class="hf-pagination" aria-label="Páginas"><span>Página @Model.Query.Page de @Model.TotalPages</span><div>@if(Model.Query.Page > 1){<a class="btn btn-outline-secondary" asp-route-page="@(Model.Query.Page-1)" asp-route-search="@Model.Query.Search" asp-route-status="@Model.Query.Status">Anterior</a>} @if(Model.Query.Page < Model.TotalPages){<a class="btn btn-outline-secondary" asp-route-page="@(Model.Query.Page+1)" asp-route-search="@Model.Query.Search" asp-route-status="@Model.Query.Status">Próxima</a>}</div></nav> }
 }
 <partial name="Partials/_HabitPlanLimitModal" />
+</div>
 @section Styles { <link rel="stylesheet" href="~/css/habits-v4.css" asp-append-version="true" /> }
 @section Scripts { <script src="~/js/habits-v4.js" asp-append-version="true"></script> }
