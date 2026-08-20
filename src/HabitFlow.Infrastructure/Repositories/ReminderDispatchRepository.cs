@@ -47,11 +47,15 @@ public sealed class ReminderDispatchRepository(DbConnectionFactory connections) 
                    d.attempt_count "AttemptCount", d.correlation_id "CorrelationId"
               from dispatch d join leased l on l.id=d.habit_reminder_id
             """;
-        var rows = (await connection.QueryAsync<ReminderDispatchCandidate>(new CommandDefinition(sql,
+        // Do not ask Dapper to materialize the immutable domain record directly. PostgreSQL
+        // returns timestamp columns as DateTime and the record constructor expects
+        // DateTimeOffset; constructor binding therefore changes with provider/Dapper versions.
+        // A mutable persistence projection keeps that conversion explicit and deterministic.
+        var rows = (await connection.QueryAsync<ReminderDispatchCandidateRow>(new CommandDefinition(sql,
             new { now = now.UtcDateTime, batchSize, workerId, leaseUntil = now.Add(lease).UtcDateTime },
             transaction, cancellationToken: ct))).AsList();
         transaction.Commit();
-        return rows;
+        return rows.Select(row => row.ToDomain()).ToList();
     }
 
     public async Task CompleteAsync(ReminderDispatchCandidate candidate, DateTimeOffset nextOccurrence,
@@ -123,5 +127,26 @@ public sealed class ReminderDispatchRepository(DbConnectionFactory connections) 
             """;
         return await connection.QuerySingleAsync<ReminderDispatchHealth>(
             new CommandDefinition(sql, new { now = now.UtcDateTime }, cancellationToken: ct));
+    }
+
+    private sealed class ReminderDispatchCandidateRow
+    {
+        public Guid DispatchId { get; init; }
+        public Guid ReminderId { get; init; }
+        public Guid ClientId { get; init; }
+        public Guid UserId { get; init; }
+        public Guid HabitId { get; init; }
+        public string HabitName { get; init; } = "";
+        public TimeOnly ReminderTime { get; init; }
+        public string Timezone { get; init; } = "UTC";
+        public int[] DaysOfWeek { get; init; } = [];
+        public DateTime ScheduledFor { get; init; }
+        public int AttemptCount { get; init; }
+        public Guid CorrelationId { get; init; }
+
+        public ReminderDispatchCandidate ToDomain() => new(
+            DispatchId, ReminderId, ClientId, UserId, HabitId, HabitName, ReminderTime, Timezone,
+            DaysOfWeek, new DateTimeOffset(DateTime.SpecifyKind(ScheduledFor, DateTimeKind.Utc)),
+            AttemptCount, CorrelationId);
     }
 }

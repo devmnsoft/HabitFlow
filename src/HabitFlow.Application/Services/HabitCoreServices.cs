@@ -85,7 +85,7 @@ public sealed class HabitLifecycleService(IHabitRepository habits, AuditService 
     }
 }
 
-public sealed class HabitEditorService(IHabitRepository habits, IHabitWeekDayRepository weekDays, HabitScheduleNormalizer scheduleNormalizer, HabitPolicy policy, AuditService audit, IUserGoalRepository goals, UserTimeZoneService clock, IUnitOfWork unitOfWork)
+public sealed class HabitEditorService(IHabitRepository habits, IHabitWeekDayRepository weekDays, HabitScheduleNormalizer scheduleNormalizer, PlanEntitlementService entitlements, AuditService audit, IUserGoalRepository goals, UserTimeZoneService clock, IUnitOfWork unitOfWork)
 {
     private static readonly string[] DefaultCategories = ["Saúde", "Movimento", "Estudo", "Trabalho", "Casa", "Finanças", "Sono", "Alimentação", "Leitura", "Espiritualidade", "Bem-estar"];
     private static readonly Regex HexColor = new("^#[0-9a-fA-F]{6}$", RegexOptions.Compiled);
@@ -124,7 +124,14 @@ public sealed class HabitEditorService(IHabitRepository habits, IHabitWeekDayRep
             return Result<Habit>.Failure("habit.objective_not_found", "Objetivo não encontrado.");
         var current = input.Id.HasValue ? await habits.GetAsync(user.ClientId.Value, user.Id, input.Id.Value, ct) : null;
         if (input.Id.HasValue && current is null) return Result<Habit>.Failure("habit.not_found", "Hábito não encontrado.");
-        if (current is null) { var count = await habits.CountActiveAsync(user.ClientId.Value, user.Id, ct); var allowed = policy.CanCreate(user, count); if (allowed.IsFailure) return Result<Habit>.Failure(allowed.Error.Code, allowed.Error.Message); }
+        if (current is null)
+        {
+            var count = await habits.CountActiveAsync(user.ClientId.Value, user.Id, ct);
+            var limit = await entitlements.GetIntegerFeatureAsync(user.Id, PlanFeatureCodes.ActiveHabitsLimit, ct);
+            if (limit is >= 0 && count >= limit)
+                return Result<Habit>.Failure("plan.habit_limit",
+                    $"Você chegou ao limite de {limit} hábitos ativos do seu plano. Veja os planos para criar outro hábito.");
+        }
         var now = DateTime.UtcNow;
         var startDate = current?.StartDate ?? input.StartDate ?? clock.Today();
         var habit = (current ?? new Habit(Guid.NewGuid(), user.Id, name, color, Clean(input.Category, 80), false, null, now, now, ClientId: user.ClientId, StartDate: startDate)) with { Name = name, Color = color, Category = Clean(input.Category, 80), IconCode = icon, FrequencyType = normalized.FrequencyType, TargetPerWeek = normalized.TargetPerWeek, ReminderTime = input.ReminderTime, Notes = Clean(input.Notes, 2000), ObjectiveId = input.ObjectiveId, EstimatedTimeMinutes = input.EstimatedTimeMinutes, Difficulty = input.Difficulty, StartDate = startDate, UpdatedAt = now };
