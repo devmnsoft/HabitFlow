@@ -92,6 +92,7 @@ select to_regclass('habitflow.plan_prices') as plan_prices,
 select table_name, to_regclass('habitflow.'||table_name) is not null as exists from (values ('user_goals'),('goal_habits'),('milestones'),('user_milestones'),('habit_reminders'),('user_summary_preferences'),('shared_routines'),('shared_routine_habits'),('shared_routine_members'),('shared_goals'),('shared_goal_members'),('shared_goal_progress'),('product_events')) v(table_name);
 select 'v6.3 no public conflicts' check_name,count(*) public_conflicts from information_schema.tables where table_schema='public' and table_name in ('user_goals','goal_habits','milestones','user_milestones','habit_reminders','user_summary_preferences','shared_routines','shared_goals','product_events');
 select 'v6.3 habits visibility' check_name,count(*) found from information_schema.columns where table_schema='habitflow' and table_name='habits' and column_name='visibility';
+select 'v6.16.5 challenges' check_name,to_regclass('habitflow.user_challenges') is not null as exists;
 
 -- v6.4 operational tables must exist in habitflow.
 DO $$

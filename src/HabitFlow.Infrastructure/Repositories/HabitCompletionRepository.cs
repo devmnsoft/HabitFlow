@@ -18,6 +18,7 @@ public sealed class HabitCompletionRepository(SqlExecutor db) : IHabitCompletion
               from habitflow.habits h
               join habitflow.users u on u.id = @userId and u.client_id = @clientId
              where h.id = @habitId and h.user_id = @userId and h.client_id = @clientId
+               and h.is_archived = false and h.is_paused = false
             on conflict (habit_id, completed_date) do nothing
             returning id
             """, new { clientId, userId, habitId, localDate, completionId }, ct);

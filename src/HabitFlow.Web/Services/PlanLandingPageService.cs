@@ -78,6 +78,7 @@ public sealed class PlanLandingPageService(IPlanCatalogRepository repository)
             new("Objetivos ativos", Value(PlanCodes.Free, PlanFeatureCodes.ActiveGoalsLimit, "Não informado"), Value(PlanCodes.Ritmo, PlanFeatureCodes.ActiveGoalsLimit, "Não informado")),
             new("Histórico", Value(PlanCodes.Free, PlanFeatureCodes.HistoryDaysLimit, "Não informado", x => x.IntValue is null ? "Não informado" : $"{x.IntValue} dias"), Value(PlanCodes.Ritmo, PlanFeatureCodes.FullHistory, "Não incluído", _ => "Histórico completo")),
             new("Biblioteca", Value(PlanCodes.Free, PlanFeatureCodes.FullHabitLibrary, "Não incluída"), Value(PlanCodes.Ritmo, PlanFeatureCodes.FullHabitLibrary, "Não incluída")),
+            new("Desafios", Value(PlanCodes.Free, "challenge_7_days", "7 dias", _ => "7 dias"), Value(PlanCodes.Ritmo, "challenge_90_days", "7, 30 e 90 dias", _ => "7, 30 e 90 dias"), "O progresso considera uma conclusão por dia, a partir do início do desafio."),
             new("Relatórios", Value(PlanCodes.Free, PlanFeatureCodes.BasicReports, "Não incluídos", _ => "Resumo semanal básico"), Value(PlanCodes.Ritmo, PlanFeatureCodes.BasicReports, "Não incluídos", _ => "Relatórios disponíveis implementados")),
             new("Exportação", Value(PlanCodes.Free, PlanFeatureCodes.ReportExportCsv, "Não incluída", _ => "Exportação CSV"), Value(PlanCodes.Ritmo, PlanFeatureCodes.ReportExportCsv, "Não incluída", _ => "Exportação CSV")),
             new("Segurança da conta", "Incluída", "Incluída"), new("Central de Privacidade", "Incluída", "Incluída")];
