@@ -19,6 +19,9 @@ public sealed class PlanFeatureImplementationRegistry
         yield return I(PlanFeatureCodes.ActiveHabitsLimit, "Hábitos ativos", "Limite de hábitos ativos do plano.", "HabitPolicy e CreateHabitFromTemplateUseCase", ["/habits"], ["HabitPolicy"]);
         yield return I(PlanFeatureCodes.ActiveGoalsLimit, "Objetivos ativos", "Limite de objetivos ativos do plano.", "GoalService", ["/goals"], ["GoalService"]);
         yield return I(PlanFeatureCodes.FullHabitLibrary, "Biblioteca completa", "Acesso ao catálogo completo de hábitos.", "HabitLibraryService", ["/habit-library"], ["HabitLibraryService"]);
+        yield return I("challenge_7_days", "Desafio de 7 dias", "Progresso alimentado por conclusões reais.", "UserChallengeService", ["/challenges"], ["UserChallengeService"]);
+        yield return I("challenge_30_days", "Desafio de 30 dias", "Desafio Premium com bloqueio no backend.", "UserChallengeService", ["/challenges"], ["UserChallengeService"]);
+        yield return I("challenge_90_days", "Desafio de 90 dias", "Desafio Premium com bloqueio no backend.", "UserChallengeService", ["/challenges"], ["UserChallengeService"]);
         yield return I(PlanFeatureCodes.BasicReports, "Relatório básico", "Resumo semanal e consistência básica.", "ReportService", ["/reports"], ["ReportService"]);
         yield return I(PlanFeatureCodes.ReportExportCsv, "Exportação CSV", "Exporte relatórios em formato CSV.", "ReportsController.Export", ["/reports/export"], ["ReportService"]);
         yield return I(PlanFeatureCodes.ReportPrint, "Versão para impressão", "Relatórios preparados para impressão.", "ReportsController.Print", ["/reports/print"], ["ReportService"]);

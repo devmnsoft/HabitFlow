@@ -161,6 +161,10 @@ public sealed class NavigationService(INavigationAccessEvaluator? accessEvaluato
             Context: NavigationContext.Personal, RequiredPermission: null, RequiredFeature: null, SortOrder: 60, IsEnabled: true),
 
         new(
+            Code: "challenges", Label: "Desafios", Description: "Um passo por dia", Icon: "progress", Url: "/challenges",
+            Context: NavigationContext.Personal, RequiredPermission: null, RequiredFeature: null, SortOrder: 65, IsEnabled: true),
+
+        new(
             Code: "reminders", Label: "Lembretes", Description: "Organize os avisos da sua rotina", Icon: IconCodes.Reminders, Url: "/reminders",
             Context: NavigationContext.Personal, RequiredPermission: null, RequiredFeature: null, SortOrder: 70, IsEnabled: true),
 

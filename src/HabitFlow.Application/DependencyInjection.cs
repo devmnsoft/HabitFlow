@@ -38,6 +38,7 @@ public static class DependencyInjection
         services.AddScoped<HabitPolicy>();
         services.AddScoped<HabitScheduleNormalizer>();
         services.AddScoped<ProgressService>();
+        services.AddScoped<UserChallengeService>();
         services.AddScoped<HabitOccurrenceService>();
         services.AddScoped<EffectiveHabitScheduleService>();
         services.AddScoped<ConsistencyService>();
