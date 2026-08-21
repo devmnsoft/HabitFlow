@@ -46,10 +46,8 @@ public sealed class ReportService(IHabitRepository habits, IHabitCompletionRepos
         return report;
     }
     public Task SaveReportAsync(Guid clientId, Guid userId, PersonalReport report, CancellationToken ct = default) =>
-        reports.CreateAsync(new UserReport(Guid.NewGuid(), userId, "personal", report.PeriodStart, report.PeriodEnd,
-            JsonSerializer.Serialize(new { clientId, report }), DateTime.UtcNow), ct);
-    [Obsolete("Use the overload that requires clientId.")]
-    public Task SaveReportAsync(Guid userId, PersonalReport report, CancellationToken ct = default) => reports.CreateAsync(new UserReport(Guid.NewGuid(), userId, "personal", report.PeriodStart, report.PeriodEnd, JsonSerializer.Serialize(report), DateTime.UtcNow), ct);
+        reports.CreateAsync(new UserReport(Guid.NewGuid(), clientId, userId, "personal", report.PeriodStart, report.PeriodEnd,
+            JsonSerializer.Serialize(report), 1, DateTime.UtcNow), ct);
     public async Task<Result<byte[]>> ExportPersonalReportCsvAsync(Guid clientId, Guid userId, DateOnly periodStart, DateOnly periodEnd, CancellationToken ct = default)
     {
         try
