@@ -117,3 +117,11 @@ select to_regclass('habitflow.assistant_conversations') is not null as assistant
        to_regclass('habitflow.assistant_messages') is not null as assistant_messages_ok,
        to_regclass('habitflow.support_settings') is not null as support_settings_ok,
        to_regclass('habitflow.support_tickets_v2') is not null as support_tickets_v2_ok;
+
+-- v6.17.0 SaaS administration contracts
+DO $$ DECLARE object_name text; BEGIN
+ FOREACH object_name IN ARRAY ARRAY['tenant_settings','user_invitations','roles','permissions','role_permissions','user_role_assignments','feature_flags','audit_events','privacy_requests','consent_records'] LOOP
+  IF to_regclass('habitflow.' || object_name) IS NULL THEN RAISE EXCEPTION 'Tabela administrativa ausente: habitflow.%', object_name; END IF;
+ END LOOP;
+ IF EXISTS (SELECT 1 FROM pg_tables WHERE schemaname='public' AND tablename IN ('tenant_settings','user_invitations','feature_flags','audit_events','privacy_requests','consent_records')) THEN RAISE EXCEPTION 'Objetos administrativos não podem existir em public'; END IF;
+END $$;
