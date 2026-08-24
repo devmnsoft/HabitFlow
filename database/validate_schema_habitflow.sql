@@ -105,3 +105,9 @@ BEGIN
   RAISE EXCEPTION 'Objetos v6.4 não podem existir em public';
  END IF;
 END $$;
+
+-- v6.16.8 PWA/push contract
+select to_regclass('habitflow.push_subscriptions') as push_subscriptions,
+       to_regclass('habitflow.notification_preferences') as notification_preferences,
+       to_regclass('habitflow.push_delivery_attempts') as push_delivery_attempts,
+       to_regclass('habitflow.offline_sync_events') as offline_sync_events;

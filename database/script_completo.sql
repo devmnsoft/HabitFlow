@@ -943,3 +943,6 @@ create unique index if not exists ux_user_reports_snapshot_version on habitflow.
 commit;
 -- v6.16.7 secure multi-tenant billing
 \i database/migrations/071_v6167_secure_multitenant_billing.sql
+
+-- v6.16.8 PWA, controlled offline sync and real push notifications
+\i database/migrations/072_v6168_pwa_push_offline.sql

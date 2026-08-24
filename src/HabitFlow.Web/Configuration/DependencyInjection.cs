@@ -14,6 +14,7 @@ public static class DependencyInjection
         services.AddOptions<SessionSecurityOptions>().Bind(configuration.GetSection("Security:Sessions"))
             .Validate(x => x.LifetimeDays is >= 1 and <= 365 && x.TouchIntervalMinutes is >= 1 and <= 60, "Configuração de sessões inválida.").ValidateOnStart();
         services.AddControllersWithViews();
+        services.Configure<PushNotificationOptions>(configuration.GetSection("PushNotifications"));
         services.Configure<EmailOptions>(configuration.GetSection("Email"));
         services.AddOptions<EmailOptions>().Bind(configuration.GetSection("Email")).Validate(options =>
         {
