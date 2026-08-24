@@ -17,6 +17,7 @@ jobs:
       ASPNETCORE_ENVIRONMENT: Development
       HABITFLOW_BASE_URL: http://127.0.0.1:5097
       HABITFLOW_EXTERNAL_SERVER: '1'
+      HABITFLOW_CI_EMAIL: playwright-ci@habitflow.local
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
@@ -27,17 +28,27 @@ jobs:
       - run: ./scripts/database/run-migrations.sh
       - working-directory: tests/HabitFlow.Playwright
         run: npm ci && npx playwright install --with-deps chromium
-      - name: Restore authenticated browser state
-        env: { AUTH_STATE_B64: '${{ secrets.HABITFLOW_AUTH_STORAGE_B64 }}' }
+      - name: Generate ephemeral browser password
+        shell: pwsh
         run: |
-          test -n "$AUTH_STATE_B64" || { echo 'HABITFLOW_AUTH_STORAGE_B64 secret is required for authenticated release tests'; exit 1; }
-          mkdir -p playwright/.auth
-          printf '%s' "$AUTH_STATE_B64" | base64 --decode > playwright/.auth/ci.json
-          echo "HABITFLOW_AUTH_STORAGE=$GITHUB_WORKSPACE/playwright/.auth/ci.json" >> "$GITHUB_ENV"
+          $password = [Convert]::ToBase64String([Security.Cryptography.RandomNumberGenerator]::GetBytes(24)) + '!aA1'
+          Write-Output "::add-mask::$password"
+          Add-Content $env:GITHUB_ENV "HABITFLOW_CI_PASSWORD=$password"
       - name: Start ASP.NET application
         run: nohup dotnet run --no-build -c Release --project src/HabitFlow.Web --urls http://127.0.0.1:5097 > /tmp/habitflow.log 2>&1 &
       - name: Wait for health
         run: for i in {1..60}; do curl -fsS http://127.0.0.1:5097/health/ready && exit 0; sleep 2; done; cat /tmp/habitflow.log; exit 1
+      - name: Provision disposable tenant user
+        shell: pwsh
+        run: ./scripts/validation/provision-ci-user.ps1 -Email $env:HABITFLOW_CI_EMAIL
+      - name: Create authenticated browser state through the real login flow
+        working-directory: tests/HabitFlow.Playwright
+        env:
+          HABITFLOW_AUTH_OUTPUT: playwright/.auth/ci.json
+        run: |
+          mkdir -p playwright/.auth
+          npx playwright test auth-state.setup.js
+          echo "HABITFLOW_AUTH_STORAGE=$GITHUB_WORKSPACE/tests/HabitFlow.Playwright/playwright/.auth/ci.json" >> "$GITHUB_ENV"
       - name: Execute real Playwright suites
         working-directory: tests/HabitFlow.Playwright
         run: npx playwright test

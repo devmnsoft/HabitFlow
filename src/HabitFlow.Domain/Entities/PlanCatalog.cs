@@ -31,7 +31,7 @@ public static class PlanFeatureCodes
 }
 
 public sealed record PlanFeatureValue(string Code, string Name, string ValueType, bool? BoolValue, int? IntValue, string? StringValue);
-public enum PlanFeatureImplementationStatus { Implemented, Partial, Planned, Internal, Deprecated }
+public enum PlanFeatureImplementationStatus { Implemented, Partial, Planned, Disabled, Internal, Deprecated }
 public sealed record PlanFeatureImplementation(string Code, PlanFeatureImplementationStatus Status, string PublicName,
     string PublicDescription, string Evidence, bool IsMarketable, string? ImplementedSince,
     IReadOnlyList<string> RequiredRoutes, IReadOnlyList<string> RequiredServices);

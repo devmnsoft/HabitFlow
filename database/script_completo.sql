@@ -953,3 +953,6 @@ commit;
 
 -- v6.17.0 SaaS administration, RBAC, audit and privacy
 \i database/migrations/074_v6170_saas_admin_lgpd.sql
+
+-- v6.17.1 release candidate integrity and hot-path indexes
+\i database/migrations/075_v6171_release_candidate_integrity.sql
