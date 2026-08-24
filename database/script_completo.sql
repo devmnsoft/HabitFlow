@@ -941,3 +941,5 @@ alter table habitflow.user_reports alter column client_id set not null;
 create index if not exists ix_user_reports_tenant_owner_period on habitflow.user_reports(client_id,user_id,period_start desc);
 create unique index if not exists ux_user_reports_snapshot_version on habitflow.user_reports(client_id,user_id,report_type,period_start,algorithm_version);
 commit;
+-- v6.16.7 secure multi-tenant billing
+\i database/migrations/071_v6167_secure_multitenant_billing.sql
