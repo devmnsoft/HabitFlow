@@ -17,4 +17,8 @@ public sealed class PaymentsWebhookController(PaymentWebhookService webhooks) : 
         var result = await webhooks.ReceiveAsync(PaymentProvider.MercadoPago, payload, headers, ct);
         return result.IsSuccess ? Ok(new { received = true }) : BadRequest(new { received = true, error = result.Error.Code });
     }
+
+    [HttpPost("billing/webhooks/mercadopago")]
+    [IgnoreAntiforgeryToken]
+    public Task<IActionResult> MercadoPagoBilling(CancellationToken ct) => MercadoPago(ct);
 }

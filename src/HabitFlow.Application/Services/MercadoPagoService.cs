@@ -29,10 +29,27 @@ public sealed class MercadoPagoService(HttpClient http, IConfiguration config, I
     }
     public Task<Result> ValidateWebhookAsync(string payload, IReadOnlyDictionary<string,string> headers, CancellationToken ct = default)
     {
-        var secret = config["MercadoPago:WebhookSecret"]; if (string.IsNullOrWhiteSpace(secret)) return Task.FromResult(Result.Success());
-        if (!headers.TryGetValue("x-signature", out var signature)) return Task.FromResult(Result.Failure("webhook.invalid_signature", "Assinatura ausente."));
-        var expected = Convert.ToHexString(HMACSHA256.HashData(Encoding.UTF8.GetBytes(secret), Encoding.UTF8.GetBytes(payload))).ToLowerInvariant();
-        return Task.FromResult(signature.Contains(expected, StringComparison.OrdinalIgnoreCase) ? Result.Success() : Result.Failure("webhook.invalid_signature", "Assinatura inválida."));
+        var secret = config["Billing:WebhookSecret"] ?? config["MercadoPago:WebhookSecret"];
+        if (string.IsNullOrWhiteSpace(secret)) return Task.FromResult(Result.Failure("webhook.not_configured", "Validação de webhook não configurada."));
+        if (!headers.TryGetValue("x-signature", out var signature) || !headers.TryGetValue("x-request-id", out var requestId))
+            return Task.FromResult(Result.Failure("webhook.invalid_signature", "Assinatura ausente."));
+        return Task.FromResult(ValidateSignature(payload, signature, requestId, secret)
+            ? Result.Success()
+            : Result.Failure("webhook.invalid_signature", "Assinatura inválida."));
+    }
+
+    public static bool ValidateSignature(string payload, string signatureHeader, string requestId, string secret)
+    {
+        var parts = signatureHeader.Split(',').Select(x => x.Trim().Split('=', 2)).Where(x => x.Length == 2)
+            .ToDictionary(x => x[0], x => x[1], StringComparer.OrdinalIgnoreCase);
+        if (!parts.TryGetValue("ts", out var timestamp) || !parts.TryGetValue("v1", out var received)) return false;
+        using var document = JsonDocument.Parse(payload);
+        if (!document.RootElement.TryGetProperty("data", out var data) || !data.TryGetProperty("id", out var idElement)) return false;
+        var dataId = idElement.ValueKind == JsonValueKind.String ? idElement.GetString() : idElement.GetRawText();
+        if (string.IsNullOrWhiteSpace(dataId)) return false;
+        var manifest = $"id:{dataId.ToLowerInvariant()};request-id:{requestId};ts:{timestamp};";
+        var expected = Convert.ToHexString(HMACSHA256.HashData(Encoding.UTF8.GetBytes(secret), Encoding.UTF8.GetBytes(manifest))).ToLowerInvariant();
+        return received.Length == expected.Length && CryptographicOperations.FixedTimeEquals(Encoding.ASCII.GetBytes(received.ToLowerInvariant()), Encoding.ASCII.GetBytes(expected));
     }
     private static string? Read(JsonElement e, string name) => e.TryGetProperty(name, out var v) ? v.ValueKind == JsonValueKind.String ? v.GetString() : v.GetRawText().Trim('"') : null;
 }

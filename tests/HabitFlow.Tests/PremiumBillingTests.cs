@@ -26,4 +26,18 @@ public class PremiumBillingTests
     {
         Assert.Equal("Approved", HabitFlow.Domain.PaymentStatus.Approved.ToString());
     }
+
+    [Fact]
+    public void Mercado_pago_signature_requires_exact_hmac_manifest()
+    {
+        const string payload = "{\"id\":\"evt-1\",\"data\":{\"id\":\"PAY-123\"}}";
+        const string requestId = "req-1";
+        const string timestamp = "1710000000";
+        const string secret = "test-only-secret";
+        var manifest = $"id:pay-123;request-id:{requestId};ts:{timestamp};";
+        var hash = Convert.ToHexString(System.Security.Cryptography.HMACSHA256.HashData(
+            System.Text.Encoding.UTF8.GetBytes(secret), System.Text.Encoding.UTF8.GetBytes(manifest))).ToLowerInvariant();
+        Assert.True(MercadoPagoService.ValidateSignature(payload, $"ts={timestamp},v1={hash}", requestId, secret));
+        Assert.False(MercadoPagoService.ValidateSignature(payload, $"ts={timestamp},v1={new string('0', 64)}", requestId, secret));
+    }
 }
