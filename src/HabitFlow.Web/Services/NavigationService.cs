@@ -68,6 +68,9 @@ public sealed class NavigationService(INavigationAccessEvaluator? accessEvaluato
             SortOrder: 60,
             IsEnabled: true),
 
+        new("public-support", "Suporte", "Fale com a nossa equipe", "help", "/support",
+            NavigationContext.Public, null, null, 70, true),
+
         new("public-privacy", "Privacidade", "Seus dados, suas escolhas", "privacy", "/privacy",
             NavigationContext.Public, null, null, 50, true),
 

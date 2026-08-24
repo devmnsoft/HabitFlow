@@ -28,6 +28,18 @@ public sealed class LayoutShellFunctionalTests : IClassFixture<WebApplicationFac
         Assert.DoesNotContain("data-navigation-variant=\"PlatformSidebar\"", html, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public async Task Support_route_renders_public_center_without_authentication()
+    {
+        using var response = await _client.GetAsync("/support");
+        var html = await response.Content.ReadAsStringAsync();
+
+        response.EnsureSuccessStatusCode();
+        Assert.Contains("Central de suporte", html, StringComparison.Ordinal);
+        Assert.Contains("data-navigation-context=\"public\"", html, StringComparison.Ordinal);
+        Assert.Contains("Entrar para abrir chamado", html, StringComparison.Ordinal);
+    }
+
     [Theory]
     [InlineData("/dashboard")]
     [InlineData("/habits")]
