@@ -22,7 +22,7 @@ public static class ReminderDispatchEvents
 
 public sealed class ReminderDispatchProcessor(
     IReminderDispatchRepository repository, ReminderScheduleCalculator schedules,
-    TimeProvider clock, ILogger<ReminderDispatchProcessor> logger)
+    PushNotificationService pushNotifications, TimeProvider clock, ILogger<ReminderDispatchProcessor> logger)
 {
     public async Task<ReminderDispatchResult> ProcessAsync(
         string workerId, ReminderDispatchOptions options, CancellationToken ct = default)
@@ -44,6 +44,11 @@ public sealed class ReminderDispatchProcessor(
                 var next = schedules.Next(candidate.ReminderTime, candidate.DaysOfWeek,
                     candidate.Timezone, candidate.ScheduledFor);
                 await repository.CompleteAsync(candidate, next, clock.GetUtcNow(), ct);
+                // Internal notification is committed by CompleteAsync first. Push is complementary and
+                // its provider/database failure must never cause the reminder dispatch to be retried.
+                try { await pushNotifications.SendSafeReminderAsync(candidate.ClientId, candidate.UserId, ct); }
+                catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; }
+                catch (Exception pushError) { logger.LogWarning("Push delivery failed safely for dispatch {DispatchId}: {ErrorType}", candidate.DispatchId, pushError.GetType().Name); }
                 delivered++;
                 logger.LogInformation(ReminderDispatchEvents.Delivered,
                     "Delivered reminder dispatch {DispatchId} correlation {CorrelationId}",

@@ -1,0 +1,5 @@
+import { test, expect } from '@playwright/test';
+
+const viewports=[{width:1440,height:900},{width:1024,height:768},{width:768,height:1024},{width:430,height:932},{width:390,height:844},{width:360,height:800},{width:320,height:568}];
+for(const viewport of viewports)test(`PWA pública sem overflow ${viewport.width}x${viewport.height}`,async({page})=>{const errors=[];page.on('console',m=>{if(m.type()==='error')errors.push(m.text())});page.on('pageerror',e=>errors.push(e.message));await page.setViewportSize(viewport);await page.goto('/');expect(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth)).toBeTruthy();const manifest=await page.locator('link[rel=manifest]').getAttribute('href');expect(manifest).toBeTruthy();expect(errors).toEqual([]);});
+test('offline fallback continua amigável no celular',async({page,context})=>{await page.setViewportSize({width:390,height:844});await page.goto('/offline');await context.setOffline(true);await page.reload();await expect(page.getByRole('heading',{name:'Você está offline'})).toBeVisible();await expect(page.getByRole('button',{name:'Tentar novamente'})).toBeVisible();});
