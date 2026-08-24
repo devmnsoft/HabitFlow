@@ -1,0 +1,6 @@
+@model HabitFlow.Web.Models.HelpArticleViewModel
+@{ViewData["Title"]=Model.Article.Title;}
+<article class="article-shell"><a href="/help">← Voltar à Central de Ajuda</a><span class="assist-kicker">@Model.Article.Category</span><h1>@Model.Article.Title</h1><p class="article-question">@Model.Article.Question</p><div class="article-answer">@Model.Article.Answer</div><p class="article-updated">Atualizado em @Model.Article.UpdatedAt.ToString("dd/MM/yyyy")</p></article>
+@if(Model.Related.Count>0){<section><h2>Artigos relacionados</h2><div class="help-grid">@foreach(var item in Model.Related){<article class="help-article-card"><h3><a href="/help/@item.Slug">@item.Title</a></h3><p>@item.Question</p></article>}</div></section>}
+<div class="assist-inline-actions"><a class="btn btn-primary" href="/assistant">Abrir assistente</a><a class="btn btn-outline-primary" href="/support/tickets/new">Abrir chamado</a></div><partial name="~/Views/Shared/Partials/_SupportContact.cshtml" model="Model.Contact" />
+@section Styles{<link rel="stylesheet" href="~/css/assistance-v6169.css" asp-append-version="true">}

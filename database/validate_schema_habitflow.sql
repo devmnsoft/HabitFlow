@@ -111,3 +111,9 @@ select to_regclass('habitflow.push_subscriptions') as push_subscriptions,
        to_regclass('habitflow.notification_preferences') as notification_preferences,
        to_regclass('habitflow.push_delivery_attempts') as push_delivery_attempts,
        to_regclass('habitflow.offline_sync_events') as offline_sync_events;
+
+-- v6.16.9 assistance/support contracts
+select to_regclass('habitflow.assistant_conversations') is not null as assistant_conversations_ok,
+       to_regclass('habitflow.assistant_messages') is not null as assistant_messages_ok,
+       to_regclass('habitflow.support_settings') is not null as support_settings_ok,
+       to_regclass('habitflow.support_tickets_v2') is not null as support_tickets_v2_ok;

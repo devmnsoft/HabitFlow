@@ -1,10 +1,8 @@
-@{ ViewData["Title"] = "Como usar o HabitFlow"; var cards = new[]{("Primeiros passos","/help/getting-started","guide"),("Criar hábitos","/help/habits","habit"),("Acompanhar progresso","/help/progress","progress"),("Entender relatórios","/help/reports","report"),("Plano gratuito e Premium","/help/premium","premium"),("Privacidade e LGPD","/help/privacy","lgpd"),("Falar com suporte","/help/support","support")}; }
-<section class="hf-page-header"><div><p class="hf-section-kicker">Central de Ajuda</p><h1>Como usar o HabitFlow</h1><p>Aprenda o básico em poucos minutos.</p></div>@await Html.PartialAsync("~/Views/Shared/Partials/Illustrations/_SupportIllustration.cshtml")</section>
-<div class="row g-3">@foreach (var c in cards){<div class="col-md-6 col-xl-4"><a class="hf-help-card h-100" href="@c.Item2">@await Html.PartialAsync("~/Views/Shared/Partials/Icons/_Icon.cshtml", null, new ViewDataDictionary(ViewData){{"Name",c.Item3},{"Class","hf-icon-lg"}})<span>@c.Item1</span><small>Ler guia rápido</small></a></div>}</div>
-@if (User.Identity?.IsAuthenticated == true)
-{
-  <form method="post" action="/product-tips/reopen" class="mt-4">
-    @Html.AntiForgeryToken()
-    <button class="btn btn-outline-primary" type="submit">Reabrir guia de primeiro uso</button>
-  </form>
-}
+@model HabitFlow.Web.Models.HelpIndexViewModel
+@{ViewData["Title"]="Central de Ajuda";}
+<section class="assist-hero"><div><span class="assist-kicker">Central de Ajuda</span><h1>Como podemos ajudar?</h1><p>Respostas diretas para você seguir no seu ritmo.</p><form action="/help/search" method="get" class="help-search" role="search"><label class="visually-hidden" for="help-q">Buscar na ajuda</label><input id="help-q" name="q" value="@Model.Query" placeholder="Busque por hábitos, lembretes, relatórios…"><button class="btn btn-primary">Buscar</button></form></div></section>
+<nav class="help-filters" aria-label="Categorias"><a class="@(Model.Category is null?"active":"")" href="/help">Tudo</a>@foreach(var category in Model.Categories){<a class="@(Model.Category==category?"active":"")" href="/help?category=@Uri.EscapeDataString(category)">@category</a>}</nav>
+<section aria-labelledby="articles-title"><div class="assist-heading"><div><span class="assist-kicker">Guias rápidos</span><h2 id="articles-title">@(Model.Query is null?"Explore os artigos":$"Resultados para “{Model.Query}”")</h2></div><a class="btn btn-outline-primary" href="/assistant">Perguntar ao assistente</a></div>
+<div class="help-grid">@foreach(var article in Model.Articles){<article class="help-article-card"><span>@article.Category</span><h3><a href="/help/@article.Slug">@article.Title</a></h3><p>@article.Question</p><a href="/help/@article.Slug" aria-label="Ler @article.Title">Ler guia →</a></article>}@if(Model.Articles.Count==0){<div class="assist-empty"><h3>Nenhum artigo encontrado</h3><p>Tente outro termo ou fale com nosso suporte.</p></div>}</div></section>
+<partial name="~/Views/Shared/Partials/_SupportContact.cshtml" model="Model.Contact" />
+@section Styles{<link rel="stylesheet" href="~/css/assistance-v6169.css" asp-append-version="true">}

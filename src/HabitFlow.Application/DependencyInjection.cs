@@ -110,6 +110,12 @@ public static class DependencyInjection
         services.AddScoped<AdminAuditService>();
         services.AddScoped<SettingsService>();
         services.AddScoped<SupportService>();
+        services.AddSingleton<AssistantSafetyPolicy>();
+        services.AddSingleton<AssistantKnowledgeService>();
+        services.AddScoped<AssistantContextBuilder>();
+        services.AddSingleton<DeterministicAssistantProvider>();
+        services.AddScoped<AssistantConversationService>();
+        services.AddScoped<SupportCenterService>();
         services.AddScoped<ProfileService>();
         services.AddScoped<UserUiPreferenceService>();
         services.AddScoped<AdminService>();

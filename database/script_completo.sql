@@ -946,3 +946,6 @@ commit;
 
 -- v6.16.8 PWA, controlled offline sync and real push notifications
 \i database/migrations/072_v6168_pwa_push_offline.sql
+
+-- v6.16.9 secure assistant, help and support center
+\i database/migrations/073_v6169_secure_assistance_support.sql
