@@ -84,6 +84,7 @@ else
 @await Html.PartialAsync("~/Views/Shared/Partials/_ConfirmationDialog.cshtml")
 @if (productTip is not null) { @await Html.PartialAsync("~/Views/Shared/Partials/_ProductTipPopover.cshtml", productTip) }
 @if (isAuthenticated && navigationContext != NavigationContext.Public) { @await Html.PartialAsync("~/Views/Shared/Partials/_GlobalSearchModal.cshtml") }
+@if (isAuthenticated && navigationContext != NavigationContext.Public) { <a class="hf-assistant-fab" href="/assistant" aria-label="Abrir Assistente HabitFlow">✦<span>Assistente</span></a> }
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="~/js/site.js" asp-append-version="true"></script>
 <script src="~/js/design-system.js" asp-append-version="true"></script>
@@ -99,6 +100,7 @@ else
 <script src="~/js/global-search.js" asp-append-version="true"></script>
 <script src="~/js/header-v4.js" asp-append-version="true"></script>
 <script src="~/js/guided-tour-v4.js" asp-append-version="true"></script>
+<style>.hf-assistant-fab{position:fixed;right:1.25rem;bottom:1.25rem;z-index:1030;display:flex;align-items:center;gap:.45rem;padding:.72rem 1rem;border-radius:999px;background:#087a55;color:#fff!important;text-decoration:none;font-weight:750;box-shadow:0 10px 28px rgba(4,80,54,.28)}.hf-assistant-fab:focus-visible{outline:3px solid #f4b942;outline-offset:3px}@media(max-width:480px){.hf-assistant-fab span{position:absolute;width:1px;height:1px;overflow:hidden}.hf-assistant-fab{padding:.8rem}}</style>
 @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
