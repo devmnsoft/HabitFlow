@@ -1,0 +1,34 @@
+.hf-assistant-fab {
+  position: fixed;
+  right: 1.25rem;
+  bottom: 1.25rem;
+  z-index: 1030;
+  display: flex;
+  align-items: center;
+  gap: .45rem;
+  padding: .72rem 1rem;
+  border-radius: 999px;
+  background: #087a55;
+  color: #fff !important;
+  text-decoration: none;
+  font-weight: 750;
+  box-shadow: 0 10px 28px rgba(4, 80, 54, .28);
+}
+
+.hf-assistant-fab:focus-visible {
+  outline: 3px solid #f4b942;
+  outline-offset: 3px;
+}
+
+@media (max-width: 480px) {
+  .hf-assistant-fab span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+  }
+
+  .hf-assistant-fab {
+    padding: .8rem;
+  }
+}
