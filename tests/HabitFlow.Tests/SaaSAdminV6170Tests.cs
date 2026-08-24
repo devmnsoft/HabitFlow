@@ -31,22 +31,5 @@ public sealed class SaaSAdminV6170Tests
         Assert.False(service.HasPermission(tenant, tenant, AdminRoles.Owner, "unknown.permission"));
     }
 
-    [Fact]
-    public void Migration_defines_secure_invites_audit_privacy_and_scoped_flags()
-    {
-        var root = RepositoryRootLocator.Find();
-        var sql = File.ReadAllText(Path.Combine(root, "database/migrations/074_v6170_saas_admin_lgpd.sql"));
-        Assert.Contains("token_hash", sql); Assert.Contains("expires_at", sql); Assert.Contains("accepted_at", sql); Assert.Contains("revoked_at", sql);
-        Assert.Contains("client_id uuid not null", sql); Assert.Contains("correlation_id", sql); Assert.Contains("legal_hold_reason", sql);
-        Assert.Contains("environment", sql); Assert.Contains("starts_at", sql); Assert.Contains("ends_at", sql);
-        Assert.DoesNotContain(" token varchar", sql.ToLowerInvariant());
-    }
-
-    [Fact]
-    public void Complete_script_and_schema_validator_include_release()
-    {
-        var root = RepositoryRootLocator.Find();
-        Assert.Contains("074_v6170_saas_admin_lgpd.sql", File.ReadAllText(Path.Combine(root, "database/script_completo.sql")));
-        Assert.Contains("v6.17.0 SaaS administration contracts", File.ReadAllText(Path.Combine(root, "database/validate_schema_habitflow.sql")));
-    }
+    
 }

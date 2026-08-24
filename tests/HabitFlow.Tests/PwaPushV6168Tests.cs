@@ -5,7 +5,7 @@ namespace HabitFlow.Tests;
 
 public sealed class PwaPushV6168Tests
 {
-    private static string Root => RepositoryRootLocator.Find();
+    private static string Root => RepositoryRootLocator.Root.ToString();
 
     [Fact] public void Manifest_IsInstallableAndHasProfessionalMetadata()
     {
