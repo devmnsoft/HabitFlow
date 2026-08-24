@@ -1,3 +1,7 @@
 @model IReadOnlyList<HabitFlow.Domain.SupportTicketDetail>
 @{ViewData["Title"]="Meus chamados";}
-<div class="assist-heading"><div><span class="assist-kicker">Suporte</span><h1>Chamados</h1><p>Acompanhe conversas com nossa equipe.</p></div><a class="btn btn-primary" href="/support/tickets/new">Novo chamado</a></div><div class="ticket-list">@foreach(var t in Model){<a class="ticket-card" href="/support/tickets/@t.Id"><div><small>@t.Protocol · @t.Category</small><h2>@t.Subject</h2><p>Atualizado em @t.UpdatedAt.ToString("dd/MM/yyyy HH:mm")</p></div><span class="ticket-status @t.Status.ToLowerInvariant()">@t.Status</span></a>}@if(Model.Count==0){<div class="assist-empty"><h2>Nenhum chamado</h2><p>Quando precisar, nossa equipe está por aqui.</p></div>}</div>@section Styles{<link rel="stylesheet" href="~/css/assistance-v6169.css" asp-append-version="true">}
+<div class="assist-heading"><div><span class="assist-kicker">Suporte</span><h1>Chamados</h1><p>Acompanhe conversas com nossa equipe.</p></div><a class="btn btn-primary" href="/support/tickets/new">Novo chamado</a></div><div class="ticket-list">@foreach(var t in Model){<a class="ticket-card" href="/support/tickets/@t.Id"><div><small>@t.Protocol · @t.Category</small><h2>@t.Subject</h2><p>Atualizado em @t.UpdatedAt.ToString("dd/MM/yyyy HH:mm")</p></div><span class="ticket-status @t.Status.ToLowerInvariant()">@t.Status</span></a>}@if(Model.Count==0){<div class="assist-empty"><h2>Nenhum chamado</h2><p>Quando precisar, nossa equipe está por aqui.</p></div>}</div>
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/assistance-v6169.css" asp-append-version="true" />
+}
