@@ -1,4 +1,12 @@
 @using HabitFlow.Application
 @{ViewData["Title"]="Assistente HabitFlow";var contact=(SupportContact)ViewBag.Contact;}
 <section class="assistant-layout"><div class="assistant-main"><header class="assist-heading"><div><span class="assist-kicker">Assistente seguro</span><h1>Olá! Como posso orientar você?</h1><p>Pergunte sobre hábitos, streaks, lembretes, desafios, relatórios e sua conta.</p></div><span class="assist-secure">🔒 Seus dados ficam no seu contexto</span></header><div id="assistant-messages" class="assistant-messages" role="log" aria-live="polite"><div class="assistant-bubble bot">Posso explicar recursos do HabitFlow e oferecer sugestões seguras. Não altero senha, cobrança ou dados críticos pelo chat.</div></div><form id="assistant-form" action="/assistant/ask" method="post" class="assistant-composer">@Html.AntiForgeryToken()<label for="assistant-input" class="visually-hidden">Sua pergunta</label><textarea id="assistant-input" name="message" maxlength="1000" required placeholder="Ex.: Como crio um hábito?"></textarea><button class="btn btn-primary" type="submit">Enviar</button></form><div class="assistant-suggestions"><button type="button" data-question="Como crio um hábito?">Criar hábito</button><button type="button" data-question="Como funcionam os lembretes?">Lembretes</button><button type="button" data-question="Como vejo meus relatórios?">Relatórios</button><button type="button" data-question="Como estão meus hábitos?">Meu contexto</button></div><form method="post" action="/assistant/history/delete" class="mt-3">@Html.AntiForgeryToken()<button class="btn btn-link text-danger" type="submit">Apagar meu histórico</button></form></div><aside class="assistant-aside"><h2>Atalhos seguros</h2><a href="/habits/create">Criar hábito</a><a href="/reminders">Configurar lembrete</a><a href="/reports">Abrir relatórios</a><a href="/plans">Ver planos</a><a href="/support/tickets/new">Falar com suporte</a><small>O assistente apenas sugere ações. Alterações sensíveis usam fluxos próprios.</small></aside></section><partial name="~/Views/Shared/Partials/_SupportContact.cshtml" model="contact" />
-@section Styles{<link rel="stylesheet" href="~/css/assistance-v6169.css" asp-append-version="true">}@section Scripts{<script src="~/js/assistant-v6169.js" asp-append-version="true"></script>}
+
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/assistance-v6169.css" asp-append-version="true" />
+}
+
+@section Scripts {
+    <script src="~/js/assistant-v6169.js" asp-append-version="true"></script>
+}
