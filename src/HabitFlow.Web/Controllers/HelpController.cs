@@ -14,7 +14,7 @@ public sealed class HelpController(AssistantKnowledgeService knowledge,SupportCe
     [HttpGet("reports")] public IActionResult Reports()=>Redirect("/help/relatorios-exportacoes");
     [HttpGet("premium")] public IActionResult Premium()=>Redirect("/help/planos");
     [HttpGet("privacy")] public IActionResult Privacy()=>Redirect("/help/privacidade-suporte");
-    [HttpGet("support")] public IActionResult Support()=>Redirect("/support/tickets/new");
+    [HttpGet("support")] public IActionResult Support()=>Redirect("/support");
     [HttpGet("login")] public IActionResult Login()=>View("Login");
     [HttpGet("database-setup")] public IActionResult DatabaseSetup()=>View("DatabaseSetup");
     [HttpGet("{slug}")] public async Task<IActionResult> Article(string slug,CancellationToken ct){var article=knowledge.Get(slug);if(article is null)return NotFound();logger.LogInformation("help.article.viewed Slug={Slug}",slug);var related=knowledge.List(article.Category).Where(x=>x.Slug!=slug).Take(3).ToArray();return View("Article",new HelpArticleViewModel(article,related,await support.ContactAsync(ct)));}
