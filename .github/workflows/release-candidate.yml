@@ -2,6 +2,9 @@ name: Release candidate
 on:
   pull_request:
   workflow_dispatch:
+concurrency:
+  group: habitflow-v6171-rc-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   dotnet: { uses: ./.github/workflows/dotnet-ci.yml }
   security: { uses: ./.github/workflows/security-ci.yml }
@@ -15,7 +18,7 @@ jobs:
     steps:
       - run: |
           cat > release-report.md <<'EOF'
-          # HabitFlow v6.12.0 release candidate
+          # HabitFlow v6.17.1 release candidate
           Todas as validações obrigatórias (.NET, segurança, migrations e navegador real) concluíram com sucesso.
           EOF
       - uses: actions/upload-artifact@v4
