@@ -1,0 +1,15 @@
+@model HabitFlow.Web.Controllers.AdminSaaSPage
+@{ ViewData["Title"] = Model.Title; }
+<div class="hf-admin-layout">
+  <aside class="hf-admin-sidebar" aria-label="Console SaaS">
+    <strong>HabitFlow SaaS</strong>
+    <a href="/admin">Visão geral</a><a href="/admin/tenants">Tenants</a><a href="/admin/users">Usuários</a>
+    <a href="/admin/roles">Papéis</a><a href="/admin/audit">Auditoria</a><a href="/admin/feature-flags">Feature flags</a>
+    <a href="/admin/system-health">Saúde</a><a href="/admin/privacy">Privacidade</a>
+  </aside>
+  <main class="hf-card" aria-labelledby="admin-title">
+    <p class="hf-eyebrow">Console administrativo · v6.17.0</p><h1 id="admin-title">@Model.Title</h1><p>@Model.Description</p>
+    <div class="hf-admin-metric"><span>Proteção ativa</span><strong>Escopo do tenant</strong><small>Permissão: <code>@Model.RequiredPermission</code></small></div>
+    <div class="hf-empty-state" role="status"><h2>Nenhum alerta crítico</h2><p>Use os filtros e ações desta área para operar o ambiente com segurança e auditoria.</p></div>
+  </main>
+</div>

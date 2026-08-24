@@ -46,6 +46,7 @@ public static class DependencyInjection
         services.AddScoped<ProgressCalendarService>();
         services.AddSingleton(TimeProvider.System);
         services.AddScoped<AdminAuthorizationService>();
+        services.AddSingleton<PermissionService>();
         services.AddScoped<AuthService>();
         services.AddScoped<ClientAccountRegistrationService>();
         services.AddScoped<UserService>();

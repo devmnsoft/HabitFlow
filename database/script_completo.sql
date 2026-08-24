@@ -949,3 +949,7 @@ commit;
 
 -- v6.16.9 secure assistant, help and support center
 \i database/migrations/073_v6169_secure_assistance_support.sql
+
+
+-- v6.17.0 SaaS administration, RBAC, audit and privacy
+\i database/migrations/074_v6170_saas_admin_lgpd.sql
