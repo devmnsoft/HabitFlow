@@ -956,3 +956,6 @@ commit;
 
 -- v6.17.1 release candidate integrity and hot-path indexes
 \i database/migrations/075_v6171_release_candidate_integrity.sql
+
+-- v6.17.3 healthy gamification and personal retention journey
+\i database/migrations/076_v6173_healthy_gamification.sql

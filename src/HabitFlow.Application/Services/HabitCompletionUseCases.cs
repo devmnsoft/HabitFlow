@@ -55,7 +55,7 @@ public sealed class ProgressSnapshotService(IProgressCalendarRepository reposito
     private static DateOnly Max(DateOnly left, DateOnly right) => left > right ? left : right;
 }
 
-public sealed class CompleteHabitUseCase(IUserRepository users, IHabitRepository habits, IHabitCompletionRepository completions, IUnitOfWork unitOfWork, ProgressSnapshotService snapshots, GoalProgressEngine goals, MilestoneEvaluationService milestones, AuditService audit, UserTimeZoneService clock)
+public sealed class CompleteHabitUseCase(IUserRepository users, IHabitRepository habits, IHabitCompletionRepository completions, IUnitOfWork unitOfWork, ProgressSnapshotService snapshots, GoalProgressEngine goals, MilestoneEvaluationService milestones, AuditService audit, UserTimeZoneService clock, IGamificationRepository gamification, AchievementService achievements, Microsoft.Extensions.Logging.ILogger<CompleteHabitUseCase> logger)
 {
     public async Task<Result<HabitCompletionResult>> ExecuteAsync(HabitCompletionCommand command, CancellationToken ct = default)
     {
@@ -83,6 +83,24 @@ public sealed class CompleteHabitUseCase(IUserRepository users, IHabitRepository
                     goalResults.Any(x => x.CompletedNow), command.CorrelationId), ct);
             }
             await unitOfWork.CommitAsync(ct);
+            if (mutation.Created && mutation.CompletionId.HasValue)
+            {
+                try
+                {
+                    var weekly = await gamification.ApplyCompletionAsync(command.ClientId, command.UserId, habit.Id,
+                        mutation.CompletionId.Value, command.LocalDate, ct);
+                    var completedGoal = weekly.Any(x => x.Status == "Completed");
+                    await achievements.EvaluateCompletionAsync(command.ClientId, command.UserId, snapshot.CurrentStreak, completedGoal, ct);
+                    foreach (var goal in weekly.Where(x => x.Status == "Completed"))
+                        logger.LogInformation("gamification.goal.completed {ClientId} {UserId} {GoalId}", command.ClientId, command.UserId, goal.Id);
+                }
+                catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; }
+                catch (Exception ex)
+                {
+                    // Retention features are deliberately best-effort: the real completion already succeeded.
+                    logger.LogError(ex, "Gamification evaluation failed after habit completion {CorrelationId}", command.CorrelationId);
+                }
+            }
             return Result<HabitCompletionResult>.Success(ToResult(command.HabitId, true, snapshot, goalResults, milestoneResults));
         }
         catch { await unitOfWork.RollbackAsync(ct); throw; }

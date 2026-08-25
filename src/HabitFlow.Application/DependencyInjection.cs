@@ -38,6 +38,10 @@ public static class DependencyInjection
         services.AddScoped<HabitPolicy>();
         services.AddScoped<HabitScheduleNormalizer>();
         services.AddScoped<ProgressService>();
+        services.AddSingleton<AchievementEvaluator>();
+        services.AddScoped<AchievementNotificationService>();
+        services.AddScoped<AchievementService>();
+        services.AddScoped<GamificationService>();
         services.AddScoped<UserChallengeService>();
         services.AddScoped<HabitOccurrenceService>();
         services.AddScoped<EffectiveHabitScheduleService>();

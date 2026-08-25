@@ -125,3 +125,17 @@ DO $$ DECLARE object_name text; BEGIN
  END LOOP;
  IF EXISTS (SELECT 1 FROM pg_tables WHERE schemaname='public' AND tablename IN ('tenant_settings','user_invitations','feature_flags','audit_events','privacy_requests','consent_records')) THEN RAISE EXCEPTION 'Objetos administrativos não podem existir em public'; END IF;
 END $$;
+-- v6.17.3 healthy gamification parity
+do $gamification_schema$
+declare table_name text;
+begin
+  foreach table_name in array array['weekly_goals','weekly_goal_habits','achievement_definitions','user_achievements','user_missions','streak_freezes','gamification_events'] loop
+    if to_regclass('habitflow.' || table_name) is null then
+      raise exception 'Missing gamification table: %', table_name;
+    end if;
+  end loop;
+  if exists(select 1 from habitflow.user_achievements group by client_id,user_id,achievement_code having count(*)>1) then
+    raise exception 'Duplicate user achievement detected';
+  end if;
+end
+$gamification_schema$;
