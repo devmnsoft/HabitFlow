@@ -1,0 +1,4 @@
+@* The Navigation view component remains the source of truth for permissions and links. *@
+<nav class="hf-mobile-nav" aria-label="Navegação móvel">
+  @await Component.InvokeAsync("Navigation", new { context = ViewData["Context"], variant = ViewData["Variant"] })
+</nav>

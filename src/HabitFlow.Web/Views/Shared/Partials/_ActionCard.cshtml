@@ -1,0 +1,6 @@
+<article class="hf-action-card">
+  @if (ViewData["Eyebrow"] is string eyebrow) { <p class="hf-eyebrow">@eyebrow</p> }
+  <h2 class="h4">@ViewData["Title"]</h2>
+  <p>@ViewData["Description"]</p>
+  @if (ViewData["ActionHref"] is string href && ViewData["ActionText"] is string text) { <a class="btn btn-success" href="@href">@text</a> }
+</article>
