@@ -1,0 +1,4 @@
+<section class="hf-section-shell" aria-labelledby="@ViewData["HeadingId"]">
+  @if (ViewData["Title"] is string title) { <h2 id="@ViewData["HeadingId"]" class="h4">@title</h2> }
+  @(ViewData["Content"] as Microsoft.AspNetCore.Html.IHtmlContent)
+</section>
