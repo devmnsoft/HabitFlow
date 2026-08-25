@@ -10,9 +10,6 @@ namespace HabitFlow.Web.Controllers;
 public sealed class ProgressController(ProgressCalendarService calendar, UserTimeZoneService timeZones,
     CurrentUserContext currentUser, ILogger<ProgressController> logger) : Controller
 {
-    [HttpGet("")]
-    public IActionResult Index(int? year = null, int? month = null) => RedirectToAction(nameof(Calendar), new { year, month });
-
     [HttpGet("calendar", Name = "ProgressCalendar")]
     public async Task<IActionResult> Calendar(int? year, int? month, CancellationToken ct)
     {

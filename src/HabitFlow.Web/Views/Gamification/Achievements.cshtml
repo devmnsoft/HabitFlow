@@ -1,0 +1,6 @@
+@model HabitFlow.Domain.GamificationSnapshot
+@{ViewData["Title"]="Conquistas";}
+@section Styles{<link rel="stylesheet" href="~/css/gamification.css" asp-append-version="true"/>}
+<header class="hf-page-header"><div><p class="hf-eyebrow">Vitórias no seu ritmo</p><h1>Conquistas</h1><p>Cada badge representa uma ação real. Sem ranking público e sem comparação.</p></div><a href="/progress" class="btn btn-outline-primary">Ver painel</a></header>
+<section><h2 class="h4">Desbloqueadas</h2><div class="badge-grid">@foreach(var badge in Model.Achievements){<article class="hf-card badge-card"><span class="badge-icon">✦</span><div><strong>@badge.Name</strong><p>@badge.Description</p><small>@badge.Category · @badge.Rarity · @badge.UnlockedAt.ToString("dd/MM/yyyy")</small></div></article>}@if(Model.Achievements.Count==0){<div class="hf-card empty-kind"><strong>Mais um passo abre o caminho</strong><p>Suas conquistas aparecerão aqui naturalmente, conforme sua rotina evoluir.</p></div>}</div></section>
+<section class="mt-5"><h2 class="h4">Próximas conquistas</h2><div class="badge-grid">@foreach(var badge in Model.NextAchievements){<article class="hf-card badge-card badge-locked"><span class="badge-icon">○</span><div><strong>@badge.Name</strong><p>@badge.Description</p><small>@badge.Rarity</small></div></article>}</div></section>
