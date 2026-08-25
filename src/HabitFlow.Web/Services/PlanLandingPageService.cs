@@ -81,18 +81,20 @@ public sealed class PlanLandingPageService(IPlanCatalogRepository repository)
             new("Desafios", Value(PlanCodes.Free, "challenge_7_days", "7 dias", _ => "7 dias"), Value(PlanCodes.Ritmo, "challenge_90_days", "7, 30 e 90 dias", _ => "7, 30 e 90 dias"), "O progresso considera uma conclusão por dia, a partir do início do desafio."),
             new("Relatórios", Value(PlanCodes.Free, PlanFeatureCodes.BasicReports, "Não incluídos", _ => "Resumo semanal básico"), Value(PlanCodes.Ritmo, PlanFeatureCodes.BasicReports, "Não incluídos", _ => "Relatórios disponíveis implementados")),
             new("Exportação", Value(PlanCodes.Free, PlanFeatureCodes.ReportExportCsv, "Não incluída", _ => "Exportação CSV"), Value(PlanCodes.Ritmo, PlanFeatureCodes.ReportExportCsv, "Não incluída", _ => "Exportação CSV")),
+            new("Lembretes por hábito", "Conforme catálogo", "Conforme catálogo"),
+            new("PWA", "Incluído", "Incluído"), new("Push notifications", "Em breve", "Em breve"),
+            new("Assistente", "Em breve", "Em breve"), new("Conquistas e metas semanais", "Em breve", "Em breve"),
+            new("Suporte", "Incluído", "Incluído"), new("Exportação PDF", "Em breve", "Em breve"),
             new("Segurança da conta", "Incluída", "Incluída"), new("Central de Privacidade", "Incluída", "Incluída")];
     }
 
     private static IReadOnlyList<PlanFaqItemViewModel> BuildFaq() => [
-        new("Preciso de cartão para começar?", "Não. O plano Gratuito pode ser usado sem cadastrar cartão."),
-        new("Posso cancelar?", "Sim. Você pode cancelar a renovação do plano pelos canais disponíveis na sua conta."),
-        new("O que acontece se eu cancelar?", "O acesso pago segue as regras do ciclo contratado e depois volta aos limites do Gratuito. Seus dados não são apagados automaticamente."),
-        new("Meus dados são apagados?", "Cancelamento e exclusão são ações diferentes. Você pode solicitar exclusão na Central de Privacidade."),
-        new("Qual plano é melhor para começar?", "O Gratuito permite conhecer o fluxo essencial. O Ritmo amplia limites e recursos implementados para quem precisa avançar."),
-        new("O que o Ritmo libera?", "Os limites e recursos efetivamente disponíveis aparecem na comparação desta página."),
-        new("Posso mudar de plano depois?", "Sim, conforme as opções de assinatura disponíveis na sua conta."),
-        new("O plano gratuito tem limite?", "Sim. Os limites ajudam a manter uma opção sustentável e aparecem antes da criação da conta."),
-        new("O HabitFlow substitui acompanhamento médico ou psicológico?", "Não. O HabitFlow é uma ferramenta de organização e não presta diagnóstico ou tratamento."),
-        new("Como funciona minha privacidade?", "Você pode consultar a Política de Privacidade e gerenciar solicitações pela Central de Privacidade.")];
+        new("Posso começar grátis?", "Sim. O Free não exige cartão e mantém os recursos e limites exibidos na comparação."),
+        new("O que muda no Premium?", "O Premium amplia somente os limites e recursos implementados que aparecem na comparação. Mensal e anual têm os mesmos recursos."),
+        new("Meus hábitos somem se eu cancelar?", "Não. Depois do período contratado, sua conta volta aos limites do Free; cancelar não exclui seus dados."),
+        new("Posso usar no celular?", "Sim. A interface é responsiva e o PWA pode ser instalado quando o navegador e o dispositivo oferecem suporte."),
+        new("Relatórios e exportações estão inclusos?", "O resumo e a exportação CSV aparecem conforme o catálogo. PDF e recursos parciais não são vendidos como disponíveis."),
+        new("Como funcionam desafios?", "Os desafios disponíveis registram uma conclusão por dia desde o início. As durações liberadas constam na comparação."),
+        new("Posso cancelar depois?", "Sim. O Premium permanece ativo até o fim do período já pago quando aplicável, e depois sua conta retorna ao Free."),
+        new("O pagamento já está ativo?", "O checkout usa a integração real com Mercado Pago quando configurada. A ativação só ocorre após confirmação segura pelo webhook; se o ambiente não estiver configurado, mostramos uma mensagem e o suporte.")];
 }
