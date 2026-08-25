@@ -1,5 +1,6 @@
 using HabitFlow.Web.Services;
 using HabitFlow.Application;
+using Microsoft.AspNetCore.Mvc;
 
 namespace HabitFlow.Web.Configuration;
 
@@ -13,7 +14,9 @@ public static class DependencyInjection
                 "Configuração do processador de lembretes inválida.").ValidateOnStart();
         services.AddOptions<SessionSecurityOptions>().Bind(configuration.GetSection("Security:Sessions"))
             .Validate(x => x.LifetimeDays is >= 1 and <= 365 && x.TouchIntervalMinutes is >= 1 and <= 60, "Configuração de sessões inválida.").ValidateOnStart();
-        services.AddControllersWithViews();
+        // Unsafe browser requests are protected by default. The only exceptions are
+        // signed provider webhooks, which explicitly use IgnoreAntiforgeryToken.
+        services.AddControllersWithViews(options => options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute()));
         services.Configure<PushNotificationOptions>(configuration.GetSection("PushNotifications"));
         services.Configure<EmailOptions>(configuration.GetSection("Email"));
         services.AddOptions<EmailOptions>().Bind(configuration.GetSection("Email")).Validate(options =>
