@@ -1,14 +1,15 @@
 @model HabitFlow.Web.Models.PlanLandingPageViewModel
-@{ ViewData["Title"] = "Planos para construir consistência"; }
+@{ ViewData["Title"] = "Planos para construir consistência"; ViewData["PlanViewer"] = Model.Viewer; }
 @section Styles { <link rel="stylesheet" href="~/css/plans-premium.css" asp-append-version="true" /> }
 <div class="plans-landing">
   <partial name="Partials/_PlansHero" model="Model" />
+  @if(Model.Viewer.IsAuthenticated){<aside class="plan-status" role="status"><div><span>Seu plano</span><strong>@Model.Viewer.Status</strong><p>@Model.Viewer.StatusMessage</p>@if(Model.Viewer.NextBillingAt.HasValue){<small>Próxima cobrança prevista: @Model.Viewer.NextBillingAt.Value.ToString("dd/MM/yyyy")</small>}</div>@if(Model.Viewer.CanManage){<a class="btn btn-outline-success" href="/billing">Gerenciar assinatura</a>}else{<a class="btn btn-outline-success" href="/account/plan/usage">Ver uso e limites</a>}</aside>}
   <partial name="Partials/_PlanPainGain" model="Model.Benefits" />
-  <section class="plans-section" id="planos" aria-labelledby="plans-title"><div class="plans-heading"><span>Escolha com clareza</span><h2 id="plans-title">Um plano para cada momento da sua rotina</h2><p>Comece com o essencial e avance apenas quando fizer sentido.</p></div><partial name="_PlanBillingToggle"/><div class="plans-grid">@foreach(var plan in Model.Plans){<partial name="Partials/_CommercialPlanCard" model="plan"/>}</div></section>
+  <section class="plans-section" id="planos" aria-labelledby="plans-title"><div class="plans-heading"><span>Escolha com clareza</span><h2 id="plans-title">Um plano para cada momento da sua rotina</h2><p>Preços e recursos vêm do catálogo ativo. Comece com o essencial e avance apenas quando fizer sentido.</p></div><div class="plans-grid">@foreach(var plan in Model.Plans){<partial name="Partials/_CommercialPlanCard" model="plan"/>}</div></section>
   <partial name="Partials/_PlanComparisonTable" model="Model.Comparison" />
   <partial name="Partials/_PlanTrustSignals" model="Model.TrustSignals" />
   <partial name="Partials/_PlanFaq" model="Model.Faq" />
   <partial name="Partials/_PlanFinalCta" model="Model.Conversion" />
 </div>
-<div class="plans-mobile-cta"><a href="/register" class="btn btn-success">Começar grátis</a><a href="#planos" class="btn btn-outline-success">Ver planos</a></div>
+<div class="plans-mobile-cta"><a href="@(Model.Viewer.IsAuthenticated?"/dashboard":"/register")" class="btn btn-success">@(Model.Viewer.IsAuthenticated?"Ir ao app":"Começar grátis")</a><a href="#planos" class="btn btn-outline-success">Ver planos</a></div>
 @section Scripts { <script src="~/js/plans-premium.js" asp-append-version="true"></script> }
