@@ -25,7 +25,7 @@ public sealed class MercadoPagoService(HttpClient http, IConfiguration config, I
     {
         var token = config["MercadoPago:AccessToken"]; if (string.IsNullOrWhiteSpace(token)) return Result<ProviderPayment>.Failure("payment.not_configured", "Pagamento não configurado.");
         using var msg = new HttpRequestMessage(HttpMethod.Get, $"https://api.mercadopago.com/v1/payments/{Uri.EscapeDataString(providerPaymentId)}"); msg.Headers.Authorization = new("Bearer", token); var response = await http.SendAsync(msg, ct); var body = await response.Content.ReadAsStringAsync(ct); if (!response.IsSuccessStatusCode) return Result<ProviderPayment>.Failure("payment.lookup_error", "Não foi possível consultar pagamento.");
-        using var doc = JsonDocument.Parse(body); var r = doc.RootElement; var raw = Read(r, "status") ?? "unknown"; var status = raw switch { "approved" => PaymentStatus.Approved, "pending" or "in_process" => PaymentStatus.Pending, "rejected" => PaymentStatus.Rejected, "cancelled" => PaymentStatus.Canceled, "refunded" => PaymentStatus.Refunded, _ => PaymentStatus.Unknown }; decimal? amount = r.TryGetProperty("transaction_amount", out var a) && a.TryGetDecimal(out var d) ? d : null; return Result<ProviderPayment>.Success(new(providerPaymentId, Read(r, "external_reference"), raw, status, amount, Read(r, "currency_id") ?? "BRL", Read(r, "preference_id")));
+        using var doc = JsonDocument.Parse(body); var r = doc.RootElement; var raw = Read(r, "status") ?? "unknown"; var status = raw switch { "approved" => PaymentStatus.Approved, "pending" or "in_process" => PaymentStatus.Pending, "rejected" => PaymentStatus.Rejected, "cancelled" => PaymentStatus.Canceled, "refunded" => PaymentStatus.Refunded, "charged_back" => PaymentStatus.ChargedBack, _ => PaymentStatus.Unknown }; decimal? amount = r.TryGetProperty("transaction_amount", out var a) && a.TryGetDecimal(out var d) ? d : null; return Result<ProviderPayment>.Success(new(providerPaymentId, Read(r, "external_reference"), raw, status, amount, Read(r, "currency_id") ?? "BRL", Read(r, "preference_id")));
     }
     public Task<Result> ValidateWebhookAsync(string payload, IReadOnlyDictionary<string,string> headers, CancellationToken ct = default)
     {
@@ -40,16 +40,22 @@ public sealed class MercadoPagoService(HttpClient http, IConfiguration config, I
 
     public static bool ValidateSignature(string payload, string signatureHeader, string requestId, string secret)
     {
-        var parts = signatureHeader.Split(',').Select(x => x.Trim().Split('=', 2)).Where(x => x.Length == 2)
-            .ToDictionary(x => x[0], x => x[1], StringComparer.OrdinalIgnoreCase);
+        var parts = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var pair in signatureHeader.Split(',').Select(x => x.Trim().Split('=', 2)).Where(x => x.Length == 2))
+            if (!parts.TryAdd(pair[0], pair[1])) return false;
         if (!parts.TryGetValue("ts", out var timestamp) || !parts.TryGetValue("v1", out var received)) return false;
-        using var document = JsonDocument.Parse(payload);
+        JsonDocument document;
+        try { document = JsonDocument.Parse(payload, new JsonDocumentOptions { MaxDepth = 32 }); }
+        catch (JsonException) { return false; }
+        using (document)
+        {
         if (!document.RootElement.TryGetProperty("data", out var data) || !data.TryGetProperty("id", out var idElement)) return false;
         var dataId = idElement.ValueKind == JsonValueKind.String ? idElement.GetString() : idElement.GetRawText();
         if (string.IsNullOrWhiteSpace(dataId)) return false;
         var manifest = $"id:{dataId.ToLowerInvariant()};request-id:{requestId};ts:{timestamp};";
         var expected = Convert.ToHexString(HMACSHA256.HashData(Encoding.UTF8.GetBytes(secret), Encoding.UTF8.GetBytes(manifest))).ToLowerInvariant();
         return received.Length == expected.Length && CryptographicOperations.FixedTimeEquals(Encoding.ASCII.GetBytes(received.ToLowerInvariant()), Encoding.ASCII.GetBytes(expected));
+        }
     }
     private static string? Read(JsonElement e, string name) => e.TryGetProperty(name, out var v) ? v.ValueKind == JsonValueKind.String ? v.GetString() : v.GetRawText().Trim('"') : null;
 }
