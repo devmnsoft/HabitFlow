@@ -49,6 +49,7 @@ public static class DependencyInjection
         services.AddScoped<UserTimeZoneService>();
         services.AddScoped<ProgressCalendarService>();
         services.AddSingleton(TimeProvider.System);
+        services.AddScoped<InvitationTokenService>();
         services.AddScoped<AdminAuthorizationService>();
         services.AddSingleton<PermissionService>();
         services.AddScoped<AuthService>();
