@@ -1,0 +1,33 @@
+HabitFlow local quality gate - global CSS
+STATUS: PASS
+
+REVIEW: src/HabitFlow.Web/wwwroot/css/account-security.css: 2 use(s) of !important.
+REVIEW: src/HabitFlow.Web/wwwroot/css/habits-v4.css: 2 use(s) of !important.
+REVIEW: src/HabitFlow.Web/wwwroot/css/habits-v4.css:16: global selector `/* v6.16.2: the list owns its layout; it intentionally does not reuse .hf-habit-card. */ .hf-habits-page`.
+REVIEW: src/HabitFlow.Web/wwwroot/css/habits-v4.css:28: global selector `.hf-habits-page .hf-habit-filters>.btn`.
+REVIEW: src/HabitFlow.Web/wwwroot/css/habits-v4.css:45: global selector `.hf-habits-list-card__footer .btn`.
+REVIEW: src/HabitFlow.Web/wwwroot/css/plans-premium.css: 2 use(s) of !important.
+REVIEW: src/HabitFlow.Web/wwwroot/css/product-polish-v6129.css: 3 use(s) of !important.
+REVIEW: src/HabitFlow.Web/wwwroot/css/reminders.css: 1 use(s) of !important.
+REVIEW: src/HabitFlow.Web/wwwroot/css/goals-v5.css: 1 use(s) of !important.
+REVIEW: src/HabitFlow.Web/wwwroot/css/dashboard-v4.css: 3 use(s) of !important.
+REVIEW: src/HabitFlow.Web/wwwroot/css/app-header-v2.css: 5 use(s) of !important.
+REVIEW: src/HabitFlow.Web/wwwroot/css/feedback-v5.css: 2 use(s) of !important.
+REVIEW: src/HabitFlow.Web/wwwroot/css/product-tips-v4.css: 5 use(s) of !important.
+REVIEW: src/HabitFlow.Web/wwwroot/css/accessibility.css: 3 use(s) of !important.
+REVIEW: src/HabitFlow.Web/wwwroot/css/assistance-v6169.css: 1 use(s) of !important.
+REVIEW: src/HabitFlow.Web/wwwroot/css/design-system-v2.css: 4 use(s) of !important.
+REVIEW: src/HabitFlow.Web/wwwroot/css/design-system-v2.css:24: global selector `.btn`.
+REVIEW: src/HabitFlow.Web/wwwroot/css/design-system-v2.css:30: global selector `.dropdown-menu`.
+REVIEW: src/HabitFlow.Web/wwwroot/css/design-system-v2.css:31: global selector `.modal-content,.offcanvas`.
+REVIEW: src/HabitFlow.Web/wwwroot/css/design-system.css: 4 use(s) of !important.
+REVIEW: src/HabitFlow.Web/wwwroot/css/habit-library.css: 3 use(s) of !important.
+REVIEW: src/HabitFlow.Web/wwwroot/css/my-day.css: 2 use(s) of !important.
+REVIEW: src/HabitFlow.Web/wwwroot/css/layout.css: 1 use(s) of !important.
+REVIEW: src/HabitFlow.Web/wwwroot/css/my-day-v3.css: 8 use(s) of !important.
+REVIEW: src/HabitFlow.Web/wwwroot/css/responsive.css: 2 use(s) of !important.
+REVIEW: src/HabitFlow.Web/wwwroot/css/header-v4.css: 7 use(s) of !important.
+REVIEW: src/HabitFlow.Web/wwwroot/css/site.css: 21 use(s) of !important.
+REVIEW: src/HabitFlow.Web/wwwroot/css/legal-pages.css: 1 use(s) of !important.
+REVIEW: src/HabitFlow.Web/wwwroot/css/layout-stabilization.css: 2 use(s) of !important.
+REVIEW: src/HabitFlow.Web/wwwroot/css/navigation-premium.css: 1 use(s) of !important.

@@ -1,0 +1,45 @@
+name: Local quality gate
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: quality-gate-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  quality-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      QUALITY_GATE_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Execute the mandatory local quality gate
+        run: scripts/validation/local-quality-gate.sh
+      - name: Upload validation evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: habitflow-validation-${{ github.run_attempt }}
+          path: |
+            artifacts/validation/*.txt
+            artifacts/validation/*.log
+            tests/HabitFlow.Playwright/test-results/
+            tests/HabitFlow.Playwright/playwright-report/
+          if-no-files-found: warn
+          retention-days: 14
