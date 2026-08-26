@@ -11,11 +11,13 @@ public static class MiddlewareConfig
             app.UseHsts();
         }
 
+        app.UseMiddleware<CorrelationIdMiddleware>();
         app.UseMiddleware<GlobalExceptionMiddleware>();
         app.UseStaticFiles();
         app.UseRouting();
         app.UseAuthentication();
         app.UseAuthorization();
+        app.UseRateLimiter();
         app.UseMiddleware<ClientBindingMiddleware>();
         app.UseMiddleware<AccountStatusMiddleware>();
         app.UseMiddleware<RequiredPasswordChangeMiddleware>();

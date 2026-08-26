@@ -1,6 +1,8 @@
 using HabitFlow.Web.Services;
 using HabitFlow.Application;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
+using System.Threading.RateLimiting;
 
 namespace HabitFlow.Web.Configuration;
 
@@ -17,6 +19,13 @@ public static class DependencyInjection
         // Unsafe browser requests are protected by default. The only exceptions are
         // signed provider webhooks, which explicitly use IgnoreAntiforgeryToken.
         services.AddControllersWithViews(options => options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute()));
+        services.AddRateLimiter(options => options.AddFixedWindowLimiter("assistant", limiter =>
+        {
+            limiter.PermitLimit = 10;
+            limiter.Window = TimeSpan.FromMinutes(1);
+            limiter.QueueLimit = 0;
+            limiter.AutoReplenishment = true;
+        }));
         services.Configure<PushNotificationOptions>(configuration.GetSection("PushNotifications"));
         services.Configure<EmailOptions>(configuration.GetSection("Email"));
         services.AddOptions<EmailOptions>().Bind(configuration.GetSection("Email")).Validate(options =>

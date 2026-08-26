@@ -16,9 +16,11 @@ public sealed class AssistantSafetyPolicy
     private static readonly Regex SecretPattern = new(@"(?i)(password|senha|token|secret|connection\s*string|cookie|authorization)\s*[:=]", RegexOptions.Compiled, TimeSpan.FromMilliseconds(100));
     private static readonly string[] Destructive = ["excluir", "apagar hábito", "cancelar assinatura", "alterar senha", "alterar e-mail", "cartão", "pagamento"];
     private static readonly string[] OutOfScope = ["diagnóstico médico", "remédio", "processo judicial", "investimento", "ação na bolsa"];
+    private static readonly string[] PromptInjection = ["ignore as instruções", "ignore previous", "prompt do sistema", "system prompt", "modo desenvolvedor", "jailbreak", "revele os dados", "outro tenant"];
     public bool ContainsSensitiveData(string value) => SecretPattern.IsMatch(value ?? string.Empty);
     public bool IsDestructive(string value) => Destructive.Any(x => value.Contains(x, StringComparison.OrdinalIgnoreCase));
     public bool IsOutOfScope(string value) => OutOfScope.Any(x => value.Contains(x, StringComparison.OrdinalIgnoreCase));
+    public bool IsPromptInjection(string value) => PromptInjection.Any(x => value.Contains(x, StringComparison.OrdinalIgnoreCase));
     public string Sanitize(string value)
     {
         var clean = Regex.Replace(value ?? string.Empty, @"(?i)(bearer\s+)[A-Za-z0-9._~-]+", "$1[REMOVIDO]", RegexOptions.None, TimeSpan.FromMilliseconds(100));
@@ -86,16 +88,16 @@ public sealed class AssistantConversationService(IAssistanceRepository repositor
 {
     public async Task<AssistantResponse> AskAsync(Guid clientId, Guid userId, string message, string correlationId, CancellationToken ct)
     {
-        logger.LogInformation("assistant.message.received ClientId={ClientId} UserId={UserId} MessageHash={Hash}",clientId,userId,Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(message)))[..12]);
+        logger.LogInformation(ApplicationEvents.AssistantMessageReceived,"assistant.message.received CorrelationId={CorrelationId} ClientId={ClientId} UserId={UserId} MessageHash={Hash}",correlationId,clientId,userId,Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(message)))[..12]);
         var conversation=await repository.GetOrCreateConversationAsync(clientId,userId,ct); var sanitized=safety.Sanitize(message);
-        if (safety.ContainsSensitiveData(message)) { logger.LogWarning("assistant.safety.blocked ClientId={ClientId} Reason=SensitiveInput",clientId); return new("Por segurança, remova senhas, tokens ou outros segredos antes de continuar.","safety","Blocked"); }
+        if (safety.ContainsSensitiveData(message) || safety.IsPromptInjection(message)) { logger.LogWarning(ApplicationEvents.AssistantMessageBlocked,"assistant.message.blocked CorrelationId={CorrelationId} ClientId={ClientId} Reason={Reason}",correlationId,clientId,safety.ContainsSensitiveData(message)?"SensitiveInput":"PromptInjection"); return new("Não posso atender a esse pedido. Não envie segredos ou instruções para contornar as regras do assistente. Posso ajudar com o HabitFlow ou direcionar ao suporte.","safety","Blocked","/support/tickets/new","Abrir suporte"); }
         AssistantResponse response;
         if(safety.IsDestructive(message)) response=new("Essa alteração exige um fluxo seguro próprio e não pode ser feita pelo chat. Posso abrir a tela adequada ou direcionar você ao suporte.","safety","Restricted","/support/tickets/new","Abrir suporte");
         else if(safety.IsOutOfScope(message)) response=new("Posso orientar apenas sobre o uso do HabitFlow. Para decisões médicas, jurídicas ou financeiras, procure um profissional qualificado.","safety","OutOfScope","/help","Ver ajuda");
         else response=await fallback.GenerateAsync(new(message,clientId,userId,correlationId),await contextBuilder.BuildAsync(clientId,userId,ct),ct);
         await repository.AddMessageAsync(new(Guid.NewGuid(),clientId,userId,conversation,"user",sanitized,sanitized,response.SafetyStatus,"local",DateTime.UtcNow,correlationId),ct);
         await repository.AddMessageAsync(new(Guid.NewGuid(),clientId,userId,conversation,"assistant",response.Message,response.Message,response.SafetyStatus,response.Provider,DateTime.UtcNow,correlationId),ct);
-        logger.LogInformation("assistant.response.generated ClientId={ClientId} Provider={Provider} SafetyStatus={SafetyStatus}",clientId,response.Provider,response.SafetyStatus); return response;
+        logger.LogInformation(ApplicationEvents.AssistantMessageAnswered,"assistant.message.answered CorrelationId={CorrelationId} ClientId={ClientId} Provider={Provider} Result={SafetyStatus}",correlationId,clientId,response.Provider,response.SafetyStatus); return response;
     }
     public Task DeleteAsync(Guid clientId,Guid userId,CancellationToken ct)=>repository.DeleteHistoryAsync(clientId,userId,ct);
 }

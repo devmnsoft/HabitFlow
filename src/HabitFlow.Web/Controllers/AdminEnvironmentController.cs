@@ -31,11 +31,11 @@ public sealed class AdminEnvironmentController(DbConnectionFactory db, IConfigur
             dbStatus,
             configuration.GetValue<bool>("Telegram:Enabled"),
             configuration.GetValue<bool>("WhatsApp:Enabled"),
-            ConnectionStringMasker.Mask(configuration.GetConnectionString("DefaultConnection")),
             configuration["App:PublishPath"] ?? "não configurado",
-            events);
+            events,
+            DateTimeOffset.UtcNow);
         return View(model);
     }
 }
 
-public sealed record AdminEnvironmentViewModel(string HostingMode, string Environment, string Version, string DatabaseStatus, bool TelegramEnabled, bool WhatsAppEnabled, string MaskedConnectionString, string PublishPath, IReadOnlyList<object> RecentDeploymentEvents);
+public sealed record AdminEnvironmentViewModel(string HostingMode, string Environment, string Version, string DatabaseStatus, bool TelegramEnabled, bool WhatsAppEnabled, string PublishPath, IReadOnlyList<object> RecentDeploymentEvents, DateTimeOffset ServerTimeUtc);
