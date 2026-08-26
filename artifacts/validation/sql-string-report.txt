@@ -1,0 +1,66 @@
+HabitFlow local quality gate - C# SQL strings
+STATUS: PASS
+
+BASELINE REVIEW: src/HabitFlow.Infrastructure/Repositories/ClientRepository.cs:10: interpolated SQL is forbidden; use Dapper parameters.
+BASELINE REVIEW: src/HabitFlow.Infrastructure/Repositories/ClientRepository.cs:13: interpolated SQL is forbidden; use Dapper parameters.
+BASELINE REVIEW: src/HabitFlow.Infrastructure/Repositories/ClientRepository.cs:36: long SQL must use a raw or verbatim string literal.
+BASELINE REVIEW: src/HabitFlow.Infrastructure/Repositories/ClientRepository.cs:39: interpolated SQL is forbidden; use Dapper parameters.
+BASELINE REVIEW: src/HabitFlow.Infrastructure/Repositories/SaaSOperationsRepositories.cs:21: interpolated SQL is forbidden; use Dapper parameters.
+BASELINE REVIEW: src/HabitFlow.Infrastructure/Repositories/SaaSOperationsRepositories.cs:29: long SQL must use a raw or verbatim string literal.
+BASELINE REVIEW: src/HabitFlow.Infrastructure/Repositories/SaaSOperationsRepositories.cs:84: long SQL must use a raw or verbatim string literal.
+BASELINE REVIEW: src/HabitFlow.Infrastructure/Repositories/LegalDocumentRepository.cs:37: long SQL must use a raw or verbatim string literal.
+BASELINE REVIEW: src/HabitFlow.Infrastructure/Repositories/PremiumBillingRepositories.cs:6: long SQL must use a raw or verbatim string literal.
+BASELINE REVIEW: src/HabitFlow.Infrastructure/Repositories/PremiumBillingRepositories.cs:6: interpolated SQL is forbidden; use Dapper parameters.
+BASELINE REVIEW: src/HabitFlow.Infrastructure/Repositories/PremiumBillingRepositories.cs:6: interpolated SQL is forbidden; use Dapper parameters.
+BASELINE REVIEW: src/HabitFlow.Infrastructure/Repositories/PremiumBillingRepositories.cs:9: interpolated SQL is forbidden; use Dapper parameters.
+BASELINE REVIEW: src/HabitFlow.Infrastructure/Repositories/PremiumBillingRepositories.cs:9: interpolated SQL is forbidden; use Dapper parameters.
+BASELINE REVIEW: src/HabitFlow.Infrastructure/Repositories/PremiumBillingRepositories.cs:9: interpolated SQL is forbidden; use Dapper parameters.
+BASELINE REVIEW: src/HabitFlow.Infrastructure/Repositories/PremiumBillingRepositories.cs:9: interpolated SQL is forbidden; use Dapper parameters.
+BASELINE REVIEW: src/HabitFlow.Infrastructure/Repositories/PremiumBillingRepositories.cs:12: interpolated SQL is forbidden; use Dapper parameters.
+BASELINE REVIEW: src/HabitFlow.Infrastructure/Repositories/PremiumBillingRepositories.cs:12: interpolated SQL is forbidden; use Dapper parameters.
+BASELINE REVIEW: src/HabitFlow.Infrastructure/Repositories/PremiumBillingRepositories.cs:15: long SQL must use a raw or verbatim string literal.
+BASELINE REVIEW: src/HabitFlow.Infrastructure/Repositories/PremiumBillingRepositories.cs:15: interpolated SQL is forbidden; use Dapper parameters.
+BASELINE REVIEW: src/HabitFlow.Infrastructure/Repositories/PremiumBillingRepositories.cs:21: long SQL must use a raw or verbatim string literal.
+BASELINE REVIEW: src/HabitFlow.Infrastructure/Repositories/PasswordRecoveryRepositories.cs:10: long SQL must use a raw or verbatim string literal.
+BASELINE REVIEW: src/HabitFlow.Infrastructure/Repositories/PasswordRecoveryRepositories.cs:24: long SQL must use a raw or verbatim string literal.
+BASELINE REVIEW: src/HabitFlow.Infrastructure/Repositories/UserGoalRepository.cs:6: interpolated SQL is forbidden; use Dapper parameters.
+BASELINE REVIEW: src/HabitFlow.Infrastructure/Repositories/UserGoalRepository.cs:7: interpolated SQL is forbidden; use Dapper parameters.
+BASELINE REVIEW: src/HabitFlow.Infrastructure/Repositories/UserGoalRepository.cs:12: long SQL must use a raw or verbatim string literal.
+BASELINE REVIEW: src/HabitFlow.Infrastructure/Repositories/UserGoalRepository.cs:14: interpolated SQL is forbidden; use Dapper parameters.
+BASELINE REVIEW: src/HabitFlow.Infrastructure/Repositories/AdminOperationalRepositories.cs:26: long SQL must use a raw or verbatim string literal.
+BASELINE REVIEW: src/HabitFlow.Infrastructure/Repositories/AdminOperationalRepositories.cs:34: long SQL must use a raw or verbatim string literal.
+BASELINE REVIEW: src/HabitFlow.Infrastructure/Repositories/AdminOperationalRepositories.cs:35: long SQL must use a raw or verbatim string literal.
+BASELINE REVIEW: src/HabitFlow.Infrastructure/Repositories/HabitTemplateFavoriteRepository.cs:8: long SQL must use a raw or verbatim string literal.
+BASELINE REVIEW: src/HabitFlow.Infrastructure/Repositories/HabitTemplateFavoriteRepository.cs:11: long SQL must use a raw or verbatim string literal.
+BASELINE REVIEW: src/HabitFlow.Infrastructure/Repositories/HabitCompletionRepository.cs:7: long SQL must use a raw or verbatim string literal.
+BASELINE REVIEW: src/HabitFlow.Infrastructure/Repositories/HabitCompletionRepository.cs:8: long SQL must use a raw or verbatim string literal.
+BASELINE REVIEW: src/HabitFlow.Infrastructure/Repositories/UserChallengeRepository.cs:10: long SQL must use a raw or verbatim string literal.
+BASELINE REVIEW: src/HabitFlow.Infrastructure/Repositories/UserChallengeRepository.cs:10: interpolated SQL is forbidden; use Dapper parameters.
+BASELINE REVIEW: src/HabitFlow.Infrastructure/Repositories/UserChallengeRepository.cs:20: long SQL must use a raw or verbatim string literal.
+BASELINE REVIEW: src/HabitFlow.Infrastructure/Repositories/UserChallengeRepository.cs:20: interpolated SQL is forbidden; use Dapper parameters.
+BASELINE REVIEW: src/HabitFlow.Infrastructure/Repositories/AssistanceRepository.cs:12: long SQL must use a raw or verbatim string literal.
+BASELINE REVIEW: src/HabitFlow.Infrastructure/Repositories/AssistanceRepository.cs:20: long SQL must use a raw or verbatim string literal.
+BASELINE REVIEW: src/HabitFlow.Infrastructure/Repositories/UserOnboardingRepositories.cs:9: interpolated SQL is forbidden; use Dapper parameters.
+BASELINE REVIEW: src/HabitFlow.Infrastructure/Repositories/GoalProgressEventRepository.cs:10: interpolated SQL is forbidden; use Dapper parameters.
+BASELINE REVIEW: src/HabitFlow.Infrastructure/Repositories/UserMfaRepository.cs:9: long SQL must use a raw or verbatim string literal.
+BASELINE REVIEW: src/HabitFlow.Infrastructure/Repositories/UserMfaRepository.cs:23: long SQL must use a raw or verbatim string literal.
+BASELINE REVIEW: src/HabitFlow.Infrastructure/Repositories/UserMfaRepository.cs:26: long SQL must use a raw or verbatim string literal.
+BASELINE REVIEW: src/HabitFlow.Infrastructure/Repositories/UserMfaRepository.cs:40: long SQL must use a raw or verbatim string literal.
+BASELINE REVIEW: src/HabitFlow.Infrastructure/Repositories/DatabaseDiagnosticsRepository.cs:14: long SQL must use a raw or verbatim string literal.
+BASELINE REVIEW: src/HabitFlow.Infrastructure/Repositories/UserSessionRepository.cs:13: long SQL must use a raw or verbatim string literal.
+BASELINE REVIEW: src/HabitFlow.Infrastructure/Repositories/UserSessionRepository.cs:13: interpolated SQL is forbidden; use Dapper parameters.
+BASELINE REVIEW: src/HabitFlow.Infrastructure/Repositories/UserSessionRepository.cs:16: long SQL must use a raw or verbatim string literal.
+BASELINE REVIEW: src/HabitFlow.Infrastructure/Repositories/UserSessionRepository.cs:16: interpolated SQL is forbidden; use Dapper parameters.
+BASELINE REVIEW: src/HabitFlow.Infrastructure/Repositories/UserSessionRepository.cs:19: long SQL must use a raw or verbatim string literal.
+BASELINE REVIEW: src/HabitFlow.Infrastructure/Repositories/UserSessionRepository.cs:19: interpolated SQL is forbidden; use Dapper parameters.
+BASELINE REVIEW: src/HabitFlow.Infrastructure/Repositories/SuperAdminProvisioningRepository.cs:10: interpolated SQL is forbidden; use Dapper parameters.
+BASELINE REVIEW: src/HabitFlow.Infrastructure/Repositories/SuperAdminProvisioningRepository.cs:54: long SQL must use a raw or verbatim string literal.
+BASELINE REVIEW: src/HabitFlow.Infrastructure/Repositories/SuperAdminProvisioningRepository.cs:54: interpolated SQL is forbidden; use Dapper parameters.
+BASELINE REVIEW: src/HabitFlow.Infrastructure/Repositories/SuperAdminProvisioningRepository.cs:66: long SQL must use a raw or verbatim string literal.
+BASELINE REVIEW: src/HabitFlow.Infrastructure/Repositories/HabitObjectiveRepository.cs:10: interpolated SQL is forbidden; use Dapper parameters.
+BASELINE REVIEW: src/HabitFlow.Infrastructure/Repositories/HabitObjectiveRepository.cs:13: interpolated SQL is forbidden; use Dapper parameters.
+BASELINE REVIEW: src/HabitFlow.Infrastructure/Repositories/HabitObjectiveRepository.cs:16: interpolated SQL is forbidden; use Dapper parameters.
+BASELINE REVIEW: src/HabitFlow.Infrastructure/Repositories/HabitTemplateCollectionRepository.cs:10: interpolated SQL is forbidden; use Dapper parameters.
+BASELINE REVIEW: src/HabitFlow.Infrastructure/Repositories/HabitTemplateCollectionRepository.cs:13: interpolated SQL is forbidden; use Dapper parameters.
+BASELINE REVIEW: src/HabitFlow.Infrastructure/Repositories/HabitTemplateCollectionRepository.cs:16: interpolated SQL is forbidden; use Dapper parameters.
+Scanned 440 C# files; SQL interpolation and literal style checked.

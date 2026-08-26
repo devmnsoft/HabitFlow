@@ -1,0 +1,16 @@
+HabitFlow local quality gate - forbidden files
+STATUS: PASS
+
+Diff scope contains 12 file(s).
+AUDITED: .github/workflows/dotnet-ci.yml
+AUDITED: .github/workflows/local-quality-gate.yml
+AUDITED: .gitignore
+AUDITED: artifacts/validation/css-global-report.txt
+AUDITED: artifacts/validation/forbidden-files-report.txt
+AUDITED: artifacts/validation/razor-css-report.txt
+AUDITED: artifacts/validation/sql-string-report.txt
+AUDITED: docs/LOCAL_QUALITY_GATE.md
+AUDITED: scripts/validation/local-quality-gate.sh
+AUDITED: scripts/validation/quality_validators.py
+AUDITED: scripts/validation/test_quality_validators.py
+AUDITED: tests/HabitFlow.Playwright/quality-gate-routes.spec.js

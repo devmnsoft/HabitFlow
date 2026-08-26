@@ -1,5 +1,5 @@
-name: .NET CI
-on: [push, pull_request, workflow_call]
+name: Reusable .NET CI
+on: [workflow_call]
 jobs:
   dotnet:
     runs-on: ubuntu-latest

@@ -1,0 +1,4 @@
+HabitFlow local quality gate - Razor/CSS
+STATUS: PASS
+
+Scanned 316 Razor views/partials/layouts.

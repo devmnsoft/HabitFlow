@@ -5,6 +5,8 @@ publish/
 backups/
 dist/
 node_modules/
+__pycache__/
+*.pyc
 
 # Archives, dumps, logs and binaries
 *.zip
