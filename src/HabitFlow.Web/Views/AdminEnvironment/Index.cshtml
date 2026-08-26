@@ -1,5 +1,6 @@
 @model HabitFlow.Web.Controllers.AdminEnvironmentViewModel
 @{ ViewData["Title"] = "Diagnóstico operacional"; }
+@section Styles { <link rel="stylesheet" href="~/css/admin-environment.css" asp-append-version="true" /> }
 <section class="hf-diagnostics">
   <header>
     <span class="text-uppercase text-success fw-bold">Operações</span>
@@ -20,6 +21,3 @@
     else { <pre aria-label="Eventos recentes">@System.Text.Json.JsonSerializer.Serialize(Model.RecentDeploymentEvents, new System.Text.Json.JsonSerializerOptions { WriteIndented = true })</pre> }
   </section>
 </section>
-<style>
-.hf-diagnostics{max-width:1100px;margin:auto}.hf-diagnostic-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem}.hf-diagnostic-grid article,.hf-diagnostic-events{padding:1.25rem;border:1px solid #d7e7df;border-radius:18px;background:#fff;box-shadow:0 8px 24px rgba(8,80,55,.06)}.hf-diagnostic-grid small,.hf-diagnostic-grid strong{display:block}.hf-diagnostic-grid strong{margin-top:.4rem;font-size:1.1rem}.hf-diagnostic-events{margin-top:1rem}.hf-diagnostic-events pre{max-height:24rem;overflow:auto;white-space:pre-wrap}@media(max-width:768px){.hf-diagnostic-grid{grid-template-columns:1fr 1fr}}@media(max-width:375px){.hf-diagnostic-grid{grid-template-columns:1fr}}
-</style>
