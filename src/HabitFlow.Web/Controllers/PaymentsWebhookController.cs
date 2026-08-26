@@ -10,6 +10,7 @@ public sealed class PaymentsWebhookController(PaymentWebhookService webhooks) : 
 {
     [HttpPost("webhooks/mercadopago")]
     [IgnoreAntiforgeryToken]
+    [RequestSizeLimit(262_144)]
     public async Task<IActionResult> MercadoPago(CancellationToken ct)
     {
         using var reader = new StreamReader(Request.Body); var payload = await reader.ReadToEndAsync(ct);

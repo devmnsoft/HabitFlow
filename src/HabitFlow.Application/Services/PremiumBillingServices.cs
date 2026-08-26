@@ -13,15 +13,34 @@ public sealed class PaymentMetadataSanitizer
     public string Sanitize(string? json)
     {
         if (string.IsNullOrWhiteSpace(json)) return "{}";
-        using var doc = JsonDocument.Parse(json);
-        return JsonSerializer.Serialize(SanitizeElement(doc.RootElement));
+        // Webhooks are untrusted input. Sanitization must never turn malformed input
+        // into an exception (or accidentally persist the original body in a fallback).
+        try
+        {
+            using var doc = JsonDocument.Parse(json, new JsonDocumentOptions { MaxDepth = 32 });
+            return JsonSerializer.Serialize(SanitizeElement(doc.RootElement));
+        }
+        catch (JsonException)
+        {
+            return "{\"invalidPayload\":true}";
+        }
     }
     private static object? SanitizeElement(JsonElement element) => element.ValueKind switch
     {
-        JsonValueKind.Object => element.EnumerateObject().ToDictionary(p => p.Name, p => Sensitive.Any(s => p.Name.Contains(s, StringComparison.OrdinalIgnoreCase)) ? "[REDACTED]" : SanitizeElement(p.Value)),
+        JsonValueKind.Object => SanitizeObject(element),
         JsonValueKind.Array => element.EnumerateArray().Select(SanitizeElement).ToArray(),
         JsonValueKind.String => element.GetString(), JsonValueKind.Number => element.GetRawText(), JsonValueKind.True => true, JsonValueKind.False => false, _ => null
     };
+
+    private static IReadOnlyDictionary<string, object?> SanitizeObject(JsonElement element)
+    {
+        var result = new Dictionary<string, object?>(StringComparer.Ordinal);
+        foreach (var property in element.EnumerateObject())
+            result[property.Name] = Sensitive.Any(s => property.Name.Contains(s, StringComparison.OrdinalIgnoreCase))
+                ? "[REDACTED]"
+                : SanitizeElement(property.Value);
+        return result;
+    }
 }
 
 public sealed class PlanService(IPlanRepository plans, ISubscriptionRepository subscriptions, ILogger<PlanService> logger)
@@ -80,13 +99,21 @@ public sealed class PaymentWebhookService(IPaymentWebhookRepository webhooks, IS
 {
     public async Task<Result> ReceiveAsync(PaymentProvider paymentProvider, string payload, IReadOnlyDictionary<string,string> headers, CancellationToken ct = default)
     {
-        var safe = sanitizer.Sanitize(payload); using var parsed = JsonDocument.Parse(payload); var eventId = TryGet(parsed.RootElement, "id") ?? TryGet(parsed.RootElement, "data", "id"); var eventType = TryGet(parsed.RootElement, "type") ?? TryGet(parsed.RootElement, "action") ?? "unknown";
+        var safe = sanitizer.Sanitize(payload);
+        JsonDocument parsed;
+        try { parsed = JsonDocument.Parse(payload, new JsonDocumentOptions { MaxDepth = 32 }); }
+        catch (JsonException) { return Result.Failure("webhook.invalid_payload", "Payload JSON inválido."); }
+        using (parsed)
+        {
+            var eventId = TryGet(parsed.RootElement, "id") ?? TryGet(parsed.RootElement, "data", "id"); var eventType = TryGet(parsed.RootElement, "type") ?? TryGet(parsed.RootElement, "action") ?? "unknown";
         if (string.IsNullOrWhiteSpace(eventId)) return Result.Failure("webhook.event_id_missing", "Identificador do evento ausente.");
         var valid = await provider.ValidateWebhookAsync(payload, headers, ct); if (valid.IsFailure) { logger.LogWarning(new EventId(6205, "billing.webhook.rejected"), "billing.webhook.rejected Provider={Provider}", paymentProvider); return valid; }
-        if (await webhooks.ExistsAsync(paymentProvider, eventId, ct)) { logger.LogInformation(new EventId(6206, "billing.webhook.duplicate"), "billing.webhook.duplicate Provider={Provider} EventId={EventId}", paymentProvider, eventId); return Result.Success(); }
+        logger.LogInformation(new EventId(6201, "billing.webhook.received"), "billing.webhook.received Provider={Provider} EventId={EventId} EventType={EventType}", paymentProvider, eventId, eventType);
+        if (await webhooks.ExistsAsync(paymentProvider, eventId, ct)) { logger.LogInformation(new EventId(6206, "billing.webhook.ignored_duplicate"), "billing.webhook.ignored_duplicate Provider={Provider} EventId={EventId}", paymentProvider, eventId); return Result.Success(); }
         var webhook = new PaymentWebhookEvent(Guid.NewGuid(), paymentProvider, eventId, eventType, "Received", DateTime.UtcNow, null, null, null, null, safe, null); await webhooks.CreateAsync(webhook, ct);
         try { logger.LogInformation(new EventId(6202, "billing.webhook.verified"), "billing.webhook.verified Provider={Provider} EventId={EventId}", paymentProvider, eventId); return await ProcessMercadoPagoEventAsync(webhook.Id, payload, ct); }
         catch (Exception ex) { logger.LogError(ex, "Erro em webhook de pagamento"); await webhooks.MarkProcessedAsync(webhook.Id, null, null, null, "Erro ao processar webhook", ct); return Result.Failure("webhook.error", "Webhook recebido com erro de processamento."); }
+        }
     }
     public async Task<Result> ProcessMercadoPagoEventAsync(Guid webhookEventId, string payload, CancellationToken ct = default)
     {
@@ -97,7 +124,12 @@ public sealed class PaymentWebhookService(IPaymentWebhookRepository webhooks, IS
     {
         var subId = ExtractSubscriptionId(payment.ExternalReference); var sub = subId.HasValue ? await subscriptions.GetByIdAsync(subId.Value, ct) : await subscriptions.GetByProviderPaymentIdAsync(payment.ProviderPaymentId, ct); if (sub is null) { await webhooks.MarkProcessedAsync(webhookEventId, null, null, null, "assinatura não localizada", ct); return Result.Failure("webhook.subscription_not_found", "Assinatura não localizada."); }
         var tx = new PaymentTransaction(Guid.NewGuid(), sub.UserId, sub.Id, PaymentProvider.MercadoPago, payment.ProviderPaymentId, payment.PreferenceId, "payment", payment.Status, payment.Amount, payment.Currency, payment.RawStatus, "{}", DateTime.UtcNow, DateTime.UtcNow); await transactions.CreateAsync(tx, ct);
-        if (payment.Status == PaymentStatus.Approved) await subscriptionService.ActivateSubscriptionAsync(sub.Id, payment.ProviderPaymentId, ct); else if (payment.Status is PaymentStatus.Rejected or PaymentStatus.Failed) await subscriptions.UpdateAsync(sub with { Status = SubscriptionStatus.Failed, ProviderPaymentId = payment.ProviderPaymentId, UpdatedAt = DateTime.UtcNow }, ct); else if (payment.Status is PaymentStatus.Canceled or PaymentStatus.Refunded) await subscriptions.UpdateAsync(sub with { Status = SubscriptionStatus.Canceled, ProviderPaymentId = payment.ProviderPaymentId, CanceledAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow }, ct);
+        if (payment.Status == PaymentStatus.Approved) await subscriptionService.ActivateSubscriptionAsync(sub.Id, payment.ProviderPaymentId, ct);
+        else if (payment.Status == PaymentStatus.Pending) await subscriptions.UpdateAsync(sub with { Status = SubscriptionStatus.PaymentPending, ProviderPaymentId = payment.ProviderPaymentId, UpdatedAt = DateTime.UtcNow }, ct);
+        else if (payment.Status is PaymentStatus.Rejected or PaymentStatus.Failed) await subscriptions.UpdateAsync(sub with { Status = SubscriptionStatus.Failed, ProviderPaymentId = payment.ProviderPaymentId, UpdatedAt = DateTime.UtcNow }, ct);
+        else if (payment.Status is PaymentStatus.Canceled or PaymentStatus.Refunded) await subscriptions.UpdateAsync(sub with { Status = SubscriptionStatus.Canceled, ProviderPaymentId = payment.ProviderPaymentId, CanceledAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow }, ct);
+        else if (payment.Status == PaymentStatus.ChargedBack) await subscriptions.UpdateAsync(sub with { Status = SubscriptionStatus.ManualReview, ProviderPaymentId = payment.ProviderPaymentId, UpdatedAt = DateTime.UtcNow }, ct);
+        else await subscriptions.UpdateAsync(sub with { Status = SubscriptionStatus.ManualReview, ProviderPaymentId = payment.ProviderPaymentId, UpdatedAt = DateTime.UtcNow }, ct);
         await webhooks.MarkProcessedAsync(webhookEventId, sub.UserId, sub.Id, tx.Id, null, ct); return Result.Success();
     }
     private static string? TryGet(JsonElement e, params string[] path) { foreach (var p in path) { if (e.ValueKind != JsonValueKind.Object || !e.TryGetProperty(p, out e)) return null; } return e.ValueKind == JsonValueKind.String ? e.GetString() : e.GetRawText().Trim('"'); }

@@ -44,6 +44,30 @@ public sealed class BillingV6179Tests
     }
 
     [Fact]
+    public void Sanitizer_does_not_echo_or_throw_for_malformed_provider_payload()
+    {
+        var safe = new PaymentMetadataSanitizer().Sanitize("{\"token\":\"secret\"");
+        Assert.Equal("{\"invalidPayload\":true}", safe);
+        Assert.DoesNotContain("secret", safe);
+    }
+
+    [Fact]
+    public void Mercado_pago_signature_rejects_malformed_payload_and_ambiguous_headers()
+    {
+        Assert.False(MercadoPagoService.ValidateSignature("not-json", "ts=1,v1=abc", "request", "secret"));
+        Assert.False(MercadoPagoService.ValidateSignature("{\"data\":{\"id\":\"1\"}}", "ts=1,ts=2,v1=abc", "request", "secret"));
+    }
+
+    [Fact]
+    public void Payment_lifecycle_covers_pending_and_chargeback_without_paid_access()
+    {
+        Assert.Contains(nameof(PaymentStatus.Pending), Enum.GetNames<PaymentStatus>());
+        Assert.Contains(nameof(PaymentStatus.ChargedBack), Enum.GetNames<PaymentStatus>());
+        Assert.Contains(nameof(SubscriptionStatus.PaymentPending), Enum.GetNames<SubscriptionStatus>());
+        Assert.Contains(nameof(SubscriptionStatus.ManualReview), Enum.GetNames<SubscriptionStatus>());
+    }
+
+    [Fact]
     public void Migration_is_additive_tenant_aware_and_idempotent()
     {
         var sql = File.ReadAllText(Path.Combine(Root, "database/migrations/078_v6179_real_billing_commercial.sql"));
