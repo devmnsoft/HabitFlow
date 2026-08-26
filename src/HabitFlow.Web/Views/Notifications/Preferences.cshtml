@@ -1,8 +1,6 @@
 @model HabitFlow.Web.Models.PushNotificationViewModel
 @{ ViewData["Title"] = "Preferências de notificações"; }
-@section Styles {<style>
-.notification-grid{display:grid;gap:1rem;grid-template-columns:repeat(auto-fit,minmax(min(100%,22rem),1fr));margin-block:1.5rem}.notification-card{padding:clamp(1rem,4vw,1.5rem);border:1px solid #dbe7e2;border-radius:1.25rem;background:#fff;box-shadow:0 12px 32px #064e3b0a}.notification-card h2{font-size:1.15rem}.notification-form{display:grid;gap:1rem}.notification-form fieldset{display:grid;gap:.65rem;border:0;padding:0}.notification-form legend{font-size:1rem;font-weight:700}.notification-form input,.notification-form select,.notification-card button{min-height:44px}.quiet-grid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}.device{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.75rem 0;border-top:1px solid #e2e8f0}@media(max-width:420px){.quiet-grid{grid-template-columns:1fr}.device{align-items:flex-start;flex-direction:column}}
-</style>}
+@section Styles { <link rel="stylesheet" href="~/css/notification-preferences.css" asp-append-version="true" /> }
 <header class="py-3"><a href="/notifications">← Notificações</a><h1>Como você quer ser lembrado?</h1><p>Você controla cada canal. As notificações internas funcionam sem Web Push e nenhuma permissão é solicitada sem sua ação.</p></header>
 <div class="notification-grid">
 <section class="notification-card" aria-labelledby="browser-title"><h2 id="browser-title">Notificações do navegador</h2>
