@@ -3,6 +3,14 @@
 @section Styles { <link rel="stylesheet" href="~/css/plans-premium.css" asp-append-version="true" /> }
 <div class="plans-landing">
   <partial name="Partials/_PlansHero" model="Model" />
+  @if (!(ViewBag.CheckoutEnabled as bool? ?? false))
+  {
+    <aside class="alert alert-info mx-auto" role="status" data-testid="checkout-unavailable">
+      <strong>Checkout online indisponível neste ambiente.</strong>
+      Nenhuma cobrança será simulada e recursos pagos só são liberados após confirmação real ou ajuste administrativo auditado.
+      Fale com a MNSOFT em <a href="mailto:comercial@mnsoft.com.br">comercial@mnsoft.com.br</a>@if (!string.IsNullOrWhiteSpace(ViewBag.CommercialWhatsApp as string)){<text> ou pelo <a href="https://wa.me/@ViewBag.CommercialWhatsApp" rel="noopener noreferrer">WhatsApp comercial</a></text>}.
+    </aside>
+  }
   @if(Model.Viewer.IsAuthenticated){<aside class="plan-status" role="status"><div><span>Seu plano</span><strong>@Model.Viewer.Status</strong><p>@Model.Viewer.StatusMessage</p>@if(Model.Viewer.NextBillingAt.HasValue){<small>Próxima cobrança prevista: @Model.Viewer.NextBillingAt.Value.ToString("dd/MM/yyyy")</small>}</div>@if(Model.Viewer.CanManage){<a class="btn btn-outline-success" href="/billing">Gerenciar assinatura</a>}else{<a class="btn btn-outline-success" href="/account/plan/usage">Ver uso e limites</a>}</aside>}
   <partial name="Partials/_PlanPainGain" model="Model.Benefits" />
   <section class="plans-section" id="planos" aria-labelledby="plans-title"><div class="plans-heading"><span>Escolha com clareza</span><h2 id="plans-title">Um plano para cada momento da sua rotina</h2><p>Preços e recursos vêm do catálogo ativo. Comece com o essencial e avance apenas quando fizer sentido.</p></div><div class="plans-grid">@foreach(var plan in Model.Plans){<partial name="Partials/_CommercialPlanCard" model="plan"/>}</div></section>

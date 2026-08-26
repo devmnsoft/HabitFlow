@@ -24,3 +24,15 @@ public sealed class BillingProviderOptions
     public string Currency { get; set; } = "BRL";
     public int GracePeriodDays { get; set; } = 3;
 }
+
+/// <summary>Safe commercial switch. Disabled/manual mode never creates a paid entitlement.</summary>
+public sealed class PaymentsOptions
+{
+    public const string SectionName = "Payments";
+    public string Provider { get; set; } = "Manual";
+    public bool Enabled { get; set; }
+    public string SuccessUrl { get; set; } = string.Empty;
+    public string CancelUrl { get; set; } = string.Empty;
+    public string CommercialEmail { get; set; } = "comercial@mnsoft.com.br";
+    public string? WhatsApp { get; set; }
+}
