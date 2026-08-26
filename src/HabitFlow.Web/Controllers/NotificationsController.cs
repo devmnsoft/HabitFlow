@@ -1,6 +1,7 @@
 using HabitFlow.Application;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace HabitFlow.Web.Controllers;
 
@@ -31,21 +32,31 @@ public sealed class NotificationsController(NotificationService notifications, N
 
     [HttpGet("notifications/preferences")]
     public async Task<IActionResult> Preferences(CancellationToken ct) => View(new Models.PushNotificationViewModel(
-        pushOptions.Value.PublicKey, await preferences.GetAsync(this.CurrentClientId(), this.CurrentUserId(), ct),
+        pushOptions.Value.Enabled && !string.IsNullOrWhiteSpace(pushOptions.Value.PublicKey), pushOptions.Value.PublicKey,
+        await preferences.GetAsync(this.CurrentClientId(), this.CurrentUserId(), ct),
         await subscriptions.ListAsync(this.CurrentClientId(), this.CurrentUserId(), ct)));
 
     [ValidateAntiForgeryToken, HttpPost("notifications/push/subscriptions")]
     public async Task<IActionResult> Subscribe([FromBody] Models.PushSubscriptionRequest request, CancellationToken ct)
-    { await subscriptions.SubscribeAsync(this.CurrentClientId(),this.CurrentUserId(),request.Endpoint,request.P256Dh,request.Auth,request.DeviceName??"Este dispositivo",ct); return Ok(new{status="subscribed"}); }
+    {
+        if (!pushOptions.Value.Enabled) return Problem("Web Push não está configurado.", statusCode: StatusCodes.Status503ServiceUnavailable);
+        await subscriptions.SubscribeAsync(this.CurrentClientId(),this.CurrentUserId(),request.Endpoint,request.P256Dh,request.Auth,request.DeviceName??"Este dispositivo",ct);
+        return Ok(new{status="subscribed"});
+    }
 
     [ValidateAntiForgeryToken, HttpDelete("notifications/push/subscriptions/{id:guid}")]
     public async Task<IActionResult> RemoveDevice(Guid id,CancellationToken ct) => await subscriptions.RemoveAsync(this.CurrentClientId(),this.CurrentUserId(),id,ct) ? NoContent() : NotFound();
 
     [ValidateAntiForgeryToken, HttpPost("notifications/preferences")]
-    public async Task<IActionResult> SavePreferences(bool pushEnabled,bool internalEnabled,TimeOnly? quietStart,TimeOnly? quietEnd,int maximumPerDay,DateTime? pausedUntil,CancellationToken ct)
-    { await preferences.SaveAsync(new(this.CurrentClientId(),this.CurrentUserId(),pushEnabled,internalEnabled,quietStart,quietEnd,maximumPerDay,pausedUntil),ct); TempData["Success"]="Preferências atualizadas."; return RedirectToAction(nameof(Preferences)); }
+    public async Task<IActionResult> SavePreferences(bool pushEnabled,bool internalEnabled,bool habitReminders,bool dailySummary,bool weeklySummary,
+        TimeOnly? quietStart,TimeOnly? quietEnd,int maximumPerDay,DateTime? pausedUntil,string timezone,string language,CancellationToken ct)
+    {
+        await preferences.SaveAsync(new(this.CurrentClientId(),this.CurrentUserId(),pushEnabled && pushOptions.Value.Enabled,internalEnabled,
+            quietStart,quietEnd,maximumPerDay,pausedUntil,habitReminders,dailySummary,weeklySummary,timezone,language),ct);
+        TempData["Success"]="Preferências atualizadas."; return RedirectToAction(nameof(Preferences));
+    }
 
-    [ValidateAntiForgeryToken, HttpPost("notifications/push/test")]
+    [ValidateAntiForgeryToken, EnableRateLimiting("notification-test"), HttpPost("notifications/push/test")]
     public async Task<IActionResult> TestPush(CancellationToken ct) { var count=await push.SendSafeReminderAsync(this.CurrentClientId(),this.CurrentUserId(),ct); TempData[count>0?"Success":"Info"]=count>0?"Notificação de teste enviada.":"Nenhum dispositivo ativo recebeu o teste."; return RedirectToAction(nameof(Preferences)); }
 
     private void SetActionFeedback(bool changed,string success){TempData[changed?"Success":"Error"]=changed?success:"Essa notificação não existe ou não está disponível para sua conta.";}

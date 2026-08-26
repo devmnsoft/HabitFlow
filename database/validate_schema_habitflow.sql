@@ -139,3 +139,10 @@ begin
   end if;
 end
 $gamification_schema$;
+
+-- v6.17.7
+do $v6177$ begin
+  if to_regclass('habitflow.notification_preferences') is null or to_regclass('habitflow.push_subscriptions') is null or to_regclass('habitflow.push_delivery_attempts') is null then
+    raise exception 'Objetos de notificação v6.17.7 ausentes';
+  end if;
+end $v6177$;

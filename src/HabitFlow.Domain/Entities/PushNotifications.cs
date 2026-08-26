@@ -4,7 +4,9 @@ public sealed record PushSubscriptionRecord(Guid Id, Guid ClientId, Guid UserId,
     string P256Dh, string Auth, string DeviceName, bool IsActive, DateTime CreatedAt, DateTime? LastSeenAt);
 
 public sealed record PushNotificationPreference(Guid ClientId, Guid UserId, bool PushEnabled,
-    bool InternalEnabled, TimeOnly? QuietStart, TimeOnly? QuietEnd, int MaximumPerDay, DateTime? PausedUntil);
+    bool InternalEnabled, TimeOnly? QuietStart, TimeOnly? QuietEnd, int MaximumPerDay, DateTime? PausedUntil,
+    bool HabitReminders = true, bool DailySummary = false, bool WeeklySummary = true,
+    string Timezone = "America/Sao_Paulo", string Language = "pt-BR");
 
 public sealed record PushDeliveryAttempt(Guid Id, Guid ClientId, Guid UserId, Guid SubscriptionId,
     string Status, string? ErrorCode, DateTime AttemptedAt);
