@@ -965,3 +965,6 @@ commit;
 
 -- HabitFlow v6.17.9: cobrança real, checkout seguro e governança comercial
 \i database/migrations/078_v6179_real_billing_commercial.sql
+
+-- HabitFlow v6.18.0: times, convites e programas corporativos com privacidade
+\i database/migrations/079_v6180_corporate_programs.sql
