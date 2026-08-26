@@ -20,7 +20,7 @@ public sealed class BillingController(SubscriptionService subscriptions, Payment
         logger.LogInformation("plans.cta.clicked Cta=checkout Plan={PlanCode} Cycle={BillingCycle}", planCode, billingCycle);
         if (!Enum.TryParse<BillingCycle>(billingCycle, true, out var cycle)) { TempData["Error"] = "Ciclo inválido."; return RedirectToAction("Index", "Plans"); }
         var result = await checkout.StartCheckoutAsync(this.CurrentUserId(), User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value ?? string.Empty, User.Identity?.Name ?? "Usuário", planCode, cycle, ct);
-        if (result.IsFailure) { logger.LogWarning("plans.checkout.unavailable Plan={PlanCode} Cycle={BillingCycle} Code={Code}", planCode, billingCycle, result.Error.Code); TempData["Error"] = result.Error.Code == "payment.not_configured" ? "Pagamento ainda não configurado neste ambiente. Fale com o suporte para registrar seu interesse." : result.Error.Message; return RedirectToAction("Index", "Plans"); }
+        if (result.IsFailure) { logger.LogWarning("billing.checkout.unavailable Plan={PlanCode} Cycle={BillingCycle} Code={Code}", planCode, billingCycle, result.Error.Code); TempData["Error"] = result.Error.Message; return RedirectToAction("Index", "Plans"); }
         logger.LogInformation("plans.checkout.started Plan={PlanCode} Cycle={BillingCycle}", planCode, billingCycle);
         return Redirect(result.Value!.CheckoutUrl);
     }
