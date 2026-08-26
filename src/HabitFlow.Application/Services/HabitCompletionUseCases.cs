@@ -1,5 +1,6 @@
 using HabitFlow.Domain;
 using HabitFlow.Shared;
+using Microsoft.Extensions.Logging;
 
 namespace HabitFlow.Application;
 
