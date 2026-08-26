@@ -1,12 +1,25 @@
 @model HabitFlow.Web.Controllers.AdminEnvironmentViewModel
-@{ ViewData["Title"] = "Sistema > Ambiente"; }
-<section class="py-4">
-  <div class="d-flex justify-content-between align-items-center mb-3"><h1>Sistema &gt; Ambiente</h1><span class="badge bg-success">@Model.Version</span></div>
-  <div class="row g-3">
-    <div class="col-md-4"><div class="card"><div class="card-body"><small>Modo de execução</small><h4>@Model.HostingMode</h4></div></div></div>
-    <div class="col-md-4"><div class="card"><div class="card-body"><small>Ambiente</small><h4>@Model.Environment</h4></div></div></div>
-    <div class="col-md-4"><div class="card"><div class="card-body"><small>Status DB</small><h4>@Model.DatabaseStatus</h4></div></div></div>
+@{ ViewData["Title"] = "Diagnóstico operacional"; }
+<section class="hf-diagnostics">
+  <header>
+    <span class="text-uppercase text-success fw-bold">Operações</span>
+    <h1>Diagnóstico operacional</h1>
+    <p>Visão segura do ambiente, sem credenciais, dados pessoais ou stack traces.</p>
+  </header>
+  <div class="hf-diagnostic-grid" aria-label="Resumo do sistema">
+    <article><small>Banco de dados</small><strong class="@(Model.DatabaseStatus == "Healthy" ? "text-success" : "text-danger")">@Model.DatabaseStatus</strong></article>
+    <article><small>Versão</small><strong>@Model.Version</strong></article>
+    <article><small>Ambiente</small><strong>@Model.Environment</strong></article>
+    <article><small>Hospedagem</small><strong>@Model.HostingMode</strong></article>
+    <article><small>Servidor (UTC)</small><strong>@Model.ServerTimeUtc.ToString("yyyy-MM-dd HH:mm:ss")</strong></article>
+    <article><small>WhatsApp</small><strong>@(Model.WhatsAppEnabled ? "Habilitado" : "Desabilitado")</strong></article>
   </div>
-  <div class="card mt-3"><div class="card-body"><h2>Produção / Diagnóstico</h2><dl class="row"><dt class="col-sm-3">Connection string</dt><dd class="col-sm-9"><code>@Model.MaskedConnectionString</code></dd><dt class="col-sm-3">Telegram</dt><dd class="col-sm-9">@(Model.TelegramEnabled ? "Ativo" : "Inativo")</dd><dt class="col-sm-3">WhatsApp</dt><dd class="col-sm-9">@(Model.WhatsAppEnabled ? "Ativo" : "Inativo")</dd><dt class="col-sm-3">Publicação</dt><dd class="col-sm-9">@Model.PublishPath</dd></dl><a href="/docs/DEPLOY_WINDOWS_SEM_DOCKER.md">Docs de deploy</a></div></div>
-  <div class="card mt-3"><div class="card-body"><h2>Últimos backups/deploys registrados</h2><p class="text-muted">Eventos são lidos de habitflow.deployment_events quando a migration 014 foi aplicada.</p><pre>@System.Text.Json.JsonSerializer.Serialize(Model.RecentDeploymentEvents)</pre></div></div>
+  <section class="hf-diagnostic-events">
+    <h2>Implantações recentes</h2>
+    @if (Model.RecentDeploymentEvents.Count == 0) { <p>Nenhum evento disponível ou banco temporariamente indisponível.</p> }
+    else { <pre aria-label="Eventos recentes">@System.Text.Json.JsonSerializer.Serialize(Model.RecentDeploymentEvents, new System.Text.Json.JsonSerializerOptions { WriteIndented = true })</pre> }
+  </section>
 </section>
+<style>
+.hf-diagnostics{max-width:1100px;margin:auto}.hf-diagnostic-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem}.hf-diagnostic-grid article,.hf-diagnostic-events{padding:1.25rem;border:1px solid #d7e7df;border-radius:18px;background:#fff;box-shadow:0 8px 24px rgba(8,80,55,.06)}.hf-diagnostic-grid small,.hf-diagnostic-grid strong{display:block}.hf-diagnostic-grid strong{margin-top:.4rem;font-size:1.1rem}.hf-diagnostic-events{margin-top:1rem}.hf-diagnostic-events pre{max-height:24rem;overflow:auto;white-space:pre-wrap}@media(max-width:768px){.hf-diagnostic-grid{grid-template-columns:1fr 1fr}}@media(max-width:375px){.hf-diagnostic-grid{grid-template-columns:1fr}}
+</style>
