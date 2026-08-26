@@ -31,15 +31,27 @@ public sealed class PushSubscriptionService(IPushSubscriptionRepository reposito
 public sealed class PushNotificationPreferenceService(IPushSubscriptionRepository repository)
 {
     public Task<PushNotificationPreference> GetAsync(Guid clientId, Guid userId, CancellationToken ct = default) => repository.GetPreferenceAsync(clientId, userId, ct);
-    public Task SaveAsync(PushNotificationPreference value, CancellationToken ct = default) => repository.SavePreferenceAsync(value with { MaximumPerDay = Math.Clamp(value.MaximumPerDay, 1, 20) }, ct);
+    public Task SaveAsync(PushNotificationPreference value, CancellationToken ct = default)
+    {
+        if ((value.QuietStart is null) != (value.QuietEnd is null) || (value.QuietStart is not null && value.QuietStart == value.QuietEnd))
+            throw new ArgumentException("Informe o início e o fim do horário silencioso, usando horários diferentes.");
+        if (!TimeZoneInfo.GetSystemTimeZones().Any(zone => zone.Id == value.Timezone))
+            throw new ArgumentException("Timezone inválido.");
+        if (value.Language is not ("pt-BR" or "en-US")) throw new ArgumentException("Idioma inválido.");
+        return repository.SavePreferenceAsync(value with { MaximumPerDay = Math.Clamp(value.MaximumPerDay, 1, 20) }, ct);
+    }
 }
 
-public sealed class PushNotificationService(IPushSubscriptionRepository repository, IPushNotificationSender sender, TimeProvider clock)
+public sealed class PushNotificationService(IPushSubscriptionRepository repository, IPushNotificationSender sender,
+    Microsoft.Extensions.Options.IOptions<PushNotificationOptions> options, TimeProvider clock)
 {
     public async Task<int> SendSafeReminderAsync(Guid clientId, Guid userId, CancellationToken ct = default)
     {
         var preference = await repository.GetPreferenceAsync(clientId, userId, ct);
-        if (!preference.PushEnabled || preference.PausedUntil > clock.GetUtcNow().UtcDateTime) return 0;
+        if (!options.Value.Enabled || !preference.PushEnabled || !preference.HabitReminders || preference.PausedUntil > clock.GetUtcNow().UtcDateTime) return 0;
+        var localTime = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(clock.GetUtcNow(), preference.Timezone).TimeOfDay;
+        if (preference.QuietStart is { } start && preference.QuietEnd is { } end &&
+            (start < end ? localTime >= start.ToTimeSpan() && localTime < end.ToTimeSpan() : localTime >= start.ToTimeSpan() || localTime < end.ToTimeSpan())) return 0;
         var sent = 0;
         foreach (var subscription in await repository.ListAsync(clientId, userId, true, ct))
         {

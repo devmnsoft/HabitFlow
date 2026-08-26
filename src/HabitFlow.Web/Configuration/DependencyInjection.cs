@@ -26,7 +26,13 @@ public static class DependencyInjection
             limiter.QueueLimit = 0;
             limiter.AutoReplenishment = true;
         }));
-        services.Configure<PushNotificationOptions>(configuration.GetSection("PushNotifications"));
+        services.AddRateLimiter(options => options.AddFixedWindowLimiter("notification-test", limiter =>
+        {
+            limiter.PermitLimit = 3; limiter.Window = TimeSpan.FromMinutes(10); limiter.QueueLimit = 0;
+        }));
+        services.AddOptions<PushNotificationOptions>().Bind(configuration.GetSection("WebPush")).Validate(options =>
+            !options.Enabled || (!string.IsNullOrWhiteSpace(options.Subject) && !string.IsNullOrWhiteSpace(options.PublicKey) && !string.IsNullOrWhiteSpace(options.PrivateKey)),
+            "WebPush habilitado exige Subject, PublicKey e PrivateKey.").ValidateOnStart();
         services.Configure<EmailOptions>(configuration.GetSection("Email"));
         services.AddOptions<EmailOptions>().Bind(configuration.GetSection("Email")).Validate(options =>
         {

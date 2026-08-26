@@ -959,3 +959,6 @@ commit;
 
 -- v6.17.3 healthy gamification and personal retention journey
 \i database/migrations/076_v6173_healthy_gamification.sql
+
+-- HabitFlow v6.17.7: mobile, PWA e notificações seguras
+\i database/migrations/077_v6177_mobile_pwa_notification_preferences.sql

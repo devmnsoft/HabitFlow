@@ -1,10 +1,30 @@
 @model HabitFlow.Web.Models.PushNotificationViewModel
-@{ViewData["Title"]="Preferências de notificações";}
-@section Styles{<style>.push-grid{display:grid;gap:1rem;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr))}.push-card{padding:1.25rem;border:1px solid #dbe7e2;border-radius:1rem;background:#fff}.push-card button,.push-card input,.push-card select{min-height:44px}.device{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.75rem 0;border-top:1px solid #e2e8f0}</style>}
-<header><a href="/notifications">← Notificações</a><h1>Como você quer ser lembrado?</h1><p>O HabitFlow só pede permissão quando você escolher ativar. Push complementa as notificações internas.</p></header>
-<div class="push-grid">
-<section class="push-card"><h2>Push neste dispositivo</h2><p id="push-status" aria-live="polite">Verificando suporte…</p><button class="btn btn-success" id="enable-push" data-public-key="@Model.PublicKey">Ativar push</button></section>
-<section class="push-card"><h2>Preferências</h2><form method="post" action="/notifications/preferences">@Html.AntiForgeryToken()<label class="form-check"><input class="form-check-input" type="checkbox" name="pushEnabled" value="true" checked="@Model.Preference.PushEnabled"> Push</label><input type="hidden" name="internalEnabled" value="true"><label>Silêncio de <input type="time" name="quietStart" value="@Model.Preference.QuietStart"></label><label> até <input type="time" name="quietEnd" value="@Model.Preference.QuietEnd"></label><label>Máximo diário <input type="number" inputmode="numeric" name="maximumPerDay" min="1" max="20" value="@Model.Preference.MaximumPerDay"></label><button class="btn btn-success" type="submit">Salvar preferências</button></form></section>
-<section class="push-card"><h2>Seus dispositivos</h2>@if(Model.Devices.Count==0){<p>Nenhum dispositivo conectado.</p>}@foreach(var d in Model.Devices){<div class="device"><span><strong>@d.DeviceName</strong><br><small>@(d.IsActive?"Ativo":"Inativo")</small></span><button class="btn btn-outline-danger remove-device" data-id="@d.Id">Remover</button></div>}<form method="post" action="/notifications/push/test">@Html.AntiForgeryToken()<button class="btn btn-outline-success">Enviar teste</button></form></section>
-</div>
-@section Scripts{<script src="~/js/push-notifications.js" asp-append-version="true"></script>}
+@{ ViewData["Title"] = "Preferências de notificações"; }
+@section Styles {<style>
+.notification-grid{display:grid;gap:1rem;grid-template-columns:repeat(auto-fit,minmax(min(100%,22rem),1fr));margin-block:1.5rem}.notification-card{padding:clamp(1rem,4vw,1.5rem);border:1px solid #dbe7e2;border-radius:1.25rem;background:#fff;box-shadow:0 12px 32px #064e3b0a}.notification-card h2{font-size:1.15rem}.notification-form{display:grid;gap:1rem}.notification-form fieldset{display:grid;gap:.65rem;border:0;padding:0}.notification-form legend{font-size:1rem;font-weight:700}.notification-form input,.notification-form select,.notification-card button{min-height:44px}.quiet-grid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}.device{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.75rem 0;border-top:1px solid #e2e8f0}@media(max-width:420px){.quiet-grid{grid-template-columns:1fr}.device{align-items:flex-start;flex-direction:column}}
+</style>}
+<header class="py-3"><a href="/notifications">← Notificações</a><h1>Como você quer ser lembrado?</h1><p>Você controla cada canal. As notificações internas funcionam sem Web Push e nenhuma permissão é solicitada sem sua ação.</p></header>
+<div class="notification-grid">
+<section class="notification-card" aria-labelledby="browser-title"><h2 id="browser-title">Notificações do navegador</h2>
+@if (Model.PushConfigured) {<p id="push-status" aria-live="polite">Verificando suporte…</p><button type="button" class="btn btn-success" id="enable-push" data-public-key="@Model.PublicKey">Ativar neste dispositivo</button>}
+else {<p class="alert alert-info">Web Push não está configurado neste ambiente. Você continuará recebendo notificações internas; o HabitFlow não solicitará permissão do navegador.</p>}
+</section>
+<section class="notification-card"><h2>Preferências</h2><form class="notification-form" method="post" action="/notifications/preferences" data-notification-preferences>@Html.AntiForgeryToken()
+<fieldset><legend>Canais</legend>
+<label class="form-check form-switch"><input class="form-check-input" type="checkbox" name="internalEnabled" value="true" checked="@Model.Preference.InternalEnabled"> Notificações internas</label>
+@if(Model.PushConfigured){<label class="form-check form-switch"><input class="form-check-input" type="checkbox" name="pushEnabled" value="true" checked="@Model.Preference.PushEnabled"> Notificações do navegador</label>}
+</fieldset>
+<fieldset><legend>Conteúdo</legend>
+<label class="form-check"><input class="form-check-input" type="checkbox" name="habitReminders" value="true" checked="@Model.Preference.HabitReminders"> Lembretes de hábitos</label>
+<label class="form-check"><input class="form-check-input" type="checkbox" name="dailySummary" value="true" checked="@Model.Preference.DailySummary"> Resumo diário</label>
+<label class="form-check"><input class="form-check-input" type="checkbox" name="weeklySummary" value="true" checked="@Model.Preference.WeeklySummary"> Resumo semanal</label>
+</fieldset>
+<fieldset><legend>Horário silencioso</legend><p class="text-muted">Deixe ambos vazios para não silenciar.</p><div class="quiet-grid"><label>Início<input class="form-control" type="time" name="quietStart" value="@Model.Preference.QuietStart"></label><label>Fim<input class="form-control" type="time" name="quietEnd" value="@Model.Preference.QuietEnd"></label></div></fieldset>
+<label>Timezone<select class="form-select" name="timezone" required><option value="America/Sao_Paulo" selected="@(Model.Preference.Timezone=="America/Sao_Paulo")">Brasília (São Paulo)</option><option value="America/Manaus" selected="@(Model.Preference.Timezone=="America/Manaus")">Manaus</option><option value="America/Belem" selected="@(Model.Preference.Timezone=="America/Belem")">Belém</option><option value="America/Fortaleza" selected="@(Model.Preference.Timezone=="America/Fortaleza")">Fortaleza</option><option value="UTC" selected="@(Model.Preference.Timezone=="UTC")">UTC</option></select></label>
+<label>Idioma<select class="form-select" name="language" required><option value="pt-BR" selected="@(Model.Preference.Language=="pt-BR")">Português (Brasil)</option><option value="en-US" selected="@(Model.Preference.Language=="en-US")">English (US)</option></select></label>
+<label>Limite diário<input class="form-control" type="number" inputmode="numeric" name="maximumPerDay" min="1" max="20" required value="@Model.Preference.MaximumPerDay"></label>
+<button class="btn btn-success" type="submit">Salvar preferências</button></form></section>
+<section class="notification-card"><h2>Seus dispositivos</h2>@if(Model.Devices.Count==0){<p>Nenhum dispositivo conectado.</p>}@foreach(var d in Model.Devices){<div class="device"><span><strong>@d.DeviceName</strong><br><small>@(d.IsActive?"Ativo":"Revogado")</small></span>@if(d.IsActive){<button type="button" class="btn btn-outline-danger remove-device" data-id="@d.Id">Revogar</button>}</div>}
+@if(Model.PushConfigured && Model.Devices.Any(d=>d.IsActive)){<form method="post" action="/notifications/push/test">@Html.AntiForgeryToken()<button class="btn btn-outline-success">Testar notificação</button></form>}
+</section></div>
+@section Scripts {<script src="~/js/push-notifications.js" asp-append-version="true"></script>}
