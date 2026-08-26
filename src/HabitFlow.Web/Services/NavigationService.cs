@@ -160,6 +160,18 @@ public sealed class NavigationService(INavigationAccessEvaluator? accessEvaluato
             IsEnabled: true),
 
         new(
+            Code: "analytics",
+            Label: "Minha evolução",
+            Description: "Visualize consistência e tendências",
+            Icon: "progress",
+            Url: "/analytics",
+            Context: NavigationContext.Personal,
+            RequiredPermission: null,
+            RequiredFeature: null,
+            SortOrder: 45,
+            IsEnabled: true),
+
+        new(
             Code: "personal-library", Label: "Biblioteca", Description: "Ideias prontas para começar", Icon: "library", Url: "/habit-library",
             Context: NavigationContext.Personal, RequiredPermission: null, RequiredFeature: null, SortOrder: 60, IsEnabled: true),
 
