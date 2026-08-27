@@ -1,0 +1,24 @@
+@model DailyRoutineViewModel
+<section class="daily-command" aria-label="Resumo inteligente do dia">
+  <article class="daily-command__card daily-command__card--insight">
+    <span class="daily-command__eyebrow">Sugestão inteligente</span>
+    <h2>@(Model.FocusHabitName is null ? "Prepare um pequeno avanço" : $"Comece por {Model.FocusHabitName}")</h2>
+    <p>@(Model.Pending == 0 ? "Seu planejamento está em dia. Aproveite para revisar a semana." : "Concluir a menor ação agora reduz a carga mental e cria ritmo para o restante do dia.")</p>
+  </article>
+  <article class="daily-command__card">
+    <span class="daily-command__eyebrow">Sinais de hoje</span>
+    <dl class="daily-signals"><div><dt>Sequência atual</dt><dd>@Model.CurrentStreak dia@(Model.CurrentStreak == 1 ? "" : "s")</dd></div><div><dt>Atrasos</dt><dd class="@(Model.Overdue > 0 ? "is-alert" : null)">@Model.Overdue</dd></div><div><dt>Próximo lembrete</dt><dd>@(Model.NextActions.FirstOrDefault(x => x.PreferredTime.HasValue)?.PreferredTime?.ToString("HH:mm") ?? "Sem horário")</dd></div></dl>
+    <a class="daily-command__link" href="/reminders">Configurar lembretes</a>
+  </article>
+  <article class="daily-command__card daily-command__card--wide">
+    <div><span class="daily-command__eyebrow">Próximas ações</span><h2>Um passo de cada vez</h2></div>
+    @if (Model.NextActions.Count == 0) { <p>Nenhuma pendência ativa para hoje.</p> }
+    else { <ol class="daily-next">@foreach (var action in Model.NextActions) { <li><span style="--habit-color:@action.Color"></span><strong>@action.Name</strong><small>@action.EstimatedMinutes min</small></li> }</ol> }
+    <a class="btn btn-success" href="/habits/create">Criar novo hábito</a>
+  </article>
+  <article class="daily-command__card daily-command__card--wide">
+    <div class="daily-week__header"><div><span class="daily-command__eyebrow">Resumo semanal</span><h2>Seu ritmo nos últimos 7 dias</h2></div><a href="/progress/calendar">Abrir calendário</a></div>
+    <div class="daily-week">@foreach (var day in Model.WeeklyPulse) { <div class="@(day.IsToday ? "is-today" : null)"><span style="--pulse:@day.Percentage%"></span><small>@day.Label</small></div> }</div>
+  </article>
+  @if (Model.PlanLimitReached) { <aside class="daily-plan"><div><strong>Seu plano chegou ao limite</strong><p>Seus dados continuam seguros. Conheça os planos para criar novas rotinas.</p></div><a class="btn btn-light" href="/plans">Ver planos</a></aside> }
+</section>

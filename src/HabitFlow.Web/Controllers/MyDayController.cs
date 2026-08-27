@@ -8,14 +8,24 @@ namespace HabitFlow.Web.Controllers;
 
 [Authorize]
 [Route("my-day")]
-public sealed class MyDayController(DailyRoutinePlannerService planner,HabitScheduleExceptionService schedule,DailyRoutineActionService actions,CompleteHabitUseCase complete,UndoHabitCompletionUseCase undo,UserTimeZoneService timeZone) : Controller
+public sealed class MyDayController(DailyRoutinePlannerService planner,HabitScheduleExceptionService schedule,DailyRoutineActionService actions,CompleteHabitUseCase complete,UndoHabitCompletionUseCase undo,UserTimeZoneService timeZone, ILogger<MyDayController> logger) : Controller
 {
     [HttpGet("")]
     public async Task<IActionResult> Index(CancellationToken ct)
     {
-        var model = DailyRoutineViewModelMapper.From(await planner.BuildAsync(new(this.CurrentClientId(),this.CurrentUserId(),timeZone.Today()),ct));
-        var greeting = timeZone.LocalNow().Hour switch { < 12 => "Bom dia", < 18 => "Boa tarde", _ => "Boa noite" };
-        return View(model with { Greeting = greeting });
+        try
+        {
+            var model = DailyRoutineViewModelMapper.From(await planner.BuildAsync(new(this.CurrentClientId(),this.CurrentUserId(),timeZone.Today()),ct));
+            var greeting = timeZone.LocalNow().Hour switch { < 12 => "Bom dia", < 18 => "Boa tarde", _ => "Boa noite" };
+            logger.LogInformation("daily_center.opened CorrelationId={CorrelationId}", HttpContext.TraceIdentifier);
+            return View(model with { Greeting = greeting });
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "daily_center.failed CorrelationId={CorrelationId}", HttpContext.TraceIdentifier);
+            TempData["Error"] = "Não foi possível preparar o seu dia agora. Tente novamente em instantes.";
+            return RedirectToAction("Index", "Dashboard");
+        }
     }
 
     [HttpPost("{habitId:guid}/complete"),ValidateAntiForgeryToken]

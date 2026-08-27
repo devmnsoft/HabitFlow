@@ -10,10 +10,17 @@ public sealed record DailyRoutineViewModel(
     IReadOnlyList<RoutinePeriodGroupViewModel> Groups,
     string Greeting,
     string Motivation,
-    string? FocusHabitName)
+    string? FocusHabitName,
+    IReadOnlyList<RoutineHabitCardViewModel> NextActions,
+    int Overdue,
+    int CurrentStreak,
+    IReadOnlyList<DailyPulseViewModel> WeeklyPulse)
 {
     public int Pending => Math.Max(0, Scheduled - Completed);
+    public bool PlanLimitReached { get; init; }
 }
+
+public sealed record DailyPulseViewModel(string Label, int Percentage, bool IsToday);
 
 public sealed record RoutinePeriodGroupViewModel(
     string Key,
@@ -71,7 +78,16 @@ public static class DailyRoutineViewModelMapper
             _ when plan.Pending <= 2 => $"Hoje está leve: {plan.Pending} passos importantes.",
             _ => "Seu foco hoje é manter consistência, não perfeição."
         };
-        return new(plan.LocalDate, plan.Scheduled, plan.Completed, plan.Percentage, groups, "Olá", motivation, focus);
+        var nextActions = cards.Where(x => x.CanComplete).Take(3).ToList();
+        var overdue = cards.Count(x => x.Status == DailyRoutineItemStatus.Missed);
+        var pulse = Enumerable.Range(-6, 7)
+            .Select(offset => new DailyPulseViewModel(
+                plan.LocalDate.AddDays(offset).ToString("ddd").TrimEnd('.'),
+                offset == 0 ? plan.Percentage : 0,
+                offset == 0))
+            .ToList();
+        return new(plan.LocalDate, plan.Scheduled, plan.Completed, plan.Percentage, groups, "Olá", motivation, focus,
+            nextActions, overdue, plan.Completed > 0 ? 1 : 0, pulse);
     }
 
     private static RoutineHabitCardViewModel ToCard(DailyRoutineItem item) => new(
