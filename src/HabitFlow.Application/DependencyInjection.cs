@@ -1,12 +1,14 @@
 using HabitFlow.Domain;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace HabitFlow.Application;
 
 public static class DependencyInjection
 {
-    public static IServiceCollection AddHabitFlowApplication(this IServiceCollection services)
+    public static IServiceCollection AddHabitFlowApplication(this IServiceCollection services, IConfiguration configuration)
     {
+        services.AddOptions<AssistantOptions>().Bind(configuration.GetSection(AssistantOptions.SectionName));
         services.AddSingleton<LogSanitizer>();
         services.AddSingleton<ProtocolGenerator>();
         services.AddSingleton<WhatsAppValidator>();
@@ -118,9 +120,16 @@ public static class DependencyInjection
         services.AddScoped<SettingsService>();
         services.AddScoped<SupportService>();
         services.AddSingleton<AssistantSafetyPolicy>();
+        services.AddSingleton<AssistantSafetyService>();
         services.AddSingleton<AssistantKnowledgeService>();
         services.AddScoped<AssistantContextBuilder>();
         services.AddSingleton<DeterministicAssistantProvider>();
+        services.AddSingleton<DisabledAssistantProvider>();
+        services.AddSingleton<ConfiguredAssistantProvider>();
+        services.AddSingleton<IAssistantProvider>(sp => sp.GetRequiredService<ConfiguredAssistantProvider>());
+        services.AddScoped<AssistantConversationRepository>();
+        services.AddScoped<AssistantAuditService>();
+        services.AddScoped<AssistantChatService>();
         services.AddScoped<AssistantConversationService>();
         services.AddScoped<SupportCenterService>();
         services.AddScoped<ProfileService>();

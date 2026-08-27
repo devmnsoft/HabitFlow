@@ -968,3 +968,6 @@ commit;
 
 -- HabitFlow v6.18.0: times, convites e programas corporativos com privacidade
 \i database/migrations/079_v6180_corporate_programs.sql
+
+-- HabitFlow v6.18.2: Coach IA seguro, eventos e uso agregado
+\i database/migrations/080_v6182_safe_contextual_assistant.sql

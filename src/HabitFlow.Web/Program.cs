@@ -16,7 +16,7 @@ if (builder.Environment.IsDevelopment())
 builder.WebHost.UseUrls("http://0.0.0.0:5097");
 
 builder.Services
-    .AddHabitFlowApplication()
+    .AddHabitFlowApplication(builder.Configuration)
     .AddHabitFlowInfrastructure(builder.Configuration)
     .AddHabitFlowWeb(builder.Configuration, builder.Environment);
 

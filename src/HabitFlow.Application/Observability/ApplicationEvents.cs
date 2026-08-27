@@ -17,6 +17,12 @@ public static class ApplicationEvents
     public static readonly EventId AssistantMessageReceived = new(617640, "assistant.message.received");
     public static readonly EventId AssistantMessageBlocked = new(617641, "assistant.message.blocked");
     public static readonly EventId AssistantMessageAnswered = new(617642, "assistant.message.answered");
+    public static readonly EventId AssistantDisabled = new(618200, "assistant.disabled");
+    public static readonly EventId AssistantContextBuilt = new(618201, "assistant.context.built");
+    public static readonly EventId AssistantResponseGenerated = new(618202, "assistant.response.generated");
+    public static readonly EventId AssistantSafetyBlocked = new(618203, "assistant.safety.blocked");
+    public static readonly EventId AssistantProviderTimeout = new(618204, "assistant.provider.timeout");
+    public static readonly EventId AssistantProviderError = new(618205, "assistant.provider.error");
     public static readonly EventId BillingPlanViewed = new(617650, "billing.plan.viewed");
     public static readonly EventId BillingCheckoutStarted = new(617651, "billing.checkout.started");
     public static readonly EventId AuthLoginFailed = new(617660, "auth.login.failed");
