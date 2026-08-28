@@ -19,17 +19,44 @@ public sealed record HabitTimelineItem(DateTime At, string Title, string Descrip
 public sealed record HabitDetailsViewModel(Habit Habit, int CompletedCount, int ScheduledCount, decimal Consistency,
     int CurrentStreak, int BestStreak, IReadOnlyList<HabitCalendarDay> Calendar, IReadOnlyList<HabitTimelineItem> Timeline);
 
+public static class HabitListPolicy
+{
+    private static readonly HashSet<string> AllowedStatuses = new(StringComparer.OrdinalIgnoreCase) { "active", "paused", "archived", "all" };
+    private static readonly HashSet<string> AllowedSorts = new(StringComparer.OrdinalIgnoreCase) { "newest", "oldest", "updated", "name" };
+
+    public static HabitListQuery Normalize(HabitListQuery query)
+    {
+        var search = string.IsNullOrWhiteSpace(query.Search) ? null : query.Search.Trim();
+        var category = string.IsNullOrWhiteSpace(query.Category) ? null : query.Category.Trim();
+        return query with
+        {
+            Search = search?[..Math.Min(search.Length, 120)],
+            Category = category?[..Math.Min(category.Length, 80)],
+            Status = AllowedStatuses.Contains(query.Status ?? "") ? query.Status.ToLowerInvariant() : "active",
+            Sort = AllowedSorts.Contains(query.Sort ?? "") ? query.Sort.ToLowerInvariant() : "newest",
+            Page = Math.Max(1, query.Page),
+            PageSize = Math.Clamp(query.PageSize, 6, 48)
+        };
+    }
+
+    public static decimal Consistency(int completed, int scheduled) => scheduled <= 0
+        ? 0
+        : Math.Round(Math.Clamp(completed * 100m / scheduled, 0, 100), 1);
+}
+
 public sealed class HabitQueryService(IHabitRepository habits, IHabitCompletionRepository completions, IHabitWeekDayRepository weekDays,
     HabitOccurrenceService occurrences, UserTimeZoneService clock)
 {
     public async Task<HabitListViewModel> SearchAsync(Guid clientId, Guid userId, HabitListQuery query, CancellationToken ct = default)
     {
+        query = HabitListPolicy.Normalize(query);
         var all = await habits.ListAsync(clientId, userId, ct);
         var scoped = all.Where(x => MatchesStatus(x, query.Status));
         if (!string.IsNullOrWhiteSpace(query.Search)) scoped = scoped.Where(x => x.Name.Contains(query.Search.Trim(), StringComparison.OrdinalIgnoreCase) || (x.Category?.Contains(query.Search.Trim(), StringComparison.OrdinalIgnoreCase) ?? false));
         if (!string.IsNullOrWhiteSpace(query.Category)) scoped = scoped.Where(x => string.Equals(x.Category, query.Category, StringComparison.OrdinalIgnoreCase));
         scoped = query.Sort switch { "name" => scoped.OrderBy(x => x.Name), "oldest" => scoped.OrderBy(x => x.CreatedAt), "updated" => scoped.OrderByDescending(x => x.UpdatedAt), _ => scoped.OrderByDescending(x => x.CreatedAt) };
-        var total = scoped.Count(); var pageSize = Math.Clamp(query.PageSize, 6, 48); var page = Math.Max(1, query.Page);
+        var total = scoped.Count(); var pageSize = query.PageSize; var totalPages = (int)Math.Ceiling(total / (double)pageSize);
+        var page = totalPages == 0 ? 1 : Math.Min(query.Page, totalPages);
         var selected = scoped.Skip((page - 1) * pageSize).Take(pageSize).ToList();
         var from = clock.Today().AddDays(-27); var to = clock.Today();
         var done = await completions.ListAsync(clientId, userId, from, to, ct);
@@ -37,8 +64,14 @@ public sealed class HabitQueryService(IHabitRepository habits, IHabitCompletionR
         var configured = dayMap.ToDictionary(x => x.Key, x => (IReadOnlySet<int>)x.Value.Select(y => y.DayOfWeek).ToHashSet());
         var progressRows = selected.Select(ToProgressRow).ToList();
         var planned = await occurrences.ListScheduledForPeriodAsync(progressRows, configured, from, to, clock.Resolve());
-        var items = selected.Select(h => { var scheduled = planned.Count(x => x.Habit.Id == h.Id); var completed = done.Count(x => x.HabitId == h.Id); return new HabitListItem(h, completed, scheduled, scheduled == 0 ? 0 : Math.Round(completed * 100m / scheduled, 1)); }).ToList();
-        return new(items, all.Select(x => x.Category).Where(x => !string.IsNullOrWhiteSpace(x)).Distinct(StringComparer.OrdinalIgnoreCase).Order().Cast<string>().ToList(), query with { Page = page, PageSize = pageSize }, total, (int)Math.Ceiling(total / (double)pageSize));
+        var scheduledDates = planned.GroupBy(x => x.Habit.Id).ToDictionary(x => x.Key, x => x.Select(y => y.Date).ToHashSet());
+        var items = selected.Select(h =>
+        {
+            var dates = scheduledDates.GetValueOrDefault(h.Id) ?? [];
+            var completed = done.Count(x => x.HabitId == h.Id && dates.Contains(x.CompletedDate));
+            return new HabitListItem(h, completed, dates.Count, HabitListPolicy.Consistency(completed, dates.Count));
+        }).ToList();
+        return new(items, all.Select(x => x.Category).Where(x => !string.IsNullOrWhiteSpace(x)).Distinct(StringComparer.OrdinalIgnoreCase).Order().Cast<string>().ToList(), query with { Page = page }, total, totalPages);
     }
 
     public async Task<HabitDetailsViewModel?> DetailAsync(Guid clientId, Guid userId, Guid habitId, CancellationToken ct = default)
@@ -129,8 +162,12 @@ public sealed class HabitEditorService(IHabitRepository habits, IHabitWeekDayRep
             var count = await habits.CountActiveAsync(user.ClientId.Value, user.Id, ct);
             var limit = await entitlements.GetIntegerFeatureAsync(user.Id, PlanFeatureCodes.ActiveHabitsLimit, ct);
             if (limit is >= 0 && count >= limit)
+            {
+                await audit.LogAsync("plan.limit_reached", "Limite de hábitos ativos atingido", AuditSeverity.Warning,
+                    user.Id, user.Email, new { feature = PlanFeatureCodes.ActiveHabitsLimit, limit }, ct);
                 return Result<Habit>.Failure("plan.habit_limit",
                     $"Você chegou ao limite de {limit} hábitos ativos do seu plano. Veja os planos para criar outro hábito.");
+            }
         }
         var now = DateTime.UtcNow;
         var startDate = current?.StartDate ?? input.StartDate ?? clock.Today();
@@ -140,7 +177,7 @@ public sealed class HabitEditorService(IHabitRepository habits, IHabitWeekDayRep
         {
             if (current is null) await habits.CreateAsync(habit, ct); else if (!await habits.UpdateAsync(user.ClientId.Value, user.Id, habit, ct)) { await unitOfWork.RollbackAsync(ct); return Result<Habit>.Failure("habit.concurrent_update", "Não foi possível salvar a alteração."); }
             await weekDays.ReplaceAsync(habit.Id, normalized.FrequencyType == HabitFrequencyType.CustomWeekly ? normalized.SelectedDays : [], ct);
-            await audit.LogAsync(current is null ? "habit_created" : "habit_updated", current is null ? "Hábito criado" : "Hábito atualizado", AuditSeverity.Info, user.Id, user.Email, new { habitId = habit.Id }, ct);
+            await audit.LogAsync(current is null ? "habit.created" : "habit.updated", current is null ? "Hábito criado" : "Hábito atualizado", AuditSeverity.Info, user.Id, user.Email, new { habitId = habit.Id }, ct);
             await unitOfWork.CommitAsync(ct);
             return Result<Habit>.Success(habit);
         }
