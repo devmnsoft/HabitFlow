@@ -110,6 +110,7 @@ public static class DependencyInjection
         services.AddScoped<CompleteWeeklyReviewUseCase>();
         services.AddSingleton<ReminderScheduleCalculator>();
         services.AddScoped<ReportService>();
+        services.AddSingleton<MetricCalculationService>();
         services.AddScoped<IAnalyticsQueryService, AnalyticsQueryService>();
         services.AddScoped<OnboardingService>();
         services.AddScoped<OnboardingJourneyService>();

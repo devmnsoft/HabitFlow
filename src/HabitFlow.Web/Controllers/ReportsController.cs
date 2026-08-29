@@ -9,9 +9,11 @@ public sealed class ReportsController(ReportService reports, WeeklyReviewService
     FeatureAccessService access, AuditService audit, UserTimeZoneService timeZones, CurrentTenantService tenant,
     ILogger<ReportsController> logger) : Controller
 {
-    private static readonly EventId PlanBlocked = new(616601, "report.plan_blocked");
+    private static readonly EventId PlanBlocked = new(618606, "report.export.blocked");
     private static readonly EventId PdfExported = new(616602, "report.pdf.exported");
-    private static readonly EventId CsvExported = new(616603, "report.csv.exported");
+    private static readonly EventId CsvExported = new(618603, "report.export.completed");
+    private static readonly EventId CsvStarted = new(618604, "report.export.started");
+    private static readonly EventId CsvFailed = new(618605, "report.export.failed");
     [HttpGet("reports")]
     public async Task<IActionResult> Index(CancellationToken ct)
     {
@@ -38,11 +40,21 @@ public sealed class ReportsController(ReportService reports, WeeklyReviewService
     [HttpGet("reports/export-csv")]
     public async Task<IActionResult> ExportCsv(CancellationToken ct)
     {
+        var clientId = tenant.RequireCurrentClientId(); var userId = this.CurrentUserId();
         if (!await RequirePremiumAsync(HabitFlow.Domain.PlanFeatureCodes.ReportExportCsv, ct)) return Redirect("/plans?from=csv_export");
         var end = timeZones.Today(); var start = end.AddDays(-(((int)end.DayOfWeek + 6) % 7));
-        var bytes = documents.ToCsv(await weeklyReviews.BuildAsync(tenant.RequireCurrentClientId(), this.CurrentUserId(), start, ct));
-        logger.LogInformation(CsvExported, "report.csv.exported CorrelationId={CorrelationId} UserId={UserId}", HttpContext.TraceIdentifier, this.CurrentUserId());
-        return File(bytes, "text/csv; charset=utf-8", $"habitflow-dados-{end:yyyy-MM-dd}.csv");
+        logger.LogInformation(CsvStarted, "report.export.started Code={Code} CorrelationId={CorrelationId} TenantId={TenantId} UserId={UserId} Status={Status}", "REPORT_EXPORT_STARTED", HttpContext.TraceIdentifier, clientId, userId, "started");
+        try
+        {
+            var bytes = documents.ToCsv(await weeklyReviews.BuildAsync(clientId, userId, start, ct));
+            logger.LogInformation(CsvExported, "report.export.completed Code={Code} CorrelationId={CorrelationId} TenantId={TenantId} UserId={UserId} Status={Status}", "REPORT_EXPORT_COMPLETED", HttpContext.TraceIdentifier, clientId, userId, "success");
+            return File(bytes, "text/csv; charset=utf-8", $"habitflow-dados-{end:yyyy-MM-dd}.csv");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(CsvFailed, ex, "report.export.failed Code={Code} CorrelationId={CorrelationId} TenantId={TenantId} UserId={UserId} Status={Status}", "REPORT_EXPORT_FAILED", HttpContext.TraceIdentifier, clientId, userId, "failed");
+            return Problem("Não foi possível gerar a exportação agora. Tente novamente.");
+        }
     }
     [HttpGet("reports/monthly/export/pdf")]
     [HttpGet("reports/export-pdf")]
@@ -80,7 +92,7 @@ public sealed class ReportsController(ReportService reports, WeeklyReviewService
     private async Task<bool> RequirePremiumAsync(string feature, CancellationToken ct)
     {
         var allowed = (await access.RequireFeatureAsync(this.CurrentUserId(), feature, ct)).Allowed;
-        if (!allowed) logger.LogWarning(PlanBlocked, "report.plan_blocked Feature={Feature} CorrelationId={CorrelationId} UserId={UserId}", feature, HttpContext.TraceIdentifier, this.CurrentUserId());
+        if (!allowed) logger.LogWarning(PlanBlocked, "report.export.blocked Code={Code} Feature={Feature} CorrelationId={CorrelationId} UserId={UserId} Status={Status}", "REPORT_EXPORT_BLOCKED", feature, HttpContext.TraceIdentifier, this.CurrentUserId(), "blocked");
         return allowed;
     }
 }
