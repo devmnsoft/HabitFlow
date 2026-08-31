@@ -37,8 +37,10 @@ public static class AuthenticationConfig
         });
         services.AddAuthorization(options =>
         {
-            options.AddPolicy("RequireAdmin", policy => policy.RequireRole("Admin", "SuperAdmin"));
+            options.AddPolicy("RequireAdmin", policy => policy.RequireRole("Admin", "TenantAdmin", "TenantOwner", "SuperAdmin"));
             options.AddPolicy("RequireSuperAdmin", policy => policy.RequireRole("SuperAdmin"));
+            options.AddPolicy("RequireTenantAdmin", policy => policy.RequireRole("Admin", "TenantAdmin", "TenantOwner", "SuperAdmin"));
+            options.AddPolicy("RequireBillingAdmin", policy => policy.RequireRole("BillingAdmin", "TenantOwner", "SuperAdmin"));
             options.AddPolicy("RequireClientAccess", policy => policy.RequireAuthenticatedUser());
         });
         return services;

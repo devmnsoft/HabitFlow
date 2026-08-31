@@ -21,6 +21,7 @@ public static class MiddlewareConfig
         app.UseRateLimiter();
         app.UseMiddleware<ClientBindingMiddleware>();
         app.UseMiddleware<AccountStatusMiddleware>();
+        app.UseMiddleware<TenantModuleAccessMiddleware>();
         app.UseMiddleware<RequiredPasswordChangeMiddleware>();
         app.UseMiddleware<SuperAdminMfaMiddleware>();
         app.MapControllerRoute("login", "login", new { controller = "Auth", action = "Login" });

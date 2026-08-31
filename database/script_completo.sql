@@ -980,3 +980,6 @@ commit;
 
 -- HabitFlow v6.19.1: API pública, webhooks e calendário
 \i database/migrations/083_v6191_public_integrations.sql
+
+-- HabitFlow v6.19.2: SuperAdmin, tenant modules, manual billing and document login
+\i database/migrations/084_v6192_superadmin_tenant_governance.sql

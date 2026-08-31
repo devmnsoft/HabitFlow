@@ -4,5 +4,5 @@ public sealed record User(Guid Id, string Name, string Email, string PasswordHas
 {
     public bool CanUseDashboard => AccountStatus == AccountStatus.Active;
     public bool HasRestrictedAccess => AccountStatus == AccountStatus.Suspended;
-    public bool CanManageUsers => Role == UserRole.Admin;
+    public bool CanManageUsers => TenantAccessPolicy.CanManageUsers(Role);
 }
