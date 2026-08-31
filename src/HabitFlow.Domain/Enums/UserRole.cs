@@ -4,5 +4,10 @@ public enum UserRole
 {
     User,
     Admin,
-    SuperAdmin
+    SuperAdmin,
+    ReadOnly,
+    Manager,
+    TenantAdmin,
+    TenantOwner,
+    BillingAdmin
 }

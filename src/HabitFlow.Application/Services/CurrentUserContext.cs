@@ -15,7 +15,7 @@ public sealed class CurrentUserContext(IHttpContextAccessor httpContextAccessor)
     public Guid? ClientId => Guid.TryParse(Principal?.FindFirstValue("client_id"), out var id) ? id : null;
     public bool IsAuthenticated => Principal?.Identity?.IsAuthenticated == true;
     public bool IsSuperAdmin => IsAuthenticated && Role == UserRole.SuperAdmin;
-    public bool IsAdmin => IsAuthenticated && Role == UserRole.Admin;
+    public bool IsAdmin => IsAuthenticated && Role is UserRole.Admin or UserRole.TenantAdmin or UserRole.TenantOwner;
     public bool IsUser => IsAuthenticated && Role == UserRole.User;
     public bool RequiresClient => IsAdmin || IsUser;
     public bool HasClient => ClientId.HasValue;

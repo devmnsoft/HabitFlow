@@ -16,7 +16,7 @@ public sealed class ClientBindingMiddleware(RequestDelegate next)
         }
 
         var user = context.User;
-        var requiresClient = user.Identity?.IsAuthenticated == true && (user.IsInRole("Admin") || user.IsInRole("User"));
+        var requiresClient = user.Identity?.IsAuthenticated == true && !user.IsInRole("SuperAdmin");
         var hasClient = Guid.TryParse(user.FindFirstValue("client_id"), out _);
         if (requiresClient && !hasClient)
         {
