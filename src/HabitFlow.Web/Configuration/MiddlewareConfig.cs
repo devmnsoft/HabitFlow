@@ -16,6 +16,7 @@ public static class MiddlewareConfig
         app.UseStaticFiles();
         app.UseRouting();
         app.UseAuthentication();
+        app.UseMiddleware<ApiKeyAuthenticationMiddleware>();
         app.UseAuthorization();
         app.UseRateLimiter();
         app.UseMiddleware<ClientBindingMiddleware>();

@@ -1,0 +1,17 @@
+@using HabitFlow.Domain
+@{ ViewData["Title"] = "Integrações"; var keys=(IReadOnlyList<ApiKeyRecord>)ViewBag.ApiKeys; var hooks=(IReadOnlyList<IntegrationWebhook>)ViewBag.Webhooks; }
+<link rel="stylesheet" href="~/css/integrations.css" asp-append-version="true" />
+<main class="integrations-shell">
+  <header class="integrations-hero"><span class="eyebrow">HABITFLOW CONNECT</span><h1>Integrações</h1><p>Conecte seus hábitos com segurança. Credenciais e tokens nunca voltam a ser exibidos.</p></header>
+  @if (ViewBag.NewSecret is string secret) { <aside class="secret-once" role="status"><strong>Copie agora — exibida uma única vez</strong><code id="new-key">@secret</code><button type="button" onclick="navigator.clipboard.writeText(document.getElementById('new-key').textContent)">Copiar chave</button></aside> }
+  @if (ViewBag.CalendarUrl is string url) { <aside class="secret-once"><strong>Nova URL do calendário</strong><code>@url</code></aside> }
+  <section class="integration-grid">
+    <article class="integration-card"><h2>Chaves de API</h2><p>Use no cabeçalho <code>X-Api-Key</code>. Limite de 60 requisições/minuto.</p>
+      <form method="post" action="/integrations/api-keys">@Html.AntiForgeryToken()<label>Nome<input name="name" required maxlength="80" /></label><fieldset><legend>Escopos</legend>@foreach(var scope in IntegrationScopes.Allowed){<label><input type="checkbox" name="scopes" value="@scope" /> @scope</label>}</fieldset><button class="primary">Criar chave</button></form>
+      <ul class="credential-list">@foreach(var key in keys){<li><span><strong>@key.Name</strong><small>@key.KeyPrefix… · último uso: @(key.LastUsedAt?.ToString("g") ?? "nunca")</small></span>@if(key.RevokedAt is null){<form method="post" action="/integrations/api-keys/@key.Id/revoke">@Html.AntiForgeryToken()<button>Revogar</button></form>}else{<span class="badge">Revogada</span>}</li>}</ul>
+    </article>
+    <article class="integration-card"><h2>Calendário</h2><p>Feed privado por token para hábitos e rotinas. A rotação invalida imediatamente a URL anterior.</p><form method="post" action="/integrations/calendar/rotate">@Html.AntiForgeryToken()<label><input type="checkbox" name="enabled" value="true" checked /> Feed ativo</label><label><input type="checkbox" name="includeHabits" value="true" checked /> Hábitos</label><label><input type="checkbox" name="includeRoutines" value="true" /> Rotinas</label><button class="primary">Gerar ou rotacionar URL</button></form></article>
+    <article class="integration-card"><h2>Webhooks</h2><p>Disponível para Team/Empresarial. Entregas reais usam HTTPS, assinatura HMAC e retentativas idempotentes.</p><span class="badge premium">Recurso empresarial</span>@if(hooks.Count==0){<p>Nenhum endpoint configurado.</p>}</article>
+    <article class="integration-card"><h2>Importar e exportar</h2><p>CSV e JSON passam por prévia, validação de tamanho e detecção de duplicidade.</p><span class="badge">Em configuração segura</span><p>O processamento permanece desabilitado até que o plano e armazenamento de jobs estejam configurados.</p></article>
+  </section>
+</main>
