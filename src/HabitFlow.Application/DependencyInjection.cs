@@ -36,6 +36,7 @@ public static class DependencyInjection
         services.AddScoped<PromoteSuperAdminHandler>();
         services.AddScoped<CurrentUserContext>();
         services.AddScoped<CurrentTenantService>();
+        services.AddScoped<IntegrationService>();
         services.AddScoped<GlobalSearchService>();
         services.AddScoped<HabitPolicy>();
         services.AddScoped<HabitScheduleNormalizer>();

@@ -977,3 +977,6 @@ commit;
 
 -- HabitFlow v6.19.0: security, LGPD, audit and tenant-safe data portability
 \i database/migrations/082_v6190_security_lgpd_hardening.sql
+
+-- HabitFlow v6.19.1: API pública, webhooks e calendário
+\i database/migrations/083_v6191_public_integrations.sql
