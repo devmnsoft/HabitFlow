@@ -15,10 +15,21 @@ public sealed class ClientOnboardingRepository(SqlExecutor db) : IClientOnboardi
     }
     public Task UpdateStepAsync(Guid clientId, string step, bool completed, CancellationToken ct = default)
     {
-        var allowed = new HashSet<string> { "company_data_completed", "billing_data_completed", "first_user_invited", "first_habit_created", "plan_reviewed", "completed" };
-        if (!allowed.Contains(step)) throw new ArgumentOutOfRangeException(nameof(step));
-        var completedAt = step == "completed" && completed ? ", completed_at=now()" : string.Empty;
-        return db.ExecuteAsync($"update habitflow.client_onboarding set {step}=@completed, updated_at=now(){completedAt} where client_id=@clientId", new { clientId, completed }, ct);
+        // SQL identifiers cannot be parameters. Keep every accepted identifier in a
+        // compile-time statement instead of interpolating even allow-listed input.
+        // Besides being easier to audit, this also guarantees that reopening the
+        // onboarding clears a previously recorded completion timestamp.
+        var sql = step switch
+        {
+            "company_data_completed" => "update habitflow.client_onboarding set company_data_completed=@completed, updated_at=now() where client_id=@clientId",
+            "billing_data_completed" => "update habitflow.client_onboarding set billing_data_completed=@completed, updated_at=now() where client_id=@clientId",
+            "first_user_invited" => "update habitflow.client_onboarding set first_user_invited=@completed, updated_at=now() where client_id=@clientId",
+            "first_habit_created" => "update habitflow.client_onboarding set first_habit_created=@completed, updated_at=now() where client_id=@clientId",
+            "plan_reviewed" => "update habitflow.client_onboarding set plan_reviewed=@completed, updated_at=now() where client_id=@clientId",
+            "completed" => "update habitflow.client_onboarding set completed=@completed, completed_at=case when @completed then now() else null end, updated_at=now() where client_id=@clientId",
+            _ => throw new ArgumentOutOfRangeException(nameof(step), step, "Etapa de onboarding inválida.")
+        };
+        return db.ExecuteAsync(sql, new { clientId, completed }, ct);
     }
 }
 

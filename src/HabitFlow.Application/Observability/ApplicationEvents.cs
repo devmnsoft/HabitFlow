@@ -4,6 +4,15 @@ namespace HabitFlow.Application;
 
 public static class ApplicationEvents
 {
+    public static readonly EventId AuditIssueFound = new(618700, "audit.issue_found");
+    public static readonly EventId AuditIssueFixed = new(618701, "audit.issue_fixed");
+    public static readonly EventId ValidationFailed = new(618702, "validation.failed");
+    public static readonly EventId HabitOperationFailed = new(618703, "habit.operation_failed");
+    public static readonly EventId GoalOperationFailed = new(618704, "goal.operation_failed");
+    public static readonly EventId RoutineOperationFailed = new(618705, "routine.operation_failed");
+    public static readonly EventId NotificationOperationFailed = new(618706, "notification.operation_failed");
+    public static readonly EventId TenantAccessDenied = new(618707, "tenant.access_denied");
+    public static readonly EventId SystemHealthChecked = new(618708, "system.health_checked");
     public static readonly EventId HabitCreated = new(617610, "habit.created");
     public static readonly EventId HabitUpdated = new(617611, "habit.updated");
     public static readonly EventId HabitDeleted = new(617612, "habit.deleted");
