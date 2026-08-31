@@ -974,3 +974,6 @@ commit;
 
 -- HabitFlow v6.18.8: gamificação premium, pontos saudáveis e ranking seguro
 \i database/migrations/081_v6188_premium_gamification.sql
+
+-- HabitFlow v6.19.0: security, LGPD, audit and tenant-safe data portability
+\i database/migrations/082_v6190_security_lgpd_hardening.sql

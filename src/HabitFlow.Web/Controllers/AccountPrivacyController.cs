@@ -28,6 +28,13 @@ public sealed class AccountPrivacyController(AccountPrivacyService privacy, User
     }
 
     [HttpPost("export-request"), ValidateAntiForgeryToken] public Task<IActionResult> Export(CancellationToken ct) => Register(LgpdRequestType.Export, "Sua exportação entrou na fila para análise segura.", ct);
+    [HttpPost("export/json"), ValidateAntiForgeryToken]
+    public async Task<IActionResult> DownloadJson(CancellationToken ct)
+    {
+        if (!HasBoundIdentity()) return Forbid();
+        var content = await privacy.ExportJsonAsync(this.CurrentUserSnapshot(), ct);
+        return File(content, "application/json", $"habitflow-meus-dados-{DateTime.UtcNow:yyyyMMdd}.json");
+    }
     [HttpPost("delete-request"), ValidateAntiForgeryToken] public Task<IActionResult> Delete(CancellationToken ct) => Register(LgpdRequestType.Delete, "Sua solicitação de exclusão foi registrada e será analisada. Nenhum dado foi excluído agora.", ct);
     [HttpPost("anonymization-request"), ValidateAntiForgeryToken] public Task<IActionResult> Anonymize(CancellationToken ct) => Register(LgpdRequestType.Anonymize, "Sua solicitação de anonimização foi registrada para análise.", ct);
 

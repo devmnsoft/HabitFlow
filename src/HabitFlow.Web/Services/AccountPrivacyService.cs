@@ -14,8 +14,9 @@ public sealed class AccountPrivacyService(ILgpdRepository repository, HabitFlow.
 
     public async Task<AccountPrivacyViewModel> GetAsync(User user, CancellationToken ct)
     {
-        var consents = await repository.ListConsentsAsync(user.Id, ct);
-        var history = await repository.ListByUserAsync(user.Id, ct);
+        var clientId = user.ClientId ?? throw new InvalidOperationException("Conta sem tenant vinculado.");
+        var consents = await repository.ListConsentsAsync(clientId, user.Id, ct);
+        var history = await repository.ListByUserAsync(clientId, user.Id, ct);
         var mappedConsents = ConsentCatalog.Select(item =>
         {
             var saved = consents.FirstOrDefault(x => x.ConsentKey == item.Key);
@@ -35,4 +36,13 @@ public sealed class AccountPrivacyService(ILgpdRepository repository, HabitFlow.
     }
 
     public Task<HabitFlow.Shared.Result> RequestAsync(User user, LgpdRequestType type, CancellationToken ct) => requests.RequestAsync(user, type, ct);
+
+    public async Task<byte[]> ExportJsonAsync(User user, CancellationToken ct)
+    {
+        var clientId = user.ClientId ?? throw new InvalidOperationException("Conta sem tenant vinculado.");
+        await repository.RecordSecurityEventAsync(clientId, user.Id, "data_export.requested", "Info", ct);
+        var json = await repository.ExportOwnedDataJsonAsync(clientId, user.Id, ct);
+        await repository.RecordSecurityEventAsync(clientId, user.Id, "data_export.completed", "Info", ct);
+        return System.Text.Encoding.UTF8.GetBytes(json);
+    }
 }
