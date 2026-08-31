@@ -27,7 +27,7 @@ public sealed class PrivacyCenterV6114Tests
         var controller = Read("src/HabitFlow.Web/Controllers/AccountPrivacyController.cs");
         var repository = Read("src/HabitFlow.Infrastructure/Repositories/LgpdRepository.cs");
         Assert.Contains("CurrentUserId() != Guid.Empty && this.CurrentClientId() != Guid.Empty", controller);
-        Assert.Contains("where user_id=@userId", repository);
+        Assert.Contains("u.client_id=@clientId and r.user_id=@userId", repository);
         Assert.DoesNotContain("select * from habitflow.lgpd_requests", repository);
     }
 
