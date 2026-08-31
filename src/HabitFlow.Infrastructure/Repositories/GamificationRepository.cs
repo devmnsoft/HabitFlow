@@ -4,6 +4,7 @@ namespace HabitFlow.Infrastructure;
 
 public sealed class GamificationRepository(SqlExecutor db) : IGamificationRepository
 {
+    private const int DailyPointsLimit = 100;
     public async Task<WeeklyGoal?> CreateWeeklyGoalAsync(WeeklyGoal goal, IReadOnlyCollection<Guid> habitIds, CancellationToken ct = default)
     {
         const string createGoalSql = """
@@ -202,5 +203,43 @@ public sealed class GamificationRepository(SqlExecutor db) : IGamificationReposi
             """;
 
         return await db.ExecuteAsync(sql, freeze, ct) == 1;
+    }
+
+    public async Task<int> GrantPointsAsync(Guid clientId, Guid userId, Guid completionId, int points, DateOnly localDate, DateTime occurredAt, CancellationToken ct = default)
+    {
+        const string sql = """
+            with used as (select coalesce(sum(points),0)::int value from habitflow.gamification_points_ledger
+              where client_id=@clientId and user_id=@userId and local_date=@localDate),
+            added as (insert into habitflow.gamification_points_ledger(id,client_id,user_id,source_type,source_id,points,local_date,occurred_at,idempotency_key)
+              select gen_random_uuid(),@clientId,@userId,'completion',@completionId,least(@points,greatest(0,@limit-used.value)),@localDate,@occurredAt,'completion:'||@completionId
+              from used where used.value < @limit on conflict(client_id,user_id,idempotency_key) do nothing returning points)
+            select coalesce((select points from added),0)
+            """;
+        return await db.QuerySingleOrDefaultAsync<int>(sql,new {clientId,userId,completionId,points=Math.Max(0,points),localDate,occurredAt,limit=DailyPointsLimit},ct);
+    }
+
+    public async Task<int> RevertPointsAsync(Guid clientId, Guid userId, Guid completionId, DateTime occurredAt, CancellationToken ct = default)
+    {
+        const string sql = """
+            with original as (select coalesce(sum(points),0)::int points,min(local_date) local_date from habitflow.gamification_points_ledger
+              where client_id=@clientId and user_id=@userId and source_id=@completionId and source_type='completion'),
+            reverted as (insert into habitflow.gamification_points_ledger(id,client_id,user_id,source_type,source_id,points,local_date,occurred_at,idempotency_key)
+              select gen_random_uuid(),@clientId,@userId,'reversal',@completionId,-points,local_date,@occurredAt,'reversal:'||@completionId from original where points>0
+              on conflict(client_id,user_id,idempotency_key) do nothing returning points) select coalesce((select points from reverted),0)
+            """;
+        return await db.QuerySingleOrDefaultAsync<int>(sql,new {clientId,userId,completionId,occurredAt},ct);
+    }
+
+    public async Task<PointsBalance> GetPointsAsync(Guid clientId, Guid userId, DateOnly localDate, CancellationToken ct=default)
+    {
+        const string sql="select coalesce(sum(points),0)::int total_points,coalesce(sum(points) filter(where local_date=@localDate),0)::int today_points,@limit daily_limit from habitflow.gamification_points_ledger where client_id=@clientId and user_id=@userId";
+        return await db.QuerySingleOrDefaultAsync<PointsBalance>(sql,new{clientId,userId,localDate,limit=DailyPointsLimit},ct) ?? new(0,0,DailyPointsLimit);
+    }
+    public Task<LeaderboardPreference?> GetLeaderboardPreferenceAsync(Guid clientId,Guid userId,CancellationToken ct=default) => db.QuerySingleOrDefaultAsync<LeaderboardPreference>("select client_id,user_id,is_opted_in,scope,public_name,team_id,updated_at from habitflow.gamification_leaderboard_preferences where client_id=@clientId and user_id=@userId",new{clientId,userId},ct);
+    public Task SaveLeaderboardPreferenceAsync(LeaderboardPreference p,CancellationToken ct=default) => db.ExecuteAsync("insert into habitflow.gamification_leaderboard_preferences(client_id,user_id,is_opted_in,scope,public_name,team_id,updated_at) values(@ClientId,@UserId,@IsOptedIn,@Scope,@PublicName,@TeamId,@UpdatedAt) on conflict(client_id,user_id) do update set is_opted_in=excluded.is_opted_in,scope=excluded.scope,public_name=excluded.public_name,team_id=excluded.team_id,updated_at=excluded.updated_at",new{p.ClientId,p.UserId,p.IsOptedIn,Scope=p.Scope.ToString(),p.PublicName,p.TeamId,p.UpdatedAt},ct);
+    public async Task<IReadOnlyList<LeaderboardEntry>> ListLeaderboardAsync(Guid clientId,Guid userId,LeaderboardScope scope,CancellationToken ct=default)
+    {
+        const string sql="""select row_number() over(order by sum(l.points) desc,p.public_name)::int position,p.public_name,sum(l.points)::int points,p.scope from habitflow.gamification_leaderboard_preferences p join habitflow.gamification_points_ledger l on l.client_id=p.client_id and l.user_id=p.user_id where p.client_id=@clientId and p.is_opted_in and p.scope=@scope and (@scope<>'Team' or p.team_id=(select team_id from habitflow.gamification_leaderboard_preferences where client_id=@clientId and user_id=@userId)) group by p.user_id,p.public_name,p.scope order by points desc limit 100""";
+        return (await db.QueryAsync<LeaderboardEntry>(sql,new{clientId,userId,scope=scope.ToString()},ct)).ToList();
     }
 }

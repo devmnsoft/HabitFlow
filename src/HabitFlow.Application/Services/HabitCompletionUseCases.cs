@@ -56,7 +56,7 @@ public sealed class ProgressSnapshotService(IProgressCalendarRepository reposito
     private static DateOnly Max(DateOnly left, DateOnly right) => left > right ? left : right;
 }
 
-public sealed class CompleteHabitUseCase(IUserRepository users, IHabitRepository habits, IHabitCompletionRepository completions, IUnitOfWork unitOfWork, ProgressSnapshotService snapshots, GoalProgressEngine goals, MilestoneEvaluationService milestones, AuditService audit, UserTimeZoneService clock, IGamificationRepository gamification, AchievementService achievements, Microsoft.Extensions.Logging.ILogger<CompleteHabitUseCase> logger)
+public sealed class CompleteHabitUseCase(IUserRepository users, IHabitRepository habits, IHabitCompletionRepository completions, IUnitOfWork unitOfWork, ProgressSnapshotService snapshots, GoalProgressEngine goals, MilestoneEvaluationService milestones, AuditService audit, UserTimeZoneService clock, IGamificationRepository gamification, AchievementService achievements, HealthyPointsService points, Microsoft.Extensions.Logging.ILogger<CompleteHabitUseCase> logger)
 {
     public async Task<Result<HabitCompletionResult>> ExecuteAsync(HabitCompletionCommand command, CancellationToken ct = default)
     {
@@ -92,6 +92,7 @@ public sealed class CompleteHabitUseCase(IUserRepository users, IHabitRepository
                         mutation.CompletionId.Value, command.LocalDate, ct);
                     var completedGoal = weekly.Any(x => x.Status == "Completed");
                     await achievements.EvaluateCompletionAsync(command.ClientId, command.UserId, snapshot.CurrentStreak, completedGoal, ct);
+                    await points.GrantCompletionAsync(command.ClientId,command.UserId,mutation.CompletionId.Value,snapshot.CurrentStreak,ct);
                     foreach (var goal in weekly.Where(x => x.Status == "Completed"))
                         logger.LogInformation("gamification.goal.completed {ClientId} {UserId} {GoalId}", command.ClientId, command.UserId, goal.Id);
                 }
@@ -112,7 +113,7 @@ public sealed class CompleteHabitUseCase(IUserRepository users, IHabitRepository
             milestones?.Select(x => new MilestoneNotification(x.MilestoneId, x.Title, x.Message)).ToList() ?? []);
 }
 
-public sealed class UndoHabitCompletionUseCase(IUserRepository users, IHabitRepository habits, IHabitCompletionRepository completions, IUnitOfWork unitOfWork, ProgressSnapshotService snapshots, GoalProgressEngine goals, UserTimeZoneService clock)
+public sealed class UndoHabitCompletionUseCase(IUserRepository users, IHabitRepository habits, IHabitCompletionRepository completions, IUnitOfWork unitOfWork, ProgressSnapshotService snapshots, GoalProgressEngine goals, UserTimeZoneService clock, HealthyPointsService points)
 {
     public async Task<Result<HabitCompletionResult>> ExecuteAsync(HabitCompletionCommand command, CancellationToken ct = default)
     {
@@ -130,6 +131,7 @@ public sealed class UndoHabitCompletionUseCase(IUserRepository users, IHabitRepo
                     command.LocalDate, mutation.CompletionId, command.IdempotencyKey, command.CorrelationId,
                     snapshot.CurrentStreak, true, ct);
             await unitOfWork.CommitAsync(ct);
+            if(mutation.Deleted && mutation.CompletionId.HasValue) await points.RevertCompletionAsync(command.ClientId,command.UserId,mutation.CompletionId.Value,ct);
             return Result<HabitCompletionResult>.Success(CompleteHabitUseCase.ToResult(command.HabitId, false, snapshot, goalResults));
         }
         catch { await unitOfWork.RollbackAsync(ct); throw; }

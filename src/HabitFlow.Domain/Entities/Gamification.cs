@@ -10,3 +10,9 @@ public sealed record StreakFreeze(Guid Id, Guid ClientId, Guid UserId, Guid Habi
 public sealed record GamificationSnapshot(IReadOnlyList<WeeklyGoal> WeeklyGoals,
     IReadOnlyList<UserAchievement> Achievements, IReadOnlyList<AchievementDefinition> NextAchievements,
     int TotalCompletions, int CurrentStreak, int BestStreak);
+
+public enum LeaderboardScope { Private, Team, General }
+public sealed record PointsBalance(int TotalPoints, int TodayPoints, int DailyLimit);
+public sealed record LeaderboardPreference(Guid ClientId, Guid UserId, bool IsOptedIn, LeaderboardScope Scope,
+    string PublicName, Guid? TeamId, DateTime UpdatedAt);
+public sealed record LeaderboardEntry(int Position, string PublicName, int Points, LeaderboardScope Scope);
