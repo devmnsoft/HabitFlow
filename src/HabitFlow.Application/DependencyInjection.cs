@@ -44,6 +44,8 @@ public static class DependencyInjection
         services.AddScoped<AchievementNotificationService>();
         services.AddScoped<AchievementService>();
         services.AddScoped<GamificationService>();
+        services.AddScoped<HealthyPointsService>();
+        services.AddScoped<LeaderboardService>();
         services.AddScoped<UserChallengeService>();
         services.AddScoped<HabitOccurrenceService>();
         services.AddScoped<EffectiveHabitScheduleService>();

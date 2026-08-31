@@ -4,7 +4,8 @@ using Microsoft.Extensions.Logging;
 
 namespace HabitFlow.Application;
 
-public sealed record AchievementEvaluationContext(int TotalCompletions, int CurrentStreak, bool GoalCompleted);
+public sealed record AchievementEvaluationContext(int TotalCompletions, int CurrentStreak, bool GoalCompleted,
+    bool FirstHabitCreated=false, bool RoutineCompleted=false, bool ConsistentWeek=false, bool ReturnedAfterPause=false, bool UsedTemplate=false);
 
 public sealed class AchievementEvaluator
 {
@@ -14,10 +15,30 @@ public sealed class AchievementEvaluator
         if (context.TotalCompletions >= 1) codes.Add("first_completion");
         if (context.CurrentStreak >= 3) codes.Add("consistency_3");
         if (context.CurrentStreak >= 7) codes.Add("consistency_7");
+        if (context.CurrentStreak >= 30) codes.Add("consistency_30");
         if (context.TotalCompletions >= 30) codes.Add("total_30");
         if (context.GoalCompleted) codes.Add("weekly_goal_completed");
+        if (context.FirstHabitCreated) codes.Add("first_habit");
+        if (context.RoutineCompleted) codes.Add("routine_completed");
+        if (context.ConsistentWeek) codes.Add("consistent_week");
+        if (context.ReturnedAfterPause) codes.Add("return_after_pause");
+        if (context.UsedTemplate) codes.Add("template_used");
         return codes;
     }
+}
+
+public sealed record LeaderboardPage(LeaderboardPreference Preference, PointsBalance Balance, IReadOnlyList<LeaderboardEntry> Entries);
+public sealed class HealthyPointsService(IGamificationRepository repository, UserTimeZoneService clock, AuditService audit, ILogger<HealthyPointsService> logger)
+{
+    public async Task<int> GrantCompletionAsync(Guid clientId,Guid userId,Guid completionId,int streak,CancellationToken ct=default)
+    { var points=await repository.GrantPointsAsync(clientId,userId,completionId,10+(streak>=7?5:0),clock.Today(),DateTime.UtcNow,ct); var action=points>0?"points.granted":"gamification.limit_reached"; await audit.LogAsync(action,"Movimentação saudável de pontos",userId:userId,metadata:new{completionId,points},ct:ct); logger.LogInformation("{Event} ClientId={ClientId} UserId={UserId} Points={Points}",action,clientId,userId,points); return points; }
+    public async Task<int> RevertCompletionAsync(Guid clientId,Guid userId,Guid completionId,CancellationToken ct=default)
+    { var points=await repository.RevertPointsAsync(clientId,userId,completionId,DateTime.UtcNow,ct); if(points<0) await audit.LogAsync("points.reverted","Pontos de conclusão revertidos",userId:userId,metadata:new{completionId,points},ct:ct); return points; }
+}
+public sealed class LeaderboardService(IGamificationRepository repository,UserTimeZoneService clock,AuditService audit)
+{
+    public async Task<LeaderboardPage> GetAsync(Guid clientId,Guid userId,CancellationToken ct=default){var p=await repository.GetLeaderboardPreferenceAsync(clientId,userId,ct)??new(clientId,userId,false,LeaderboardScope.Private,"Participante",null,DateTime.UtcNow);var entries=p.IsOptedIn?await repository.ListLeaderboardAsync(clientId,userId,p.Scope,ct):[];return new(p,await repository.GetPointsAsync(clientId,userId,clock.Today(),ct),entries);}
+    public async Task SaveAsync(Guid clientId,Guid userId,bool optedIn,LeaderboardScope scope,string publicName,CancellationToken ct=default){var safe=string.IsNullOrWhiteSpace(publicName)?"Participante":publicName.Trim();if(safe.Length>40)safe=safe[..40];await repository.SaveLeaderboardPreferenceAsync(new(clientId,userId,optedIn,optedIn?scope:LeaderboardScope.Private,safe,null,DateTime.UtcNow),ct);await audit.LogAsync(optedIn?"leaderboard.joined":"leaderboard.left","Preferência do ranking atualizada",userId:userId,metadata:new{scope},ct:ct);}
 }
 
 public sealed class AchievementNotificationService(INotificationRepository notifications)

@@ -971,3 +971,6 @@ commit;
 
 -- HabitFlow v6.18.2: Coach IA seguro, eventos e uso agregado
 \i database/migrations/080_v6182_safe_contextual_assistant.sql
+
+-- HabitFlow v6.18.8: gamificação premium, pontos saudáveis e ranking seguro
+\i database/migrations/081_v6188_premium_gamification.sql
