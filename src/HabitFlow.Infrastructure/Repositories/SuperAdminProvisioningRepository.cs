@@ -5,6 +5,7 @@ namespace HabitFlow.Infrastructure;
 
 public sealed class SuperAdminProvisioningRepository(SqlExecutor db, IUnitOfWork unitOfWork) : ISuperAdminProvisioningRepository
 {
+    private static readonly Guid PlatformTenantId = Guid.Parse("61950000-0000-4000-8000-000000000001");
     private const string UserColumns = "id,name,email,password_hash,photo_url,role,account_status,risk_status,plan,plan_status,wants_premium_notice,onboarding_completed,accepted_terms_at,accepted_privacy_at,last_login_at,last_activity_at,created_at,updated_at,client_id,session_version,must_change_password";
 
     public Task<User?> FindByEmailAsync(string email, CancellationToken ct) => db.QuerySingleOrDefaultAsync<User>($"select {UserColumns} from habitflow.users where email=@email", new { email }, ct);
@@ -57,6 +58,28 @@ public sealed class SuperAdminProvisioningRepository(SqlExecutor db, IUnitOfWork
             await AuditAsync("superadmin.password_reset", userId, user.Email, actor, reason, correlationId, ct);
             await AuditAsync("superadmin.session_revoked", userId, user.Email, actor, reason, correlationId, ct);
             await unitOfWork.CommitAsync(ct);
+        }
+        catch { await unitOfWork.RollbackAsync(ct); throw; }
+    }
+
+    public async Task<(User User, bool Created, bool Updated)> BootstrapAsync(string name, string email, string document, string passwordHash, string correlationId, CancellationToken ct)
+    {
+        await unitOfWork.BeginTransactionAsync(ct);
+        try
+        {
+            var existing = await FindByEmailAsync(email, ct);
+            var id = existing?.Id ?? Guid.NewGuid();
+            var updated = existing is not null && (existing.Role != UserRole.SuperAdmin || existing.AccountStatus != AccountStatus.Active || existing.ClientId is not null);
+            if (existing is null)
+                await db.ExecuteAsync("insert into habitflow.users(id,name,email,password_hash,role,account_status,risk_status,plan,plan_status,onboarding_completed,created_at,updated_at,client_id,session_version,must_change_password) values(@id,@name,@email,@passwordHash,'SuperAdmin','Active','Normal','Free','Active',true,now(),now(),null,1,true)", new { id, name, email, passwordHash }, ct);
+            else
+                await db.ExecuteAsync("update habitflow.users set name=@name,role='SuperAdmin',account_status='Active',client_id=null,updated_at=now() where id=@id", new { id, name }, ct);
+            await db.ExecuteAsync("insert into habitflow.user_documents(id,user_id,tenant_id,document_type,document_normalized,enabled_for_login,created_at,updated_at) values(gen_random_uuid(),@id,@tenantId,'CNPJ',@document,true,now(),now()) on conflict(user_id,tenant_id,document_type) do update set document_normalized=excluded.document_normalized,enabled_for_login=true,updated_at=now()", new { id, tenantId = PlatformTenantId, document }, ct);
+            await EnsureAuthorityAsync(id, ct);
+            var action = existing is null ? "security.superadmin.bootstrap.created" : updated ? "security.superadmin.bootstrap.updated" : "security.superadmin.bootstrap.skipped_existing";
+            await AuditAsync(action, id, email, "startup", "bootstrap idempotente", correlationId, ct);
+            await unitOfWork.CommitAsync(ct);
+            return ((await FindByEmailAsync(email, ct))!, existing is null, updated);
         }
         catch { await unitOfWork.RollbackAsync(ct); throw; }
     }

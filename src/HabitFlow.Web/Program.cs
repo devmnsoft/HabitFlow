@@ -21,6 +21,7 @@ builder.Services
     .AddHabitFlowWeb(builder.Configuration, builder.Environment);
 
 builder.Services.AddHostedService<BillingStatusHostedService>();
+builder.Services.AddHostedService<SuperAdminBootstrapHostedService>();
 
 var app = builder.Build();
 

@@ -13,6 +13,28 @@ public interface ISuperAdminProvisioningRepository
     Task<User> CreateOrPromoteAsync(string name, string email, string passwordHash, bool mustChangePassword, string actor, string reason, string correlationId, CancellationToken ct);
     Task<User?> PromoteAsync(string email, string actor, string reason, string correlationId, CancellationToken ct);
     Task ResetPasswordAsync(Guid userId, string passwordHash, string actor, string reason, string correlationId, CancellationToken ct);
+    Task<(User User, bool Created, bool Updated)> BootstrapAsync(string name, string email, string document, string passwordHash, string correlationId, CancellationToken ct);
+}
+
+public sealed class SuperAdminOptions
+{
+    public const string SectionName = "SuperAdmin";
+    public string Email { get; set; } = "comercial@mnsoft.com.br";
+    public string Document { get; set; } = "18160057000113";
+    public string? InitialPassword { get; set; }
+}
+
+public sealed class SuperAdminBootstrapService(ISuperAdminProvisioningRepository repository, IPasswordHasher hasher)
+{
+    public Task<(User User, bool Created, bool Updated)> BootstrapAsync(SuperAdminOptions options, string correlationId, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(options.InitialPassword))
+            throw new InvalidOperationException("HABITFLOW_SUPERADMIN_INITIAL_PASSWORD não configurada; bootstrap seguro não executado.");
+        var document = new string(options.Document.Where(char.IsDigit).ToArray());
+        if (document.Length != 14) throw new InvalidOperationException("HABITFLOW_SUPERADMIN_DOCUMENT deve ser um CNPJ com 14 dígitos.");
+        return repository.BootstrapAsync("Super Administrador MNSOFT", PasswordRecoveryService.NormalizeEmail(options.Email), document,
+            hasher.Hash(options.InitialPassword), correlationId, ct);
+    }
 }
 
 public sealed class CreateSuperAdminHandler(ISuperAdminProvisioningRepository repository, IPasswordPolicy policy, IPasswordHasher hasher)

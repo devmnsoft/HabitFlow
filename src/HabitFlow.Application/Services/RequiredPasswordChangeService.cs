@@ -22,7 +22,7 @@ public sealed class RequiredPasswordChangeService(
         if (violation is not null) return Result.Failure("security.password_policy", violation);
 
         await users.UpdatePasswordAndSessionVersionAsync(user.Id, hasher.Hash(newPassword), ct);
-        await audit.LogAsync("required_password_changed", "Senha obrigatória alterada; sessões anteriores revogadas.", AuditSeverity.Warning, user.Id, user.Email, new { previousSessionVersion = user.SessionVersion }, ct);
+        await audit.LogAsync(user.Role == UserRole.SuperAdmin ? "security.superadmin.password_changed" : "required_password_changed", "Senha obrigatória alterada; sessões anteriores revogadas.", AuditSeverity.Warning, user.Id, user.Email, new { previousSessionVersion = user.SessionVersion }, ct);
         return Result.Success();
     }
 }
