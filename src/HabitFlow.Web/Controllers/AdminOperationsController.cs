@@ -4,33 +4,17 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HabitFlow.Web.Controllers;
-
-[Authorize(Policy = "RequireAdmin")]
+[Authorize(Policy="RequireSuperAdmin")]
 [Route("admin")]
-public sealed class AdminOperationsController(ClientOnboardingService onboarding, ClientCommunicationService communications, CurrentUserContext currentUser, ClientService clients) : Controller
+public sealed class AdminOperationsController(OperationsCenterService service, AdminAuditService audit) : Controller
 {
-    private Guid ClientId => currentUser.ClientId ?? Guid.Empty;
-    [HttpGet("onboarding")]
-    public async Task<IActionResult> Onboarding(CancellationToken ct)
-    {
-        var client = (await clients.GetByIdAsync(ClientId, ct)).Value?.Client;
-        ViewData["OnboardingTitle"] = client?.PersonType == ClientPersonType.NaturalPerson ? "Complete sua conta" : "Complete os dados da empresa";
-        return View("~/Views/Admin/Onboarding.cshtml", ClientOnboardingService.BuildChecklist(await onboarding.GetOrCreateAsync(ClientId, ct)));
-    }
-    [AllowAnonymous]
-    [HttpGet("onboarding/recover-client")] public IActionResult RecoverClient() => View("~/Views/Admin/RecoverClient.cshtml");
-    [HttpPost("onboarding/company")][ValidateAntiForgeryToken] public async Task<IActionResult> CompanyStep(CancellationToken ct){ await onboarding.CompleteCompanyAsync(ClientId, ct); TempData["Success"]="Dados da conta confirmados."; return RedirectToAction(nameof(Onboarding)); }
-    [HttpPost("onboarding/users")][ValidateAntiForgeryToken] public async Task<IActionResult> UsersStep(CancellationToken ct){ await onboarding.CompleteUsersAsync(ClientId, ct); return RedirectToAction(nameof(Onboarding)); }
-    [HttpPost("onboarding/billing")][ValidateAntiForgeryToken] public async Task<IActionResult> BillingStep(CancellationToken ct){ await onboarding.CompleteBillingAsync(ClientId, ct); await onboarding.CompletePlanAsync(ClientId, ct); return RedirectToAction(nameof(Onboarding)); }
-    [HttpPost("onboarding/finish")][ValidateAntiForgeryToken] public async Task<IActionResult> Finish(CancellationToken ct){ await onboarding.FinishAsync(ClientId, ct); TempData["Success"]="Tudo pronto. Sua conta já está preparada para uso."; return RedirectToAction(nameof(Onboarding)); }
-    [Authorize(Roles = "Admin")]
-    [HttpGet("company")] public async Task<IActionResult> Company(CancellationToken ct)
-    {
-        var result = await clients.GetByIdAsync(ClientId, ct);
-        if (result.IsFailure) { TempData["Error"] = "Não foi possível carregar os dados da conta."; return RedirectToAction(nameof(Onboarding)); }
-        return View("~/Views/Admin/Company.cshtml", result.Value!.Client);
-    }
-    [HttpPost("company/update")][ValidateAntiForgeryToken] public async Task<IActionResult> UpdateCompany(CancellationToken ct){ await onboarding.CompleteCompanyAsync(ClientId, ct); TempData["Success"]="Minha Empresa atualizada com segurança."; return RedirectToAction(nameof(Company)); }
-    [HttpPost("company/billing-data")][ValidateAntiForgeryToken] public async Task<IActionResult> BillingData(CancellationToken ct){ await onboarding.CompleteBillingAsync(ClientId, ct); TempData["Success"]="Dados de cobrança registrados sem dados sensíveis."; return RedirectToAction(nameof(Company)); }
-    [HttpGet("communications")] public async Task<IActionResult> Communications(string? type, string? status, CancellationToken ct) => View("~/Views/Admin/Communications.cshtml", await communications.ListByClientAsync(ClientId, new ClientCommunicationFilter(Type: type, Status: status), ct));
+    [HttpGet("operations")]
+    public async Task<IActionResult> Operations(CancellationToken ct) { await audit.LogAsync(this.CurrentUserSnapshot(),"operations.opened",null,null,null,ct); return View("~/Views/Admin/Operations.cshtml",await service.GetAsync(ct)); }
+    [HttpGet("system-health")]
+    public async Task<IActionResult> Health(CancellationToken ct) { var report=await service.HealthAsync(ct); await audit.LogAsync(this.CurrentUserSnapshot(),report.OverallStatus=="Operacional"?"system_health.checked":"system_health.failed",report.OverallStatus,null,null,ct); return View("~/Views/Admin/OperationsHealth.cshtml",report); }
+    [HttpGet("logs")]
+    public async Task<IActionResult> Logs([FromQuery]StructuredLogFilter filter,CancellationToken ct) { await audit.LogAsync(this.CurrentUserSnapshot(),"admin.logs_viewed",null,null,null,ct); return View("~/Views/Admin/OperationsLogs.cshtml",await service.LogsAsync(filter,ct)); }
+    [HttpGet("logs/{id:guid}")] public async Task<IActionResult> Log(Guid id,CancellationToken ct) { var item=await service.LogAsync(id,ct); return item is null?NotFound():View("~/Views/Admin/OperationLog.cshtml",item); }
+    [HttpGet("logs/export")] public async Task<IActionResult> Export([FromQuery]StructuredLogFilter filter,CancellationToken ct)=>File(await service.ExportAsync(this.CurrentUserSnapshot(),filter,ct),"text/csv; charset=utf-8",$"habitflow-logs-{DateTime.UtcNow:yyyyMMddHHmm}.csv");
+    [HttpPost("operations/alerts/{id:guid}/resolve"),ValidateAntiForgeryToken] public async Task<IActionResult> Resolve(Guid id,CancellationToken ct) { await service.ResolveAsync(this.CurrentUserSnapshot(),id,ct); TempData["Success"]="Alerta resolvido e auditado."; return RedirectToAction(nameof(Operations)); }
 }

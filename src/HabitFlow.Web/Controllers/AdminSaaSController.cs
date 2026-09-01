@@ -14,12 +14,11 @@ public sealed class AdminSaaSController : Controller
             ["tenants"] = ("Tenants", "Configuração, plano, retenção e status dos espaços de trabalho.", AdminPermissions.DashboardRead),
             ["roles"] = ("Papéis e permissões", "RBAC centralizado com escopo obrigatório por tenant.", AdminPermissions.UsersUpdateRole),
             ["audit"] = ("Auditoria", "Eventos sensíveis sanitizados e rastreáveis por correlation ID.", AdminPermissions.AuditRead),
-            ["system-health"] = ("Saúde operacional", "Banco, migrations, workers e integrações sem exposição de stack traces.", AdminPermissions.SystemHealthRead),
             ["feature-flags"] = ("Feature flags", "Liberação gradual por ambiente, tenant e plano aplicada no backend.", AdminPermissions.FeatureFlagsManage),
             ["privacy"] = ("Privacidade e LGPD", "Exportação, anonimização, consentimentos e retenção legal.", AdminPermissions.PrivacyManage)
         };
 
-    [HttpGet("{section:regex(^(tenants|roles|audit|system-health|feature-flags|privacy)$)}")]
+    [HttpGet("{section:regex(^(tenants|roles|audit|feature-flags|privacy)$)}")]
     public IActionResult Section(string section)
     {
         var page = Pages[section];
