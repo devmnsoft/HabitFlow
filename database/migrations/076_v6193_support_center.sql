@@ -1,0 +1,22 @@
+-- HabitFlow v6.19.3: atendimento SaaS, SLA e auditoria. Idempotente.
+begin;
+alter table habitflow.support_tickets_v2 add column if not exists priority varchar(12) not null default 'Medium';
+alter table habitflow.support_tickets_v2 add column if not exists assigned_user_id uuid references habitflow.users(id);
+alter table habitflow.support_tickets_v2 add column if not exists sla_due_at timestamptz;
+update habitflow.support_tickets_v2 set sla_due_at=created_at+interval '48 hours' where sla_due_at is null;
+alter table habitflow.support_tickets_v2 alter column sla_due_at set not null;
+alter table habitflow.support_tickets_v2 drop constraint if exists support_tickets_v2_category_check;
+alter table habitflow.support_tickets_v2 add constraint support_tickets_v2_category_check check(category in ('Question','Error','Billing','Access','Configuration','Suggestion','Commercial')) not valid;
+alter table habitflow.support_tickets_v2 drop constraint if exists support_tickets_v2_status_check;
+alter table habitflow.support_tickets_v2 add constraint support_tickets_v2_status_check check(status in ('Open','InAnalysis','WaitingCustomer','WaitingMnsoft','Resolved','Closed','Cancelled')) not valid;
+alter table habitflow.support_tickets_v2 drop constraint if exists support_tickets_v2_priority_check;
+alter table habitflow.support_tickets_v2 add constraint support_tickets_v2_priority_check check(priority in ('Low','Medium','High','Critical'));
+create index if not exists ix_support_tickets_v2_queue on habitflow.support_tickets_v2(client_id,status,priority,created_at desc);
+create index if not exists ix_support_tickets_v2_sla on habitflow.support_tickets_v2(status,sla_due_at) where status not in ('Closed','Cancelled');
+alter table habitflow.support_ticket_messages_v2 add column if not exists is_internal boolean not null default false;
+alter table habitflow.support_ticket_messages_v2 add constraint support_ticket_message_not_blank check(length(btrim(message))>0) not valid;
+create table if not exists habitflow.support_ticket_status_history(id uuid primary key,client_id uuid not null references habitflow.clients(id),ticket_id uuid not null references habitflow.support_tickets_v2(id) on delete cascade,actor_user_id uuid references habitflow.users(id),from_status varchar(20) not null,to_status varchar(20) not null,reason varchar(1000),created_at timestamptz not null default now());
+create index if not exists ix_support_status_history_tenant on habitflow.support_ticket_status_history(client_id,ticket_id,created_at);
+create table if not exists habitflow.support_sla_rules(priority varchar(12) primary key,business_hours integer not null check(business_hours between 1 and 720),updated_at timestamptz not null default now());
+insert into habitflow.support_sla_rules(priority,business_hours) values('Low',72),('Medium',48),('High',24),('Critical',8) on conflict(priority) do nothing;
+commit;
