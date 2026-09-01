@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HabitFlow.Web.Controllers;
-[Authorize(Roles="Admin"),Route("admin/support-settings")]
+[Authorize(Roles="SuperAdmin"),Route("admin/support/settings")]
 public sealed class AdminSupportSettingsController(IAssistanceRepository repository,WhatsAppValidator validator,ILogger<AdminSupportSettingsController> logger):Controller
 {
     [HttpGet("")] public async Task<IActionResult> Index(CancellationToken ct)=>View("~/Views/Admin/SupportSettings.cshtml",await repository.GetSupportSettingsAsync(ct));
