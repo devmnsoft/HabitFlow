@@ -1032,3 +1032,10 @@ create table if not exists habitflow.operational_alert_history(id uuid primary k
 create index if not exists ix_operational_alert_history_tenant_date on habitflow.operational_alert_history(tenant_id,occurred_at desc);
 create table if not exists habitflow.system_health_history(id uuid primary key default gen_random_uuid(),client_id uuid null references habitflow.clients(id),tenant_id uuid null references habitflow.clients(id),user_id uuid null references habitflow.users(id),check_name varchar(100) not null,status varchar(20) not null,severity varchar(16) not null,message text not null,checked_at timestamptz not null default now());
 create index if not exists ix_system_health_status_date on habitflow.system_health_history(status,checked_at desc);
+
+-- v6.19.5 SuperAdmin bootstrap (senha deliberadamente ausente; criada pela aplicação)
+insert into habitflow.clients(id,name,legal_name,document,email,plan,status,is_active,created_at,updated_at,person_type,document_type,document_raw,document_normalized,trade_name)
+values('61950000-0000-4000-8000-000000000001','MNSOFT','MNSOFT','18160057000113','comercial@mnsoft.com.br','Enterprise','Active',true,now(),now(),'LegalPerson','CNPJ','18.160.057/0001-13','18160057000113','MNSOFT')
+on conflict(id) do update set name='MNSOFT',legal_name='MNSOFT',is_active=true,updated_at=now();
+insert into habitflow.permissions(code,name,description,category) values ('Platform.Health.View','Saúde do sistema','Visualização da saúde global','Platform'),('Platform.Tenants.Block','Bloqueio de clientes','Bloqueio e desbloqueio auditado','Platform') on conflict(code) do nothing;
+insert into habitflow.role_permissions(role_id,permission_code) select r.id,p.code from habitflow.roles r cross join habitflow.permissions p where r.code='super_admin' and p.code like 'Platform.%' on conflict do nothing;

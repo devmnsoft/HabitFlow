@@ -8,6 +8,9 @@ public sealed class UserRepository(SqlExecutor db) : IUserRepository
 
     public Task<User?> GetByIdAsync(Guid id, CancellationToken ct = default) => db.QuerySingleOrDefaultAsync<User>("select " + Columns + " from habitflow.users where id = @id", new { id }, ct);
     public Task<User?> GetByEmailAsync(string email, CancellationToken ct = default) => db.QuerySingleOrDefaultAsync<User>("select " + Columns + " from habitflow.users where email = @email", new { email }, ct);
+    public Task<User?> GetByLoginAsync(string normalizedLogin, CancellationToken ct = default) => db.QuerySingleOrDefaultAsync<User>(
+        "select " + Columns.Replace(", ", ",u.").Insert(0, "u.") + " from habitflow.users u left join habitflow.user_documents d on d.user_id=u.id and d.enabled_for_login where u.email=@login or d.document_normalized=@login order by case when u.email=@login then 0 else 1 end limit 1",
+        new { login = normalizedLogin }, ct);
     public async Task<IReadOnlyList<User>> SearchAsync(string? term, CancellationToken ct = default) => (await db.QueryAsync<User>("select " + Columns + " from habitflow.users where @term is null or email ilike @like or name ilike @like order by created_at desc", new { term = string.IsNullOrWhiteSpace(term) ? null : term, like = "%" + term + "%" }, ct)).ToList();
     public Task CreateAsync(User u, CancellationToken ct = default) => db.ExecuteAsync("insert into habitflow.users(id,name,email,password_hash,photo_url,role,account_status,risk_status,plan,plan_status,wants_premium_notice,onboarding_completed,accepted_terms_at,accepted_privacy_at,last_login_at,last_activity_at,created_at,updated_at,client_id) values(@Id,@Name,@Email,@PasswordHash,@PhotoUrl,@Role,@AccountStatus,@RiskStatus,@Plan,@PlanStatus,@WantsPremiumNotice,@OnboardingCompleted,@AcceptedTermsAt,@AcceptedPrivacyAt,@LastLoginAt,@LastActivityAt,@CreatedAt,@UpdatedAt,@ClientId)", ToParameters(u), ct);
     public Task UpdateAsync(User u, CancellationToken ct = default) => db.ExecuteAsync("update habitflow.users set name=@Name, photo_url=@PhotoUrl, role=@Role, account_status=@AccountStatus, risk_status=@RiskStatus, plan=@Plan, plan_status=@PlanStatus, updated_at=@UpdatedAt, client_id=@ClientId where id=@Id", ToParameters(u), ct);
@@ -39,4 +42,6 @@ public sealed class UserRepository(SqlExecutor db) : IUserRepository
     };
 
     public Task AddLoginAttemptAsync(LoginAttempt a, CancellationToken ct = default) => db.ExecuteAsync("insert into habitflow.login_attempts(id,email,success,ip_address,user_agent,created_at) values(@Id,@Email,@Success,@IpAddress,@UserAgent,@CreatedAt)", a, ct);
+    public Task<int> CountRecentFailedLoginsAsync(string login, DateTime sinceUtc, CancellationToken ct = default) =>
+        db.QuerySingleOrDefaultAsync<int>("select count(*)::int from habitflow.login_attempts where email=@login and not success and created_at>=@sinceUtc", new { login, sinceUtc }, ct);
 }

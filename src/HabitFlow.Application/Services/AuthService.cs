@@ -42,24 +42,41 @@ public sealed class AuthService(IUserRepository users, IPasswordHasher hasher, A
     {
         try
         {
-            logger.LogInformation("Tentativa de login para {Email}", dto.Email);
-            var email = dto.Email.ToLowerInvariant();
-            var user = await users.GetByEmailAsync(email, ct);
+            var login = NormalizeLogin(dto.Email);
+            logger.LogInformation("Login attempt LoginKind={LoginKind}", login.Contains('@') ? "email" : "document");
+            var recordedLogin = MaskLogin(login);
+            if (await users.CountRecentFailedLoginsAsync(recordedLogin, DateTime.UtcNow.AddMinutes(-15), ct) >= 5)
+                return Result<User>.Failure("login.invalid", "E-mail, CPF/CNPJ ou senha inválidos.");
+            var user = await users.GetByLoginAsync(login, ct);
             var ok = user is not null && hasher.Verify(dto.Password, user.PasswordHash);
-            await users.AddLoginAttemptAsync(new LoginAttempt(Guid.NewGuid(), email, ok, ip, userAgent, DateTime.UtcNow), ct);
-            await audit.LogAsync(ok ? "login_success" : "login_failed", "Tentativa de login", ok ? AuditSeverity.Info : AuditSeverity.Warning, user?.Id, user?.Email ?? email, null, ct);
-            return ok ? Result<User>.Success(user!) : Result<User>.Failure("login.invalid", "E-mail ou senha inválidos.");
+            var auditLogin = user is null ? recordedLogin : MaskLogin(user.Email);
+            await users.AddLoginAttemptAsync(new LoginAttempt(Guid.NewGuid(), auditLogin, ok, ip, userAgent, DateTime.UtcNow), ct);
+            var action = user?.Role == UserRole.SuperAdmin
+                ? (ok ? "security.superadmin.login.succeeded" : "security.superadmin.login.failed")
+                : (ok ? "login_success" : "login_failed");
+            await audit.LogAsync(action, "Tentativa de login", ok ? AuditSeverity.Info : AuditSeverity.Warning, user?.Id, auditLogin, null, ct);
+            return ok ? Result<User>.Success(user!) : Result<User>.Failure("login.invalid", "E-mail, CPF/CNPJ ou senha inválidos.");
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, PostgresErrorHelper.IsDatabaseMissing(ex) ? PostgresErrorHelper.DatabaseMissingLogMessage : "Erro ao realizar login para {Email}", dto.Email);
+            logger.LogError(ex, PostgresErrorHelper.IsDatabaseMissing(ex) ? PostgresErrorHelper.DatabaseMissingLogMessage : "Erro ao realizar login LoginKind={LoginKind}", NormalizeLogin(dto.Email).Contains('@') ? "email" : "document");
             if (!PostgresErrorHelper.IsConnectionFailure(ex))
             {
-                await audit.LogAsync("login_error", "Erro ao realizar login.", AuditSeverity.Error, null, dto.Email, new { dto.Email }, ct);
+                await audit.LogAsync("login_error", "Erro ao realizar login.", AuditSeverity.Error, null, MaskLogin(NormalizeLogin(dto.Email)), null, ct);
             }
             return PostgresErrorHelper.IsConnectionFailure(ex)
                 ? Result<User>.Failure(PostgresErrorHelper.BuildErrorCode(ex), PostgresErrorHelper.ToPublicUserMessage(ex, false))
                 : Result<User>.Failure("auth.login_error", "Não foi possível realizar o login agora.");
         }
     }
+
+    public static string NormalizeLogin(string value)
+    {
+        var trimmed = (value ?? string.Empty).Trim().ToLowerInvariant();
+        return trimmed.Contains('@') ? trimmed : new string(trimmed.Where(char.IsDigit).ToArray());
+    }
+
+    private static string MaskLogin(string value) => value.Contains('@')
+        ? $"{value[0]}***{value[value.IndexOf('@')..]}"
+        : value.Length <= 4 ? "***" : $"***{value[^4..]}";
 }

@@ -34,6 +34,7 @@ public static class DependencyInjection
         services.AddScoped<CreateDevelopmentSuperAdminHandler>();
         services.AddScoped<ResetSuperAdminPasswordHandler>();
         services.AddScoped<PromoteSuperAdminHandler>();
+        services.AddScoped<SuperAdminBootstrapService>();
         services.AddScoped<CurrentUserContext>();
         services.AddScoped<CurrentTenantService>();
         services.AddScoped<IntegrationService>();
