@@ -1,5 +1,6 @@
 using HabitFlow.Application;
 using HabitFlow.Domain;
+using Xunit;
 
 namespace HabitFlow.Tests;
 

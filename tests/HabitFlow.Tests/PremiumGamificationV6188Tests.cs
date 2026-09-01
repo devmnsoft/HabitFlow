@@ -1,4 +1,5 @@
 using HabitFlow.Application;
+using Xunit;
 namespace HabitFlow.Tests;
 public sealed class PremiumGamificationV6188Tests
 {

@@ -2,6 +2,7 @@ using System.Text.Json;
 using HabitFlow.Application;
 using HabitFlow.Domain;
 using HabitFlow.Domain.Billing;
+using Xunit;
 
 namespace HabitFlow.Tests;
 
@@ -9,10 +10,12 @@ public sealed class BillingV6179Tests
 {
     private static readonly string Root = RepositoryRootLocator.Find();
 
+    public static string Root1 => Root;
+
     [Fact]
     public void Default_configuration_is_manual_and_checkout_is_disabled()
     {
-        using var json = JsonDocument.Parse(File.ReadAllText(Path.Combine(Root, "src/HabitFlow.Web/appsettings.json")),
+        using var json = JsonDocument.Parse(File.ReadAllText(Path.Combine(Root1, "src/HabitFlow.Web/appsettings.json")),
             new JsonDocumentOptions { CommentHandling = JsonCommentHandling.Skip });
         var payments = json.RootElement.GetProperty("Payments");
         Assert.False(payments.GetProperty("Enabled").GetBoolean());
@@ -70,7 +73,7 @@ public sealed class BillingV6179Tests
     [Fact]
     public void Migration_is_additive_tenant_aware_and_idempotent()
     {
-        var sql = File.ReadAllText(Path.Combine(Root, "database/migrations/078_v6179_real_billing_commercial.sql"));
+        var sql = File.ReadAllText(Path.Combine(Root1, "database/migrations/078_v6179_real_billing_commercial.sql"));
         Assert.Contains("create table if not exists habitflow.billing_manual_adjustments", sql, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("create table if not exists habitflow.billing_entitlement_usage", sql, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("client_id uuid not null", sql, StringComparison.OrdinalIgnoreCase);
@@ -81,7 +84,7 @@ public sealed class BillingV6179Tests
     [Fact]
     public void Plans_offer_a_real_contact_action_when_checkout_is_unavailable()
     {
-        var view = File.ReadAllText(Path.Combine(Root, "src/HabitFlow.Web/Views/Plans/Partials/_CommercialPlanCard.cshtml"));
+        var view = File.ReadAllText(Path.Combine(Root1, "src/HabitFlow.Web/Views/Plans/Partials/_CommercialPlanCard.cshtml"));
         Assert.Contains("checkoutEnabled", view);
         Assert.Contains("mailto:comercial@mnsoft.com.br", view);
         Assert.Contains("Falar com a MNSOFT", view);

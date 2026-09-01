@@ -6,6 +6,11 @@ internal static class RepositoryRootLocator
     public static string Root => Cached.Value;
     public static string PathTo(params string[] segments) => Path.Combine([Root, .. segments]);
 
+    internal static string Find()
+    {
+        throw new NotImplementedException();
+    }
+
     private static string Locate()
     {
         var workspace = Environment.GetEnvironmentVariable("GITHUB_WORKSPACE");

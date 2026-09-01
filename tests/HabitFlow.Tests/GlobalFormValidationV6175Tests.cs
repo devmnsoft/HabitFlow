@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using HabitFlow.Web.Models;
+using Xunit;
 
 namespace HabitFlow.Tests;
 
