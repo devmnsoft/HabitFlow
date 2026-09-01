@@ -1,0 +1,4 @@
+@model HabitFlow.Domain.StructuredLogRow
+@{ ViewData["Title"]="Detalhe do log"; }
+@section Styles { <link rel="stylesheet" href="~/css/operations-v6194.css" asp-append-version="true" /> }
+<main class="ops"><a href="/admin/logs">← Voltar aos logs</a><section class="ops-panel log-detail"><span class="risk">@Model.Severity</span><h1>@Model.EventName</h1><dl><dt>Data UTC</dt><dd>@Model.CreatedAt.ToString("O")</dd><dt>Cliente</dt><dd>@(Model.ClientName??"Plataforma")</dd><dt>Usuário</dt><dd>@(Model.UserName??"Sistema")</dd><dt>Módulo</dt><dd>@Model.Module</dd><dt>Correlation ID</dt><dd><code>@Model.CorrelationId</code></dd><dt>Mensagem sanitizada</dt><dd>@Model.Message</dd><dt>Detalhes sanitizados</dt><dd><pre>@Model.Details</pre></dd></dl></section></main>

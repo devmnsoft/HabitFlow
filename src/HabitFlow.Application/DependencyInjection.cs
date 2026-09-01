@@ -186,6 +186,7 @@ public static class DependencyInjection
         services.AddScoped<CustomerHealthService>();
         services.AddScoped<SchemaMigrationStatusService>();
         services.AddScoped<SuperAdminOperationalService>();
+        services.AddScoped<OperationsCenterService>();
         services.AddHttpClient<IPaymentProviderService, MercadoPagoService>();
         services.AddHttpClient<TelegramService>();
         return services;
