@@ -17,6 +17,7 @@ const reviewedFindings = new Map([
   ["src/HabitFlow.Web/appsettings.Docker.json|SEC_CONNECTION_PASSWORD", "local PostgreSQL fixture"],
   ["src/HabitFlow.Web/appsettings.Production.example.json|SEC_CONNECTION_PASSWORD", "invalid production example"],
   ["src/HabitFlow.Web/appsettings.json|SEC_CONNECTION_PASSWORD", "legacy local default scheduled for removal"],
+  ["src/HabitFlow.Web/Services/SuperAdminBootstrapHostedService.cs|SEC_PASSWORD_LITERAL", "explicit Development-only bootstrap fallback required by product policy"],
   ["tests/HabitFlow.Tests/WindowsOperationsTests.cs|SEC_CONNECTION_PASSWORD", "assertion fixture"],
   [".github/workflows/dotnet-ci.yml|credencial potencial", "ephemeral PostgreSQL CI fixture"],
   ["docker-compose.yml|credencial potencial", "local-only PostgreSQL fixture"],

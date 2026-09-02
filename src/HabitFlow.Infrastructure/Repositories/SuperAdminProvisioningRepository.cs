@@ -62,24 +62,43 @@ public sealed class SuperAdminProvisioningRepository(SqlExecutor db, IUnitOfWork
         catch { await unitOfWork.RollbackAsync(ct); throw; }
     }
 
-    public async Task<(User User, bool Created, bool Updated)> BootstrapAsync(string name, string email, string document, string passwordHash, string correlationId, CancellationToken ct)
+    public async Task<(User User, bool Created, bool Updated, bool PasswordHashUpdated)> BootstrapAsync(string name, string email, string document, string? passwordHash, string correlationId, CancellationToken ct)
     {
         await unitOfWork.BeginTransactionAsync(ct);
         try
         {
-            var existing = await FindByEmailAsync(email, ct);
+            var matches = (await db.QueryAsync<User>($"""
+                select {string.Join(',', UserColumns.Split(',').Select(c => "u." + c))}
+                from habitflow.users u
+                left join habitflow.user_documents d on d.user_id=u.id and d.enabled_for_login
+                where lower(u.email)=@email or d.document_normalized=@document
+                for update of u
+                """, new { email, document }, ct)).ToList();
+            if (matches.Select(x => x.Id).Distinct().Count() > 1)
+                throw new InvalidOperationException("Bootstrap MNSOFT encontrou e-mail e CNPJ vinculados a usuários diferentes; correção manual necessária.");
+            var existing = matches.GroupBy(x => x.Id).Select(x => x.First()).SingleOrDefault();
             var id = existing?.Id ?? Guid.NewGuid();
-            var updated = existing is not null && (existing.Role != UserRole.SuperAdmin || existing.AccountStatus != AccountStatus.Active || existing.ClientId is not null);
+            var passwordHashUpdated = passwordHash is not null;
+            var updated = existing is not null && (existing.Role != UserRole.SuperAdmin || existing.AccountStatus != AccountStatus.Active || existing.ClientId is not null ||
+                !string.Equals(existing.Email, email, StringComparison.Ordinal) || passwordHashUpdated);
             if (existing is null)
-                await db.ExecuteAsync("insert into habitflow.users(id,name,email,password_hash,role,account_status,risk_status,plan,plan_status,onboarding_completed,created_at,updated_at,client_id,session_version,must_change_password) values(@id,@name,@email,@passwordHash,'SuperAdmin','Active','Normal','Free','Active',true,now(),now(),null,1,true)", new { id, name, email, passwordHash }, ct);
+                await db.ExecuteAsync("insert into habitflow.users(id,name,email,password_hash,role,account_status,risk_status,plan,plan_status,onboarding_completed,created_at,updated_at,client_id,session_version,must_change_password) values(@id,@name,@email,@passwordHash,'SuperAdmin','Active','Normal','Free','Active',true,now(),now(),null,1,true)", new { id, name, email, passwordHash = passwordHash! }, ct);
             else
-                await db.ExecuteAsync("update habitflow.users set name=@name,role='SuperAdmin',account_status='Active',client_id=null,updated_at=now() where id=@id", new { id, name }, ct);
+                await db.ExecuteAsync("""
+                    update habitflow.users set name=@name,email=@email,role='SuperAdmin',account_status='Active',client_id=null,
+                    password_hash=coalesce(@passwordHash,password_hash),
+                    must_change_password=case when @passwordHash is null then must_change_password else true end,
+                    session_version=case when @passwordHash is null then session_version else session_version+1 end,updated_at=now()
+                    where id=@id
+                    """, new { id, name, email, passwordHash }, ct);
             await db.ExecuteAsync("insert into habitflow.user_documents(id,user_id,tenant_id,document_type,document_normalized,enabled_for_login,created_at,updated_at) values(gen_random_uuid(),@id,@tenantId,'CNPJ',@document,true,now(),now()) on conflict(user_id,tenant_id,document_type) do update set document_normalized=excluded.document_normalized,enabled_for_login=true,updated_at=now()", new { id, tenantId = PlatformTenantId, document }, ct);
             await EnsureAuthorityAsync(id, ct);
             var action = existing is null ? "security.superadmin.bootstrap.created" : updated ? "security.superadmin.bootstrap.updated" : "security.superadmin.bootstrap.skipped_existing";
             await AuditAsync(action, id, email, "startup", "bootstrap idempotente", correlationId, ct);
+            if (passwordHashUpdated)
+                await AuditAsync("security.superadmin.bootstrap.password_hash_updated", id, email, "startup", "hash ausente ou inválido", correlationId, ct);
             await unitOfWork.CommitAsync(ct);
-            return ((await FindByEmailAsync(email, ct))!, existing is null, updated);
+            return ((await FindByEmailAsync(email, ct))!, existing is null, updated, passwordHashUpdated);
         }
         catch { await unitOfWork.RollbackAsync(ct); throw; }
     }

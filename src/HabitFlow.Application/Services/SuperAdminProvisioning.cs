@@ -13,7 +13,7 @@ public interface ISuperAdminProvisioningRepository
     Task<User> CreateOrPromoteAsync(string name, string email, string passwordHash, bool mustChangePassword, string actor, string reason, string correlationId, CancellationToken ct);
     Task<User?> PromoteAsync(string email, string actor, string reason, string correlationId, CancellationToken ct);
     Task ResetPasswordAsync(Guid userId, string passwordHash, string actor, string reason, string correlationId, CancellationToken ct);
-    Task<(User User, bool Created, bool Updated)> BootstrapAsync(string name, string email, string document, string passwordHash, string correlationId, CancellationToken ct);
+    Task<(User User, bool Created, bool Updated, bool PasswordHashUpdated)> BootstrapAsync(string name, string email, string document, string? passwordHash, string correlationId, CancellationToken ct);
 }
 
 public sealed class SuperAdminOptions
@@ -26,14 +26,25 @@ public sealed class SuperAdminOptions
 
 public sealed class SuperAdminBootstrapService(ISuperAdminProvisioningRepository repository, IPasswordHasher hasher)
 {
-    public Task<(User User, bool Created, bool Updated)> BootstrapAsync(SuperAdminOptions options, string correlationId, CancellationToken ct = default)
+    public async Task<(User User, bool Created, bool Updated, bool PasswordHashUpdated)> BootstrapAsync(SuperAdminOptions options, string correlationId, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(options.InitialPassword))
             throw new InvalidOperationException("HABITFLOW_SUPERADMIN_INITIAL_PASSWORD não configurada; bootstrap seguro não executado.");
         var document = new string(options.Document.Where(char.IsDigit).ToArray());
         if (document.Length != 14) throw new InvalidOperationException("HABITFLOW_SUPERADMIN_DOCUMENT deve ser um CNPJ com 14 dígitos.");
-        return repository.BootstrapAsync("Super Administrador MNSOFT", PasswordRecoveryService.NormalizeEmail(options.Email), document,
-            hasher.Hash(options.InitialPassword), correlationId, ct);
+        var email = PasswordRecoveryService.NormalizeEmail(options.Email);
+        var existing = await repository.FindByEmailAsync(email, ct);
+        var passwordHash = existing is null || !HasValidPasswordHash(existing.PasswordHash, options.InitialPassword)
+            ? hasher.Hash(options.InitialPassword)
+            : null;
+        return await repository.BootstrapAsync("Super Administrador MNSOFT", email, document,
+            passwordHash, correlationId, ct);
+    }
+
+    private bool HasValidPasswordHash(string hash, string password)
+    {
+        try { _ = hasher.Verify(password, hash); return true; }
+        catch { return false; }
     }
 }
 

@@ -46,16 +46,24 @@ public sealed class AuthService(IUserRepository users, IPasswordHasher hasher, A
             logger.LogInformation("Login attempt LoginKind={LoginKind}", login.Contains('@') ? "email" : "document");
             var recordedLogin = MaskLogin(login);
             if (await users.CountRecentFailedLoginsAsync(recordedLogin, DateTime.UtcNow.AddMinutes(-15), ct) >= 5)
-                return Result<User>.Failure("login.invalid", "E-mail, CPF/CNPJ ou senha inválidos.");
+                return Result<User>.Failure("login.invalid", "Login ou senha inválidos.");
             var user = await users.GetByLoginAsync(login, ct);
-            var ok = user is not null && hasher.Verify(dto.Password, user.PasswordHash);
+            var passwordOk = false;
+            if (user is not null)
+            {
+                try { passwordOk = hasher.Verify(dto.Password, user.PasswordHash); }
+                catch { logger.LogWarning("Login password hash validation failed UserId={UserId} LoginKind={LoginKind}", user.Id, login.Contains('@') ? "email" : "document"); }
+            }
+            var ok = user is not null && user.AccountStatus == AccountStatus.Active && passwordOk;
             var auditLogin = user is null ? recordedLogin : MaskLogin(user.Email);
             await users.AddLoginAttemptAsync(new LoginAttempt(Guid.NewGuid(), auditLogin, ok, ip, userAgent, DateTime.UtcNow), ct);
             var action = user?.Role == UserRole.SuperAdmin
                 ? (ok ? "security.superadmin.login.succeeded" : "security.superadmin.login.failed")
                 : (ok ? "login_success" : "login_failed");
             await audit.LogAsync(action, "Tentativa de login", ok ? AuditSeverity.Info : AuditSeverity.Warning, user?.Id, auditLogin, null, ct);
-            return ok ? Result<User>.Success(user!) : Result<User>.Failure("login.invalid", "E-mail, CPF/CNPJ ou senha inválidos.");
+            if (ok && user!.Role == UserRole.SuperAdmin && user.MustChangePassword)
+                await audit.LogAsync("security.superadmin.password_change_required", "Troca obrigatória de senha solicitada.", AuditSeverity.Warning, user.Id, auditLogin, null, ct);
+            return ok ? Result<User>.Success(user!) : Result<User>.Failure("login.invalid", "Login ou senha inválidos.");
         }
         catch (Exception ex)
         {
