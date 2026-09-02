@@ -1034,6 +1034,13 @@ create table if not exists habitflow.system_health_history(id uuid primary key d
 create index if not exists ix_system_health_status_date on habitflow.system_health_history(status,checked_at desc);
 
 -- v6.19.5 SuperAdmin bootstrap (senha deliberadamente ausente; criada pela aplicação)
+create table if not exists habitflow.user_documents (
+ id uuid primary key, user_id uuid not null references habitflow.users(id), tenant_id uuid not null references habitflow.clients(id),
+ document_type varchar(4) not null, document_normalized varchar(14) not null, enabled_for_login boolean not null default false,
+ created_at timestamptz not null default now(), updated_at timestamptz not null default now(),
+ constraint ck_user_document_type check((document_type='CPF' and length(document_normalized)=11) or (document_type='CNPJ' and length(document_normalized)=14)),
+ constraint ck_user_document_digits check(document_normalized ~ '^[0-9]+$'), unique(user_id,tenant_id,document_type));
+create unique index if not exists ux_user_documents_login on habitflow.user_documents(document_normalized,tenant_id) where enabled_for_login;
 insert into habitflow.clients(id,name,legal_name,document,email,plan,status,is_active,created_at,updated_at,person_type,document_type,document_raw,document_normalized,trade_name)
 values('61950000-0000-4000-8000-000000000001','MNSOFT','MNSOFT','18160057000113','comercial@mnsoft.com.br','Enterprise','Active',true,now(),now(),'LegalPerson','CNPJ','18.160.057/0001-13','18160057000113','MNSOFT')
 on conflict(id) do update set name='MNSOFT',legal_name='MNSOFT',is_active=true,updated_at=now();

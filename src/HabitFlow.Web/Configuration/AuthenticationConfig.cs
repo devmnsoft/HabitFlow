@@ -18,6 +18,14 @@ public static class AuthenticationConfig
             options.Cookie.SameSite = SameSiteMode.Lax;
             options.Cookie.SecurePolicy = environment.IsDevelopment() ? CookieSecurePolicy.SameAsRequest : CookieSecurePolicy.Always;
             options.ExpireTimeSpan = TimeSpan.FromHours(configuration.GetValue("Authentication:CookieHours", 8));
+            options.Events.OnRedirectToAccessDenied = context =>
+            {
+                var logger = context.HttpContext.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger("HabitFlow.Security");
+                logger.LogWarning("security.access_denied UserId={UserId} Path={Path}",
+                    context.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "anonymous", context.Request.Path.Value);
+                context.Response.Redirect(context.RedirectUri);
+                return Task.CompletedTask;
+            };
             options.Events.OnValidatePrincipal = async context =>
             {
                 var idText = context.Principal?.FindFirstValue(ClaimTypes.NameIdentifier);
