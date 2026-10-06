@@ -20,4 +20,17 @@ public sealed class AuditService(IAuditRepository repo, LogSanitizer sanitizer, 
             logger.LogError(ex, "Falha ao registrar auditoria de sistema para {Action}", action);
         }
     }
+
+    public async Task LogRequiredAsync(string action, string message, AuditSeverity severity = AuditSeverity.Info, Guid? userId = null, string? email = null, object? metadata = null, CancellationToken ct = default)
+    {
+        try
+        {
+            await repo.AddSystemAsync(new SystemAuditLog(Guid.NewGuid(), userId, email, severity, "web", action, sanitizer.Sanitize(message), metadata is null ? null : sanitizer.SanitizeJson(metadata), null, null, DateTime.UtcNow, false), ct);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Falha ao persistir auditoria obrigatória para {Action}", action);
+            throw;
+        }
+    }
 }

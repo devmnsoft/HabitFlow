@@ -9,7 +9,7 @@ with required_tables(table_name) as (values
  ('ix_habitflow_users_email'),('ix_habitflow_users_role'),('ix_habitflow_users_account_status'),
  ('ix_habitflow_users_plan'),('ix_habitflow_habits_user_id'),('ix_habitflow_habit_completions_user_id'),
  ('ix_habitflow_support_tickets_user_id'),('ix_habitflow_lgpd_requests_user_id'),
- ('ix_habitflow_system_audit_logs_created_at'),('ix_habitflow_admin_audit_logs_created_at'),('ix_habitflow_plans_code'),('ix_habitflow_subscriptions_user_id'),('ix_habitflow_subscriptions_status'),('ix_habitflow_subscriptions_provider_payment_id'),('ix_habitflow_payment_transactions_user_id'),('ix_habitflow_payment_transactions_provider_payment_id'),('ix_habitflow_payment_webhook_events_event_id'),('ix_habitflow_payment_webhook_events_received_at'),('ix_habitflow_habit_objectives_slug'),('ix_habitflow_habit_templates_objective_id'),('ix_habitflow_habit_templates_category'),('ix_habitflow_habit_templates_is_active')
+ ('ix_habitflow_system_audit_logs_created_at'),('ix_habitflow_admin_audit_logs_created_at'),('ix_habitflow_plans_code'),('ix_habitflow_subscriptions_user_id'),('ix_habitflow_subscriptions_status'),('ix_habitflow_subscriptions_provider_payment_id'),('ix_habitflow_payment_transactions_user_id'),('ix_habitflow_payment_transactions_provider_payment_id'),('ix_habitflow_payment_webhook_events_event_id'),('ix_habitflow_payment_webhook_events_received_at'),('ix_habitflow_habit_objectives_slug'),('ix_habitflow_habit_templates_objective_id'),('ix_habitflow_habit_templates_category'),('ix_habitflow_habit_templates_is_active'),('ux_habitflow_user_invites_pending_client_email'),('ix_habitflow_user_invites_client_status_expiry'),('ix_habitflow_users_client_joined_at')
 ), required_constraints(constraint_name) as (values
  ('ck_habitflow_users_role'),('ck_habitflow_users_account_status'),('ck_habitflow_users_risk_status'),
  ('ck_habitflow_users_plan'),('ck_habitflow_users_plan_status'),('uq_habitflow_habit_completions_habit_date'),
@@ -42,6 +42,8 @@ begin
  if exists(select 1 from information_schema.tables where table_schema='public' and table_name in ('users','habits','habit_completions','support_tickets','support_messages','system_audit_logs','admin_audit_logs','system_settings','lgpd_requests','billing_events','notifications','user_reports','plans','subscriptions','payment_transactions','payment_webhook_events','payment_audit_logs','habit_objectives','habit_templates')) then errors := array_append(errors,'há tabelas HabitFlow indevidas no schema public'); end if;
  if exists(with r(table_name) as (values ('users'),('habits'),('habit_completions'),('support_tickets'),('support_messages'),('system_audit_logs'),('admin_audit_logs'),('system_settings'),('lgpd_requests'),('billing_events'),('billing_customers'),('billing_subscriptions'),('billing_checkout_sessions'),('billing_invoices'),('billing_payments'),('billing_webhook_events'),('billing_audit_events'),('notifications'),('habit_objectives'),('habit_templates'),('user_reports'),('plans'),('subscriptions'),('payment_transactions'),('payment_webhook_events'),('payment_audit_logs')) select 1 from r left join information_schema.tables t on t.table_schema='habitflow' and t.table_name=r.table_name where t.table_name is null) then errors := array_append(errors,'há tabelas obrigatórias ausentes em habitflow'); end if;
  if (select count(*) from habitflow.system_settings where key in ('companyName','companyLegalName','companyCnpj','commercialEmail','supportEmail')) < 5 then errors := array_append(errors,'settings mínimos MNSOFT ausentes'); end if;
+ if exists(select 1 from (values ('user_invitations'),('users_limit')) req(code)
+  where not exists(select 1 from habitflow.feature_catalog f where f.code=req.code and f.implementation_status='Implemented' and f.is_marketable and not f.is_public)) then errors := array_append(errors,'features internas user_invitations/users_limit ausentes ou não habilitadas para autorização interna'); end if;
  if array_length(errors,1) is not null then raise exception 'Validação HabitFlow falhou: %', array_to_string(errors,'; '); end if;
 end $$;
 
@@ -87,6 +89,10 @@ select to_regclass('habitflow.plan_prices') as plan_prices,
        to_regclass('habitflow.plan_features') as plan_features,
        to_regclass('habitflow.roles') as roles,
        to_regclass('habitflow.permissions') as permissions;
+select 'habitflow.users.client_joined_at' as required_column,
+       exists(select 1 from information_schema.columns where table_schema='habitflow' and table_name='users' and column_name='client_joined_at') as exists;
+select 'pending_invites_unique_per_tenant_email' as required_index,
+       exists(select 1 from pg_indexes where schemaname='habitflow' and indexname='ux_habitflow_user_invites_pending_client_email') as exists;
 
 -- v6.3 personal journey: every object must resolve inside habitflow.
 select table_name, to_regclass('habitflow.'||table_name) is not null as exists from (values ('user_goals'),('goal_habits'),('milestones'),('user_milestones'),('habit_reminders'),('user_summary_preferences'),('shared_routines'),('shared_routine_habits'),('shared_routine_members'),('shared_goals'),('shared_goal_members'),('shared_goal_progress'),('product_events')) v(table_name);

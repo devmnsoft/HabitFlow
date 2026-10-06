@@ -1,191 +1,54 @@
-\set ON_ERROR_STOP on
--- HabitFlow v6.8.2.1-DatabaseBootstrapParity-PlanSeedIntegrity
--- BOOTSTRAP EXCLUSIVO PARA BANCO NOVO. Bancos existentes usam
--- scripts/database/run-migrations.sh. Nunca execute os dois no mesmo banco.
--- HabitFlow - Script completo de produção
--- Schema oficial: habitflow
--- Este script não cria tabelas no schema public
--- Este script não cria usuários de teste
--- Execute em banco PostgreSQL limpo ou controlado
+-- HabitFlow complete schema generated from the ordered migration runner.
+-- Do not add schema changes here; update database/migrations and database/migrate.sql.
 
+-- BEGIN include database/migrations/001_create_schema.sql
 create schema if not exists habitflow;
+-- END include database/migrations/001_create_schema.sql
 
-create table if not exists habitflow.users (
-    id uuid primary key,
-    name varchar(150) not null,
-    email varchar(200) not null unique,
-    password_hash text not null,
-    photo_url text null,
-    role varchar(50) not null default 'User',
-    account_status varchar(50) not null default 'Active',
-    risk_status varchar(50) not null default 'Normal',
-    plan varchar(50) not null default 'Free',
-    plan_status varchar(50) not null default 'Active',
-    wants_premium_notice boolean not null default false,
-    onboarding_completed boolean not null default false,
-    accepted_terms_at timestamp null,
-    accepted_privacy_at timestamp null,
-    last_login_at timestamp null,
-    last_activity_at timestamp null,
-    created_at timestamp not null default now(),
-    updated_at timestamp not null default now(),
-    constraint ck_habitflow_users_role check (role in ('User', 'Admin')),
-    constraint ck_habitflow_users_account_status check (account_status in ('Active', 'Blocked', 'Suspended', 'DeletedPending')),
-    constraint ck_habitflow_users_risk_status check (risk_status in ('Normal', 'Watchlist', 'Suspicious')),
-    constraint ck_habitflow_users_plan check (plan in ('Free', 'Premium')),
-    constraint ck_habitflow_users_plan_status check (plan_status in ('Active', 'Trial', 'Canceled', 'Inactive', 'PastDue'))
-);
+-- BEGIN include database/migrations/002_create_users.sql
+create table if not exists habitflow.users(id uuid primary key,name varchar(150) not null,email varchar(200) unique not null,password_hash text not null,photo_url text null,role varchar(50) not null default 'User',account_status varchar(50) not null default 'Active',risk_status varchar(50) not null default 'Normal',plan varchar(50) not null default 'Free',plan_status varchar(50) not null default 'Active',wants_premium_notice boolean not null default false,onboarding_completed boolean not null default false,accepted_terms_at timestamp null,accepted_privacy_at timestamp null,last_login_at timestamp null,last_activity_at timestamp null,created_at timestamp not null,updated_at timestamp not null);
+create table if not exists habitflow.login_attempts(id uuid primary key,email varchar(200) null,success boolean not null,ip_address varchar(100) null,user_agent text null,created_at timestamp not null);
+-- END include database/migrations/002_create_users.sql
 
-create table if not exists habitflow.login_attempts (
-    id uuid primary key,
-    email varchar(200) null,
-    success boolean not null,
-    ip_address varchar(100) null,
-    user_agent text null,
-    created_at timestamp not null default now()
-);
+-- BEGIN include database/migrations/003_create_habits.sql
+create table if not exists habitflow.habits(id uuid primary key,user_id uuid not null references habitflow.users(id),name varchar(120) not null,color varchar(20) not null,category varchar(80) null,is_archived boolean not null default false,archived_at timestamp null,created_at timestamp not null,updated_at timestamp not null);
+-- END include database/migrations/003_create_habits.sql
 
-create table if not exists habitflow.habits (
-    id uuid primary key,
-    user_id uuid not null references habitflow.users(id) on delete cascade,
-    name varchar(120) not null,
-    color varchar(20) not null,
-    category varchar(80) null,
-    is_archived boolean not null default false,
-    archived_at timestamp null,
-    created_at timestamp not null default now(),
-    updated_at timestamp not null default now()
-);
+-- BEGIN include database/migrations/004_create_habit_completions.sql
+create table if not exists habitflow.habit_completions(id uuid primary key,habit_id uuid not null references habitflow.habits(id),user_id uuid not null references habitflow.users(id),completed_date date not null,created_at timestamp not null,unique(habit_id, completed_date));
+-- END include database/migrations/004_create_habit_completions.sql
 
-create table if not exists habitflow.habit_completions (
-    id uuid primary key,
-    habit_id uuid not null references habitflow.habits(id) on delete cascade,
-    user_id uuid not null references habitflow.users(id) on delete cascade,
-    completed_date date not null,
-    created_at timestamp not null default now(),
-    constraint uq_habitflow_habit_completions_habit_date unique (habit_id, completed_date)
-);
+-- BEGIN include database/migrations/005_create_support.sql
+create table if not exists habitflow.support_tickets(id uuid primary key,user_id uuid not null references habitflow.users(id),protocol varchar(50) unique not null,type varchar(50) not null,status varchar(50) not null,priority varchar(50) not null,title varchar(200) not null,description text null,source varchar(50) null,created_at timestamp not null,updated_at timestamp not null,resolved_at timestamp null);
+create table if not exists habitflow.support_messages(id uuid primary key,ticket_id uuid not null references habitflow.support_tickets(id),user_id uuid null references habitflow.users(id),role varchar(50) not null,message text not null,is_sensitive_blocked boolean not null default false,created_at timestamp not null);
+-- END include database/migrations/005_create_support.sql
 
-create table if not exists habitflow.support_tickets (
-    id uuid primary key,
-    user_id uuid not null references habitflow.users(id) on delete cascade,
-    protocol varchar(50) not null unique,
-    type varchar(50) not null,
-    status varchar(50) not null,
-    priority varchar(50) not null,
-    title varchar(200) not null,
-    description text null,
-    source varchar(50) null,
-    created_at timestamp not null default now(),
-    updated_at timestamp not null default now(),
-    resolved_at timestamp null,
-    constraint ck_habitflow_support_tickets_status check (status in ('Open', 'InProgress', 'Resolved', 'Closed'))
-);
+-- BEGIN include database/migrations/006_create_audit.sql
+create table if not exists habitflow.system_audit_logs(id uuid primary key,user_id uuid null,user_email varchar(200) null,severity varchar(50) not null,source varchar(50) not null,action varchar(100) not null,message text not null,metadata jsonb null,error_code varchar(100) null,error_fingerprint varchar(200) null,created_at timestamp not null,read_by_admin boolean not null default false);
+create table if not exists habitflow.admin_audit_logs(id uuid primary key,admin_user_id uuid null,admin_email varchar(200) null,action varchar(100) not null,target_user_id uuid null,target_user_email varchar(200) null,reason text null,metadata jsonb null,created_at timestamp not null);
+-- END include database/migrations/006_create_audit.sql
 
-create table if not exists habitflow.support_messages (
-    id uuid primary key,
-    ticket_id uuid not null references habitflow.support_tickets(id) on delete cascade,
-    user_id uuid null references habitflow.users(id) on delete set null,
-    role varchar(50) not null,
-    message text not null,
-    is_sensitive_blocked boolean not null default false,
-    created_at timestamp not null default now()
-);
+-- BEGIN include database/migrations/007_create_settings.sql
+create table if not exists habitflow.system_settings(key varchar(100) primary key,value jsonb not null,updated_at timestamp not null,updated_by uuid null);
+-- END include database/migrations/007_create_settings.sql
 
-create table if not exists habitflow.system_audit_logs (
-    id uuid primary key,
-    user_id uuid null,
-    user_email varchar(200) null,
-    severity varchar(50) not null,
-    source varchar(50) not null,
-    action varchar(100) not null,
-    message text not null,
-    metadata jsonb null,
-    error_code varchar(100) null,
-    error_fingerprint varchar(200) null,
-    created_at timestamp not null default now(),
-    read_by_admin boolean not null default false,
-    constraint ck_system_audit_logs_severity check (severity in ('Info', 'Warning', 'Error', 'Critical'))
-);
+-- BEGIN include database/migrations/008_create_lgpd.sql
+create table if not exists habitflow.lgpd_requests(id uuid primary key,user_id uuid not null references habitflow.users(id),protocol varchar(50) unique not null,type varchar(50) not null,status varchar(50) not null,notes text null,rejection_reason text null,handled_by uuid null,created_at timestamp not null,updated_at timestamp not null,completed_at timestamp null);
+-- END include database/migrations/008_create_lgpd.sql
 
-create table if not exists habitflow.admin_audit_logs (
-    id uuid primary key,
-    admin_user_id uuid null,
-    admin_email varchar(200) null,
-    action varchar(100) not null,
-    target_user_id uuid null,
-    target_user_email varchar(200) null,
-    reason text null,
-    metadata jsonb null,
-    created_at timestamp not null default now()
-);
+-- BEGIN include database/migrations/009_create_billing.sql
+create table if not exists habitflow.billing_events(id uuid primary key,user_id uuid null references habitflow.users(id),provider varchar(50) null,event_type varchar(100) not null,plan varchar(50) null,status varchar(50) null,amount numeric(12,2) null,metadata jsonb null,created_at timestamp not null);
+-- END include database/migrations/009_create_billing.sql
 
-create table if not exists habitflow.system_settings (
-    key varchar(100) primary key,
-    value jsonb not null,
-    description text null,
-    is_public boolean not null default false,
-    created_at timestamp not null default now(),
-    updated_at timestamp not null default now(),
-    updated_by uuid null
-);
+-- BEGIN include database/migrations/010_create_indexes.sql
+create index if not exists ix_users_email on habitflow.users(email); create index if not exists ix_users_role on habitflow.users(role); create index if not exists ix_users_account_status on habitflow.users(account_status); create index if not exists ix_users_plan on habitflow.users(plan); create index if not exists ix_users_created_at on habitflow.users(created_at); create index if not exists ix_habits_user_id on habitflow.habits(user_id); create index if not exists ix_habit_completions_user_id on habitflow.habit_completions(user_id); create index if not exists ix_habit_completions_habit_id on habitflow.habit_completions(habit_id); create index if not exists ix_habit_completions_completed_date on habitflow.habit_completions(completed_date); create index if not exists ix_support_tickets_user_id on habitflow.support_tickets(user_id); create index if not exists ix_lgpd_requests_user_id on habitflow.lgpd_requests(user_id); create index if not exists ix_system_audit_logs_created_at on habitflow.system_audit_logs(created_at); create index if not exists ix_system_audit_logs_severity on habitflow.system_audit_logs(severity); create index if not exists ix_admin_audit_logs_created_at on habitflow.admin_audit_logs(created_at);
+-- END include database/migrations/010_create_indexes.sql
 
-create table if not exists habitflow.lgpd_requests (
-    id uuid primary key,
-    user_id uuid not null references habitflow.users(id) on delete cascade,
-    protocol varchar(50) not null unique,
-    type varchar(50) not null,
-    status varchar(50) not null,
-    notes text null,
-    rejection_reason text null,
-    handled_by uuid null,
-    created_at timestamp not null default now(),
-    updated_at timestamp not null default now(),
-    completed_at timestamp null,
-    constraint ck_habitflow_lgpd_requests_type check (type in ('Export', 'Delete', 'Anonymize')),
-    constraint ck_habitflow_lgpd_requests_status check (status in ('Requested', 'InReview', 'Processing', 'Completed', 'Rejected', 'Canceled'))
-);
+-- BEGIN include database/migrations/011_seed_initial_settings.sql
+insert into habitflow.system_settings(key,value,updated_at) values ('companyName','"MNSOFT"',now()),('companyLegalName','"MNSOLUÇÕES TECNOLÓGICAS & CONSULTORIA LTDA"',now()),('companyCnpj','"18.160.057/0001-13"',now()),('commercialEmail','"comercial@mnsoft.com.br"',now()),('supportEmail','"comercial@mnsoft.com.br"',now()),('whatsappEnabled','false',now()) on conflict(key) do nothing;
+-- END include database/migrations/011_seed_initial_settings.sql
 
-create table if not exists habitflow.billing_events (
-    id uuid primary key,
-    user_id uuid null references habitflow.users(id) on delete set null,
-    provider varchar(50) null,
-    event_type varchar(100) not null,
-    plan varchar(50) null,
-    status varchar(50) null,
-    amount numeric(12,2) null,
-    metadata jsonb null,
-    created_at timestamp not null default now(),
-    constraint ck_habitflow_billing_events_plan check (plan is null or plan in ('Free', 'Premium'))
-);
-
-create index if not exists ix_habitflow_users_email on habitflow.users(email);
-create index if not exists ix_habitflow_users_role on habitflow.users(role);
-create index if not exists ix_habitflow_users_account_status on habitflow.users(account_status);
-create index if not exists ix_habitflow_users_plan on habitflow.users(plan);
-create index if not exists ix_users_created_at on habitflow.users(created_at);
-create index if not exists ix_habitflow_habits_user_id on habitflow.habits(user_id);
-create index if not exists ix_habitflow_habit_completions_user_id on habitflow.habit_completions(user_id);
-create index if not exists ix_habit_completions_habit_id on habitflow.habit_completions(habit_id);
-create index if not exists ix_habit_completions_completed_date on habitflow.habit_completions(completed_date);
-create index if not exists ix_habitflow_support_tickets_user_id on habitflow.support_tickets(user_id);
-create index if not exists ix_habitflow_lgpd_requests_user_id on habitflow.lgpd_requests(user_id);
-create index if not exists ix_habitflow_system_audit_logs_created_at on habitflow.system_audit_logs(created_at);
-create index if not exists ix_system_audit_logs_severity on habitflow.system_audit_logs(severity);
-create index if not exists ix_habitflow_admin_audit_logs_created_at on habitflow.admin_audit_logs(created_at);
-
-insert into habitflow.system_settings(key, value, updated_at)
-values
-    ('companyName', '"MNSOFT"', now()),
-    ('companyLegalName', '"MNSOLUÇÕES TECNOLÓGICAS & CONSULTORIA LTDA"', now()),
-    ('companyCnpj', '"18.160.057/0001-13"', now()),
-    ('commercialEmail', '"comercial@mnsoft.com.br"', now()),
-    ('supportEmail', '"comercial@mnsoft.com.br"', now()),
-    ('whatsappEnabled', 'false', now())
-on conflict(key) do nothing;
-
-
--- v4.2 habit recurrence, notifications and reports
+-- BEGIN include database/migrations/012_habit_recurrence_reports_notifications.sql
 alter table habitflow.habits add column if not exists frequency_type varchar(50) not null default 'Daily';
 alter table habitflow.habits add column if not exists target_per_week integer null;
 alter table habitflow.habits add column if not exists reminder_time time null;
@@ -236,6 +99,9 @@ create index if not exists ix_notifications_created_at on habitflow.notification
 create index if not exists ix_user_reports_user_id on habitflow.user_reports(user_id);
 create index if not exists ix_user_reports_period_start on habitflow.user_reports(period_start);
 create index if not exists ix_user_reports_period_end on habitflow.user_reports(period_end);
+-- END include database/migrations/012_habit_recurrence_reports_notifications.sql
+
+-- BEGIN include database/migrations/013_admin_operacional.sql
 -- HabitFlow v4.3 Admin Operacional, Métricas, LGPD e Suporte
 create schema if not exists habitflow;
 
@@ -276,16 +142,17 @@ create table if not exists habitflow.admin_dashboard_snapshots (
     constraint uq_admin_dashboard_snapshots_snapshot_date unique(snapshot_date)
 );
 
-create index if not exists ix_habitflow_users_account_status on habitflow.users(account_status);
+create index if not exists ix_users_account_status on habitflow.users(account_status);
 create index if not exists ix_users_risk_status on habitflow.users(risk_status);
-create index if not exists ix_habitflow_users_plan on habitflow.users(plan);
+create index if not exists ix_users_plan on habitflow.users(plan);
 create index if not exists ix_users_wants_premium_notice on habitflow.users(wants_premium_notice);
 create index if not exists ix_users_last_login_at on habitflow.users(last_login_at);
 create index if not exists ix_admin_user_notes_user_id on habitflow.admin_user_notes(user_id);
 create index if not exists ix_admin_exports_created_at on habitflow.admin_exports(created_at);
 create index if not exists ix_admin_dashboard_snapshots_snapshot_date on habitflow.admin_dashboard_snapshots(snapshot_date);
+-- END include database/migrations/013_admin_operacional.sql
 
--- v4.4 Windows/IIS operations
+-- BEGIN include database/migrations/014_windows_iis_operations.sql
 create table if not exists habitflow.deployment_events (
     id uuid primary key,
     version varchar(80) not null,
@@ -298,17 +165,80 @@ create table if not exists habitflow.deployment_events (
 );
 create index if not exists ix_deployment_events_created_at on habitflow.deployment_events(created_at desc);
 create index if not exists ix_deployment_events_action on habitflow.deployment_events(action);
+-- END include database/migrations/014_windows_iis_operations.sql
+
+-- BEGIN include database/migrations/015_schema_hardening.sql
+-- HabitFlow v4.5 - hardening do schema PostgreSQL.
+-- Não apaga, move ou corrige automaticamente tabelas existentes em public.
+
+create schema if not exists habitflow;
+
+do $$
+declare conflict_count integer;
+begin
+    select count(*) into conflict_count
+    from information_schema.tables
+    where table_schema = 'public'
+      and table_name in ('users','habits','habit_completions','support_tickets','support_messages','system_audit_logs','admin_audit_logs','system_settings','lgpd_requests','billing_events','notifications','user_reports');
+
+    if conflict_count > 0 then
+        raise warning 'HabitFlow v4.5: existem % tabelas HabitFlow no schema public. Revise manualmente; a migration não move/apaga dados.', conflict_count;
+    end if;
+end $$;
+
+do $$
+declare item text[];
+begin
+    foreach item slice 1 in array array[
+        array['habitflow.users','ck_users_role','ck_habitflow_users_role'],
+        array['habitflow.users','ck_users_account_status','ck_habitflow_users_account_status'],
+        array['habitflow.users','ck_users_risk_status','ck_habitflow_users_risk_status'],
+        array['habitflow.users','ck_users_plan','ck_habitflow_users_plan'],
+        array['habitflow.users','ck_users_plan_status','ck_habitflow_users_plan_status'],
+        array['habitflow.habit_completions','uq_habit_completions_habit_date','uq_habitflow_habit_completions_habit_date'],
+        array['habitflow.support_tickets','ck_support_tickets_status','ck_habitflow_support_tickets_status'],
+        array['habitflow.lgpd_requests','ck_lgpd_requests_type','ck_habitflow_lgpd_requests_type'],
+        array['habitflow.lgpd_requests','ck_lgpd_requests_status','ck_habitflow_lgpd_requests_status'],
+        array['habitflow.billing_events','ck_billing_events_plan','ck_habitflow_billing_events_plan']
+    ] loop
+        if to_regclass(item[1]) is not null and exists(select 1 from pg_constraint where conrelid = item[1]::regclass and conname = item[2]) and not exists(select 1 from pg_constraint where conrelid = item[1]::regclass and conname = item[3]) then
+            execute format('alter table %s rename constraint %I to %I', item[1], item[2], item[3]);
+        end if;
+    end loop;
+end $$;
+
+alter index if exists habitflow.ix_users_email rename to ix_habitflow_users_email;
+alter index if exists habitflow.ix_users_role rename to ix_habitflow_users_role;
+alter index if exists habitflow.ix_users_account_status rename to ix_habitflow_users_account_status;
+alter index if exists habitflow.ix_users_plan rename to ix_habitflow_users_plan;
+alter index if exists habitflow.ix_habits_user_id rename to ix_habitflow_habits_user_id;
+alter index if exists habitflow.ix_habit_completions_user_id rename to ix_habitflow_habit_completions_user_id;
+alter index if exists habitflow.ix_support_tickets_user_id rename to ix_habitflow_support_tickets_user_id;
+alter index if exists habitflow.ix_lgpd_requests_user_id rename to ix_habitflow_lgpd_requests_user_id;
+alter index if exists habitflow.ix_system_audit_logs_created_at rename to ix_habitflow_system_audit_logs_created_at;
+alter index if exists habitflow.ix_admin_audit_logs_created_at rename to ix_habitflow_admin_audit_logs_created_at;
+
+create index if not exists ix_habitflow_users_email on habitflow.users(email);
+create index if not exists ix_habitflow_users_role on habitflow.users(role);
+create index if not exists ix_habitflow_users_account_status on habitflow.users(account_status);
+create index if not exists ix_habitflow_users_plan on habitflow.users(plan);
+create index if not exists ix_habitflow_habits_user_id on habitflow.habits(user_id);
+create index if not exists ix_habitflow_habit_completions_user_id on habitflow.habit_completions(user_id);
+create index if not exists ix_habitflow_support_tickets_user_id on habitflow.support_tickets(user_id);
+create index if not exists ix_habitflow_lgpd_requests_user_id on habitflow.lgpd_requests(user_id);
+create index if not exists ix_habitflow_system_audit_logs_created_at on habitflow.system_audit_logs(created_at);
+create index if not exists ix_habitflow_admin_audit_logs_created_at on habitflow.admin_audit_logs(created_at);
+-- END include database/migrations/015_schema_hardening.sql
+
+-- BEGIN include database/migrations/016_premium_billing.sql
 -- HabitFlow v4.6 Premium Payments Billing Automation
 create schema if not exists habitflow;
 
 create table if not exists habitflow.plans (
- id uuid primary key, code varchar(80) not null unique, name varchar(120) not null, public_name varchar(120) not null,
- headline varchar(200) null, audience_text text null, badge_text varchar(100) null, description text null,
+ id uuid primary key, code varchar(80) not null unique, name varchar(120) not null, description text null,
  price_monthly numeric(12,2) null, price_yearly numeric(12,2) null, currency varchar(10) not null default 'BRL',
  habit_limit integer null, reports_enabled boolean not null default false, advanced_reports_enabled boolean not null default false,
  challenges_enabled boolean not null default false, is_active boolean not null default true, is_public boolean not null default true,
- is_featured boolean not null default false, sort_order integer not null default 0,
- created_by_user_id uuid null, updated_by_user_id uuid null,
  created_at timestamp not null default now(), updated_at timestamp not null default now()
 );
 create table if not exists habitflow.subscriptions (
@@ -347,34 +277,14 @@ create index if not exists ix_habitflow_payment_transactions_provider_payment_id
 create index if not exists ix_habitflow_payment_webhook_events_event_id on habitflow.payment_webhook_events(event_id);
 create index if not exists ix_habitflow_payment_webhook_events_received_at on habitflow.payment_webhook_events(received_at);
 
--- Keep the first seed compatible with the final plans contract. This block is
--- intentionally before any INSERT so a partially-created bootstrap can recover.
-alter table habitflow.plans add column if not exists public_name varchar(120);
-alter table habitflow.plans add column if not exists headline varchar(200);
-alter table habitflow.plans add column if not exists audience_text text;
-alter table habitflow.plans add column if not exists badge_text varchar(100);
-alter table habitflow.plans add column if not exists is_featured boolean not null default false;
-alter table habitflow.plans add column if not exists sort_order integer not null default 0;
-alter table habitflow.plans add column if not exists created_by_user_id uuid null;
-alter table habitflow.plans add column if not exists updated_by_user_id uuid null;
-update habitflow.plans
-set public_name = name
-where public_name is null or btrim(public_name) = '';
-alter table habitflow.plans alter column public_name set not null;
+insert into habitflow.plans(id,code,name,description,price_monthly,price_yearly,currency,habit_limit,reports_enabled,advanced_reports_enabled,challenges_enabled,is_active,is_public,created_at,updated_at) values
+('00000000-0000-0000-0000-000000000461','free','Gratuito','Plano gratuito com até 5 hábitos ativos.',0,0,'BRL',5,true,false,false,true,true,now(),now()),
+('00000000-0000-0000-0000-000000000462','premium_monthly','Premium Mensal','Hábitos ilimitados, relatórios avançados e recursos premium.',14.90,null,'BRL',null,true,true,true,true,true,now(),now()),
+('00000000-0000-0000-0000-000000000463','premium_yearly','Premium Anual','Plano anual com melhor custo-benefício.',null,99.00,'BRL',null,true,true,true,true,true,now(),now())
+on conflict(code) do update set name=excluded.name, description=excluded.description, price_monthly=excluded.price_monthly, price_yearly=excluded.price_yearly, currency=excluded.currency, habit_limit=excluded.habit_limit, reports_enabled=excluded.reports_enabled, advanced_reports_enabled=excluded.advanced_reports_enabled, challenges_enabled=excluded.challenges_enabled, is_active=excluded.is_active, is_public=excluded.is_public, updated_at=now();
+-- END include database/migrations/016_premium_billing.sql
 
-insert into habitflow.plans(id,code,name,public_name,headline,description,price_monthly,price_yearly,currency,habit_limit,reports_enabled,advanced_reports_enabled,challenges_enabled,is_active,is_public,is_featured,sort_order,created_at,updated_at) values
-('00000000-0000-0000-0000-000000000461','free','Gratuito','Gratuito',null,'Plano gratuito com até 5 hábitos ativos.',0,0,'BRL',5,true,false,false,true,true,false,10,now(),now()),
-('00000000-0000-0000-0000-000000000462','premium_monthly','Premium Mensal','Premium Mensal',null,'Hábitos ilimitados, relatórios avançados e recursos premium.',14.90,null,'BRL',null,true,true,true,true,true,false,20,now(),now()),
-('00000000-0000-0000-0000-000000000463','premium_yearly','Premium Anual','Premium Anual',null,'Plano anual com melhor custo-benefício.',null,99.00,'BRL',null,true,true,true,true,true,false,30,now(),now())
-on conflict(code) do update set
- name=excluded.name, public_name=excluded.public_name, headline=excluded.headline,
- description=excluded.description, price_monthly=excluded.price_monthly,
- price_yearly=excluded.price_yearly, currency=excluded.currency,
- habit_limit=excluded.habit_limit, reports_enabled=excluded.reports_enabled,
- advanced_reports_enabled=excluded.advanced_reports_enabled,
- challenges_enabled=excluded.challenges_enabled, is_active=excluded.is_active,
- is_public=excluded.is_public, is_featured=excluded.is_featured,
- sort_order=excluded.sort_order, updated_at=now();
+-- BEGIN include database/migrations/017_habit_templates_guided_journey.sql
 -- v4.9 Guided Journey + Habit Library
 create table if not exists habitflow.habit_objectives (
     id uuid primary key,
@@ -469,9 +379,9 @@ insert into habitflow.habit_templates(id, objective_id, name, description, categ
 select (substr(md5(o.slug || ':' || d.name),1,8)||'-'||substr(md5(o.slug || ':' || d.name),9,4)||'-'||substr(md5(o.slug || ':' || d.name),13,4)||'-'||substr(md5(o.slug || ':' || d.name),17,4)||'-'||substr(md5(o.slug || ':' || d.name),21,12))::uuid, o.id, d.name, d.description, d.category, 'Daily', d.suggested_color, d.difficulty, d.estimated_time_minutes, d.benefit_text, d.sort_order, true
 from data d join habitflow.habit_objectives o on o.slug=d.slug
 on conflict(objective_id, name) do update set description=excluded.description, category=excluded.category, suggested_color=excluded.suggested_color, difficulty=excluded.difficulty, estimated_time_minutes=excluded.estimated_time_minutes, benefit_text=excluded.benefit_text, sort_order=excluded.sort_order, is_active=true, updated_at=now();
+-- END include database/migrations/017_habit_templates_guided_journey.sql
 
-
--- 018_user_ui_preferences_accessibility
+-- BEGIN include database/migrations/018_user_ui_preferences_accessibility.sql
 create table if not exists habitflow.user_ui_preferences (
   id uuid primary key,
   user_id uuid not null references habitflow.users(id) on delete cascade,
@@ -485,8 +395,9 @@ create table if not exists habitflow.user_ui_preferences (
   constraint user_ui_preferences_font_check check (font_scale in ('Normal','Large'))
 );
 create index if not exists ix_user_ui_preferences_user_id on habitflow.user_ui_preferences(user_id);
+-- END include database/migrations/018_user_ui_preferences_accessibility.sql
 
--- 019_notifications_feedback_preferences
+-- BEGIN include database/migrations/019_notifications_feedback_preferences.sql
 create table if not exists habitflow.notifications(
   id uuid primary key,
   user_id uuid not null references habitflow.users(id) on delete cascade,
@@ -507,12 +418,16 @@ alter table habitflow.notifications add column if not exists related_entity_type
 alter table habitflow.notifications add column if not exists related_entity_id uuid null;
 create index if not exists ix_notifications_user_id on habitflow.notifications(user_id);
 create index if not exists ix_notifications_unread on habitflow.notifications(user_id, is_read, created_at desc);
+-- END include database/migrations/019_notifications_feedback_preferences.sql
 
--- 020_popup_preferences
+-- BEGIN include database/migrations/020_popup_preferences.sql
 alter table habitflow.user_ui_preferences add column if not exists show_achievement_popups boolean not null default true;
 alter table habitflow.user_ui_preferences add column if not exists show_tip_popups boolean not null default true;
 alter table habitflow.user_ui_preferences add column if not exists enable_toasts boolean not null default true;
 alter table habitflow.user_ui_preferences add column if not exists reduce_popups boolean not null default false;
+-- END include database/migrations/020_popup_preferences.sql
+
+-- BEGIN include database/migrations/021_clients_management.sql
 create table if not exists habitflow.clients (
     id uuid primary key,
     name varchar(180) not null,
@@ -536,8 +451,14 @@ create index if not exists ix_habitflow_clients_email on habitflow.clients(email
 create index if not exists ix_habitflow_clients_document on habitflow.clients(document);
 create index if not exists ix_habitflow_clients_status on habitflow.clients(status);
 create index if not exists ix_habitflow_clients_created_at on habitflow.clients(created_at);
+-- END include database/migrations/021_clients_management.sql
+
+-- BEGIN include database/migrations/022_users_clients_link.sql
 alter table habitflow.users add column if not exists client_id uuid null references habitflow.clients(id);
 create index if not exists ix_habitflow_users_client_id on habitflow.users(client_id);
+-- END include database/migrations/022_users_clients_link.sql
+
+-- BEGIN include database/migrations/023_clients_cpf_cnpj_superadmin.sql
 set search_path to habitflow;
 
 alter table habitflow.clients add column if not exists person_type varchar(20) not null default 'LegalPerson';
@@ -571,8 +492,6 @@ alter table habitflow.clients drop constraint if exists ck_habitflow_clients_per
 alter table habitflow.clients add constraint ck_habitflow_clients_person_type check (person_type in ('NaturalPerson','LegalPerson'));
 alter table habitflow.clients drop constraint if exists ck_habitflow_clients_document_type;
 alter table habitflow.clients add constraint ck_habitflow_clients_document_type check (document_type in ('CPF','CNPJ'));
-alter table habitflow.clients drop constraint if exists ck_habitflow_clients_person_document_match;
-alter table habitflow.clients add constraint ck_habitflow_clients_person_document_match check ((person_type = 'NaturalPerson' and document_type = 'CPF') or (person_type = 'LegalPerson' and document_type = 'CNPJ'));
 alter table habitflow.clients drop constraint if exists ck_habitflow_clients_subscription_status;
 alter table habitflow.clients add constraint ck_habitflow_clients_subscription_status check (subscription_status in ('Free','Trial','Active','PastDue','Canceled','Suspended'));
 alter table habitflow.clients drop constraint if exists ck_habitflow_clients_benefits_status;
@@ -590,6 +509,9 @@ create index if not exists ix_habitflow_clients_benefits_status on habitflow.cli
 create index if not exists ix_habitflow_clients_payment_status on habitflow.clients(payment_status);
 create index if not exists ix_habitflow_clients_next_due_date on habitflow.clients(next_due_date);
 create index if not exists ix_habitflow_clients_overdue_since on habitflow.clients(overdue_since);
+-- END include database/migrations/023_clients_cpf_cnpj_superadmin.sql
+
+-- BEGIN include database/migrations/024_superadmin_billing_entitlements.sql
 set search_path to habitflow;
 
 create table if not exists habitflow.client_subscriptions(
@@ -604,8 +526,8 @@ create index if not exists ix_habitflow_client_subscriptions_client_id on habitf
 create index if not exists ix_habitflow_client_invoices_client_id on habitflow.client_invoices(client_id);
 create index if not exists ix_habitflow_client_invoices_status_due_date on habitflow.client_invoices(status, due_date);
 create index if not exists ix_habitflow_superadmin_audit_logs_created_at on habitflow.superadmin_audit_logs(created_at desc);
+-- END include database/migrations/024_superadmin_billing_entitlements.sql
 
--- v5.9-TenantIsolation-UserInvites-BillingAutomation-SaaSHardening
 -- BEGIN include database/migrations/025_tenant_isolation_client_id.sql
 -- v5.9 tenant isolation: ensure client_id is present on client-owned data.
 set search_path to habitflow;
@@ -649,6 +571,7 @@ create index if not exists ix_habitflow_payment_transactions_client_id on habitf
 create index if not exists ix_habitflow_client_invoices_client_id on habitflow.client_invoices(client_id);
 create index if not exists ix_habitflow_client_subscriptions_client_id on habitflow.client_subscriptions(client_id);
 -- END include database/migrations/025_tenant_isolation_client_id.sql
+
 -- BEGIN include database/migrations/026_backfill_client_id.sql
 -- Development-oriented backfill. Review manually before production use.
 set search_path to habitflow;
@@ -673,6 +596,7 @@ from habitflow.users u where r.user_id = u.id and r.client_id is null and u.clie
 update habitflow.support_tickets t set client_id = u.client_id
 from habitflow.users u where t.user_id = u.id and t.client_id is null and u.client_id is not null;
 -- END include database/migrations/026_backfill_client_id.sql
+
 -- BEGIN include database/migrations/027_user_invites.sql
 set search_path to habitflow;
 
@@ -698,6 +622,8 @@ create unique index if not exists ux_habitflow_user_invites_token_hash on habitf
 create index if not exists ix_habitflow_user_invites_client_id on habitflow.user_invites(client_id);
 create index if not exists ix_habitflow_user_invites_email_status on habitflow.user_invites(email, status);
 -- END include database/migrations/027_user_invites.sql
+
+-- BEGIN include database/migrations/028_client_onboarding.sql
 create table if not exists habitflow.client_onboarding (
   id uuid primary key,
   client_id uuid not null references habitflow.clients(id),
@@ -773,8 +699,8 @@ insert into habitflow.billing_communication_rules(id,code,name,trigger_type,days
 (gen_random_uuid(),'engagement_first_habit','Engajamento primeiro hábito','AfterDueDate',0,'Internal','Comece com seu primeiro hábito','Você ainda não criou hábitos. Use a biblioteca para começar em poucos segundos.'),
 (gen_random_uuid(),'engagement_free_limit','Engajamento limite Free','AfterDueDate',0,'Internal','Você chegou ao limite gratuito','Considere revisar os hábitos arquivados ou conhecer o Premium.')
 on conflict(code) do nothing;
+-- END include database/migrations/028_client_onboarding.sql
 
--- v6.1 operational completeness baseline
 -- BEGIN include database/migrations/029_operational_completeness_v61.sql
 create schema if not exists habitflow;
 create extension if not exists pgcrypto;
@@ -864,7 +790,40 @@ create index if not exists ix_job_execution_logs_job_started on habitflow.job_ex
 insert into habitflow.schema_migrations(id,name) values ('029','operational_completeness_v61') on conflict (id) do update set name=excluded.name, applied_at=now();
 -- END include database/migrations/029_operational_completeness_v61.sql
 
--- v6.1.2 Registration claims, onboarding activation and cadastral quality
+-- BEGIN include database/migrations/030_client_registration_cpf_cnpj_real_flow.sql
+-- v6.1.1 - Public SaaS registration with CPF/CNPJ.
+set search_path to habitflow;
+
+alter table habitflow.clients add column if not exists person_type varchar(20) not null default 'LegalPerson';
+alter table habitflow.clients add column if not exists document_type varchar(10) not null default 'CNPJ';
+alter table habitflow.clients add column if not exists document_raw varchar(30);
+alter table habitflow.clients add column if not exists document_normalized varchar(20);
+alter table habitflow.clients add column if not exists legal_name varchar(180);
+alter table habitflow.clients add column if not exists trade_name varchar(180);
+alter table habitflow.clients add column if not exists billing_responsible_name varchar(160);
+alter table habitflow.clients add column if not exists billing_email varchar(200);
+alter table habitflow.clients add column if not exists billing_phone varchar(40);
+alter table habitflow.users add column if not exists client_id uuid null references habitflow.clients(id);
+
+alter table habitflow.clients drop constraint if exists ck_habitflow_clients_person_type;
+alter table habitflow.clients add constraint ck_habitflow_clients_person_type check (person_type in ('NaturalPerson','LegalPerson'));
+alter table habitflow.clients drop constraint if exists ck_habitflow_clients_document_type;
+alter table habitflow.clients add constraint ck_habitflow_clients_document_type check (document_type in ('CPF','CNPJ'));
+alter table habitflow.clients drop constraint if exists ck_habitflow_clients_person_document_match;
+alter table habitflow.clients add constraint ck_habitflow_clients_person_document_match check ((person_type = 'NaturalPerson' and document_type = 'CPF') or (person_type = 'LegalPerson' and document_type = 'CNPJ'));
+
+alter table habitflow.users drop constraint if exists ck_habitflow_users_role;
+alter table habitflow.users add constraint ck_habitflow_users_role check (role in ('User','Admin','SuperAdmin'));
+
+update habitflow.clients set document_normalized = regexp_replace(coalesce(document_raw, document, ''), '\D', '', 'g') where document_normalized is null and coalesce(document_raw, document) is not null;
+create unique index if not exists ux_habitflow_clients_document_normalized_not_null on habitflow.clients(document_normalized) where document_normalized is not null and btrim(document_normalized) <> '';
+create index if not exists ix_habitflow_clients_document_normalized on habitflow.clients(document_normalized);
+create index if not exists ix_habitflow_clients_person_type on habitflow.clients(person_type);
+create index if not exists ix_habitflow_clients_document_type on habitflow.clients(document_type);
+
+insert into habitflow.schema_migrations(id, name, applied_at) values ('030','client_registration_cpf_cnpj_real_flow', now()) on conflict (id) do nothing;
+-- END include database/migrations/030_client_registration_cpf_cnpj_real_flow.sql
+
 -- BEGIN include database/migrations/031_registration_claims_onboarding_quality.sql
 create schema if not exists habitflow;
 
@@ -892,6 +851,7 @@ insert into habitflow.schema_migrations(id, name, applied_at)
 values ('031','registration_claims_onboarding_quality',now())
 on conflict (id) do nothing;
 -- END include database/migrations/031_registration_claims_onboarding_quality.sql
+
 -- BEGIN include database/migrations/032_parameterized_plans_rbac_effective_access.sql
 -- v6.2: catálogo de produtos separado do ciclo de cobrança.
 set search_path to habitflow, public;
@@ -930,8 +890,8 @@ update habitflow.client_subscriptions set plan_code=case when lower(coalesce(pla
 update habitflow.client_subscriptions set billing_cycle=case when lower(coalesce(billing_cycle,''))='yearly' or lower(coalesce(plan_code,''))='premium_yearly' then 'Yearly' else 'Monthly' end where billing_cycle is null;
 comment on column habitflow.plans.price_monthly is 'LEGADO: remover somente após validação da migração em produção.';
 comment on column habitflow.plans.price_yearly is 'LEGADO: usar habitflow.plan_prices.';
-
 -- END include database/migrations/032_parameterized_plans_rbac_effective_access.sql
+
 -- BEGIN include database/migrations/033_plan_prices_features.sql
 set search_path to habitflow, public;
 
@@ -966,8 +926,8 @@ insert into habitflow.plan_features(plan_id,feature_code,bool_value,int_value)
 select p.id,f.code,case when f.value_type='Boolean' then (case when p.code='free' then f.code in ('basic_reports','internal_communications') when p.code='ritmo' then f.code not in ('shared_routines','shared_goals','client_admin_dashboard','consolidated_reports','user_invitations','priority_support') else true end) end,
 case when f.value_type='Integer' then case f.code when 'users_limit' then case when p.code='evolucao' then 5 else 1 end when 'active_habits_limit' then case when p.code='free' then 5 else -1 end when 'reminders_per_habit' then case when p.code='free' then 1 else -1 end when 'active_goals_limit' then case when p.code='free' then 1 else -1 end end end
 from habitflow.plans p cross join habitflow.feature_catalog f where p.code in ('free','ritmo','evolucao') on conflict(plan_id,feature_code) do update set bool_value=excluded.bool_value,int_value=excluded.int_value,updated_at=now();
-
 -- END include database/migrations/033_plan_prices_features.sql
+
 -- BEGIN include database/migrations/034_roles_permissions.sql
 set search_path to habitflow, public;
 create table if not exists habitflow.roles(id uuid primary key,code varchar(80) unique not null,name varchar(120) not null,scope varchar(30) not null check(scope in ('Platform','Client')),description text,is_system boolean not null default false,is_active boolean not null default true);
@@ -979,10 +939,15 @@ insert into habitflow.roles(id,code,name,scope,is_system) values
 ('30000000-0000-0000-0000-000000000001','super_admin','Super Administrador','Platform',true),('30000000-0000-0000-0000-000000000002','finance_manager','Gestor Financeiro','Platform',true),('30000000-0000-0000-0000-000000000003','support_manager','Atendimento','Platform',true),('30000000-0000-0000-0000-000000000004','customer_success','Relacionamento','Platform',true),('30000000-0000-0000-0000-000000000005','auditor_readonly','Auditor','Platform',true),('30000000-0000-0000-0000-000000000006','account_owner','Proprietário da conta','Client',true),('30000000-0000-0000-0000-000000000007','account_admin','Administrador da conta','Client',true),('30000000-0000-0000-0000-000000000008','member','Membro','Client',true) on conflict(code) do update set name=excluded.name;
 insert into habitflow.permissions(code,name,category) select code,replace(code,'.',' '),split_part(code,'.',1) from unnest(array['Platform.FullAccess','Platform.Clients.View','Platform.Clients.Manage','Platform.Users.View','Platform.Users.Manage','Platform.Plans.View','Platform.Plans.Manage','Platform.Billing.View','Platform.Billing.Manage','Platform.Support.Manage','Platform.Audit.View','Platform.Settings.Manage','Client.Account.Manage','Client.Users.Manage','Client.Billing.View','Client.Billing.Manage','Client.Routines.Use','Client.Reports.View','Client.SharedFeatures.Use']) code on conflict do nothing;
 insert into habitflow.role_permissions select r.id,p.code from habitflow.roles r cross join habitflow.permissions p where r.code='super_admin' or (r.code='finance_manager' and p.code like 'Platform.Billing.%') or (r.code='support_manager' and p.code in ('Platform.Clients.View','Platform.Users.View','Platform.Support.Manage')) or (r.code='auditor_readonly' and p.code in ('Platform.Audit.View','Platform.Clients.View','Platform.Users.View')) or (r.code='account_owner' and p.code like 'Client.%') on conflict do nothing;
-
 -- END include database/migrations/034_roles_permissions.sql
+
 -- BEGIN include database/migrations/035_effective_plan_payment_restrictions.sql
 set search_path to habitflow, public;
+-- correção v6.19.6: colunas do contrato de system_settings criadas em 051, usadas já em 035;
+-- guardas idempotentes mantêm o histórico aplicável em banco novo (ordem cronológica).
+alter table habitflow.system_settings add column if not exists description text null;
+alter table habitflow.system_settings add column if not exists is_public boolean not null default false;
+alter table habitflow.system_settings add column if not exists created_at timestamp null;
 alter table habitflow.client_subscriptions add column if not exists plan_id uuid null references habitflow.plans(id);
 alter table habitflow.client_subscriptions add column if not exists plan_price_id uuid null references habitflow.plan_prices(id);
 alter table habitflow.client_subscriptions add column if not exists price_snapshot numeric(12,2);
@@ -995,7 +960,7 @@ alter table habitflow.payment_transactions add column if not exists client_subsc
 insert into habitflow.system_settings(key,value,description,is_public,created_at,updated_at) values('billing.grace_period_days','3','Período global de tolerância de pagamento.',false,now(),now()) on conflict(key) do nothing;
 -- END include database/migrations/035_effective_plan_payment_restrictions.sql
 
--- v6.3 personal journey
+-- BEGIN include database/migrations/036_personal_goals.sql
 BEGIN;
 CREATE TABLE IF NOT EXISTS habitflow.user_goals (
  id uuid PRIMARY KEY, client_id uuid NOT NULL REFERENCES habitflow.clients(id), user_id uuid NOT NULL REFERENCES habitflow.users(id),
@@ -1012,7 +977,9 @@ CREATE TABLE IF NOT EXISTS habitflow.goal_habits (
  created_at timestamp NOT NULL DEFAULT now(), PRIMARY KEY(goal_id,habit_id)
 );
 COMMIT;
+-- END include database/migrations/036_personal_goals.sql
 
+-- BEGIN include database/migrations/037_consistency_milestones.sql
 BEGIN;
 CREATE TABLE IF NOT EXISTS habitflow.milestones (id uuid PRIMARY KEY, code varchar(80) NOT NULL UNIQUE, title varchar(120) NOT NULL, description varchar(240) NOT NULL, threshold integer, is_active boolean NOT NULL DEFAULT true, created_at timestamp NOT NULL DEFAULT now());
 CREATE TABLE IF NOT EXISTS habitflow.user_milestones (id uuid PRIMARY KEY, client_id uuid NOT NULL REFERENCES habitflow.clients(id), user_id uuid NOT NULL REFERENCES habitflow.users(id), milestone_id uuid NOT NULL REFERENCES habitflow.milestones(id), achieved_at timestamp NOT NULL DEFAULT now(), metadata jsonb, UNIQUE(user_id,milestone_id));
@@ -1025,14 +992,18 @@ INSERT INTO habitflow.milestones(id,code,title,description,threshold) VALUES
 ('37100000-0000-0000-0000-000000000030','evolution_30','30 dias de evolução','Você cuidou da sua rotina por 30 dias.',30)
 ON CONFLICT(code) DO UPDATE SET title=EXCLUDED.title,description=EXCLUDED.description,threshold=EXCLUDED.threshold;
 COMMIT;
+-- END include database/migrations/037_consistency_milestones.sql
+
+-- BEGIN include database/migrations/038_reminders.sql
 BEGIN;
 CREATE TABLE IF NOT EXISTS habitflow.habit_reminders (id uuid PRIMARY KEY, client_id uuid NOT NULL REFERENCES habitflow.clients(id), user_id uuid NOT NULL REFERENCES habitflow.users(id), habit_id uuid NOT NULL REFERENCES habitflow.habits(id) ON DELETE CASCADE, reminder_time time NOT NULL, timezone varchar(80) NOT NULL DEFAULT 'America/Sao_Paulo', days_of_week integer[], is_active boolean NOT NULL DEFAULT true, last_triggered_at timestamp, next_trigger_at timestamp, created_at timestamp NOT NULL DEFAULT now(), updated_at timestamp NOT NULL DEFAULT now(), CHECK(days_of_week IS NULL OR days_of_week <@ ARRAY[0,1,2,3,4,5,6]));
 CREATE INDEX IF NOT EXISTS ix_habit_reminders_due ON habitflow.habit_reminders(next_trigger_at) WHERE is_active;
-ALTER TABLE habitflow.habit_reminders ADD COLUMN IF NOT EXISTS locked_by varchar(160) null;
-ALTER TABLE habitflow.habit_reminders ADD COLUMN IF NOT EXISTS locked_until timestamptz null;
 CREATE INDEX IF NOT EXISTS ix_habit_reminders_scope ON habitflow.habit_reminders(client_id,user_id,habit_id);
 CREATE TABLE IF NOT EXISTS habitflow.user_summary_preferences (user_id uuid PRIMARY KEY REFERENCES habitflow.users(id) ON DELETE CASCADE, daily_summary_enabled boolean NOT NULL DEFAULT true, daily_summary_time time NOT NULL DEFAULT '20:00', weekly_summary_enabled boolean NOT NULL DEFAULT true, weekly_summary_day integer NOT NULL DEFAULT 0 CHECK(weekly_summary_day BETWEEN 0 AND 6), weekly_summary_time time NOT NULL DEFAULT '18:00', timezone varchar(80) NOT NULL DEFAULT 'America/Sao_Paulo', updated_at timestamp NOT NULL DEFAULT now());
 COMMIT;
+-- END include database/migrations/038_reminders.sql
+
+-- BEGIN include database/migrations/039_shared_routines.sql
 BEGIN;
 CREATE TABLE IF NOT EXISTS habitflow.shared_routines (id uuid PRIMARY KEY, client_id uuid NOT NULL REFERENCES habitflow.clients(id), created_by_user_id uuid NOT NULL REFERENCES habitflow.users(id), name varchar(160) NOT NULL, description text, color varchar(20), status varchar(40) NOT NULL DEFAULT 'Active' CHECK(status IN ('Active','Archived')), created_at timestamp NOT NULL DEFAULT now(), updated_at timestamp NOT NULL DEFAULT now());
 CREATE TABLE IF NOT EXISTS habitflow.shared_routine_habits (routine_id uuid NOT NULL REFERENCES habitflow.shared_routines(id) ON DELETE CASCADE, habit_template_id uuid REFERENCES habitflow.habit_templates(id), name varchar(160) NOT NULL, category varchar(100), frequency_type varchar(40) NOT NULL, target_per_week integer CHECK(target_per_week BETWEEN 1 AND 7), reminder_time time, sort_order integer NOT NULL DEFAULT 0, PRIMARY KEY(routine_id,name));
@@ -1044,6 +1015,9 @@ CREATE TABLE IF NOT EXISTS habitflow.shared_goal_members (goal_id uuid NOT NULL 
 CREATE TABLE IF NOT EXISTS habitflow.shared_goal_progress (id uuid PRIMARY KEY, goal_id uuid NOT NULL REFERENCES habitflow.shared_goals(id) ON DELETE CASCADE, user_id uuid NOT NULL REFERENCES habitflow.users(id), value integer NOT NULL DEFAULT 0 CHECK(value >= 0), recorded_on date NOT NULL, created_at timestamp NOT NULL DEFAULT now(), UNIQUE(goal_id,user_id,recorded_on));
 CREATE INDEX IF NOT EXISTS ix_shared_goals_client ON habitflow.shared_goals(client_id,status);
 COMMIT;
+-- END include database/migrations/039_shared_routines.sql
+
+-- BEGIN include database/migrations/040_product_events_privacy.sql
 BEGIN;
 ALTER TABLE habitflow.habits ADD COLUMN IF NOT EXISTS visibility varchar(40) NOT NULL DEFAULT 'Private';
 ALTER TABLE habitflow.habits DROP CONSTRAINT IF EXISTS ck_habits_visibility;
@@ -1053,8 +1027,9 @@ CREATE INDEX IF NOT EXISTS ix_product_events_occurred ON habitflow.product_event
 CREATE INDEX IF NOT EXISTS ix_product_events_scope ON habitflow.product_events(client_id,user_id,occurred_at DESC);
 COMMENT ON COLUMN habitflow.product_events.metadata IS 'Somente metadados operacionais; nunca documentos, credenciais ou conteúdo de hábitos.';
 COMMIT;
+-- END include database/migrations/040_product_events_privacy.sql
 
--- v6.4 incremental product core
+-- BEGIN include database/migrations/041_scheduler_locking_idempotency.sql
 BEGIN;
 CREATE TABLE IF NOT EXISTS habitflow.job_locks (
  job_name varchar(120) PRIMARY KEY, locked_by varchar(200), locked_at timestamp,
@@ -1068,31 +1043,9 @@ CREATE TABLE IF NOT EXISTS habitflow.notification_deliveries (
 );
 CREATE INDEX IF NOT EXISTS ix_notification_deliveries_scope ON habitflow.notification_deliveries(client_id,user_id,scheduled_for DESC);
 COMMIT;
+-- END include database/migrations/041_scheduler_locking_idempotency.sql
 
-BEGIN;
-ALTER TABLE habitflow.notifications ADD COLUMN IF NOT EXISTS client_id uuid null REFERENCES habitflow.clients(id);
-ALTER TABLE habitflow.notifications ADD COLUMN IF NOT EXISTS category varchar(40) null;
-ALTER TABLE habitflow.notifications ADD COLUMN IF NOT EXISTS deduplication_key varchar(160) null;
-UPDATE habitflow.notifications n SET client_id=u.client_id FROM habitflow.users u WHERE u.id=n.user_id AND n.client_id IS NULL;
-CREATE UNIQUE INDEX IF NOT EXISTS ux_notifications_deduplication ON habitflow.notifications(client_id,user_id,deduplication_key) WHERE deduplication_key IS NOT NULL;
-CREATE TABLE IF NOT EXISTS habitflow.reminder_dispatches(
- id uuid PRIMARY KEY, client_id uuid NOT NULL REFERENCES habitflow.clients(id), user_id uuid NOT NULL REFERENCES habitflow.users(id),
- habit_reminder_id uuid NOT NULL REFERENCES habitflow.habit_reminders(id), habit_id uuid NOT NULL REFERENCES habitflow.habits(id),
- scheduled_for_utc timestamptz NOT NULL, channel varchar(24) NOT NULL DEFAULT 'in_app', status varchar(24) NOT NULL,
- attempt_count integer NOT NULL DEFAULT 0, processed_at timestamptz NULL, error_code varchar(80) NULL, created_at timestamptz NOT NULL DEFAULT now(),
- UNIQUE(habit_reminder_id,scheduled_for_utc,channel));
-ALTER TABLE habitflow.reminder_dispatches ADD COLUMN IF NOT EXISTS next_attempt_at timestamptz null;
-ALTER TABLE habitflow.reminder_dispatches ADD COLUMN IF NOT EXISTS locked_by varchar(160) null;
-ALTER TABLE habitflow.reminder_dispatches ADD COLUMN IF NOT EXISTS locked_until timestamptz null;
-ALTER TABLE habitflow.reminder_dispatches ADD COLUMN IF NOT EXISTS last_error_at timestamptz null;
-ALTER TABLE habitflow.reminder_dispatches ADD COLUMN IF NOT EXISTS correlation_id uuid null;
-UPDATE habitflow.reminder_dispatches SET correlation_id=gen_random_uuid() WHERE correlation_id IS NULL;
-ALTER TABLE habitflow.reminder_dispatches ALTER COLUMN correlation_id SET NOT NULL;
-CREATE INDEX IF NOT EXISTS ix_reminder_dispatch_status ON habitflow.reminder_dispatches(status,scheduled_for_utc);
-CREATE INDEX IF NOT EXISTS ix_reminder_dispatch_retry ON habitflow.reminder_dispatches(next_attempt_at,locked_until) WHERE status IN ('Pending','Retry','Processing');
-CREATE INDEX IF NOT EXISTS ix_habit_reminder_lease ON habitflow.habit_reminders(next_trigger_at,locked_until) WHERE is_active;
-COMMIT;
-
+-- BEGIN include database/migrations/042_sharing_privacy_consent.sql
 BEGIN;
 CREATE TABLE IF NOT EXISTS habitflow.sharing_consents (
  id uuid PRIMARY KEY, client_id uuid NOT NULL REFERENCES habitflow.clients(id), user_id uuid NOT NULL REFERENCES habitflow.users(id) ON DELETE CASCADE,
@@ -1102,7 +1055,9 @@ CREATE TABLE IF NOT EXISTS habitflow.sharing_consents (
 );
 CREATE INDEX IF NOT EXISTS ix_sharing_consents_scope ON habitflow.sharing_consents(client_id,user_id);
 COMMIT;
+-- END include database/migrations/042_sharing_privacy_consent.sql
 
+-- BEGIN include database/migrations/043_goal_progress_completion.sql
 BEGIN;
 ALTER TABLE habitflow.goal_habits ADD COLUMN IF NOT EXISTS client_id uuid REFERENCES habitflow.clients(id);
 UPDATE habitflow.goal_habits gh SET client_id=g.client_id FROM habitflow.user_goals g WHERE g.id=gh.goal_id AND gh.client_id IS NULL;
@@ -1116,7 +1071,9 @@ CREATE TABLE IF NOT EXISTS habitflow.goal_progress_events (
 );
 CREATE INDEX IF NOT EXISTS ix_goal_progress_events_scope ON habitflow.goal_progress_events(client_id,user_id,goal_id,created_at DESC);
 COMMIT;
+-- END include database/migrations/043_goal_progress_completion.sql
 
+-- BEGIN include database/migrations/044_report_snapshots_analytics.sql
 BEGIN;
 CREATE TABLE IF NOT EXISTS habitflow.report_snapshots (
  id uuid PRIMARY KEY, client_id uuid NOT NULL REFERENCES habitflow.clients(id), user_id uuid REFERENCES habitflow.users(id),
@@ -1125,13 +1082,35 @@ CREATE TABLE IF NOT EXISTS habitflow.report_snapshots (
 );
 CREATE INDEX IF NOT EXISTS ix_report_snapshots_scope ON habitflow.report_snapshots(client_id,user_id,report_type,period_start,period_end);
 COMMIT;
+-- END include database/migrations/044_report_snapshots_analytics.sql
 
+-- BEGIN include database/migrations/045_pwa_product_events_hardening.sql
 BEGIN;
 CREATE UNIQUE INDEX IF NOT EXISTS ux_product_events_pwa_install_day
  ON habitflow.product_events(user_id,event_name,(occurred_at::date)) WHERE event_name='pwa_installed' AND user_id IS NOT NULL;
 CREATE INDEX IF NOT EXISTS ix_product_events_analytics ON habitflow.product_events(event_name,occurred_at DESC,client_id);
 COMMIT;
--- Password recovery is maintained in its canonical migration for new databases.
+-- END include database/migrations/045_pwa_product_events_hardening.sql
+
+-- BEGIN include database/migrations/046_progress_history_days_limit.sql
+begin;
+insert into habitflow.feature_catalog(code,name,value_type,category)
+values ('history_days_limit','Limite do histórico em dias','Integer','Histórico')
+on conflict(code) do update set name=excluded.name,value_type=excluded.value_type,category=excluded.category;
+
+insert into habitflow.plan_features(plan_id,feature_code,int_value)
+select id,'history_days_limit',case when code='free' then 90 else -1 end
+from habitflow.plans where code in ('free','ritmo','evolucao')
+on conflict(plan_id,feature_code) do update set int_value=excluded.int_value,updated_at=now();
+commit;
+-- END include database/migrations/046_progress_history_days_limit.sql
+
+-- BEGIN include database/migrations/047_schema_migration_governance.sql
+alter table habitflow.schema_migrations add column if not exists filename varchar(260);
+alter table habitflow.schema_migrations add column if not exists app_version varchar(80);
+alter table habitflow.schema_migrations alter column checksum type varchar(64);
+-- END include database/migrations/047_schema_migration_governance.sql
+
 -- BEGIN include database/migrations/048_password_recovery_transactional_email.sql
 -- Secure, single-use password recovery and asynchronous transactional email.
 alter table habitflow.users add column if not exists session_version integer not null default 0;
@@ -1164,6 +1143,7 @@ create table if not exists habitflow.transactional_email_outbox (
 );
 create index if not exists ix_email_outbox_due on habitflow.transactional_email_outbox(status,next_attempt_at);
 -- END include database/migrations/048_password_recovery_transactional_email.sql
+
 -- BEGIN include database/migrations/049_billing_communication_rule_seed_integrity.sql
 -- Transaction mode: required. DDL and legacy normalization are atomic.
 BEGIN;
@@ -1198,8 +1178,48 @@ WHERE code IN ('overdue_plus_2', 'overdue_plus_5');
 COMMIT;
 -- END include database/migrations/049_billing_communication_rule_seed_integrity.sql
 
+-- BEGIN include database/migrations/050_goal_progress_activation_core.sql
+-- transaction-mode: transactional
+BEGIN;
 
--- v6.9.2 forward migrations 051-052 (fresh database aggregate)
+ALTER TABLE habitflow.goal_progress_events
+    ADD COLUMN IF NOT EXISTS event_type varchar(60),
+    ADD COLUMN IF NOT EXISTS new_value integer,
+    ADD COLUMN IF NOT EXISTS local_date date,
+    ADD COLUMN IF NOT EXISTS source_completion_id uuid,
+    ADD COLUMN IF NOT EXISTS idempotency_key varchar(240),
+    ADD COLUMN IF NOT EXISTS correlation_id varchar(160),
+    ADD COLUMN IF NOT EXISTS metadata_json jsonb NOT NULL DEFAULT '{}'::jsonb;
+
+UPDATE habitflow.goal_progress_events
+   SET event_type=coalesce(event_type,source_type),
+       new_value=coalesce(new_value,current_value),
+       local_date=coalesce(local_date,created_at::date),
+       idempotency_key=coalesce(idempotency_key,'legacy:' || id::text),
+       correlation_id=coalesce(correlation_id,'legacy:' || id::text)
+ WHERE event_type IS NULL OR new_value IS NULL OR local_date IS NULL
+    OR idempotency_key IS NULL OR correlation_id IS NULL;
+
+ALTER TABLE habitflow.goal_progress_events
+    ALTER COLUMN event_type SET NOT NULL,
+    ALTER COLUMN new_value SET NOT NULL,
+    ALTER COLUMN local_date SET NOT NULL,
+    ALTER COLUMN idempotency_key SET NOT NULL,
+    ALTER COLUMN correlation_id SET NOT NULL;
+
+CREATE UNIQUE INDEX IF NOT EXISTS ux_goal_progress_events_idempotency
+    ON habitflow.goal_progress_events(idempotency_key);
+CREATE INDEX IF NOT EXISTS ix_goal_progress_events_tenant_date
+    ON habitflow.goal_progress_events(client_id,user_id,local_date DESC);
+
+INSERT INTO habitflow.milestones(id,code,title,description,threshold)
+VALUES ('50100000-0000-0000-0000-000000000001','first_goal_completed','Primeiro objetivo concluído','Você concluiu seu primeiro objetivo.',1)
+ON CONFLICT(code) DO UPDATE SET title=excluded.title,description=excluded.description,threshold=excluded.threshold,is_active=true;
+
+COMMIT;
+-- END include database/migrations/050_goal_progress_activation_core.sql
+
+-- BEGIN include database/migrations/051_system_settings_contract.sql
 -- transaction-mode: runner-managed
 alter table habitflow.system_settings add column if not exists description text null;
 alter table habitflow.system_settings add column if not exists is_public boolean not null default false;
@@ -1208,7 +1228,9 @@ update habitflow.system_settings set created_at = coalesce(created_at, updated_a
 alter table habitflow.system_settings alter column created_at set default now();
 alter table habitflow.system_settings alter column created_at set not null;
 alter table habitflow.system_settings alter column is_public set default false;
+-- END include database/migrations/051_system_settings_contract.sql
 
+-- BEGIN include database/migrations/052_library_v2_onboarding.sql
 -- transaction-mode: runner-managed
 create extension if not exists unaccent;
 
@@ -1266,8 +1288,84 @@ create table if not exists habitflow.user_onboarding_progress (
  last_activity_at timestamptz not null default now(), completed_at timestamptz, skipped_at timestamptz, version integer not null default 1,
  primary key(client_id,user_id), constraint ck_onboarding_days check(preferred_days <@ array[0,1,2,3,4,5,6]::smallint[]),
  constraint ck_onboarding_terminal check(completed_at is null or skipped_at is null));
+-- END include database/migrations/052_library_v2_onboarding.sql
 
--- v6.10.0 additive legal/privacy/catalog governance
+-- BEGIN include database/migrations/053_persistent_onboarding_drafts.sql
+-- transaction-mode: runner-managed
+create table if not exists habitflow.user_onboarding_draft_items (
+ id uuid primary key,
+ client_id uuid not null references habitflow.clients(id),
+ user_id uuid not null references habitflow.users(id),
+ template_id uuid not null references habitflow.habit_templates(id),
+ collection_id uuid null references habitflow.habit_template_collections(id),
+ name varchar(120) not null,
+ frequency varchar(40) not null,
+ days smallint[] not null default '{}',
+ target_per_week integer null,
+ preferred_time time null,
+ color varchar(10) not null,
+ category varchar(80) null,
+ is_required boolean not null default false,
+ sort_order integer not null default 0,
+ created_at timestamptz not null default now(),
+ constraint ck_onboarding_draft_days check(days <@ array[0,1,2,3,4,5,6]::smallint[]),
+ constraint ck_onboarding_draft_target check(target_per_week is null or target_per_week between 1 and 7),
+ unique(client_id,user_id,template_id)
+);
+create index if not exists ix_onboarding_draft_owner on habitflow.user_onboarding_draft_items(client_id,user_id,sort_order);
+-- END include database/migrations/053_persistent_onboarding_drafts.sql
+
+-- BEGIN include database/migrations/054_onboarding_engagement_notification_center.sql
+-- transaction-mode: runner-managed
+alter table habitflow.notifications add column if not exists client_id uuid null references habitflow.clients(id);
+alter table habitflow.notifications add column if not exists category varchar(40) null;
+alter table habitflow.notifications add column if not exists deduplication_key varchar(160) null;
+alter table habitflow.notifications add column if not exists is_archived boolean not null default false;
+alter table habitflow.notifications add column if not exists archived_at timestamptz null;
+alter table habitflow.notifications add column if not exists expires_at timestamptz null;
+update habitflow.notifications n set client_id=u.client_id from habitflow.users u where u.id=n.user_id and n.client_id is null;
+create index if not exists ix_notifications_center on habitflow.notifications(user_id,is_archived,is_read,created_at desc);
+create unique index if not exists ux_notifications_deduplication on habitflow.notifications(client_id,user_id,deduplication_key) where deduplication_key is not null;
+
+create table if not exists habitflow.reminder_dispatches(
+ id uuid primary key, client_id uuid not null references habitflow.clients(id), user_id uuid not null references habitflow.users(id),
+ habit_reminder_id uuid not null references habitflow.habit_reminders(id), habit_id uuid not null references habitflow.habits(id),
+ scheduled_for_utc timestamptz not null, channel varchar(24) not null default 'in_app', status varchar(24) not null,
+ attempt_count integer not null default 0, processed_at timestamptz null, error_code varchar(80) null, created_at timestamptz not null default now(),
+ unique(habit_reminder_id,scheduled_for_utc,channel)
+);
+create index if not exists ix_reminder_dispatch_status on habitflow.reminder_dispatches(status,scheduled_for_utc);
+
+alter table habitflow.user_summary_preferences add column if not exists client_id uuid null references habitflow.clients(id);
+update habitflow.user_summary_preferences p set client_id=u.client_id from habitflow.users u where u.id=p.user_id and p.client_id is null;
+-- END include database/migrations/054_onboarding_engagement_notification_center.sql
+
+-- BEGIN include database/migrations/055_routine_planner_weekly_review.sql
+-- transaction-mode: runner-managed
+-- Planejamento diário e revisão semanal, sempre isolados no schema habitflow.
+create table if not exists habitflow.habit_schedule_exceptions (
+ id uuid primary key, client_id uuid not null references habitflow.clients(id), user_id uuid not null references habitflow.users(id), habit_id uuid not null references habitflow.habits(id),
+ local_date date not null, type varchar(16) not null, destination_date date null, reason varchar(240), version integer not null default 1,
+ created_at timestamptz not null default now(), updated_at timestamptz not null default now(),
+ constraint ck_schedule_exception_type check(type in ('Excused','Moved','Added')), constraint ck_schedule_exception_version check(version>0),
+ constraint ck_schedule_exception_move check((type='Moved' and destination_date>local_date) or (type<>'Moved' and destination_date is null)), unique(client_id,user_id,habit_id,local_date)
+);
+create index if not exists ix_schedule_exceptions_range on habitflow.habit_schedule_exceptions(client_id,user_id,local_date);
+create table if not exists habitflow.daily_routine_overrides (
+ id uuid primary key, client_id uuid not null references habitflow.clients(id), user_id uuid not null references habitflow.users(id), habit_id uuid not null references habitflow.habits(id), local_date date not null,
+ preferred_time time null, sort_order integer not null default 0, version integer not null default 1, created_at timestamptz not null default now(), updated_at timestamptz not null default now(),
+ constraint ck_daily_override_version check(version>0), unique(client_id,user_id,habit_id,local_date)
+);
+create index if not exists ix_daily_overrides_day on habitflow.daily_routine_overrides(client_id,user_id,local_date,sort_order);
+create table if not exists habitflow.weekly_reviews (
+ id uuid primary key, client_id uuid not null references habitflow.clients(id), user_id uuid not null references habitflow.users(id), period_start date not null, period_end date not null,
+ status varchar(16) not null default 'Draft', idempotency_key varchar(80) not null, version integer not null default 1, created_at timestamptz not null default now(), completed_at timestamptz null,
+ constraint ck_weekly_review_status check(status in ('Draft','Completed')), constraint ck_weekly_review_period check(period_end=period_start+6), constraint ck_weekly_review_version check(version>0),
+ unique(client_id,user_id,period_start), unique(client_id,user_id,idempotency_key)
+);
+create index if not exists ix_weekly_reviews_user_period on habitflow.weekly_reviews(client_id,user_id,period_start desc);
+-- END include database/migrations/055_routine_planner_weekly_review.sql
+
 -- BEGIN include database/migrations/056_secure_admin_honest_plans_legal_privacy.sql
 -- v6.10.0. Additive/idempotent governance; never seeds an administrator credential.
 BEGIN;
@@ -1313,6 +1411,7 @@ CREATE TABLE IF NOT EXISTS habitflow.plan_public_benefits(
 CREATE INDEX IF NOT EXISTS ix_legal_versions_current ON habitflow.legal_document_versions(document_id,locale,effective_at DESC) WHERE status='Published';
 COMMIT;
 -- END include database/migrations/056_secure_admin_honest_plans_legal_privacy.sql
+
 -- BEGIN include database/migrations/057_legal_document_immutability.sql
 -- v6.10.2: enforce the legal publication invariant at the database boundary.
 BEGIN;
@@ -1339,6 +1438,7 @@ FOR EACH ROW EXECUTE FUNCTION habitflow.prevent_published_legal_version_mutation
 
 COMMIT;
 -- END include database/migrations/057_legal_document_immutability.sql
+
 -- BEGIN include database/migrations/058_user_sessions.sql
 -- v6.10.2 - Server-authorized account sessions and revocation.
 BEGIN;
@@ -1358,6 +1458,7 @@ CREATE INDEX IF NOT EXISTS ix_user_sessions_owner_active ON habitflow.user_sessi
 CREATE INDEX IF NOT EXISTS ix_user_sessions_expiration ON habitflow.user_sessions(expires_at) WHERE revoked_at IS NULL;
 COMMIT;
 -- END include database/migrations/058_user_sessions.sql
+
 -- BEGIN include database/migrations/059_superadmin_mfa.sql
 begin;
 
@@ -1404,6 +1505,7 @@ create index if not exists ix_security_event_owner on habitflow.user_security_ev
 
 commit;
 -- END include database/migrations/059_superadmin_mfa.sql
+
 -- BEGIN include database/migrations/060_public_privacy_notice.sql
 -- v6.10.5: baseline public notice. Runtime fallback remains available when migrations are pending.
 BEGIN;
@@ -1422,7 +1524,86 @@ ON CONFLICT (document_id,version,locale) DO NOTHING;
 COMMIT;
 -- END include database/migrations/060_public_privacy_notice.sql
 
--- v6.12.3 CRUD/domain contract stabilization
+-- BEGIN include database/migrations/061_habit_lifecycle.sql
+-- Habit lifecycle is reversible: pausing and archiving never remove completions.
+begin;
+alter table habitflow.habits add column if not exists is_paused boolean not null default false;
+alter table habitflow.habits add column if not exists paused_at timestamptz null;
+create index if not exists ix_habits_tenant_user_lifecycle
+    on habitflow.habits(client_id, user_id, is_archived, is_paused, updated_at desc);
+commit;
+-- END include database/migrations/061_habit_lifecycle.sql
+
+-- BEGIN include database/migrations/062_product_tips.sql
+-- transaction-mode: runner-managed
+create table if not exists habitflow.product_tips(
+ id uuid primary key,
+ code varchar(80) not null unique,
+ route_pattern varchar(160) not null,
+ target_selector varchar(200) not null,
+ title varchar(120) not null,
+ content varchar(400) not null,
+ display_order integer not null default 0,
+ is_active boolean not null default true,
+ created_at timestamptz not null default now()
+);
+create table if not exists habitflow.user_product_tips(
+ user_id uuid not null references habitflow.users(id) on delete cascade,
+ product_tip_id uuid not null references habitflow.product_tips(id) on delete cascade,
+ seen_at timestamptz null,
+ dismissed_at timestamptz null,
+ updated_at timestamptz not null default now(),
+ primary key(user_id,product_tip_id)
+);
+create index if not exists ix_user_product_tips_pending on habitflow.user_product_tips(user_id,dismissed_at);
+
+insert into habitflow.product_tips(id,code,route_pattern,target_selector,title,content,display_order) values
+('62000000-0000-0000-0000-000000000001','dashboard','/dashboard%','#conteudo','Seu painel diário','Veja consistência, próximos passos e alertas do seu plano usando somente seus dados reais.',10),
+('62000000-0000-0000-0000-000000000002','header','/%','[data-app-header]','Navegação rápida','Use a busca, o menu Novo e suas notificações sem sair do contexto atual.',20),
+('62000000-0000-0000-0000-000000000003','my-day','/my-day%','#conteudo','Organize o seu dia','Conclua hábitos planejados e acompanhe o que ainda precisa da sua atenção.',30),
+('62000000-0000-0000-0000-000000000004','progress','/progress%','#conteudo','Entenda seu progresso','Explore o calendário para reconhecer padrões de consistência ao longo do tempo.',40),
+('62000000-0000-0000-0000-000000000005','reports','/reports%','#conteudo','Leia seus relatórios','Compare períodos e transforme seus resultados em próximos passos possíveis.',50),
+('62000000-0000-0000-0000-000000000006','library','/habit-library%','#conteudo','Descubra hábitos','Revise cada sugestão antes de ativá-la e adapte-a à sua rotina.',60),
+('62000000-0000-0000-0000-000000000007','plan','/account/plan%','#conteudo','Acompanhe seu plano','Confira limites e uso antes de decidir por qualquer alteração.',70),
+('62000000-0000-0000-0000-000000000008','security','/account/security%','#conteudo','Proteja sua conta','Revise sessões, senha e autenticação para manter seus dados seguros.',80),
+('62000000-0000-0000-0000-000000000009','privacy','/account/privacy%','#conteudo','Controle sua privacidade','Gerencie preferências e solicitações relacionadas aos seus dados.',90),
+('62000000-0000-0000-0000-000000000010','notifications','/notifications%','#conteudo','Sua central de notificações','Filtre, leia e arquive avisos operacionais vinculados à sua conta.',100)
+on conflict(code) do update set route_pattern=excluded.route_pattern,target_selector=excluded.target_selector,title=excluded.title,content=excluded.content,display_order=excluded.display_order;
+-- END include database/migrations/062_product_tips.sql
+
+-- BEGIN include database/migrations/063_account_privacy_center.sql
+begin;
+alter table habitflow.lgpd_requests drop constraint if exists ck_habitflow_lgpd_requests_type;
+alter table habitflow.lgpd_requests add constraint ck_habitflow_lgpd_requests_type check (type in ('Export', 'Delete', 'Anonymize'));
+create table if not exists habitflow.user_privacy_consents (user_id uuid not null references habitflow.users(id) on delete cascade,consent_key varchar(60) not null,granted boolean not null,updated_at timestamp not null default now(),primary key(user_id,consent_key),constraint ck_user_privacy_consents_key check(consent_key in ('analytics','communications')));
+create table if not exists habitflow.privacy_request_events (id bigint generated always as identity primary key,request_id uuid not null references habitflow.lgpd_requests(id) on delete cascade,event_type varchar(40) not null,status varchar(50) not null,occurred_at timestamp not null default now());
+create index if not exists ix_privacy_request_events_request on habitflow.privacy_request_events(request_id,occurred_at desc);
+create or replace function habitflow.audit_privacy_request() returns trigger language plpgsql as $$ begin insert into habitflow.privacy_request_events(request_id,event_type,status) values(new.id,case when tg_op='INSERT' then 'requested' else 'status_changed' end,new.status);return new;end $$;
+drop trigger if exists trg_audit_privacy_request on habitflow.lgpd_requests;
+create trigger trg_audit_privacy_request after insert or update of status on habitflow.lgpd_requests for each row execute function habitflow.audit_privacy_request();
+commit;
+-- END include database/migrations/063_account_privacy_center.sql
+
+-- BEGIN include database/migrations/064_v6121_commercial_plan_integrity.sql
+-- v6.12.1: a public plan must not offer values for non-marketable capabilities.
+BEGIN;
+UPDATE habitflow.plan_features pf
+SET bool_value = CASE WHEN f.value_type = 'Boolean' THEN false ELSE pf.bool_value END,
+    int_value = CASE WHEN f.value_type = 'Integer' THEN null ELSE pf.int_value END,
+    string_value = CASE WHEN f.value_type = 'String' THEN null ELSE pf.string_value END,
+    updated_at = now()
+FROM habitflow.feature_catalog f, habitflow.plans p
+WHERE f.code = pf.feature_code
+  AND p.id = pf.plan_id
+  AND p.code IN ('free', 'ritmo')
+  AND (f.implementation_status <> 'Implemented' OR NOT f.is_marketable);
+
+UPDATE habitflow.plans
+SET is_public = false, is_sellable = false, sales_status = 'Grandfathered'
+WHERE code = 'evolucao';
+COMMIT;
+-- END include database/migrations/064_v6121_commercial_plan_integrity.sql
+
 -- BEGIN include database/migrations/065_v6123_crud_contract_backfill.sql
 -- v6.12.3: repair the persisted Habit/domain contract without rewriting historical migrations.
 update habitflow.habits
@@ -1437,24 +1618,121 @@ create index if not exists ix_goal_habits_tenant_goal
     on habitflow.goal_habits(client_id, goal_id, habit_id);
 -- END include database/migrations/065_v6123_crud_contract_backfill.sql
 
--- v6.16.5 intelligent onboarding and tenant-safe challenges
+-- BEGIN include database/migrations/066_lgpd_privacy_schema_repair.sql
+begin;
+
+create table if not exists habitflow.user_privacy_consents (
+    user_id uuid not null references habitflow.users(id) on delete cascade,
+    consent_key varchar(60) not null,
+    granted boolean not null,
+    updated_at timestamp not null default now(),
+    primary key (user_id, consent_key),
+    constraint ck_user_privacy_consents_key
+        check (consent_key in ('analytics', 'communications'))
+);
+
+create table if not exists habitflow.privacy_request_events (
+    id bigint generated always as identity primary key,
+    request_id uuid not null references habitflow.lgpd_requests(id) on delete cascade,
+    event_type varchar(40) not null,
+    status varchar(50) not null,
+    occurred_at timestamp not null default now()
+);
+
+create index if not exists ix_privacy_request_events_request
+    on habitflow.privacy_request_events(request_id, occurred_at desc);
+
+create or replace function habitflow.audit_privacy_request()
+returns trigger
+language plpgsql
+as $$
+begin
+    insert into habitflow.privacy_request_events(request_id, event_type, status)
+    values (
+        new.id,
+        case when tg_op = 'INSERT' then 'requested' else 'status_changed' end,
+        new.status
+    );
+    return new;
+end
+$$;
+
+drop trigger if exists trg_audit_privacy_request on habitflow.lgpd_requests;
+
+create trigger trg_audit_privacy_request
+after insert or update of status on habitflow.lgpd_requests
+for each row execute function habitflow.audit_privacy_request();
+
+commit;
+-- END include database/migrations/066_lgpd_privacy_schema_repair.sql
+
+-- BEGIN include database/migrations/067_reminder_dispatch_runtime.sql
+-- transaction-mode: runner-managed
+alter table habitflow.habit_reminders add column if not exists locked_by varchar(160) null;
+alter table habitflow.habit_reminders add column if not exists locked_until timestamptz null;
+alter table habitflow.reminder_dispatches add column if not exists next_attempt_at timestamptz null;
+alter table habitflow.reminder_dispatches add column if not exists locked_by varchar(160) null;
+alter table habitflow.reminder_dispatches add column if not exists locked_until timestamptz null;
+alter table habitflow.reminder_dispatches add column if not exists last_error_at timestamptz null;
+alter table habitflow.reminder_dispatches add column if not exists correlation_id uuid null;
+update habitflow.reminder_dispatches set correlation_id=gen_random_uuid() where correlation_id is null;
+alter table habitflow.reminder_dispatches alter column correlation_id set not null;
+create index if not exists ix_reminder_dispatch_retry on habitflow.reminder_dispatches(next_attempt_at,locked_until) where status in ('Pending','Retry','Processing');
+create index if not exists ix_habit_reminder_lease on habitflow.habit_reminders(next_trigger_at,locked_until) where is_active;
+-- END include database/migrations/067_reminder_dispatch_runtime.sql
+
+-- BEGIN include database/migrations/068_reminder_runtime_integrity.sql
+-- habitflow:transaction=runner
+-- Reminder instants were historically stored as timestamp without time zone.  The
+-- application has always written UTC, so preserve the wall-clock value while
+-- making that contract explicit to PostgreSQL.
+alter table habitflow.habit_reminders
+  alter column next_trigger_at type timestamptz using next_trigger_at at time zone 'UTC',
+  alter column last_triggered_at type timestamptz using last_triggered_at at time zone 'UTC';
+
+create index if not exists ix_habit_reminders_dispatch_due
+  on habitflow.habit_reminders(next_trigger_at, id)
+  where is_active and next_trigger_at is not null;
+create index if not exists ix_reminder_dispatches_lease_recovery
+  on habitflow.reminder_dispatches(locked_until)
+  where locked_until is not null and status in ('Pending','Processing','Retry');
+-- END include database/migrations/068_reminder_runtime_integrity.sql
+
+-- BEGIN include database/migrations/069_v6165_intelligent_onboarding_challenges.sql
+-- habitflow:transaction=runner
+-- HabitFlow v6.16.5: tenant-safe challenge foundation.
 create table if not exists habitflow.user_challenges (
- id uuid primary key, client_id uuid not null references habitflow.clients(id), user_id uuid not null references habitflow.users(id),
- habit_id uuid not null references habitflow.habits(id), name varchar(160) not null, description varchar(320) not null,
- duration_days integer not null constraint ck_user_challenges_duration check(duration_days in (7,30,90)), start_date date not null, end_date date not null,
+ id uuid primary key,
+ client_id uuid not null references habitflow.clients(id),
+ user_id uuid not null references habitflow.users(id),
+ habit_id uuid not null references habitflow.habits(id),
+ name varchar(160) not null,
+ description varchar(320) not null,
+ duration_days integer not null constraint ck_user_challenges_duration check(duration_days in (7,30,90)),
+ start_date date not null,
+ end_date date not null,
  status varchar(20) not null default 'Active' constraint ck_user_challenges_status check(status in ('Active','Completed','Abandoned','Expired')),
  created_at timestamptz not null default now(), updated_at timestamptz not null default now(), completed_at timestamptz,
- constraint ck_user_challenges_dates check(end_date=start_date+(duration_days-1)));
+ constraint ck_user_challenges_dates check(end_date=start_date+(duration_days-1))
+);
 create index if not exists ix_user_challenges_owner on habitflow.user_challenges(client_id,user_id,status,created_at desc);
 create unique index if not exists ux_user_challenges_active_habit on habitflow.user_challenges(client_id,user_id,habit_id) where status='Active';
-insert into habitflow.feature_catalog(code,name,value_type,category,implementation_status,is_marketable) values
+
+-- The feature catalogue is honest: the 7-day flow is available to Free, while
+-- longer challenges are implemented but enforced as Premium by the backend.
+insert into habitflow.feature_catalog(code,name,value_type,category,implementation_status,is_marketable)
+values
  ('challenge_7_days','Desafio de 7 dias','Boolean','Desafios','Implemented',true),
  ('challenge_30_days','Desafio de 30 dias','Boolean','Desafios','Implemented',true),
  ('challenge_90_days','Desafio de 90 dias','Boolean','Desafios','Implemented',true)
 on conflict(code) do update set name=excluded.name,value_type=excluded.value_type,category=excluded.category,implementation_status='Implemented',is_marketable=true;
 insert into habitflow.plan_features(plan_id,feature_code,bool_value)
 select p.id,f.code,(f.code='challenge_7_days' or p.code<>'free') from habitflow.plans p cross join habitflow.feature_catalog f
-where f.code in ('challenge_7_days','challenge_30_days','challenge_90_days') on conflict(plan_id,feature_code) do update set bool_value=excluded.bool_value,updated_at=now();
+where f.code in ('challenge_7_days','challenge_30_days','challenge_90_days')
+on conflict(plan_id,feature_code) do update set bool_value=excluded.bool_value,updated_at=now();
+-- END include database/migrations/069_v6165_intelligent_onboarding_challenges.sql
+
+-- BEGIN include database/migrations/070_v6166_premium_reports.sql
 -- v6.16.6: tenant-safe, idempotent report snapshots.
 begin;
 alter table habitflow.user_reports add column if not exists client_id uuid null;
@@ -1464,7 +1742,8 @@ alter table habitflow.user_reports alter column client_id set not null;
 create index if not exists ix_user_reports_tenant_owner_period on habitflow.user_reports(client_id,user_id,period_start desc);
 create unique index if not exists ux_user_reports_snapshot_version on habitflow.user_reports(client_id,user_id,report_type,period_start,algorithm_version);
 commit;
--- v6.16.7 secure multi-tenant billing
+-- END include database/migrations/070_v6166_premium_reports.sql
+
 -- BEGIN include database/migrations/071_v6167_secure_multitenant_billing.sql
 -- HabitFlow v6.16.7 - secure, idempotent, multi-tenant billing ledger.
 begin;
@@ -1527,7 +1806,6 @@ create index if not exists ix_billing_audit_tenant_user on habitflow.billing_aud
 commit;
 -- END include database/migrations/071_v6167_secure_multitenant_billing.sql
 
--- v6.16.8 PWA, controlled offline sync and real push notifications
 -- BEGIN include database/migrations/072_v6168_pwa_push_offline.sql
 -- HabitFlow v6.16.8: tenant-safe Web Push persistence and idempotent offline events.
 begin;
@@ -1559,7 +1837,6 @@ create index if not exists ix_offline_sync_expiry on habitflow.offline_sync_even
 commit;
 -- END include database/migrations/072_v6168_pwa_push_offline.sql
 
--- v6.16.9 secure assistant, help and support center
 -- BEGIN include database/migrations/073_v6169_secure_assistance_support.sql
 -- HabitFlow v6.16.9: secure assistant, support contact and tenant-isolated tickets.
 begin;
@@ -1602,8 +1879,6 @@ create index if not exists ix_support_ticket_events_tenant on habitflow.support_
 commit;
 -- END include database/migrations/073_v6169_secure_assistance_support.sql
 
-
--- v6.17.0 SaaS administration, RBAC, audit and privacy
 -- BEGIN include database/migrations/074_v6170_saas_admin_lgpd.sql
 -- HabitFlow v6.17.0: tenant-scoped SaaS administration, RBAC, audit, flags and LGPD.
 begin;
@@ -1667,11 +1942,12 @@ create index if not exists ix_consent_records_owner on habitflow.consent_records
 commit;
 -- END include database/migrations/074_v6170_saas_admin_lgpd.sql
 
--- v6.17.1 release candidate integrity and hot-path indexes
 -- BEGIN include database/migrations/075_v6171_release_candidate_integrity.sql
 -- HabitFlow v6.17.1: honest feature states and indexes for tenant-scoped hot paths.
 begin;
 set local search_path to habitflow, public;
+
+alter table habitflow.notifications add column if not exists is_archived boolean not null default false;
 
 -- Disabled is an explicit product state. Internal remains reserved for operational
 -- capabilities which are real but must never be advertised as customer benefits.
@@ -1702,7 +1978,6 @@ create index if not exists ix_habits_tenant_user_active
 commit;
 -- END include database/migrations/075_v6171_release_candidate_integrity.sql
 
--- v6.17.3 healthy gamification and personal retention journey
 -- BEGIN include database/migrations/076_v6173_healthy_gamification.sql
 -- HabitFlow v6.17.3: healthy, personal gamification (tenant-safe and additive).
 begin;
@@ -1778,7 +2053,6 @@ on conflict(plan_id,feature_code) do update set bool_value=excluded.bool_value,u
 commit;
 -- END include database/migrations/076_v6173_healthy_gamification.sql
 
--- HabitFlow v6.17.7: mobile, PWA e notificações seguras
 -- BEGIN include database/migrations/077_v6177_mobile_pwa_notification_preferences.sql
 -- HabitFlow v6.17.7: preferências completas e trilha de entrega multicanal.
 begin;
@@ -1804,7 +2078,6 @@ create unique index if not exists ux_push_attempt_delivery on habitflow.push_del
 commit;
 -- END include database/migrations/077_v6177_mobile_pwa_notification_preferences.sql
 
--- HabitFlow v6.17.9: cobrança real, checkout seguro e governança comercial
 -- BEGIN include database/migrations/078_v6179_real_billing_commercial.sql
 -- HabitFlow v6.17.9 - additive commercial billing governance.
 -- Provider secrets and card data intentionally do not belong in this schema.
@@ -1854,7 +2127,6 @@ create index if not exists ix_billing_events_code_created_v6179 on habitflow.bil
 commit;
 -- END include database/migrations/078_v6179_real_billing_commercial.sql
 
--- HabitFlow v6.18.0: times, convites e programas corporativos com privacidade
 -- BEGIN include database/migrations/079_v6180_corporate_programs.sql
 -- HabitFlow v6.18.0 - corporate collaboration, privacy-first and tenant isolated.
 begin;
@@ -1895,7 +2167,6 @@ create index if not exists ix_challenges_tenant_team_status on habitflow.team_ch
 commit;
 -- END include database/migrations/079_v6180_corporate_programs.sql
 
--- HabitFlow v6.18.2: Coach IA seguro, eventos e uso agregado
 -- BEGIN include database/migrations/080_v6182_safe_contextual_assistant.sql
 -- HabitFlow v6.18.2: assistant audit, safety and aggregate usage. Additive and rerunnable.
 begin;
@@ -1919,7 +2190,6 @@ create table if not exists habitflow.assistant_usage_daily (
 commit;
 -- END include database/migrations/080_v6182_safe_contextual_assistant.sql
 
--- HabitFlow v6.18.8: gamificação premium, pontos saudáveis e ranking seguro
 -- BEGIN include database/migrations/081_v6188_premium_gamification.sql
 -- HabitFlow v6.18.8: pontos verificáveis e ranking explicitamente opt-in.
 set search_path to habitflow, public;
@@ -1941,14 +2211,13 @@ create index if not exists ix_gamification_leaderboard_visible on gamification_l
 insert into achievement_definitions(code,name,description,icon,criterion,category,rarity) values
  ('first_habit','Primeiro passo','Você criou seu primeiro hábito ativo.','sparkles','first_active_habit','começo','comum'),
  ('consistency_30','Presença de 30 dias','Trinta dias de presença, respeitando pausas.','calendar','streak_30','consistência','especial'),
- ('routine_completed','Rotina completa','Você concluiu uma rotina real.','check-circle','rotina','especial'),
- ('consistent_week','Semana consistente','Uma semana saudável e consistente.','sun','consistência','especial'),
- ('return_after_pause','Bom retorno','Você voltou depois de uma pausa, sem punição.','heart','return_after_pause','bem-estar','comum'),
- ('template_used','Começo guiado','Você iniciou um hábito usando um template.','layout','começo','comum')
+ ('routine_completed','Rotina completa','Você concluiu uma rotina real.','check-circle','routine_completed','premium','especial'),
+ ('consistent_week','Semana consistente','Uma semana saudável e consistente.','sun','consistent_week','consistência','especial'),
+ ('return_after_pause','Bom retorno','Você voltou depois de uma pausa, sem punição.','heart','return_after_pause','retorno','comum'),
+ ('template_used','Começo guiado','Você iniciou um hábito usando um template.','layout','template_used','começo','comum')
 on conflict(code) do update set name=excluded.name,description=excluded.description,criterion=excluded.criterion,is_active=true;
 -- END include database/migrations/081_v6188_premium_gamification.sql
 
--- HabitFlow v6.19.0: security, LGPD, audit and tenant-safe data portability
 -- BEGIN include database/migrations/082_v6190_security_lgpd_hardening.sql
 -- HabitFlow v6.19.0: LGPD governance, immutable consent history and tenant-safe portability.
 begin;
@@ -2004,7 +2273,6 @@ $$;
 commit;
 -- END include database/migrations/082_v6190_security_lgpd_hardening.sql
 
--- HabitFlow v6.19.1: API pública, webhooks e calendário
 -- BEGIN include database/migrations/083_v6191_public_integrations.sql
 begin;
 
@@ -2051,7 +2319,6 @@ create index if not exists ix_export_jobs_tenant_status on habitflow.export_jobs
 commit;
 -- END include database/migrations/083_v6191_public_integrations.sql
 
--- HabitFlow v6.19.2: SuperAdmin, tenant modules, manual billing and document login
 -- BEGIN include database/migrations/084_v6192_superadmin_tenant_governance.sql
 -- HabitFlow v6.19.2 - additive SaaS tenant governance. Safe to re-run.
 begin;
@@ -2103,31 +2370,9 @@ create index if not exists ix_tenant_access_audit_actor on habitflow.tenant_acce
 create unique index if not exists ux_user_documents_login on habitflow.user_documents(document_normalized,tenant_id) where enabled_for_login;
 commit;
 -- END include database/migrations/084_v6192_superadmin_tenant_governance.sql
--- HabitFlow v6.19.3: atendimento SaaS, SLA e auditoria. Idempotente.
-begin;
-alter table habitflow.support_tickets_v2 add column if not exists priority varchar(12) not null default 'Medium';
-alter table habitflow.support_tickets_v2 add column if not exists assigned_user_id uuid references habitflow.users(id);
-alter table habitflow.support_tickets_v2 add column if not exists sla_due_at timestamptz;
-update habitflow.support_tickets_v2 set sla_due_at=created_at+interval '48 hours' where sla_due_at is null;
-alter table habitflow.support_tickets_v2 alter column sla_due_at set not null;
-alter table habitflow.support_tickets_v2 drop constraint if exists support_tickets_v2_category_check;
-alter table habitflow.support_tickets_v2 add constraint support_tickets_v2_category_check check(category in ('Question','Error','Billing','Access','Configuration','Suggestion','Commercial')) not valid;
-alter table habitflow.support_tickets_v2 drop constraint if exists support_tickets_v2_status_check;
-alter table habitflow.support_tickets_v2 add constraint support_tickets_v2_status_check check(status in ('Open','InAnalysis','WaitingCustomer','WaitingMnsoft','Resolved','Closed','Cancelled')) not valid;
-alter table habitflow.support_tickets_v2 drop constraint if exists support_tickets_v2_priority_check;
-alter table habitflow.support_tickets_v2 add constraint support_tickets_v2_priority_check check(priority in ('Low','Medium','High','Critical'));
-create index if not exists ix_support_tickets_v2_queue on habitflow.support_tickets_v2(client_id,status,priority,created_at desc);
-create index if not exists ix_support_tickets_v2_sla on habitflow.support_tickets_v2(status,sla_due_at) where status not in ('Closed','Cancelled');
-alter table habitflow.support_ticket_messages_v2 add column if not exists is_internal boolean not null default false;
-alter table habitflow.support_ticket_messages_v2 add constraint support_ticket_message_not_blank check(length(btrim(message))>0) not valid;
-create table if not exists habitflow.support_ticket_status_history(id uuid primary key,client_id uuid not null references habitflow.clients(id),ticket_id uuid not null references habitflow.support_tickets_v2(id) on delete cascade,actor_user_id uuid references habitflow.users(id),from_status varchar(20) not null,to_status varchar(20) not null,reason varchar(1000),created_at timestamptz not null default now());
-create index if not exists ix_support_status_history_tenant on habitflow.support_ticket_status_history(client_id,ticket_id,created_at);
-create table if not exists habitflow.support_sla_rules(priority varchar(12) primary key,business_hours integer not null check(business_hours between 1 and 720),updated_at timestamptz not null default now());
-insert into habitflow.support_sla_rules(priority,business_hours) values('Low',72),('Medium',48),('High',24),('Critical',8) on conflict(priority) do nothing;
-commit;
--- v6.19.4: execute database/migrations/085_v6194_operations_center.sql after this baseline.
 
--- HabitFlow v6.19.4 - Operations Center (idempotent baseline parity)
+-- BEGIN include database/migrations/085_v6194_operations_center.sql
+begin;
 create schema if not exists habitflow;
 create table if not exists habitflow.structured_log_events(
  id uuid primary key default gen_random_uuid(), client_id uuid null references habitflow.clients(id) on delete set null,
@@ -2152,63 +2397,184 @@ create table if not exists habitflow.operational_alert_history(id uuid primary k
 create index if not exists ix_operational_alert_history_tenant_date on habitflow.operational_alert_history(tenant_id,occurred_at desc);
 create table if not exists habitflow.system_health_history(id uuid primary key default gen_random_uuid(),client_id uuid null references habitflow.clients(id),tenant_id uuid null references habitflow.clients(id),user_id uuid null references habitflow.users(id),check_name varchar(100) not null,status varchar(20) not null,severity varchar(16) not null,message text not null,checked_at timestamptz not null default now());
 create index if not exists ix_system_health_status_date on habitflow.system_health_history(status,checked_at desc);
+commit;
+-- END include database/migrations/085_v6194_operations_center.sql
 
--- v6.19.5 SuperAdmin bootstrap (senha deliberadamente ausente; criada pela aplicação)
-create table if not exists habitflow.user_documents (
- id uuid primary key, user_id uuid not null references habitflow.users(id), tenant_id uuid not null references habitflow.clients(id),
- document_type varchar(4) not null, document_normalized varchar(14) not null, enabled_for_login boolean not null default false,
- created_at timestamptz not null default now(), updated_at timestamptz not null default now(),
- constraint ck_user_document_type check((document_type='CPF' and length(document_normalized)=11) or (document_type='CNPJ' and length(document_normalized)=14)),
- constraint ck_user_document_digits check(document_normalized ~ '^[0-9]+$'), unique(user_id,tenant_id,document_type));
-create unique index if not exists ux_user_documents_login on habitflow.user_documents(document_normalized,tenant_id) where enabled_for_login;
+-- BEGIN include database/migrations/086_v6195_superadmin_bootstrap.sql
+-- HabitFlow v6.19.5: estrutura idempotente; a senha é criada somente pelo hasher BCrypt da aplicação.
+begin;
 insert into habitflow.clients(id,name,legal_name,document,email,plan,status,is_active,created_at,updated_at,person_type,document_type,document_raw,document_normalized,trade_name)
 values('61950000-0000-4000-8000-000000000001','MNSOFT','MNSOFT','18160057000113','comercial@mnsoft.com.br','Enterprise','Active',true,now(),now(),'LegalPerson','CNPJ','18.160.057/0001-13','18160057000113','MNSOFT')
 on conflict(id) do update set name='MNSOFT',legal_name='MNSOFT',is_active=true,updated_at=now();
-insert into habitflow.permissions(code,name,description,category) values ('Platform.Health.View','Saúde do sistema','Visualização da saúde global','Platform'),('Platform.Tenants.Block','Bloqueio de clientes','Bloqueio e desbloqueio auditado','Platform') on conflict(code) do nothing;
-insert into habitflow.role_permissions(role_id,permission_code) select r.id,p.code from habitflow.roles r cross join habitflow.permissions p where r.code='super_admin' and p.code like 'Platform.%' on conflict do nothing;
 
--- v6.19.6: multi-provider AI assistant + public feature flags (database/migrations/087_v6196_ai_multi_provider_assistant.sql)
-alter table habitflow.feature_catalog add column if not exists is_public boolean not null default true;
-update habitflow.feature_catalog set is_public = false where implementation_status = 'Internal' and is_public;
-insert into habitflow.feature_catalog(code,name,description,value_type,category,is_active,implementation_status,is_marketable,is_public)
-values ('ai_assistant','Assistente IA','Chat orientado ao HabitFlow com respostas seguras e isolamento multi-tenant.','Boolean','IA',true,'Implemented',true,true)
-on conflict(code) do update set name=excluded.name,description=excluded.description,value_type=excluded.value_type,category=excluded.category,is_active=true,implementation_status='Implemented',is_marketable=true,is_public=true;
-insert into habitflow.plan_features(plan_id,feature_code,bool_value)
-select p.id,'ai_assistant',(p.code<>'free') from habitflow.plans p where p.code in ('free','ritmo','evolucao')
-on conflict(plan_id,feature_code) do update set bool_value=excluded.bool_value,updated_at=now();
+insert into habitflow.permissions(code,name,description,category) values
+('Platform.Health.View','Saúde do sistema','Visualização da saúde global','Platform'),
+('Platform.Tenants.Block','Bloqueio de clientes','Bloqueio e desbloqueio auditado','Platform')
+on conflict(code) do nothing;
+insert into habitflow.role_permissions(role_id,permission_code)
+select r.id,p.code from habitflow.roles r cross join habitflow.permissions p
+where r.code='super_admin' and p.code like 'Platform.%' on conflict do nothing;
+insert into habitflow.schema_migrations(id,name,applied_at) values('086','v6195_superadmin_bootstrap',now()) on conflict(id) do nothing;
+commit;
+-- END include database/migrations/086_v6195_superadmin_bootstrap.sql
 
--- v6.19.6: SaaS Team/Enterprise catalog + status governance (database/migrations/089_v6196_saas_team_enterprise_catalog.sql)
-alter table habitflow.subscriptions drop constraint if exists ck_habitflow_subscriptions_status;
-alter table habitflow.subscriptions add constraint ck_habitflow_subscriptions_status check(status in ('Pending','PaymentPending','Active','Trial','Trialing','PastDue','Canceled','Expired','ManualReview','Suspended','Failed','Inactive'));
-alter table habitflow.clients drop constraint if exists ck_habitflow_clients_subscription_status;
-alter table habitflow.clients add constraint ck_habitflow_clients_subscription_status check (subscription_status in ('Free','Trial','Active','PaymentPending','PastDue','Canceled','Suspended','ManualReview'));
-create index if not exists ix_clients_subscription_status on habitflow.clients(subscription_status);
-insert into habitflow.feature_catalog(code,name,description,value_type,category,is_active,implementation_status,is_marketable,is_public)
-values ('teams','Gestão de times','Pessoas, papéis e convites da conta.','Boolean','Conta',true,'Implemented',false,false),
-('corporate_features','Recursos corporativos','SSO, integrações e contrato corporativo sob negociação.','Boolean','Corporativo',true,'Planned',false,false)
-on conflict(code) do update set name=excluded.name,description=excluded.description,value_type=excluded.value_type,category=excluded.category,is_active=true,implementation_status=excluded.implementation_status,is_marketable=excluded.is_marketable,is_public=excluded.is_public;
-insert into habitflow.plans(id,code,name,public_name,headline,description,audience_text,badge_text,is_active,is_public,is_sellable,sales_status,is_featured,sort_order,created_at,updated_at)
-values ('10000000-0000-0000-0000-000000000004','team','Team','Team','Para equipes que organizam rotinas em conjunto.','Hábitos, objetivos, desafios e assistente IA para o time inteiro, com gestão de pessoas.','Equipes pequenas e médias.','Equipe',true,true,true,'Available',false,40,now(),now()),
-('10000000-0000-0000-0000-000000000005','enterprise','Enterprise','Enterprise','Atendimento corporativo dedicado.','Plataforma completa para organizações, com recursos corporativos e suporte prioritário.','Organizações e contas corporativas.','Sob contrato',true,true,true,'Contact',false,50,now(),now())
-on conflict(code) do update set name=excluded.name,public_name=excluded.public_name,headline=excluded.headline,description=excluded.description,audience_text=excluded.audience_text,badge_text=excluded.badge_text,is_active=true,is_public=true,is_sellable=true,sales_status=excluded.sales_status,sort_order=excluded.sort_order,updated_at=now();
-insert into habitflow.plan_prices(id,plan_id,billing_cycle,amount,currency,valid_from)
-select v.id,p.id,v.cycle,v.amount,'BRL',timestamp '2026-01-01' from (values ('20000000-0000-0000-0000-000000000007'::uuid,'team','Monthly',79.90),('20000000-0000-0000-0000-000000000008'::uuid,'team','Yearly',799.00)) v(id,code,cycle,amount)
-join habitflow.plans p on p.code=v.code on conflict do nothing;
-insert into habitflow.plan_features(plan_id,feature_code,bool_value,int_value)
-select p.id,f.code,
- case when f.value_type='Boolean' then f.code in ('full_habit_library','custom_categories','basic_reports','report_export_csv','report_print','full_history','weekly_goals','achievements','advanced_achievements','streak_freeze','missions','progress_dashboard','challenge_7_days','challenge_30_days','challenge_90_days','ai_assistant','teams','user_invitations','client_admin_dashboard') end,
- case when f.value_type='Integer' then case f.code when 'users_limit' then case when p.code='team' then 10 else -1 end when 'active_habits_limit' then -1 when 'active_goals_limit' then -1 when 'history_days_limit' then -1 end end
-from habitflow.plans p cross join habitflow.feature_catalog f where p.code in ('team','enterprise')
-on conflict(plan_id,feature_code) do update set bool_value=excluded.bool_value,int_value=excluded.int_value,updated_at=now();
-update habitflow.clients c set contracted_plan_code='enterprise', effective_plan_code='enterprise', access_restriction_reason=null, updated_at=now() where c.document_normalized='18160057000113' and coalesce(c.contracted_plan_code,'free') in ('free');
-create table if not exists habitflow.tenant_feature_flags(
+-- BEGIN include database/migrations/087_v6196_ai_multi_provider_assistant.sql
+-- HabitFlow v6.19.6: multi-provider AI assistant + public feature flags.
+BEGIN;
+SET LOCAL search_path TO habitflow, public;
+
+ALTER TABLE habitflow.feature_catalog
+  ADD COLUMN IF NOT EXISTS is_public boolean NOT NULL DEFAULT true;
+
+-- Internal capabilities exist but are not advertised as public benefits.
+UPDATE habitflow.feature_catalog
+SET is_public = false
+WHERE implementation_status = 'Internal' AND is_public;
+
+INSERT INTO habitflow.feature_catalog(code,name,description,value_type,category,is_active,implementation_status,is_marketable,is_public)
+VALUES
+ ('ai_assistant','Assistente IA','Chat orientado ao HabitFlow com respostas seguras e isolamento multi-tenant.','Boolean','IA',true,'Implemented',true,true)
+ON CONFLICT(code) DO UPDATE SET
+ name=EXCLUDED.name,
+ description=EXCLUDED.description,
+ value_type=EXCLUDED.value_type,
+ category=EXCLUDED.category,
+ is_active=true,
+ implementation_status='Implemented',
+ is_marketable=true,
+ is_public=true;
+
+INSERT INTO habitflow.plan_features(plan_id,feature_code,bool_value)
+SELECT p.id,'ai_assistant',(p.code<>'free')
+FROM habitflow.plans p
+WHERE p.code IN ('free','ritmo','evolucao')
+ON CONFLICT(plan_id,feature_code) DO UPDATE SET
+ bool_value=EXCLUDED.bool_value,
+ updated_at=now();
+
+COMMIT;
+-- END include database/migrations/087_v6196_ai_multi_provider_assistant.sql
+
+-- BEGIN include database/migrations/088_v6193_support_center.sql
+-- HabitFlow v6.19.3: atendimento SaaS, SLA e auditoria. Idempotente.
+begin;
+alter table habitflow.support_tickets_v2 add column if not exists priority varchar(12) not null default 'Medium';
+alter table habitflow.support_tickets_v2 add column if not exists assigned_user_id uuid references habitflow.users(id);
+alter table habitflow.support_tickets_v2 add column if not exists sla_due_at timestamptz;
+update habitflow.support_tickets_v2 set sla_due_at=created_at+interval '48 hours' where sla_due_at is null;
+alter table habitflow.support_tickets_v2 alter column sla_due_at set not null;
+alter table habitflow.support_tickets_v2 drop constraint if exists support_tickets_v2_category_check;
+alter table habitflow.support_tickets_v2 add constraint support_tickets_v2_category_check check(category in ('Question','Error','Billing','Access','Configuration','Suggestion','Commercial')) not valid;
+alter table habitflow.support_tickets_v2 drop constraint if exists support_tickets_v2_status_check;
+alter table habitflow.support_tickets_v2 add constraint support_tickets_v2_status_check check(status in ('Open','InAnalysis','WaitingCustomer','WaitingMnsoft','Resolved','Closed','Cancelled')) not valid;
+alter table habitflow.support_tickets_v2 drop constraint if exists support_tickets_v2_priority_check;
+alter table habitflow.support_tickets_v2 add constraint support_tickets_v2_priority_check check(priority in ('Low','Medium','High','Critical'));
+create index if not exists ix_support_tickets_v2_queue on habitflow.support_tickets_v2(client_id,status,priority,created_at desc);
+create index if not exists ix_support_tickets_v2_sla on habitflow.support_tickets_v2(status,sla_due_at) where status not in ('Closed','Cancelled');
+alter table habitflow.support_ticket_messages_v2 add column if not exists is_internal boolean not null default false;
+alter table habitflow.support_ticket_messages_v2 add constraint support_ticket_message_not_blank check(length(btrim(message))>0) not valid;
+create table if not exists habitflow.support_ticket_status_history(id uuid primary key,client_id uuid not null references habitflow.clients(id),ticket_id uuid not null references habitflow.support_tickets_v2(id) on delete cascade,actor_user_id uuid references habitflow.users(id),from_status varchar(20) not null,to_status varchar(20) not null,reason varchar(1000),created_at timestamptz not null default now());
+create index if not exists ix_support_status_history_tenant on habitflow.support_ticket_status_history(client_id,ticket_id,created_at);
+create table if not exists habitflow.support_sla_rules(priority varchar(12) primary key,business_hours integer not null check(business_hours between 1 and 720),updated_at timestamptz not null default now());
+insert into habitflow.support_sla_rules(priority,business_hours) values('Low',72),('Medium',48),('High',24),('Critical',8) on conflict(priority) do nothing;
+commit;
+-- END include database/migrations/088_v6193_support_center.sql
+
+-- BEGIN include database/migrations/089_v6196_saas_team_enterprise_catalog.sql
+-- HabitFlow v6.19.6: SaaS vendável — catálogo Team/Enterprise, estados comerciais completos, tenant MNSOFT.
+-- Somente aditivo/idempotente; nunca remete valores já existentes.
+BEGIN;
+SET LOCAL search_path TO habitflow, public;
+
+-- 1) Estados de assinatura: amplia o conjunto aceito (mantém todos os valores antigos).
+ALTER TABLE habitflow.subscriptions DROP CONSTRAINT IF EXISTS ck_habitflow_subscriptions_status;
+ALTER TABLE habitflow.subscriptions ADD CONSTRAINT ck_habitflow_subscriptions_status
+ CHECK(status in ('Pending','PaymentPending','Active','Trial','Trialing','PastDue','Canceled','Expired','ManualReview','Suspended','Failed','Inactive'));
+
+-- 2) Estados comerciais do cliente: adiciona PaymentPending/ManualReview.
+ALTER TABLE habitflow.clients DROP CONSTRAINT IF EXISTS ck_habitflow_clients_subscription_status;
+ALTER TABLE habitflow.clients ADD CONSTRAINT ck_habitflow_clients_subscription_status
+ CHECK(subscription_status in ('Free','Trial','Active','PaymentPending','PastDue','Canceled','Suspended','ManualReview'));
+CREATE INDEX IF NOT EXISTS ix_clients_subscription_status ON habitflow.clients(subscription_status);
+
+-- 3) Novas features (controladas pelo backend; não divulgadas como benefício público sem implementação).
+INSERT INTO habitflow.feature_catalog(code,name,description,value_type,category,is_active,implementation_status,is_marketable,is_public)
+VALUES
+ ('teams','Gestão de times','Pessoas, papéis e convites da conta.','Boolean','Conta',true,'Implemented',false,false),
+ ('corporate_features','Recursos corporativos','SSO, integrações e contrato corporativo sob negociação.','Boolean','Corporativo',true,'Planned',false,false)
+ON CONFLICT(code) DO UPDATE SET
+ name=EXCLUDED.name,
+ description=EXCLUDED.description,
+ value_type=EXCLUDED.value_type,
+ category=EXCLUDED.category,
+ is_active=true,
+ implementation_status=EXCLUDED.implementation_status,
+ is_marketable=EXCLUDED.is_marketable,
+ is_public=EXCLUDED.is_public;
+
+-- 4) Planos Team e Enterprise (códigos estáveis). Enterprise é venda por contato comercial.
+INSERT INTO habitflow.plans(id,code,name,public_name,headline,description,audience_text,badge_text,is_active,is_public,is_sellable,sales_status,is_featured,sort_order,created_at,updated_at)
+VALUES
+ ('10000000-0000-0000-0000-000000000004','team','Team','Team','Para equipes que organizam rotinas em conjunto.','Hábitos, objetivos, desafios e assistente IA para o time inteiro, com gestão de pessoas.','Equipes pequenas e médias.','Equipe',true,true,true,'Available',false,40,now(),now()),
+ ('10000000-0000-0000-0000-000000000005','enterprise','Enterprise','Enterprise','Atendimento corporativo dedicado.','Plataforma completa para organizações, com recursos corporativos e suporte prioritário.','Organizações e contas corporativas.','Sob contrato',true,true,true,'Contact',false,50,now(),now())
+ON CONFLICT(code) DO UPDATE SET
+ name=EXCLUDED.name,
+ public_name=EXCLUDED.public_name,
+ headline=EXCLUDED.headline,
+ description=EXCLUDED.description,
+ audience_text=EXCLUDED.audience_text,
+ badge_text=EXCLUDED.badge_text,
+ is_active=true,
+ is_public=true,
+ is_sellable=true,
+ sales_status=EXCLUDED.sales_status,
+ sort_order=EXCLUDED.sort_order,
+ updated_at=now();
+
+-- 5) Preços reais do Team (anual com economia real: 12 x R$ 79,90 = R$ 958,80 -> R$ 799,00, ~17% off).
+INSERT INTO habitflow.plan_prices(id,plan_id,billing_cycle,amount,currency,valid_from)
+SELECT v.id,p.id,v.cycle,v.amount,'BRL',timestamp '2026-01-01' FROM (VALUES
+ ('20000000-0000-0000-0000-000000000007'::uuid,'team','Monthly',79.90),
+ ('20000000-0000-0000-0000-000000000008'::uuid,'team','Yearly',799.00)) v(id,code,cycle,amount)
+JOIN habitflow.plans p ON p.code=v.code
+ON CONFLICT DO NOTHING;
+
+-- 6) Recursos por plano (apenas o que o backend realmente aplica; sem promessa sem regra).
+-- Somente features com implementation_status 'Implemented' entram como promessa publica;
+-- Partial/Planned (advanced_reports, shared_routines, shared_goals, reminders_per_habit,
+-- consolidated_reports, priority_support) entram aqui quando forem implementadas.
+INSERT INTO habitflow.plan_features(plan_id,feature_code,bool_value,int_value)
+SELECT p.id,f.code,
+ CASE WHEN f.value_type='Boolean' THEN f.code IN
+  ('full_habit_library','custom_categories','basic_reports','report_export_csv','report_print','full_history',
+   'weekly_goals','achievements','advanced_achievements','streak_freeze','missions','progress_dashboard',
+   'challenge_7_days','challenge_30_days','challenge_90_days','ai_assistant','teams','user_invitations','client_admin_dashboard')
+ END,
+ CASE WHEN f.value_type='Integer' THEN CASE f.code
+   WHEN 'users_limit' THEN CASE WHEN p.code='team' THEN 10 ELSE -1 END
+   WHEN 'active_habits_limit' THEN -1
+   WHEN 'active_goals_limit' THEN -1
+   WHEN 'history_days_limit' THEN -1 END END
+FROM habitflow.plans p CROSS JOIN habitflow.feature_catalog f
+WHERE p.code IN ('team','enterprise')
+ON CONFLICT(plan_id,feature_code) DO UPDATE SET bool_value=EXCLUDED.bool_value,int_value=EXCLUDED.int_value,updated_at=now();
+
+-- 7) Tenant MNSOFT (plataforma) passa a operar no plano Enterprise.
+UPDATE habitflow.clients c
+SET contracted_plan_code='enterprise', effective_plan_code='enterprise', access_restriction_reason=NULL, updated_at=now()
+WHERE c.document_normalized='18160057000113' AND coalesce(c.contracted_plan_code,'free') IN ('free');
+
+-- 8) Sinalização por tenant/módulo (alimenta os claims tenant_status/tenant_module do cookie de sessão).
+CREATE TABLE IF NOT EXISTS habitflow.tenant_feature_flags(
  client_id uuid not null references habitflow.clients(id) on delete cascade,
  module varchar(40) not null,
  enabled boolean not null default true,
  updated_by uuid null references habitflow.users(id) on delete set null,
  updated_at timestamptz not null default now(),
  primary key(client_id,module));
-create table if not exists habitflow.tenant_commercial_status(
+
+-- 9) Histórico de mudanças de status comercial do tenant (auditoria imutável).
+CREATE TABLE IF NOT EXISTS habitflow.tenant_commercial_status(
  id uuid primary key default gen_random_uuid(),
  client_id uuid not null references habitflow.clients(id) on delete cascade,
  previous_status varchar(32) not null,
@@ -2216,4 +2582,245 @@ create table if not exists habitflow.tenant_commercial_status(
  reason varchar(240) null,
  changed_by uuid null references habitflow.users(id) on delete set null,
  changed_at timestamptz not null default now());
-create index if not exists ix_tenant_commercial_status_client_date on habitflow.tenant_commercial_status(client_id, changed_at desc);
+CREATE INDEX IF NOT EXISTS ix_tenant_commercial_status_client_date ON habitflow.tenant_commercial_status(client_id, changed_at desc);
+
+COMMIT;
+-- END include database/migrations/089_v6196_saas_team_enterprise_catalog.sql
+
+-- BEGIN include database/migrations/090_atomic_account_invites_capacity.sql
+-- 090: Keep pending invite reservations unique per tenant and email.
+-- Resolve expired rows first; stop visibly if pre-existing live duplicates need review.
+BEGIN;
+
+UPDATE habitflow.user_invites
+SET status = 'Expired', updated_at = now()
+WHERE status = 'Pending' AND expires_at <= now();
+
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM habitflow.user_invites
+        WHERE status = 'Pending'
+        GROUP BY client_id, lower(trim(email))
+        HAVING count(*) > 1
+    ) THEN
+        RAISE EXCEPTION 'Migration 090 blocked: duplicate pending invites exist for the same tenant and email; reconcile them before retrying.';
+    END IF;
+END $$;
+
+CREATE UNIQUE INDEX IF NOT EXISTS ux_habitflow_user_invites_pending_client_email
+    ON habitflow.user_invites(client_id, lower(trim(email)))
+    WHERE status = 'Pending';
+
+CREATE INDEX IF NOT EXISTS ix_habitflow_user_invites_client_status_expiry
+    ON habitflow.user_invites(client_id, status, expires_at);
+
+COMMIT;
+-- END include database/migrations/090_atomic_account_invites_capacity.sql
+
+-- BEGIN include database/migrations/091_account_people_join_date.sql
+-- 091: Preserve the actual tenant-join date separately from the user's signup date.
+BEGIN;
+
+ALTER TABLE habitflow.users
+    ADD COLUMN IF NOT EXISTS client_joined_at timestamp NULL;
+
+UPDATE habitflow.users
+SET client_joined_at = created_at
+WHERE client_id IS NOT NULL AND client_joined_at IS NULL;
+
+CREATE INDEX IF NOT EXISTS ix_habitflow_users_client_joined_at
+    ON habitflow.users(client_id, client_joined_at DESC);
+
+COMMIT;
+-- END include database/migrations/091_account_people_join_date.sql
+
+-- BEGIN include database/migrations/092_market_implemented_user_invites.sql
+-- 092: Make the existing invitation entitlement enforceable and expose it to backend feature checks.
+BEGIN;
+
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM (VALUES ('user_invitations'), ('users_limit')) req(code)
+        WHERE NOT EXISTS (SELECT 1 FROM habitflow.feature_catalog f WHERE f.code = req.code)
+    ) THEN
+        RAISE EXCEPTION 'Migration 092 blocked: invitation or seat-limit feature seed is missing; restore the feature seeds before retrying.';
+    END IF;
+END $$;
+
+UPDATE habitflow.feature_catalog
+SET implementation_status = 'Implemented',
+    is_marketable = true,
+    is_public = false
+WHERE code IN ('user_invitations', 'users_limit');
+
+INSERT INTO habitflow.plan_features(plan_id, feature_code, int_value)
+SELECT p.id, 'users_limit', 1
+FROM habitflow.plans p
+WHERE p.code IN ('free', 'ritmo')
+ON CONFLICT(plan_id, feature_code) DO UPDATE
+SET int_value = EXCLUDED.int_value,
+    updated_at = now();
+
+COMMIT;
+-- END include database/migrations/092_market_implemented_user_invites.sql
+
+-- BEGIN include database/migrations/093_restore_schema_contract_constraints.sql
+-- 093: Restore named schema contracts missing from the ordered migration set.
+BEGIN;
+
+DO $$
+DECLARE
+    existing_constraint text;
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM habitflow.users
+        WHERE role NOT IN ('User', 'Admin', 'SuperAdmin', 'ReadOnly', 'Manager', 'TenantAdmin', 'TenantOwner', 'BillingAdmin')
+           OR account_status NOT IN ('Active', 'Blocked', 'Suspended', 'DeletedPending')
+           OR risk_status NOT IN ('Normal', 'Watchlist', 'Suspicious')
+           OR plan NOT IN ('Free', 'Premium')
+           OR plan_status NOT IN ('Active', 'Trial', 'Canceled', 'Inactive', 'PastDue')
+    ) THEN
+        RAISE EXCEPTION 'Migration 093 blocked: existing users contain values outside the supported role, account, risk, plan, or plan-status contracts.';
+    END IF;
+
+    IF EXISTS (
+        SELECT 1 FROM habitflow.support_tickets
+        WHERE status NOT IN ('Open', 'InProgress', 'Resolved', 'Closed')
+    ) THEN
+        RAISE EXCEPTION 'Migration 093 blocked: existing support tickets contain an unsupported status.';
+    END IF;
+
+    IF EXISTS (
+        SELECT 1 FROM habitflow.lgpd_requests
+        WHERE type NOT IN ('Export', 'Delete', 'Anonymize')
+           OR status NOT IN ('Requested', 'InReview', 'Processing', 'Completed', 'Rejected', 'Canceled')
+    ) THEN
+        RAISE EXCEPTION 'Migration 093 blocked: existing LGPD requests contain an unsupported type or status.';
+    END IF;
+
+    IF EXISTS (
+        SELECT 1 FROM habitflow.billing_events
+        WHERE plan IS NOT NULL AND plan NOT IN ('Free', 'Premium')
+    ) THEN
+        RAISE EXCEPTION 'Migration 093 blocked: existing billing events contain an unsupported plan.';
+    END IF;
+
+    IF EXISTS (
+        SELECT 1
+        FROM habitflow.habit_completions
+        GROUP BY habit_id, completed_date
+        HAVING count(*) > 1
+    ) THEN
+        RAISE EXCEPTION 'Migration 093 blocked: duplicate habit completions must be resolved before enforcing uniqueness.';
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conrelid = 'habitflow.users'::regclass AND conname = 'ck_habitflow_users_role'
+    ) THEN
+        ALTER TABLE habitflow.users ADD CONSTRAINT ck_habitflow_users_role
+            CHECK (role IN ('User', 'Admin', 'SuperAdmin', 'ReadOnly', 'Manager', 'TenantAdmin', 'TenantOwner', 'BillingAdmin'));
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conrelid = 'habitflow.users'::regclass AND conname = 'ck_habitflow_users_account_status'
+    ) THEN
+        ALTER TABLE habitflow.users ADD CONSTRAINT ck_habitflow_users_account_status
+            CHECK (account_status IN ('Active', 'Blocked', 'Suspended', 'DeletedPending'));
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conrelid = 'habitflow.users'::regclass AND conname = 'ck_habitflow_users_risk_status'
+    ) THEN
+        ALTER TABLE habitflow.users ADD CONSTRAINT ck_habitflow_users_risk_status
+            CHECK (risk_status IN ('Normal', 'Watchlist', 'Suspicious'));
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conrelid = 'habitflow.users'::regclass AND conname = 'ck_habitflow_users_plan'
+    ) THEN
+        ALTER TABLE habitflow.users ADD CONSTRAINT ck_habitflow_users_plan
+            CHECK (plan IN ('Free', 'Premium'));
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conrelid = 'habitflow.users'::regclass AND conname = 'ck_habitflow_users_plan_status'
+    ) THEN
+        ALTER TABLE habitflow.users ADD CONSTRAINT ck_habitflow_users_plan_status
+            CHECK (plan_status IN ('Active', 'Trial', 'Canceled', 'Inactive', 'PastDue'));
+    END IF;
+
+    IF to_regclass('habitflow.habit_completions') IS NULL THEN
+        RAISE EXCEPTION 'Migration 093 blocked: habitflow.habit_completions is missing.';
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_constraint
+        WHERE conrelid = 'habitflow.habit_completions'::regclass
+          AND conname = 'uq_habitflow_habit_completions_habit_date'
+    ) THEN
+        SELECT conname
+        INTO existing_constraint
+        FROM pg_constraint
+        WHERE conrelid = 'habitflow.habit_completions'::regclass
+          AND contype = 'u'
+          AND pg_get_constraintdef(oid) = 'UNIQUE (habit_id, completed_date)'
+        ORDER BY conname
+        LIMIT 1;
+
+        IF existing_constraint IS NOT NULL THEN
+            EXECUTE format(
+                'ALTER TABLE habitflow.habit_completions RENAME CONSTRAINT %I TO %I',
+                existing_constraint,
+                'uq_habitflow_habit_completions_habit_date'
+            );
+        ELSE
+            ALTER TABLE habitflow.habit_completions
+                ADD CONSTRAINT uq_habitflow_habit_completions_habit_date UNIQUE (habit_id, completed_date);
+        END IF;
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conrelid = 'habitflow.support_tickets'::regclass AND conname = 'ck_habitflow_support_tickets_status'
+    ) THEN
+        ALTER TABLE habitflow.support_tickets ADD CONSTRAINT ck_habitflow_support_tickets_status
+            CHECK (status IN ('Open', 'InProgress', 'Resolved', 'Closed'));
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conrelid = 'habitflow.lgpd_requests'::regclass AND conname = 'ck_habitflow_lgpd_requests_type'
+    ) THEN
+        ALTER TABLE habitflow.lgpd_requests ADD CONSTRAINT ck_habitflow_lgpd_requests_type
+            CHECK (type IN ('Export', 'Delete', 'Anonymize'));
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conrelid = 'habitflow.lgpd_requests'::regclass AND conname = 'ck_habitflow_lgpd_requests_status'
+    ) THEN
+        ALTER TABLE habitflow.lgpd_requests ADD CONSTRAINT ck_habitflow_lgpd_requests_status
+            CHECK (status IN ('Requested', 'InReview', 'Processing', 'Completed', 'Rejected', 'Canceled'));
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conrelid = 'habitflow.billing_events'::regclass AND conname = 'ck_habitflow_billing_events_plan'
+    ) THEN
+        ALTER TABLE habitflow.billing_events ADD CONSTRAINT ck_habitflow_billing_events_plan
+            CHECK (plan IS NULL OR plan IN ('Free', 'Premium'));
+    END IF;
+END $$;
+
+COMMIT;
+-- END include database/migrations/093_restore_schema_contract_constraints.sql

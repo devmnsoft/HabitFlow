@@ -216,7 +216,7 @@ public sealed class NavigationService(INavigationAccessEvaluator? accessEvaluato
             Url: "/account/people",
             Context: NavigationContext.Account,
             RequiredPermission: "Client.Users.Manage",
-            RequiredFeature: "user_invitations",
+            RequiredFeature: null,
             SortOrder: 20,
             IsEnabled: true),
 
@@ -228,7 +228,7 @@ public sealed class NavigationService(INavigationAccessEvaluator? accessEvaluato
             Url: "/account/invites",
             Context: NavigationContext.Account,
             RequiredPermission: "Client.Users.Manage",
-            RequiredFeature: "user_invitations",
+            RequiredFeature: null,
             SortOrder: 30,
             IsEnabled: true),
 

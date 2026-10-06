@@ -1,0 +1,28 @@
+@model HabitFlow.Web.Models.InviteRegisterViewModel
+@{
+    ViewData["Title"] = "Criar acesso para convite";
+}
+<section class="hf-auth-grid">
+    <div class="hf-auth-card">
+        <p class="hf-eyebrow">Convite HabitFlow</p>
+        <h1>Criar acesso</h1>
+        <p>Este cadastro cria apenas seu acesso de convidado; não cria uma nova organização.</p>
+        <p>E-mail do convite: <strong>@Model.MaskedEmail</strong></p>
+        <form method="post" action="/invite/@Model.Token/register" data-prevent-double-submit>
+            @Html.AntiForgeryToken()
+            <div class="mb-3">
+                <label class="form-label" for="invite-register-name">Nome</label>
+                <input class="form-control" id="invite-register-name" name="name" required maxlength="160" autocomplete="name" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label" for="invite-register-password">Senha</label>
+                <input class="form-control" id="invite-register-password" name="password" type="password" required minlength="8" autocomplete="new-password" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label" for="invite-register-confirm">Confirmar senha</label>
+                <input class="form-control" id="invite-register-confirm" name="confirmPassword" type="password" required minlength="8" autocomplete="new-password" />
+            </div>
+            <button class="btn btn-success btn-lg w-100" type="submit">Criar acesso e continuar</button>
+        </form>
+    </div>
+</section>

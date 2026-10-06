@@ -11,7 +11,8 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./database:/database:ro
-      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+      - ./docker/postgres/init/01_migrate.sql:/docker-entrypoint-initdb.d/01_migrate.sql:ro
+      - ./database:/database:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d habitflow"]
       interval: 10s

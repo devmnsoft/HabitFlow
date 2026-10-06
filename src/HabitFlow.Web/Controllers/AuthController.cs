@@ -12,7 +12,8 @@ namespace HabitFlow.Web.Controllers;
 public class AuthController(AuthService authService, ClientAccountRegistrationService clientRegistration, UserSessionService sessionService, IOptions<SessionSecurityOptions> sessionOptions, IWebHostEnvironment env, IUserFacingErrorMapper errorMapper, ILogger<AuthController> logger) : Controller
 {
     [HttpGet("/login")]
-    public IActionResult Login() => View();
+    public IActionResult Login(string? returnUrl = null) =>
+        View(new LoginDto(string.Empty, string.Empty, Url.IsLocalUrl(returnUrl) ? returnUrl : null));
 
     [ValidateAntiForgeryToken]
     [HttpPost("/login")]
@@ -44,6 +45,7 @@ public class AuthController(AuthService authService, ClientAccountRegistrationSe
             var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identity));
             if (user.MustChangePassword) return Redirect("/account/security/change-required-password");
+            if (Url.IsLocalUrl(dto.ReturnUrl)) return LocalRedirect(dto.ReturnUrl!);
             return RedirectToAction("Index", "Dashboard");
         }
         catch (Exception ex)

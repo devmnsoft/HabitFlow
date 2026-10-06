@@ -1,8 +1,161 @@
+@model HabitFlow.Application.AccountPeoplePage
 @{
-    ViewData["Title"] = "Usuários do cliente";
+    ViewData["Title"] = "Pessoas da conta";
+    var query = ViewContext.HttpContext.Request.Query;
+    var search = query["search"].ToString();
+    var role = query["role"].ToString();
+    var status = query["status"].ToString();
+    var clientId = query["clientId"].ToString();
+    var failedUserId = TempData["FailedUserId"] as string;
+    var failedAction = TempData["FailedAction"] as string;
+    var failedReason = TempData["FailedReason"] as string;
+    var failedRole = TempData["FailedRole"] as string;
+    var filtered = !string.IsNullOrWhiteSpace(search) || !string.IsNullOrWhiteSpace(role) || !string.IsNullOrWhiteSpace(status);
 }
-<h1>Usuários do cliente</h1>
-<p>Gerencie usuários vinculados ao client_id atual. Admins não administram outros clientes.</p>
-@if (TempData["Success"] is not null) { <div class="alert alert-success">@TempData["Success"]</div> }
-@if (TempData["InviteLink"] is not null) { <div class="alert alert-info">Link de convite: @TempData["InviteLink"]</div> }
-<a class="btn btn-primary" href="/admin/users/invite">Convidar usuário</a>
+<header class="mb-4">
+    <p class="text-secondary mb-1">Conta</p>
+    <h1>Pessoas</h1>
+    <p class="text-secondary">Gerencie quem tem acesso à conta. Hábitos e conteúdos pessoais de cada pessoa não são exibidos aqui.</p>
+</header>
+
+<section class="card mb-4" aria-label="Uso das vagas">
+    <div class="card-body d-flex flex-wrap align-items-center justify-content-between gap-3">
+        <div>
+            <h2 class="h5 mb-1">Vagas da conta</h2>
+            <p class="mb-0 text-secondary">
+                @Model.OccupiedSlots ocupada(s)
+                @if (Model.UserLimit < 0) { <span>· capacidade ilimitada</span> }
+                else { <span>de @Model.UserLimit · @Math.Max(0, Model.UserLimit - Model.OccupiedSlots) disponível(is)</span> }
+            </p>
+        </div>
+        <a class="btn btn-outline-success" href="/account/plan/usage">Ver uso do plano</a>
+    </div>
+</section>
+@if (Model.ExcessSlots > 0)
+{
+    <div class="alert alert-warning" role="status">
+        A conta está acima do limite atual em @Model.ExcessSlots vaga(s). Pessoas e dados foram preservados; novas admissões e reativações ficam bloqueadas até ajustar o uso ou a capacidade.
+    </div>
+}
+
+<form method="get" action="/account/people" class="card card-body mb-4" role="search" aria-label="Pesquisar pessoas">
+    @if (!string.IsNullOrEmpty(clientId)) { <input type="hidden" name="clientId" value="@clientId" /> }
+    <div class="row g-3 align-items-end">
+        <div class="col-12 col-md-6">
+            <label class="form-label" for="people-search">Nome ou e-mail</label>
+            <input class="form-control" id="people-search" name="search" value="@search" type="search" autocomplete="off" />
+        </div>
+        <div class="col-6 col-md-2">
+            <label class="form-label" for="people-role">Perfil</label>
+            <select class="form-select" id="people-role" name="role">
+                <option value="">Todos</option>
+                <option value="User" selected="@(role == "User")">Pessoa</option>
+                <option value="Admin" selected="@(role == "Admin")">Admin</option>
+                <option value="TenantAdmin" selected="@(role == "TenantAdmin")">Admin da conta</option>
+                <option value="TenantOwner" selected="@(role == "TenantOwner")">Proprietário</option>
+                <option value="Manager" selected="@(role == "Manager")">Gestor</option>
+                <option value="ReadOnly" selected="@(role == "ReadOnly")">Somente leitura</option>
+            </select>
+        </div>
+        <div class="col-6 col-md-2">
+            <label class="form-label" for="people-status">Status</label>
+            <select class="form-select" id="people-status" name="status">
+                <option value="">Todos</option>
+                <option value="Active" selected="@(status == "Active")">Ativo</option>
+                <option value="Blocked" selected="@(status == "Blocked")">Desativado</option>
+                <option value="Suspended" selected="@(status == "Suspended")">Suspenso</option>
+                <option value="DeletedPending" selected="@(status == "DeletedPending")">Exclusão pendente</option>
+            </select>
+        </div>
+        <div class="col-12 col-md-2 d-flex gap-2">
+            <button class="btn btn-primary flex-grow-1" type="submit">Pesquisar</button>
+            @if (filtered) { <a class="btn btn-outline-secondary" href="/account/people">Limpar</a> }
+        </div>
+    </div>
+</form>
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h2 class="h4 mb-0">Pessoas (@Model.Total)</h2>
+    <a class="btn btn-success" href="/account/invites">Gerenciar convites</a>
+</div>
+
+@if (Model.People.Count == 0)
+{
+    <div class="alert alert-light border" role="status">
+        @if (filtered) { <span>Nenhuma pessoa corresponde aos filtros. Altere a pesquisa ou limpe os filtros.</span> }
+        else { <span>Ainda não há pessoas nesta conta.</span> }
+    </div>
+}
+else
+{
+    <div class="vstack gap-3">
+        @foreach (var person in Model.People)
+        {
+            var active = string.Equals(person.AccountStatus, "Active", StringComparison.OrdinalIgnoreCase);
+            <article class="card">
+                <div class="card-body">
+                    <div class="d-flex flex-wrap justify-content-between gap-3 mb-3">
+                        <div>
+                            <h3 class="h5 mb-1">@person.Name</h3>
+                            <p class="mb-1"><a href="mailto:@person.Email">@person.Email</a></p>
+                            <p class="mb-0 text-secondary">@(person.Role) · @(active ? "Ativo" : "Desativado") · Desde @person.CreatedAt.ToString("dd/MM/yyyy")</p>
+                        </div>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-12 col-lg-6">
+                            <form method="post" action="/account/people/@person.Id/change-role" class="border rounded p-3">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="search" value="@search" />
+                                <input type="hidden" name="filterRole" value="@role" />
+                                <input type="hidden" name="status" value="@status" />
+                                <input type="hidden" name="currentPage" value="@Model.Page" />
+                                @if (!string.IsNullOrEmpty(clientId)) { <input type="hidden" name="clientId" value="@clientId" /> }
+                                <label class="form-label" for="role-@person.Id">Alterar perfil</label>
+                                <select class="form-select mb-2" id="role-@person.Id" name="role">
+                                    <option value="User" selected="@(failedUserId == person.Id.ToString() && failedAction == "change-role" ? failedRole == "User" : person.Role == "User")">Pessoa</option>
+                                    <option value="Admin" selected="@(failedUserId == person.Id.ToString() && failedAction == "change-role" ? failedRole == "Admin" : person.Role == "Admin")">Admin</option>
+                                    <option value="TenantAdmin" selected="@(failedUserId == person.Id.ToString() && failedAction == "change-role" ? failedRole == "TenantAdmin" : person.Role == "TenantAdmin")">Admin da conta</option>
+                                    <option value="TenantOwner" selected="@(failedUserId == person.Id.ToString() && failedAction == "change-role" ? failedRole == "TenantOwner" : person.Role == "TenantOwner")">Proprietário</option>
+                                    <option value="Manager" selected="@(failedUserId == person.Id.ToString() && failedAction == "change-role" ? failedRole == "Manager" : person.Role == "Manager")">Gestor</option>
+                                    <option value="ReadOnly" selected="@(failedUserId == person.Id.ToString() && failedAction == "change-role" ? failedRole == "ReadOnly" : person.Role == "ReadOnly")">Somente leitura</option>
+                                    <option value="BillingAdmin" selected="@(failedUserId == person.Id.ToString() && failedAction == "change-role" ? failedRole == "BillingAdmin" : person.Role == "BillingAdmin")">Admin financeiro</option>
+                                </select>
+                                <label class="form-label" for="role-reason-@person.Id">Motivo</label>
+                                <input class="form-control mb-2" id="role-reason-@person.Id" name="reason" value="@(failedUserId == person.Id.ToString() && failedAction == "change-role" ? failedReason : null)" required maxlength="500" />
+                                <button class="btn btn-outline-primary" type="submit">Salvar perfil</button>
+                            </form>
+                        </div>
+                        <div class="col-12 col-lg-6">
+                            <form method="post" action="/account/people/@person.Id/@(active ? "disable" : "enable")" class="border rounded p-3">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="search" value="@search" />
+                                <input type="hidden" name="role" value="@role" />
+                                <input type="hidden" name="status" value="@status" />
+                                <input type="hidden" name="currentPage" value="@Model.Page" />
+                                @if (!string.IsNullOrEmpty(clientId)) { <input type="hidden" name="clientId" value="@clientId" /> }
+                                <label class="form-label" for="status-reason-@person.Id">Motivo para @(active ? "desativar" : "reativar")</label>
+                                <input class="form-control mb-2" id="status-reason-@person.Id" name="reason" value="@(failedUserId == person.Id.ToString() && failedAction == (active ? "disable" : "enable") ? failedReason : null)" required maxlength="500" />
+                                <button class="btn @(active ? "btn-outline-danger" : "btn-outline-success")" type="submit">@(active ? "Desativar pessoa" : "Reativar pessoa")</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </article>
+        }
+    </div>
+}
+
+@if (Model.PageCount > 1)
+{
+    <nav class="mt-4" aria-label="Paginação de pessoas">
+        <ul class="pagination flex-wrap">
+            @for (var pageNumber = 1; pageNumber <= Model.PageCount; pageNumber++)
+            {
+                <li class="page-item @(pageNumber == Model.Page ? "active" : null)">
+                    <a class="page-link" aria-current="@(pageNumber == Model.Page ? "page" : null)"
+                       href="@Url.Action("Index", new { search, role, status, currentPage = pageNumber, clientId })">@pageNumber</a>
+                </li>
+            }
+        </ul>
+    </nav>
+}

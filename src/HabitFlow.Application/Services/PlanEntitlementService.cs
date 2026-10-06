@@ -46,7 +46,44 @@ public sealed class PlanEntitlementService(IPlanCatalogRepository catalog)
     public async Task<int?> GetIntegerFeatureAsync(Guid userId, string featureCode, CancellationToken ct = default) => (await GetFeatureAsync(userId, featureCode, ct))?.IntValue;
     public Task<bool> CanUseFeatureAsync(Guid userId, string featureCode, CancellationToken ct = default) => GetBooleanFeatureAsync(userId, featureCode, ct);
     public async Task<bool> CanCreateHabitAsync(Guid userId, int activeHabits, CancellationToken ct = default) { var limit = await GetIntegerFeatureAsync(userId, PlanFeatureCodes.ActiveHabitsLimit, ct); return limit is < 0 or null || activeHabits < limit; }
-    public async Task<bool> CanInviteUserAsync(Guid clientId, int activeUsers, CancellationToken ct = default) { var features = await catalog.GetFeaturesAsync(await GetEffectivePlanAsync(clientId, ct), ct); var limit = features.GetValueOrDefault(PlanFeatureCodes.UsersLimit)?.IntValue; return limit is < 0 or null || activeUsers < limit; }
+    public async Task<int> GetUsersLimitAsync(Guid clientId, CancellationToken ct = default)
+    {
+        var planCode = await GetEffectivePlanAsync(clientId, ct);
+        var features = await catalog.GetFeaturesAsync(planCode, ct);
+        if (!features.TryGetValue(PlanFeatureCodes.UsersLimit, out var feature) || feature.IntValue is null)
+            throw new PlanConfigurationException($"O limite de pessoas não está configurado para o plano efetivo '{planCode}'.");
+
+        if (feature.IntValue < -1)
+            throw new PlanConfigurationException($"O limite de pessoas configurado para o plano efetivo '{planCode}' é inválido.");
+
+        return feature.IntValue.Value;
+    }
+
+    public async Task<bool> CanInviteUserAsync(Guid clientId, int occupiedSlots, CancellationToken ct = default)
+    {
+        if (occupiedSlots < 0) throw new ArgumentOutOfRangeException(nameof(occupiedSlots));
+        return await GetInviteBlockAsync(clientId, occupiedSlots, ct) is null;
+    }
+
+    public async Task<PlanInviteBlock?> GetInviteBlockAsync(Guid clientId, int occupiedSlots, CancellationToken ct = default)
+    {
+        if (occupiedSlots < 0) throw new ArgumentOutOfRangeException(nameof(occupiedSlots));
+        var planCode = await GetEffectivePlanAsync(clientId, ct);
+        var features = await catalog.GetFeaturesAsync(planCode, ct);
+        if (!features.TryGetValue(PlanFeatureCodes.UserInvitations, out var invitations))
+            throw new PlanConfigurationException($"O recurso '{PlanFeatureCodes.UserInvitations}' não está configurado para o plano efetivo '{planCode}'.");
+        if (invitations.BoolValue != true)
+            return new(PlanFeatureCodes.UserInvitations, "Convites não estão incluídos no plano efetivo. Veja o uso do plano ou fale com o comercial.");
+
+        if (!features.TryGetValue(PlanFeatureCodes.UsersLimit, out var limitFeature) || limitFeature.IntValue is null)
+            throw new PlanConfigurationException($"O limite de pessoas não está configurado para o plano efetivo '{planCode}'.");
+        if (limitFeature.IntValue < -1)
+            throw new PlanConfigurationException($"O limite de pessoas configurado para o plano efetivo '{planCode}' é inválido.");
+        if (limitFeature.IntValue >= 0 && occupiedSlots >= limitFeature.IntValue)
+            return new(PlanFeatureCodes.UsersLimit, "Limite de vagas do plano atingido. Cancele um convite pendente ou fale com o comercial para ampliar a equipe.");
+        return null;
+    }
+
     public Task<bool> CanAccessAdvancedReportsAsync(Guid userId, CancellationToken ct = default) => GetBooleanFeatureAsync(userId, PlanFeatureCodes.AdvancedReports, ct);
     public Task<bool> CanUseFullLibraryAsync(Guid userId, CancellationToken ct = default) => GetBooleanFeatureAsync(userId, PlanFeatureCodes.FullHabitLibrary, ct);
     public Task<bool> CanExportReportsAsync(Guid userId, CancellationToken ct = default) => GetBooleanFeatureAsync(userId, PlanFeatureCodes.ReportExportCsv, ct);
@@ -58,3 +95,6 @@ public sealed record PlanAccessSnapshot(
     string EffectivePlanCode,
     bool HasFullHistory,
     int HistoryDaysLimit);
+
+public sealed class PlanConfigurationException(string message) : InvalidOperationException(message);
+public sealed record PlanInviteBlock(string Code, string Message);

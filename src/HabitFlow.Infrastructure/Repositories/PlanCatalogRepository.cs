@@ -55,7 +55,8 @@ public sealed class PlanCatalogRepository(SqlExecutor db, ILogger<PlanCatalogRep
                        coalesce(contracted_plan_code, 'free') as "ContractedPlanCode",
                        coalesce(effective_plan_code, 'free') as "EffectivePlanCode",
                        coalesce(benefits_status, 'Free') as "BenefitsStatus",
-                       grace_period_until as "GracePeriodUntil"
+                       grace_period_until as "GracePeriodUntil",
+                       access_restriction_reason as "RestrictionReason"
                 from habitflow.clients
                 where id = @clientId
                 """, new { clientId }, ct);
@@ -91,7 +92,7 @@ public sealed class PlanCatalogRepository(SqlExecutor db, ILogger<PlanCatalogRep
             effectivePlan = PlanCodes.Free;
         }
 
-        return new ClientPlanAccess(row.ClientId, row.ContractedPlanCode, effectivePlan, benefitsStatus, row.GracePeriodUntil);
+        return new ClientPlanAccess(row.ClientId, row.ContractedPlanCode, effectivePlan, benefitsStatus, row.GracePeriodUntil, row.RestrictionReason);
     }
 
     public Task<Guid?> GetClientIdForUserAsync(Guid userId, CancellationToken ct = default) =>
@@ -142,6 +143,7 @@ public sealed class PlanCatalogRepository(SqlExecutor db, ILogger<PlanCatalogRep
         public string EffectivePlanCode { get; set; } = PlanCodes.Free;
         public string BenefitsStatus { get; set; } = "Free";
         public DateOnly? GracePeriodUntil { get; set; }
+        public string? RestrictionReason { get; set; }
     }
 
     private static string Mask(Guid id) => $"{id:N}"[..8] + "…";

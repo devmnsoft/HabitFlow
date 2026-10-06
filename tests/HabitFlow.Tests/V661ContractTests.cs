@@ -18,7 +18,7 @@ public sealed class V661ContractTests
     }
 
     [Fact]
-    public async Task Navigation_loads_feature_snapshot_once_and_keeps_basic_items()
+    public async Task Account_navigation_keeps_people_and_invites_visible_without_invitation_entitlement()
     {
         var evaluator = new CountingEvaluator();
         var service = new NavigationService(evaluator);
@@ -27,7 +27,9 @@ public sealed class V661ContractTests
         var items = await service.GetAsync(NavigationContext.Account, user, "/account/plan");
 
         Assert.Contains(items, x => x.Code == "my-plan");
-        Assert.Equal(2, evaluator.FeatureEvaluations);
+        Assert.Contains(items, x => x.Code == "people");
+        Assert.Contains(items, x => x.Code == "invites");
+        Assert.Equal(0, evaluator.FeatureEvaluations);
     }
 
     [Fact]
