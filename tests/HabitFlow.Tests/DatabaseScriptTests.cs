@@ -4,7 +4,7 @@ namespace HabitFlow.Tests;
 
 public sealed class DatabaseScriptTests
 {
-    private static readonly string Script = File.ReadAllText(Path.Combine("..", "..", "..", "..", "database", "script_completo.sql"));
+    private static readonly string Script = File.ReadAllText(RepositoryRootLocator.PathTo("database", "script_completo.sql"));
 
     [Theory]
     [InlineData("habitflow.users")]
@@ -36,12 +36,12 @@ public sealed class DatabaseScriptTests
 
 public sealed class SchemaHardeningTests
 {
-    private static readonly string Root = Path.Combine("..", "..", "..", "..");
+    private static readonly string Root = RepositoryRootLocator.Root;
 
     [Fact]
     public void Complete_script_uses_habitflow_schema_and_not_public_tables()
     {
-        var script = File.ReadAllText(Path.Combine(Root, "database", "script_completo.sql"));
+        var script = File.ReadAllText(RepositoryRootLocator.PathTo("database", "script_completo.sql"));
         Assert.Contains("create schema if not exists habitflow", script, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("create table if not exists users", script, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("create table " + "public.", script, StringComparison.OrdinalIgnoreCase);
@@ -52,7 +52,7 @@ public sealed class SchemaHardeningTests
     [Fact]
     public void Schema_validation_script_exists()
     {
-        Assert.True(File.Exists(Path.Combine(Root, "database", "validate_schema_habitflow.sql")));
+        Assert.True(File.Exists(RepositoryRootLocator.PathTo("database", "validate_schema_habitflow.sql")));
     }
 
     [Fact]
@@ -66,12 +66,12 @@ public sealed class SchemaHardeningTests
 
 public sealed class HabitLibraryDatabaseTests
 {
-    private static readonly string Root = Path.Combine("..", "..", "..", "..");
+    private static readonly string Root = RepositoryRootLocator.Root;
 
     [Fact]
     public void Complete_script_includes_habit_library_tables_and_seed()
     {
-        var script = File.ReadAllText(Path.Combine(Root, "database", "script_completo.sql"));
+        var script = File.ReadAllText(RepositoryRootLocator.PathTo("database", "script_completo.sql"));
         Assert.Contains("create table if not exists habitflow.habit_objectives", script, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("create table if not exists habitflow.habit_templates", script, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("on conflict(slug) do update", script, StringComparison.OrdinalIgnoreCase);
@@ -81,7 +81,7 @@ public sealed class HabitLibraryDatabaseTests
     [Fact]
     public void Habit_library_sql_uses_explicit_habitflow_schema()
     {
-        var repo = File.ReadAllText(Path.Combine(Root, "src", "HabitFlow.Infrastructure", "Repositories", "HabitTemplateRepository.cs"));
+        var repo = File.ReadAllText(RepositoryRootLocator.PathTo("src", "HabitFlow.Infrastructure", "Repositories", "HabitTemplateRepository.cs"));
         Assert.Contains("habitflow.habit_templates", repo, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain(" public.", repo, StringComparison.OrdinalIgnoreCase);
     }

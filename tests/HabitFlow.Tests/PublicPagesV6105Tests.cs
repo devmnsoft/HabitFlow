@@ -11,7 +11,7 @@ public sealed class PublicPagesV6105Tests
     [Fact] public void Public_catalog_enforces_sellability_price_and_implemented_features()
     {
         var sql = Read("src/HabitFlow.Infrastructure/Repositories/PlanCatalogRepository.cs");
-        Assert.Contains("p.code = 'free'", sql); Assert.Contains("p.is_sellable", sql); Assert.Contains("p.sales_status = 'Available'", sql);
+        Assert.Contains("p.code = 'free'", sql); Assert.Contains("p.is_sellable", sql); Assert.Contains("p.sales_status in ('Available','Contact')", sql);
         Assert.Contains("pp.currency='BRL'", sql); Assert.Contains("pp.amount > 0", sql); Assert.Contains("implementation_status <> 'Implemented'", sql);
     }
 

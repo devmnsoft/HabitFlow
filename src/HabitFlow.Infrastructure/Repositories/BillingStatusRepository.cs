@@ -27,4 +27,18 @@ where i.client_id = c.id
 
     public Task ReactivateClientAfterApprovedPaymentAsync(Guid clientId, string benefitsStatus, CancellationToken ct = default) => db.ExecuteAsync(@"
 update habitflow.clients set payment_status = 'Approved', subscription_status = 'Active', benefits_status = @benefitsStatus, overdue_since = null, grace_period_until = null, blocked_paid_benefits_at = null, blocked_paid_benefits_reason = null, updated_at = now() where id = @clientId", new { clientId, benefitsStatus }, ct);
+
+    public Task<int> ExpireTrialsAsync(CancellationToken ct = default) => db.ExecuteAsync(@"
+update habitflow.subscriptions
+set status = 'Expired', updated_at = now()
+where status in ('Trial','Trialing') and trial_ends_at is not null and trial_ends_at < now()", null, ct);
+
+    public Task<int> SyncUsersWithExpiredTrialsAsync(CancellationToken ct = default) => db.ExecuteAsync(@"
+update habitflow.users u
+set plan = 'Free', plan_status = 'Inactive', updated_at = now()
+from habitflow.subscriptions s
+where u.id = s.user_id
+  and s.status = 'Expired'
+  and u.plan = 'Premium'
+  and not exists (select 1 from habitflow.subscriptions a where a.user_id = u.id and a.id <> s.id and a.status in ('Active','Pending','PaymentPending','PastDue','Trial','Trialing'))", null, ct);
 }

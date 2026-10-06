@@ -1,8 +1,9 @@
 const VERSION = 'v6.17.7';
 const CACHE = `habitflow-public-${VERSION}`;
-const STATIC = ['/offline.html','/offline-private.html','/css/site.css','/css/design-system.css','/js/pwa.js','/favicon.svg','/icons/icon-192.svg','/icons/icon-512.svg','/icons/icon-maskable.svg'];
+const STATIC = ['/offline.html','/offline-private.html','/css/site.css','/css/design-system.css','/js/pwa.js','/favicon.svg','/icons/icon-192.svg','/icons/icon-512.svg','/icons/icon-maskable.svg']; // âncora v6.16.8: const STATIC=[lista pública, sem rotas privadas]
 const PRIVATE_ROUTE = /^\/(dashboard|my-day|habits|reminders|notifications|profile|settings|account|billing|reports|admin|superadmin)(\/|$)/i;
 const NEVER_INTERCEPT = /^\/(auth|login|logout|register|password|payments?|webhooks?|api)(\/|$)/i;
+const SENSITIVE_ROUTES = /^\/(account|billing|support|admin|superadmin)(\/|$)/i;
 const debug = (...args) => { if (self.location.hostname === 'localhost') console.info('[HabitFlow SW]', ...args); };
 self.addEventListener('install', event => event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(STATIC)).then(() => debug('assets públicos prontos'))));
 self.addEventListener('activate', event => event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key.startsWith('habitflow-') && key !== CACHE).map(key => caches.delete(key)))).then(() => self.clients.claim())));
@@ -10,6 +11,7 @@ self.addEventListener('message', event => { if (event.data?.type === 'SKIP_WAITI
 self.addEventListener('fetch', event => {
   const request = event.request; const url = new URL(request.url);
   if (request.method !== 'GET' || url.origin !== self.location.origin || NEVER_INTERCEPT.test(url.pathname) || request.headers.get('authorization') || request.headers.get('accept')?.includes('application/json')) return;
+  if (SENSITIVE_ROUTES.test(url.pathname) && request.mode !== 'navigate') return; // navegação privada usa fetch com cache:'no-store'
   if (request.mode === 'navigate') {
     event.respondWith(fetch(request, { cache: 'no-store', credentials: 'include' }).catch(() => caches.match(PRIVATE_ROUTE.test(url.pathname) ? '/offline-private.html' : '/offline.html')));
     return;

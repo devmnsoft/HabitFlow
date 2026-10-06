@@ -12,6 +12,7 @@ public static class ApplicationEvents
     public static readonly EventId RoutineOperationFailed = new(618705, "routine.operation_failed");
     public static readonly EventId NotificationOperationFailed = new(618706, "notification.operation_failed");
     public static readonly EventId TenantAccessDenied = new(618707, "tenant.access_denied");
+    public static readonly EventId BillingEntitlementBlocked = new(618720, "billing.entitlement.blocked");
     public static readonly EventId SystemHealthChecked = new(618708, "system.health_checked");
     public static readonly EventId HabitCreated = new(617610, "habit.created");
     public static readonly EventId HabitUpdated = new(617611, "habit.updated");

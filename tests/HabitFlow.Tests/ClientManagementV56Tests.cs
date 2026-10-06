@@ -105,7 +105,7 @@ public sealed class ClientManagementV56Tests
     public void AdminClientsControllerRequiresAdminAndFeedback()
     {
         var controller = Read("src/HabitFlow.Web/Controllers/AdminClientsController.cs");
-        Assert.Contains("[Authorize(Roles = \"Admin\")]", controller);
+        Assert.Contains("[Authorize(Policy = \"RequireAdmin\")]", controller);
         Assert.Contains("[ValidateAntiForgeryToken]", controller);
         Assert.Contains("O cliente foi cadastrado com sucesso.", controller);
         Assert.Contains("SetDatabaseError", controller);

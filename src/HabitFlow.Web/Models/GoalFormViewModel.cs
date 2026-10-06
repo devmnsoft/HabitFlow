@@ -4,11 +4,8 @@ using HabitFlow.Domain;
 
 namespace HabitFlow.Web.Models;
 
-public sealed class GoalFormViewModel : IValidatableObject
+public sealed class GoalFormViewModel
 {
-    private static readonly HashSet<string> TargetTypes =
-        ["HabitCompletions", "ActiveDays", "StreakDays", "WeeklyCompletions", "Custom"];
-
     public Guid? GoalId { get; init; }
 
     [Required(ErrorMessage = "Informe onde você quer chegar."), StringLength(160, ErrorMessage = "Use no máximo 160 caracteres.")]
@@ -17,7 +14,7 @@ public sealed class GoalFormViewModel : IValidatableObject
     [StringLength(1000, ErrorMessage = "Use no máximo 1.000 caracteres.")]
     public string? Description { get; set; }
 
-    [Required(ErrorMessage = "Escolha como medir a meta.")]
+    [Required(ErrorMessage = "Escolha como medir a meta."), GoalTargetTypeCode]
     public string TargetType { get; set; } = "HabitCompletions";
 
     [Range(1, 100000, ErrorMessage = "A meta deve estar entre 1 e 100.000.")]
@@ -25,15 +22,8 @@ public sealed class GoalFormViewModel : IValidatableObject
 
     [Required(ErrorMessage = "Informe a data de início.")]
     public DateOnly StartDate { get; set; } = DateOnly.FromDateTime(DateTime.UtcNow);
+    [GoalEndDateAfterStart]
     public DateOnly? EndDate { get; set; }
-
-    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
-    {
-        if (!TargetTypes.Contains(TargetType))
-            yield return new("Escolha uma forma de medição válida.", [nameof(TargetType)]);
-        if (EndDate is { } end && end < StartDate)
-            yield return new("O prazo deve ser igual ou posterior à data de início.", [nameof(EndDate)]);
-    }
 
     public static GoalFormViewModel Create() => new();
     public static GoalFormViewModel From(UserGoal goal) => new()
@@ -42,4 +32,26 @@ public sealed class GoalFormViewModel : IValidatableObject
         TargetType = goal.TargetType, TargetValue = goal.TargetValue,
         StartDate = goal.StartDate, EndDate = goal.EndDate
     };
+}
+
+[AttributeUsage(AttributeTargets.Property)]
+public sealed class GoalTargetTypeCode : ValidationAttribute
+{
+    public GoalTargetTypeCode() : base("Escolha uma forma de medição válida.") { }
+    private static readonly HashSet<string> Allowed =
+        ["HabitCompletions", "ActiveDays", "StreakDays", "WeeklyCompletions", "Custom"];
+    public override bool IsValid(object? value) => value is string s && Allowed.Contains(s);
+}
+
+[AttributeUsage(AttributeTargets.Property)]
+public sealed class GoalEndDateAfterStart : ValidationAttribute
+{
+    public GoalEndDateAfterStart() : base("O prazo deve ser igual ou posterior à data de início.") { }
+    public override bool RequiresValidationContext => true;
+    protected override ValidationResult? IsValid(object? value, ValidationContext validationContext)
+    {
+        if (value is DateOnly end && validationContext?.ObjectInstance is GoalFormViewModel model && end < model.StartDate)
+            return new ValidationResult("O prazo deve ser igual ou posterior à data de início.", new[] { nameof(GoalFormViewModel.EndDate) });
+        return null;
+    }
 }

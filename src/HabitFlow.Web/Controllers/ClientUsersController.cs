@@ -23,9 +23,20 @@ public sealed class ClientUsersController(UserInviteService inviteService, Curre
     {
         var targetClientId = clientId ?? tenant.RequireCurrentClientId();
         var inviteRole = string.Equals(role, "Admin", StringComparison.OrdinalIgnoreCase) ? UserRole.Admin : UserRole.User;
-        var (_, token) = await inviteService.CreateInviteAsync(targetClientId, email, inviteRole, ct);
-        TempData["Success"] = "Convite enviado.";
-        TempData["InviteLink"] = Url.Action("Accept", "Invites", new { token }, Request.Scheme);
+        try
+        {
+            var (_, token) = await inviteService.CreateInviteAsync(targetClientId, email, inviteRole, ct);
+            TempData["Success"] = "Convite enviado.";
+            TempData["InviteLink"] = Url.Action("Accept", "Invites", new { token }, Request.Scheme);
+        }
+        catch (PlanLimitException ex)
+        {
+            TempData["Error"] = ex.Message;
+        }
+        catch (TenantAccessDeniedException ex)
+        {
+            TempData["Error"] = ex.Message;
+        }
         return RedirectToAction(nameof(Index));
     }
 

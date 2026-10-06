@@ -37,7 +37,7 @@ public sealed class AssistantSafetyService
     private static readonly string[] Injection = ["ignore as instruções", "ignore previous", "prompt do sistema", "system prompt", "modo desenvolvedor", "jailbreak", "revele o prompt", "outro usuário", "outro tenant", "connection string"];
     private static readonly string[] Medical = ["diagnóstico", "autodiagnóstico", "automedicação", "qual remédio", "dose de", "suicídio", "me matar", "autoagressão"];
     private static readonly string[] LegalFinancial = ["aconselhamento jurídico", "processo judicial", "parecer jurídico", "qual ação comprar", "investimento garantido", "consultoria financeira"];
-    private static readonly string[] Bypass = ["burlar o plano", "contornar o limite", "mais hábitos sem pagar", "dados de outro"];
+    private static readonly string[] Bypass = ["burlar o plano", "contornar o limite", "mais hábitos sem pagar", "dados de outro", "cancelar assinatura"];
 
     public bool ContainsSensitiveData(string value) => SecretPattern.IsMatch(value ?? "");
     public bool IsPromptInjection(string value) => HasAny(value, Injection);
@@ -121,9 +121,23 @@ public sealed class DisabledAssistantProvider : IAssistantProvider
     public Task<AssistantResponse> GenerateAsync(AssistantRequest request, AssistantUserContext context, CancellationToken ct) => Task.FromResult(new AssistantResponse("Assistente desabilitado.", "Disabled", "Disabled"));
 }
 
-public sealed class ConfiguredAssistantProvider(DisabledAssistantProvider disabled, DeterministicAssistantProvider knowledge, IOptions<AssistantOptions> options) : IAssistantProvider
+public sealed class ConfiguredAssistantProvider(
+    DisabledAssistantProvider disabled,
+    DeterministicAssistantProvider knowledge,
+    GroqAssistantProvider groq,
+    GeminiAssistantProvider gemini,
+    DeepSeekAssistantProvider deepSeek,
+    IOptions<AssistantOptions> options) : IAssistantProvider
 {
-    private IAssistantProvider Current => options.Value.Provider.Equals("Knowledge", StringComparison.OrdinalIgnoreCase) ? knowledge : disabled;
+    private IAssistantProvider Current => options.Value.Provider switch
+    {
+        var p when p.Equals("Knowledge", StringComparison.OrdinalIgnoreCase) => knowledge,
+        var p when p.Equals("Groq", StringComparison.OrdinalIgnoreCase) => groq,
+        var p when p.Equals("Gemini", StringComparison.OrdinalIgnoreCase) => gemini,
+        var p when p.Equals("DeepSeek", StringComparison.OrdinalIgnoreCase) => deepSeek,
+        _ => disabled
+    };
+
     public bool IsConfigured => Current.IsConfigured;
     public Task<AssistantResponse> GenerateAsync(AssistantRequest request, AssistantUserContext context, CancellationToken ct) => Current.GenerateAsync(request, context, ct);
 }
@@ -155,10 +169,15 @@ public sealed class AssistantConversationRepository(IAssistanceRepository inner)
     public Task DeleteAsync(Guid clientId, Guid userId, CancellationToken ct) => inner.DeleteHistoryAsync(clientId, userId, ct);
 }
 
-public sealed class AssistantChatService(AssistantConversationRepository conversations, AssistantContextBuilder contextBuilder, IAssistantProvider provider, AssistantSafetyService safety, AssistantAuditService audit, IOptions<AssistantOptions> settings, ILogger<AssistantChatService> logger)
+public sealed class AssistantChatService(AssistantConversationRepository conversations, AssistantContextBuilder contextBuilder, PlanEntitlementService entitlements, IAssistantProvider provider, AssistantSafetyService safety, AssistantAuditService audit, IOptions<AssistantOptions> settings, ILogger<AssistantChatService> logger)
 {
     public bool IsEnabled => settings.Value.Enabled && provider.IsConfigured;
     public AssistantOptions Configuration => settings.Value;
+
+    private static bool RequiresAiEntitlement(string provider) =>
+        provider.Equals("Groq", StringComparison.OrdinalIgnoreCase) ||
+        provider.Equals("Gemini", StringComparison.OrdinalIgnoreCase) ||
+        provider.Equals("DeepSeek", StringComparison.OrdinalIgnoreCase);
     public async Task<AssistantResponse> AskAsync(Guid clientId, Guid userId, string message, string correlationId, CancellationToken ct)
     {
         var options = settings.Value;
@@ -173,6 +192,12 @@ public sealed class AssistantChatService(AssistantConversationRepository convers
             using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
             timeout.CancelAfter(TimeSpan.FromSeconds(Math.Clamp(options.TimeoutSeconds, 1, 120)));
             var context = await contextBuilder.BuildAsync(clientId, userId, timeout.Token);
+            if (RequiresAiEntitlement(options.Provider) && !await entitlements.GetBooleanFeatureAsync(userId, PlanFeatureCodes.AiAssistant, timeout.Token))
+            {
+                var blockedByPlan = new AssistantResponse("Seu plano não inclui o Assistente IA. Consulte Planos para habilitar.", "safety", "BlockedByPlan", "/plans", "Ver planos");
+                audit.Write(ApplicationEvents.AssistantSafetyBlocked, "assistant.plan.blocked", request, blockedByPlan.SafetyStatus, options.Provider, watch.ElapsedMilliseconds);
+                return blockedByPlan;
+            }
             audit.Write(ApplicationEvents.AssistantContextBuilt, "assistant.context.built", request, "Success", options.Provider, watch.ElapsedMilliseconds);
             var response = safety.InspectOutput(await provider.GenerateAsync(request, context, timeout.Token), options.MaxOutputChars);
             if (options.StoreConversationHistory)

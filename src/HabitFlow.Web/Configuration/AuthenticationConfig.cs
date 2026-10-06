@@ -40,7 +40,35 @@ public static class AuthenticationConfig
                     context.RejectPrincipal();
                     await context.HttpContext.SignOutAsync();
                 }
-                else await context.HttpContext.RequestServices.GetRequiredService<UserSessionService>().TouchAsync(sessionId, id, user.ClientId, context.HttpContext.RequestAborted);
+                else
+                {
+                    await context.HttpContext.RequestServices.GetRequiredService<UserSessionService>().TouchAsync(sessionId, id, user.ClientId, context.HttpContext.RequestAborted);
+                    try
+                    {
+                        // Reemite os claims de tenant a cada validação: status comercial e módulos habilitados.
+                        string tenantStatus = nameof(TenantStatus.Active);
+                        IReadOnlyCollection<string> modules = TenantModules.All;
+                        if (user.ClientId.HasValue)
+                        {
+                            var clientRepo = context.HttpContext.RequestServices.GetRequiredService<IClientRepository>();
+                            var client = await clientRepo.GetByIdAsync(user.ClientId.Value, context.HttpContext.RequestAborted);
+                            if (client is not null)
+                            {
+                                if (client.BenefitsStatus is ClientBenefitsStatus.PremiumBlocked or ClientBenefitsStatus.EnterpriseBlocked
+                                    || client.SubscriptionStatus == ClientSubscriptionStatus.Suspended) tenantStatus = nameof(TenantStatus.CommerciallyBlocked);
+                                else if (client.Status == ClientStatus.Blocked) tenantStatus = nameof(TenantStatus.Disabled);
+                                modules = await clientRepo.GetEnabledModulesAsync(client.Id, context.HttpContext.RequestAborted);
+                            }
+                        }
+                        if (context.Principal.Identity is ClaimsIdentity identity)
+                        {
+                            identity.Claims.Where(c => c.Type is "tenant_status" or "tenant_module").ToList().ForEach(identity.RemoveClaim);
+                            identity.AddClaim(new Claim("tenant_status", tenantStatus));
+                            foreach (var module in modules) identity.AddClaim(new Claim("tenant_module", module));
+                        }
+                    }
+                    catch { /* Refresh de claims falhou: mantém o cookie atual (fail open, mesmo comportamento anterior). */ }
+                }
             };
         });
         services.AddAuthorization(options =>

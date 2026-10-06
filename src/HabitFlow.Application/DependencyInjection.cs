@@ -1,6 +1,7 @@
 using HabitFlow.Domain;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace HabitFlow.Application;
 
@@ -9,6 +10,9 @@ public static class DependencyInjection
     public static IServiceCollection AddHabitFlowApplication(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddOptions<AssistantOptions>().Bind(configuration.GetSection(AssistantOptions.SectionName));
+        services.AddOptions<GroqOptions>().Bind(configuration.GetSection(GroqOptions.SectionName));
+        services.AddOptions<GeminiOptions>().Bind(configuration.GetSection(GeminiOptions.SectionName));
+        services.AddOptions<DeepSeekOptions>().Bind(configuration.GetSection(DeepSeekOptions.SectionName));
         services.AddSingleton<LogSanitizer>();
         services.AddSingleton<ProtocolGenerator>();
         services.AddSingleton<WhatsAppValidator>();
@@ -188,6 +192,21 @@ public static class DependencyInjection
         services.AddScoped<SchemaMigrationStatusService>();
         services.AddScoped<SuperAdminOperationalService>();
         services.AddScoped<OperationsCenterService>();
+        services.AddHttpClient<GroqAssistantProvider>((sp, client) =>
+        {
+            var opts = sp.GetRequiredService<IOptions<GroqOptions>>().Value;
+            if (!string.IsNullOrWhiteSpace(opts.BaseUrl) && Uri.TryCreate(opts.BaseUrl, UriKind.Absolute, out var uri)) client.BaseAddress = new Uri(uri.GetLeftPart(UriPartial.Path).TrimEnd('/') + "/");
+        });
+        services.AddHttpClient<GeminiAssistantProvider>((sp, client) =>
+        {
+            var opts = sp.GetRequiredService<IOptions<GeminiOptions>>().Value;
+            if (!string.IsNullOrWhiteSpace(opts.BaseUrl) && Uri.TryCreate(opts.BaseUrl, UriKind.Absolute, out var uri)) client.BaseAddress = new Uri(uri.GetLeftPart(UriPartial.Path).TrimEnd('/') + "/");
+        });
+        services.AddHttpClient<DeepSeekAssistantProvider>((sp, client) =>
+        {
+            var opts = sp.GetRequiredService<IOptions<DeepSeekOptions>>().Value;
+            if (!string.IsNullOrWhiteSpace(opts.BaseUrl) && Uri.TryCreate(opts.BaseUrl, UriKind.Absolute, out var uri)) client.BaseAddress = new Uri(uri.GetLeftPart(UriPartial.Path).TrimEnd('/') + "/");
+        });
         services.AddHttpClient<IPaymentProviderService, MercadoPagoService>();
         services.AddHttpClient<TelegramService>();
         return services;

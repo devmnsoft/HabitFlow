@@ -74,18 +74,20 @@ public sealed class PlanLandingPageService(IPlanCatalogRepository repository)
             return value.IntValue?.ToString(PtBr) ?? (value.BoolValue == true ? "Incluído" : value.StringValue) ?? unavailable;
         }
         return [
-            new("Hábitos ativos", Value(PlanCodes.Free, PlanFeatureCodes.ActiveHabitsLimit, "Não informado"), Value(PlanCodes.Ritmo, PlanFeatureCodes.ActiveHabitsLimit, "Não informado")),
-            new("Objetivos ativos", Value(PlanCodes.Free, PlanFeatureCodes.ActiveGoalsLimit, "Não informado"), Value(PlanCodes.Ritmo, PlanFeatureCodes.ActiveGoalsLimit, "Não informado")),
-            new("Histórico", Value(PlanCodes.Free, PlanFeatureCodes.HistoryDaysLimit, "Não informado", x => x.IntValue is null ? "Não informado" : $"{x.IntValue} dias"), Value(PlanCodes.Ritmo, PlanFeatureCodes.FullHistory, "Não incluído", _ => "Histórico completo")),
-            new("Biblioteca", Value(PlanCodes.Free, PlanFeatureCodes.FullHabitLibrary, "Não incluída"), Value(PlanCodes.Ritmo, PlanFeatureCodes.FullHabitLibrary, "Não incluída")),
-            new("Desafios", Value(PlanCodes.Free, "challenge_7_days", "7 dias", _ => "7 dias"), Value(PlanCodes.Ritmo, "challenge_90_days", "7, 30 e 90 dias", _ => "7, 30 e 90 dias"), "O progresso considera uma conclusão por dia, a partir do início do desafio."),
-            new("Relatórios", Value(PlanCodes.Free, PlanFeatureCodes.BasicReports, "Não incluídos", _ => "Resumo semanal básico"), Value(PlanCodes.Ritmo, PlanFeatureCodes.BasicReports, "Não incluídos", _ => "Relatórios disponíveis implementados")),
-            new("Exportação", Value(PlanCodes.Free, PlanFeatureCodes.ReportExportCsv, "Não incluída", _ => "Exportação CSV"), Value(PlanCodes.Ritmo, PlanFeatureCodes.ReportExportCsv, "Não incluída", _ => "Exportação CSV")),
-            new("Lembretes por hábito", "Conforme catálogo", "Conforme catálogo"),
-            new("PWA", "Incluído", "Incluído"), new("Push notifications", "Em breve", "Em breve"),
-            new("Assistente", "Em breve", "Em breve"), new("Conquistas e metas semanais", "Em breve", "Em breve"),
-            new("Suporte", "Incluído", "Incluído"), new("Exportação PDF", "Em breve", "Em breve"),
-            new("Segurança da conta", "Incluída", "Incluída"), new("Central de Privacidade", "Incluída", "Incluída")];
+            new("Usuários na equipe", "1", "1", null, "Até 10", "Ilimitado"),
+            new("Hábitos ativos", Value(PlanCodes.Free, PlanFeatureCodes.ActiveHabitsLimit, "Não informado"), Value(PlanCodes.Ritmo, PlanFeatureCodes.ActiveHabitsLimit, "Não informado"), null, "Ilimitado", "Ilimitado"),
+            new("Objetivos ativos", Value(PlanCodes.Free, PlanFeatureCodes.ActiveGoalsLimit, "Não informado"), Value(PlanCodes.Ritmo, PlanFeatureCodes.ActiveGoalsLimit, "Não informado"), null, "Ilimitado", "Ilimitado"),
+            new("Histórico", Value(PlanCodes.Free, PlanFeatureCodes.HistoryDaysLimit, "Não informado", x => x.IntValue is null ? "Não informado" : $"{x.IntValue} dias"), Value(PlanCodes.Ritmo, PlanFeatureCodes.FullHistory, "Não incluído", _ => "Histórico completo"), null, "Completo", "Completo"),
+            new("Biblioteca", Value(PlanCodes.Free, PlanFeatureCodes.FullHabitLibrary, "Não incluída"), Value(PlanCodes.Ritmo, PlanFeatureCodes.FullHabitLibrary, "Não incluída"), null, "Incluída", "Incluída"),
+            new("Desafios", Value(PlanCodes.Free, "challenge_7_days", "7 dias", _ => "7 dias"), Value(PlanCodes.Ritmo, "challenge_90_days", "7, 30 e 90 dias", _ => "7, 30 e 90 dias"), "O progresso considera uma conclusão por dia, a partir do início do desafio.", "7, 30 e 90 dias", "7, 30 e 90 dias"),
+            new("Relatórios", Value(PlanCodes.Free, PlanFeatureCodes.BasicReports, "Não incluídos", _ => "Resumo semanal básico"), Value(PlanCodes.Ritmo, PlanFeatureCodes.BasicReports, "Não incluídos", _ => "Relatórios disponíveis implementados"), null, "Avançados", "Avançados e consolidados"),
+            new("Exportação", Value(PlanCodes.Free, PlanFeatureCodes.ReportExportCsv, "Não incluída", _ => "Exportação CSV"), Value(PlanCodes.Ritmo, PlanFeatureCodes.ReportExportCsv, "Não incluída", _ => "Exportação CSV"), null, "CSV", "CSV"),
+            new("Lembretes por hábito", "Conforme catálogo", "Conforme catálogo", null, "Ampliados", "Ilimitados"),
+            new("Metas compartilhadas / times", "—", "—", null, "Incluído", "Incluído"),
+            new("PWA", "Incluído", "Incluído", null, "Incluído", "Incluído"), new("Push notifications", "Em breve", "Em breve", null, "Em breve", "Em breve"),
+            new("Assistente", "Em breve", "Em breve", null, "Em breve", "Em breve"), new("Conquistas e metas semanais", "Em breve", "Em breve", null, "Incluído", "Incluído"),
+            new("Suporte", "Incluído", "Incluído", null, "Prioritário", "Dedicado"), new("Exportação PDF", "Em breve", "Em breve", null, "Em breve", "Incluída"),
+            new("Segurança da conta", "Incluída", "Incluída", null, "Incluída", "Incluída"), new("Central de Privacidade", "Incluída", "Incluída", null, "Incluída", "Incluída")];
     }
 
     private static IReadOnlyList<PlanFaqItemViewModel> BuildFaq() => [
@@ -96,5 +98,7 @@ public sealed class PlanLandingPageService(IPlanCatalogRepository repository)
         new("Relatórios e exportações estão inclusos?", "O resumo e a exportação CSV aparecem conforme o catálogo. PDF e recursos parciais não são vendidos como disponíveis."),
         new("Como funcionam desafios?", "Os desafios disponíveis registram uma conclusão por dia desde o início. As durações liberadas constam na comparação."),
         new("Posso cancelar depois?", "Sim. O Premium permanece ativo até o fim do período já pago quando aplicável, e depois sua conta retorna ao Free."),
-        new("O pagamento já está ativo?", "O checkout usa a integração real com Mercado Pago quando configurada. A ativação só ocorre após confirmação segura pelo webhook; se o ambiente não estiver configurado, mostramos uma mensagem e o suporte.")];
+        new("O pagamento já está ativo?", "O checkout usa a integração real com Mercado Pago quando configurada. A ativação só ocorre após confirmação segura pelo webhook; se o ambiente não estiver configurado, mostramos uma mensagem e o suporte."),
+        new("Tem plano para equipes ou empresas?", "Sim. O Team libera até 10 usuários e recursos de colaboração; para volume maior e condições sob medida existe o Enterprise."),
+        new("Como assinar o Enterprise?", "O Enterprise é vendido por contato, sem checkout online. Fale com o comercial em comercial@mnsoft.com.br (CNPJ 18.160.057/0001-13).")];
 }

@@ -10,13 +10,6 @@ public sealed class HabitOccurrenceService(ILogger<HabitOccurrenceService>? logg
 {
     public bool IsScheduledForDate(ProgressHabitRow habit, IReadOnlySet<int> weekDays, DateOnly date, TimeZoneInfo timeZone)
     {
-        var created = DateOnly.FromDateTime(TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(habit.CreatedAt, DateTimeKind.Utc), timeZone));
-        if (date < created) return false;
-        if (habit.ArchivedAt.HasValue)
-        {
-            var archived = DateOnly.FromDateTime(TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(habit.ArchivedAt.Value, DateTimeKind.Utc), timeZone));
-            if (date > archived) return false;
-        }
         var day = (int)date.DayOfWeek;
         if (!Enum.TryParse<HabitFrequencyType>(habit.FrequencyTypeCode, true, out var frequency) ||
             frequency is not (HabitFrequencyType.Daily or HabitFrequencyType.Weekdays or HabitFrequencyType.Weekends or HabitFrequencyType.CustomWeekly))
@@ -25,6 +18,16 @@ public sealed class HabitOccurrenceService(ILogger<HabitOccurrenceService>? logg
                 "Unknown habit frequency code {FrequencyTypeCode} for habit {HabitId}; occurrence ignored.",
                 habit.FrequencyTypeCode, habit.Id);
             return false;
+        }
+        if (frequency == HabitFrequencyType.CustomWeekly)
+        {
+            var created = DateOnly.FromDateTime(TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(habit.CreatedAt, DateTimeKind.Utc), timeZone));
+            if (date < created) return false;
+            if (habit.ArchivedAt.HasValue)
+            {
+                var archived = DateOnly.FromDateTime(TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(habit.ArchivedAt.Value, DateTimeKind.Utc), timeZone));
+                if (date > archived) return false;
+            }
         }
         return frequency switch
         {

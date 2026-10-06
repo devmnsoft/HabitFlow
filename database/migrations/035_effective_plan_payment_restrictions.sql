@@ -1,4 +1,9 @@
 set search_path to habitflow, public;
+-- correção v6.19.6: colunas do contrato de system_settings criadas em 051, usadas já em 035;
+-- guardas idempotentes mantêm o histórico aplicável em banco novo (ordem cronológica).
+alter table habitflow.system_settings add column if not exists description text null;
+alter table habitflow.system_settings add column if not exists is_public boolean not null default false;
+alter table habitflow.system_settings add column if not exists created_at timestamp null;
 alter table habitflow.client_subscriptions add column if not exists plan_id uuid null references habitflow.plans(id);
 alter table habitflow.client_subscriptions add column if not exists plan_price_id uuid null references habitflow.plan_prices(id);
 alter table habitflow.client_subscriptions add column if not exists price_snapshot numeric(12,2);

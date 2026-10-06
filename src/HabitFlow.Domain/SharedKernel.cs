@@ -1,3 +1,5 @@
+// Kernel types shared by all layers. The namespace stays HabitFlow.Shared for source compatibility;
+// the assembly home is HabitFlow.Domain because clean-architecture rules forbid Domain depending on other projects.
 namespace HabitFlow.Shared;
 public sealed record Error(string Code, string Message)
 { public static Error None => new(string.Empty, string.Empty); }
