@@ -21,7 +21,7 @@ public sealed class EngagementV696Tests
         var clock = new FixedTimeProvider(new DateTimeOffset(2026, 8, 3, 10, 0, 0, TimeSpan.Zero));
         var result = new ReminderScheduleCalculator(clock).Next(new TimeOnly(8, 0), [1,2,3,4,5], "America/Sao_Paulo");
         Assert.Equal(TimeSpan.Zero, result.Offset);
-        Assert.Equal(new DateTimeOffset(2026, 8, 4, 11, 0, 0, TimeSpan.Zero), result);
+        Assert.Equal(new DateTimeOffset(2026, 8, 3, 11, 0, 0, TimeSpan.Zero), result);
     }
 
     private sealed class FixedTimeProvider(DateTimeOffset now) : TimeProvider

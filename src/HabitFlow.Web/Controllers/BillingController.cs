@@ -18,6 +18,12 @@ public sealed class BillingController(SubscriptionService subscriptions, Payment
     public async Task<IActionResult> Checkout(string planCode, string billingCycle, CancellationToken ct)
     {
         logger.LogInformation("plans.cta.clicked Cta=checkout Plan={PlanCode} Cycle={BillingCycle}", planCode, billingCycle);
+        if (string.Equals(planCode, PlanCodes.Enterprise, StringComparison.OrdinalIgnoreCase))
+        {
+            logger.LogInformation("billing.checkout.contact Plan={PlanCode} Cycle={BillingCycle}", planCode, billingCycle);
+            TempData["Warning"] = "O plano Enterprise é vendido sob consulta, sem checkout online. Fale com nosso comercial em comercial@mnsoft.com.br.";
+            return RedirectToAction("Index", "Plans");
+        }
         if (!Enum.TryParse<BillingCycle>(billingCycle, true, out var cycle)) { TempData["Error"] = "Ciclo inválido."; return RedirectToAction("Index", "Plans"); }
         var result = await checkout.StartCheckoutAsync(this.CurrentUserId(), User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value ?? string.Empty, User.Identity?.Name ?? "Usuário", planCode, cycle, ct);
         if (result.IsFailure) { logger.LogWarning("billing.checkout.unavailable Plan={PlanCode} Cycle={BillingCycle} Code={Code}", planCode, billingCycle, result.Error.Code); TempData["Error"] = result.Error.Message; return RedirectToAction("Index", "Plans"); }

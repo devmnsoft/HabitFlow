@@ -17,10 +17,10 @@ public sealed class V63HabitCompletionIsolationTests
     [Fact]
     public void HabitService_checks_ownership_before_mutating_completion()
     {
-        var source = File.ReadAllText(Path.Combine(Root, "src/HabitFlow.Application/Services/HabitService.cs"));
+        var source = File.ReadAllText(Path.Combine(Root, "src/HabitFlow.Application/Services/HabitCompletionUseCases.cs"));
 
-        Assert.Equal(2, source.Split("!habit.BelongsTo(user.Id)").Length - 1);
-        Assert.Contains("DeleteAsync(habitId, user.Id", source);
+        Assert.Equal(2, source.Split("!habit.BelongsTo(command.UserId)").Length - 1);
+        Assert.Contains("DeleteIfExistsAsync(command.ClientId, user.Id", source);
     }
 
     private static string FindRoot()

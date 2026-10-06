@@ -15,7 +15,7 @@ public sealed class AdminAssistantController(IOptions<AssistantOptions> options)
     [HttpPost("configuration"), ValidateAntiForgeryToken]
     public IActionResult Configure(bool enabled, string provider, string model, int maxInputChars, int maxOutputChars, string defaultMessage)
     {
-        if (provider is not ("Disabled" or "Knowledge")) ModelState.AddModelError(nameof(provider), "Provider não permitido.");
+        if (provider is not ("Disabled" or "Knowledge" or "Groq" or "Gemini" or "DeepSeek")) ModelState.AddModelError(nameof(provider), "Provider não permitido.");
         if (maxInputChars is < 100 or > 10000 || maxOutputChars is < 100 or > 10000) ModelState.AddModelError("limits", "Os limites devem ficar entre 100 e 10.000.");
         if (string.IsNullOrWhiteSpace(defaultMessage) || defaultMessage.Length > 500) ModelState.AddModelError(nameof(defaultMessage), "Informe uma mensagem de até 500 caracteres.");
         if (!ModelState.IsValid) return View("Index", options.Value);

@@ -29,5 +29,5 @@ public sealed class OperationsCenterV6194Tests
         var sql=File.ReadAllText(Path.Combine(Root(),"database/migrations/085_v6194_operations_center.sql"));
         Assert.Contains("unique index if not exists ux_operational_alert_active_dedup",sql); Assert.Contains("tenant_id",sql); Assert.Contains("operational_alert_history",sql);
     }
-    private static string Root()=>Path.GetFullPath(Path.Combine(AppContext.BaseDirectory,"../../../../"));
+    private static string Root()=>RepositoryRootLocator.Root;
 }

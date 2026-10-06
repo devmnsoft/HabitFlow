@@ -5,6 +5,13 @@ using HabitFlow.Web.Services;
 
 var builder = WebApplication.CreateBuilder(new WebApplicationOptions { Args = args });
 
+// Avoid Windows EventLog writes in restricted environments (tests/sandboxes).
+// Console/Debug/EventSource remain enabled for operational observability.
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+builder.Logging.AddDebug();
+builder.Logging.AddEventSourceLogger();
+
 if (!builder.Environment.IsProduction())
     builder.Host.UseDefaultServiceProvider(options => { options.ValidateScopes = true; options.ValidateOnBuild = true; });
 

@@ -31,7 +31,9 @@ public sealed class PlanUsageService(
             var paid = !planCode.Equals(PlanCodes.Free, StringComparison.OrdinalIgnoreCase)
                 && subscription is { Status: SubscriptionStatus.Active or SubscriptionStatus.Trial or SubscriptionStatus.PastDue };
             var publicName = planCode.Equals(PlanCodes.Free, StringComparison.OrdinalIgnoreCase) ? "Gratuito" :
-                planCode.Equals(PlanCodes.Ritmo, StringComparison.OrdinalIgnoreCase) ? "Ritmo" : "Evolução";
+                planCode.Equals(PlanCodes.Ritmo, StringComparison.OrdinalIgnoreCase) ? "Ritmo" :
+                planCode.Equals(PlanCodes.Team, StringComparison.OrdinalIgnoreCase) ? "Team" :
+                planCode.Equals(PlanCodes.Enterprise, StringComparison.OrdinalIgnoreCase) ? "Enterprise" : "Evolução";
             var featureUsage = new[]
             {
                 new PlanFeatureUsageViewModel("Relatórios", Enabled(PlanFeatureCodes.BasicReports) ? "Resumo do seu progresso disponível." : "Relatórios ampliados não estão incluídos neste plano.", Enabled(PlanFeatureCodes.BasicReports)),

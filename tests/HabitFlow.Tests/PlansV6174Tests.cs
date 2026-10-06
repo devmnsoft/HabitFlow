@@ -4,7 +4,7 @@ namespace HabitFlow.Tests;
 
 public sealed class PlansV6174Tests
 {
-    private static readonly string Root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../"));
+    private static readonly string Root = RepositoryRootLocator.Root;
     private static string Read(string path) => File.ReadAllText(Path.Combine(Root, path));
 
     [Fact]

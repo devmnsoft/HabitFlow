@@ -5,6 +5,8 @@ public static class PlanCodes
     public const string Free = "free";
     public const string Ritmo = "ritmo";
     public const string Evolucao = "evolucao";
+    public const string Team = "team";
+    public const string Enterprise = "enterprise";
 }
 
 public static class PlanFeatureCodes
@@ -28,6 +30,9 @@ public static class PlanFeatureCodes
     public const string UserInvitations = "user_invitations";
     public const string PrioritySupport = "priority_support";
     public const string InternalCommunications = "internal_communications";
+    public const string AiAssistant = "ai_assistant";
+    public const string Teams = "teams";
+    public const string CorporateFeatures = "corporate_features";
 }
 
 public sealed record PlanFeatureValue(string Code, string Name, string ValueType, bool? BoolValue, int? IntValue, string? StringValue);

@@ -6,10 +6,7 @@ internal static class RepositoryRootLocator
     public static string Root => Cached.Value;
     public static string PathTo(params string[] segments) => Path.Combine([Root, .. segments]);
 
-    internal static string Find()
-    {
-        throw new NotImplementedException();
-    }
+    internal static string Find() => Locate();
 
     private static string Locate()
     {

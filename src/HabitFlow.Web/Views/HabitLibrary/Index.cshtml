@@ -4,7 +4,7 @@
 @section Styles { <link rel="stylesheet" href="~/css/habit-library.css" asp-append-version="true" /> }
 <main class="hf-library-page" data-library>
   <header class="hf-library-hero">
-    <div><p class="hf-section-kicker">Comece pequeno, do seu jeito</p><h1>Biblioteca guiada de hábitos</h1><p>Encontre uma ação possível para sua rotina, entenda por que ela ajuda e personalize antes de criar.</p></div>
+    <div><p class="hf-section-kicker">Comece pequeno, do seu jeito</p><h1>Biblioteca guiada de hábitos</h1><p>Encontre uma ação possível para sua rotina, entenda por que ela ajuda e personalize antes de criar.</p><a class="hf-library-hero-cta" href="#sugestoes">explorar hábitos sugeridos</a></div>
     @if (User.Identity?.IsAuthenticated == true) { <a class="btn btn-outline-success" href="/habit-library/favorites">Meus favoritos</a> }
   </header>
 
@@ -21,7 +21,7 @@
 
   @if ((bool?)ViewData["UsingFallback"] == true) { <div class="alert alert-info">Estamos mostrando sugestões seguras enquanto a biblioteca completa fica disponível.</div> }
   <p class="hf-library-count" role="status" aria-live="polite" data-library-count>@Model.Templates.Count sugestões encontradas</p>
-  <section class="hf-template-grid" aria-label="Hábitos prontos">
+  <section class="hf-template-grid" id="sugestoes" aria-label="Hábitos prontos">
   @foreach(var template in Model.Templates){ var favorite = Model.FavoriteTemplateIds.Contains(template.Id); var free = template.MinimumPlanCode.Equals(PlanCodes.Free, StringComparison.OrdinalIgnoreCase);
     <article class="hf-template-card" data-template data-focus="@template.ObjectiveId" data-category="@template.Category" data-difficulty="@template.Difficulty" data-duration="@(template.EstimatedTimeMinutes ?? 999)" data-frequency="@template.SuggestedFrequency" data-plan="@template.MinimumPlanCode" data-favorite="@favorite.ToString().ToLowerInvariant()">
       <div class="hf-template-card__top"><span class="hf-chip">@template.Category</span><span class="hf-chip">@template.Difficulty</span>@if(template.EstimatedTimeMinutes is not null){<span class="hf-chip">@template.EstimatedTimeMinutes min</span>}</div>

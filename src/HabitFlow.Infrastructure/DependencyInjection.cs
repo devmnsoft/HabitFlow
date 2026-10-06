@@ -65,6 +65,7 @@ public static class DependencyInjection
         services.AddScoped<IBillingStatusRepository, BillingStatusRepository>();
         services.AddScoped<IPlanRepository, PlanRepository>();
         services.AddScoped<IPlanCatalogRepository, PlanCatalogRepository>();
+        services.AddScoped<IBillingEventLogRepository, BillingEventLogRepository>();
         services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
         services.AddScoped<IPaymentTransactionRepository, PaymentTransactionRepository>();
         services.AddScoped<IPaymentWebhookRepository, PaymentWebhookRepository>();

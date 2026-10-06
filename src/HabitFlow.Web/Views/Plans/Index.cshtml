@@ -2,6 +2,9 @@
 @{ ViewData["Title"] = "Planos para construir consistência"; ViewData["PlanViewer"] = Model.Viewer; }
 @section Styles { <link rel="stylesheet" href="~/css/plans-premium.css" asp-append-version="true" /> }
 <div class="plans-landing">
+  @if (TempData["Success"] is string _ok){<div class="alert alert-success mx-auto" role="status">@_ok</div>}
+  @if (TempData["Warning"] is string _warn){<div class="alert alert-warning mx-auto" role="status">@_warn</div>}
+  @if (TempData["Error"] is string _err){<div class="alert alert-danger mx-auto" role="status">@_err</div>}
   <partial name="Partials/_PlansHero" model="Model" />
   @if (!(ViewBag.CheckoutEnabled as bool? ?? false))
   {
@@ -16,6 +19,7 @@
   <section class="plans-section" id="planos" aria-labelledby="plans-title"><div class="plans-heading"><span>Escolha com clareza</span><h2 id="plans-title">Um plano para cada momento da sua rotina</h2><p>Preços e recursos vêm do catálogo ativo. Comece com o essencial e avance apenas quando fizer sentido.</p></div><div class="plans-grid">@foreach(var plan in Model.Plans){<partial name="Partials/_CommercialPlanCard" model="plan"/>}</div></section>
   <partial name="Partials/_PlanComparisonTable" model="Model.Comparison" />
   <partial name="Partials/_PlanTrustSignals" model="Model.TrustSignals" />
+  <div class="plans-faq-preview" id="faq" aria-hidden="true"><span class="plans-kicker">FAQ rápida</span><p>Preciso pagar para começar?</p></div>
   <partial name="Partials/_PlanFaq" model="Model.Faq" />
   <partial name="Partials/_PlanFinalCta" model="Model.Conversion" />
 </div>

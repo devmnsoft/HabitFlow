@@ -10,7 +10,7 @@
         (Key:"Empty", Type:"info", Title:"Nada por aqui ainda", Modal:false)
     };
 }
-<div class="hf-feedback-seed" hidden>
+<div class="hf-message hf-feedback-seed" hidden>
 @foreach (var item in messages)
 {
     if (TempData[item.Key] is not null)

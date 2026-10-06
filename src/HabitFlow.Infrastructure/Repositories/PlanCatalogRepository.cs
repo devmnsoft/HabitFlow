@@ -6,7 +6,7 @@ namespace HabitFlow.Infrastructure;
 public sealed class PlanCatalogRepository(SqlExecutor db, ILogger<PlanCatalogRepository> logger) : IPlanCatalogRepository
 {
     private static readonly HashSet<string> KnownPlanCodes = new(StringComparer.OrdinalIgnoreCase)
-        { PlanCodes.Free, PlanCodes.Ritmo, PlanCodes.Evolucao };
+        { PlanCodes.Free, PlanCodes.Ritmo, PlanCodes.Evolucao, PlanCodes.Team, PlanCodes.Enterprise };
     private static readonly HashSet<string> KnownBenefitsStatuses = new(StringComparer.OrdinalIgnoreCase)
         { "Free", "Active", "PastDue", "Blocked" };
     public async Task<IReadOnlyList<PublicPlan>> GetPublicCatalogAsync(CancellationToken ct = default)
@@ -16,10 +16,10 @@ public sealed class PlanCatalogRepository(SqlExecutor db, ILogger<PlanCatalogRep
             from habitflow.plans p
             where p.is_active and p.is_public and (
               p.code = 'free' or (
-                p.is_sellable and p.sales_status = 'Available'
-                and exists (select 1 from habitflow.plan_prices pp where pp.plan_id=p.id and pp.is_active
+                p.is_sellable and p.sales_status in ('Available','Contact')
+                and (p.sales_status='Contact' or exists (select 1 from habitflow.plan_prices pp where pp.plan_id=p.id and pp.is_active
                   and pp.amount > 0 and pp.currency='BRL' and pp.billing_cycle in ('Monthly','Yearly')
-                  and pp.valid_from <= now() and (pp.valid_until is null or pp.valid_until > now()))
+                  and pp.valid_from <= now() and (pp.valid_until is null or pp.valid_until > now())))
                 and not exists (
                   select 1 from habitflow.plan_features pf join habitflow.feature_catalog f on f.code=pf.feature_code
                   where pf.plan_id=p.id and f.is_public

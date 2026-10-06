@@ -7,9 +7,9 @@
 }
 @if (string.IsNullOrWhiteSpace(label))
 {
-    <svg class="@css" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><use href="/icons/habitflow-icons.svg#hf-@name"></use></svg>
+    <svg class="@css" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><defs><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z"/></defs><use href="/icons/habitflow-icons.svg#hf-@name"></use></svg>
 }
 else
 {
-    <svg class="@css" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="@label"><use href="/icons/habitflow-icons.svg#hf-@name"></use></svg>
+    <svg class="@css" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="@label"><defs><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z"/></defs><use href="/icons/habitflow-icons.svg#hf-@name"></use></svg>
 }

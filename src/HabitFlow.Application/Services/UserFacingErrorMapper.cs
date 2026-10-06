@@ -10,7 +10,7 @@ public sealed class UserFacingErrorMapper : IUserFacingErrorMapper
 {
     public string ToPublicMessage(string? code, string? context = null) => (code ?? string.Empty).ToLowerInvariant() switch
     {
-        "postgres.invalid_password" => "Não conseguimos acessar os dados necessários agora.",
+        "postgres.invalid_password" => "Não foi possível acessar os dados necessários agora.",
         "postgres.database_missing" => "Não conseguimos localizar os dados necessários agora.",
         "42p01" or "postgres.table_missing" => "O sistema ainda não encontrou todas as informações necessárias.",
         "dapper.datetime_unsupported" or "notsupportedexception" => "Não foi possível carregar esta informação agora. Tente novamente em instantes.",

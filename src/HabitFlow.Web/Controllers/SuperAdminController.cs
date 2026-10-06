@@ -142,7 +142,7 @@ public sealed class SuperAdminController(SuperAdminService dashboard, ClientServ
     public async Task<IActionResult> PlanAccessHealth(CancellationToken ct)
     {
         var plans = await planCatalog.GetPublicCatalogAsync(ct);
-        var known = new[] { Domain.PlanCodes.Free, Domain.PlanCodes.Ritmo, Domain.PlanCodes.Evolucao };
+        var known = new[] { Domain.PlanCodes.Free, Domain.PlanCodes.Ritmo, Domain.PlanCodes.Evolucao, Domain.PlanCodes.Team, Domain.PlanCodes.Enterprise };
         return Ok(new
         {
             status = plans.Count > 0 ? "Healthy" : "Degraded",

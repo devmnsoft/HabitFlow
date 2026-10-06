@@ -51,8 +51,8 @@ public sealed class PublicPlansAndFaviconTests
     [Fact]
     public void Plans_get_is_allow_anonymous_and_billing_controller_stays_authorized()
     {
-        var plans = File.ReadAllText(Path.Combine("..", "..", "..", "..", "src", "HabitFlow.Web", "Controllers", "PlansController.cs"));
-        var billing = File.ReadAllText(Path.Combine("..", "..", "..", "..", "src", "HabitFlow.Web", "Controllers", "BillingController.cs"));
+        var plans = File.ReadAllText(RepositoryRootLocator.PathTo("src", "HabitFlow.Web", "Controllers", "PlansController.cs"));
+        var billing = File.ReadAllText(RepositoryRootLocator.PathTo("src", "HabitFlow.Web", "Controllers", "BillingController.cs"));
         Assert.Contains("[AllowAnonymous]", plans, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("[Authorize]\npublic sealed class PlansController", plans, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("[Authorize]", billing, StringComparison.OrdinalIgnoreCase);
@@ -62,7 +62,7 @@ public sealed class PublicPlansAndFaviconTests
     [Fact]
     public void Layout_references_svg_favicon_and_file_exists()
     {
-        var root = Path.Combine("..", "..", "..", "..");
+        var root = RepositoryRootLocator.Root;
         Assert.True(File.Exists(Path.Combine(root, "src", "HabitFlow.Web", "wwwroot", "favicon.svg")));
         var layout = File.ReadAllText(Path.Combine(root, "src", "HabitFlow.Web", "Views", "Shared", "_Layout.cshtml"));
         Assert.Contains("/favicon.svg", layout, StringComparison.OrdinalIgnoreCase);
@@ -84,7 +84,7 @@ public sealed class HabitLibraryFallbackTests
     [Fact]
     public void Scripts_include_habit_library_validation()
     {
-        var root = Path.Combine("..", "..", "..", "..");
+        var root = RepositoryRootLocator.Root;
         var script = File.ReadAllText(Path.Combine(root, "database", "script_completo.sql"));
         var validate = File.ReadAllText(Path.Combine(root, "database", "validate_schema_habitflow.sql"));
         Assert.Contains("habitflow.habit_objectives", script, StringComparison.OrdinalIgnoreCase);

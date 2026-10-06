@@ -18,8 +18,8 @@ create index if not exists ix_gamification_leaderboard_visible on gamification_l
 insert into achievement_definitions(code,name,description,icon,criterion,category,rarity) values
  ('first_habit','Primeiro passo','Você criou seu primeiro hábito ativo.','sparkles','first_active_habit','começo','comum'),
  ('consistency_30','Presença de 30 dias','Trinta dias de presença, respeitando pausas.','calendar','streak_30','consistência','especial'),
- ('routine_completed','Rotina completa','Você concluiu uma rotina real.','check-circle','rotina','especial'),
- ('consistent_week','Semana consistente','Uma semana saudável e consistente.','sun','consistência','especial'),
- ('return_after_pause','Bom retorno','Você voltou depois de uma pausa, sem punição.','heart','return_after_pause','bem-estar','comum'),
- ('template_used','Começo guiado','Você iniciou um hábito usando um template.','layout','começo','comum')
+ ('routine_completed','Rotina completa','Você concluiu uma rotina real.','check-circle','routine_completed','premium','especial'),
+ ('consistent_week','Semana consistente','Uma semana saudável e consistente.','sun','consistent_week','consistência','especial'),
+ ('return_after_pause','Bom retorno','Você voltou depois de uma pausa, sem punição.','heart','return_after_pause','retorno','comum'),
+ ('template_used','Começo guiado','Você iniciou um hábito usando um template.','layout','template_used','começo','comum')
 on conflict(code) do update set name=excluded.name,description=excluded.description,criterion=excluded.criterion,is_active=true;

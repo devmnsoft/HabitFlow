@@ -7,7 +7,7 @@ namespace HabitFlow.Application;
 
 public sealed class AdminDashboardService(IAdminMetricsRepository repo, ILogger<AdminDashboardService> logger)
 {
-    public async Task<Result<AdminDashboardDto>> GetDashboardAsync(User adminUser, CancellationToken ct = default){try{return adminUser.Role!=UserRole.Admin?Result<AdminDashboardDto>.Failure("admin.denied","Acesso administrativo negado."):Result<AdminDashboardDto>.Success(await repo.GetDashboardAsync(ct));}catch(Exception ex){logger.LogError(ex,"Erro no dashboard admin");return Result<AdminDashboardDto>.Failure("admin.dashboard_error","Não foi possível carregar o dashboard.");}}
+    public async Task<Result<AdminDashboardDto>> GetDashboardAsync(User adminUser, CancellationToken ct = default){try{return adminUser.Role is not (UserRole.Admin or UserRole.SuperAdmin)?Result<AdminDashboardDto>.Failure("admin.denied","Acesso administrativo negado."):Result<AdminDashboardDto>.Success(await repo.GetDashboardAsync(ct));}catch(Exception ex){logger.LogError(ex,"Erro no dashboard admin");return Result<AdminDashboardDto>.Failure("admin.dashboard_error","Não foi possível carregar o dashboard.");}}
     public async Task<Result<SystemHealthSummary>> GetSystemHealthSummaryAsync(CancellationToken ct = default){try{var d=await repo.GetDashboardAsync(ct);return Result<SystemHealthSummary>.Success(new(d.SystemStatus,false,d.OpenLgpdRequests>0,d.CriticalErrors24h));}catch(Exception ex){logger.LogError(ex,"Erro no health admin");return Result<SystemHealthSummary>.Failure("admin.health_error","Não foi possível carregar saúde do sistema.");}}
 }
 

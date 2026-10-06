@@ -6,5 +6,5 @@
 }
 @if (!string.IsNullOrWhiteSpace(type) && !string.IsNullOrWhiteSpace(message))
 {
-    <span hidden data-feedback-bridge data-feedback-type="@type" data-feedback-title="@title" data-feedback-message="@message" data-feedback-modal="@modal.ToString().ToLowerInvariant()"></span>
+    <span hidden data-feedback-bridge data-feedback-type="@type" data-feedback-title="@title" data-feedback-message="@message" data-feedback-modal="@modal.ToString().ToLowerInvariant()" data-feedback-payload='@System.Text.Json.JsonSerializer.Serialize(new { type, title, message, modal })'></span>
 }

@@ -5,7 +5,7 @@ namespace HabitFlow.Application;
 
 public sealed class EntitlementService(IClientRepository clients, AuditService audit, PlanEntitlementService plans)
 {
-    public async Task<ClientPlan> GetEffectivePlanAsync(Guid userId, CancellationToken ct = default) => (await plans.GetEffectivePlanForUserAsync(userId, ct)) switch { PlanCodes.Ritmo => ClientPlan.Premium, PlanCodes.Evolucao => ClientPlan.Enterprise, _ => ClientPlan.Free };
+    public async Task<ClientPlan> GetEffectivePlanAsync(Guid userId, CancellationToken ct = default) => (await plans.GetEffectivePlanForUserAsync(userId, ct)) switch { PlanCodes.Ritmo => ClientPlan.Premium, PlanCodes.Team => ClientPlan.Premium, PlanCodes.Evolucao => ClientPlan.Enterprise, PlanCodes.Enterprise => ClientPlan.Enterprise, _ => ClientPlan.Free };
     public async Task<Result<ClientEntitlementsDto>> GetClientEntitlementsAsync(Guid clientId, CancellationToken ct = default)
     {
         var c = await clients.GetByIdAsync(clientId, ct);
@@ -37,7 +37,7 @@ public sealed class SuperAdminService(IClientRepository clients)
 {
     public async Task<SuperAdminDashboardDto> GetDashboardAsync(CancellationToken ct = default)
     {
-        var all = await clients.SearchAsync(null, null, null, 0, 500, ct);
+        var all = await clients.SearchAsync(null, null, null, 0, 500, null, ct);
         return new SuperAdminDashboardDto(all.Count, all.Count(c => c.IsActive), all.Count(c => c.Plan == ClientPlan.Free), all.Count(c => c.Plan == ClientPlan.Premium), all.Count(c => c.Plan == ClientPlan.Enterprise), all.Take(10).ToList());
     }
 }

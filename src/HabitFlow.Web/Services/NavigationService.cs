@@ -423,7 +423,9 @@ public sealed class NavigationService(INavigationAccessEvaluator? accessEvaluato
             .Where(item =>
                 item.RequiredPermission is null ||
                 isSuperAdmin ||
-                permissions.Contains(item.RequiredPermission))
+                permissions.Contains(item.RequiredPermission) ||
+                (item.RequiredPermission.Equals("Platform.Clients.View", StringComparison.OrdinalIgnoreCase) &&
+                 permissions.Contains("platform.view")))
             .Select(item => item with
             {
                 IsCurrent = IsCurrent(item.Url, path)

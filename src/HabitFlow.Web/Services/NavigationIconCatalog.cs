@@ -6,7 +6,7 @@ public static class NavigationIconCatalog
     {
         "home", "demo", "library", "premium", "help", "dashboard", "habit", "target",
         "progress", "report", "profile", "users", "invite", "billing", "privacy",
-        "organization", "calendar", "warning", "settings"
+        "organization", "calendar", "warning", "settings", "reminders", "notifications"
     };
 
     public static bool Contains(string icon) => Names.Contains(icon);

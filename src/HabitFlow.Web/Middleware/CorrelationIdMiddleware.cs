@@ -13,6 +13,7 @@ public sealed partial class CorrelationIdMiddleware(RequestDelegate next, ILogge
         var supplied = context.Request.Headers[HeaderName].FirstOrDefault();
         var correlationId = IsValid(supplied) ? supplied! : Guid.NewGuid().ToString("N");
         context.TraceIdentifier = correlationId;
+        context.Response.Headers[HeaderName] = correlationId;
         context.Response.OnStarting(() =>
         {
             context.Response.Headers[HeaderName] = correlationId;
