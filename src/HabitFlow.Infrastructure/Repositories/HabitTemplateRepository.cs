@@ -4,25 +4,38 @@ namespace HabitFlow.Infrastructure;
 
 public sealed class HabitTemplateRepository(SqlExecutor db) : IHabitTemplateRepository
 {
-    public async Task<IReadOnlyList<HabitTemplate>> ListActiveAsync(CancellationToken ct = default)
+    public async Task<IReadOnlyList<HabitTemplate>> ListActiveAsync(Guid? clientId, CancellationToken ct = default)
     {
         var rows = await db.QueryAsync<HabitTemplateRow>(HabitTemplateProjection.WithClause("""
             where t.is_active = true
               and t.published_at is not null
+              and (t.client_id is null or t.client_id = @clientId)
             order by t.is_featured desc, t.sort_order, t.name
-            """), null, ct);
+            """), new { clientId }, ct);
         return rows.Select(HabitTemplateProjection.Map).ToList();
     }
 
-    public async Task<IReadOnlyList<HabitTemplate>> ListActiveByObjectiveAsync(Guid objectiveId, CancellationToken ct = default)
+    public async Task<IReadOnlyList<HabitTemplate>> ListActiveByObjectiveAsync(Guid objectiveId, Guid? clientId, CancellationToken ct = default)
     {
         var rows = await db.QueryAsync<HabitTemplateRow>(HabitTemplateProjection.WithClause("""
             where t.objective_id = @objectiveId
               and t.is_active = true
+              and (t.client_id is null or t.client_id = @clientId)
             order by t.sort_order, t.name
-            """), new { objectiveId }, ct);
+            """), new { objectiveId, clientId }, ct);
         return rows.Select(HabitTemplateProjection.Map).ToList();
     }
+
+    public Task CreateAsync(HabitTemplateDraft draft, CancellationToken ct = default) =>
+        db.ExecuteAsync("""
+            insert into habitflow.habit_templates(
+                id, objective_id, name, description, category, suggested_frequency, suggested_color, difficulty,
+                estimated_time_minutes, benefit_text, sort_order, is_active, minimum_plan_code, audience, goal_text,
+                created_by, client_id, published_at)
+            values (
+                @Id, @ObjectiveId, @Name, @Description, @Category, @Frequency, '#16A34A', @Difficulty,
+                @Minutes, @Goal, 100, true, @MinimumPlan, @Audience, @Goal, @CreatedBy, @ClientId, now())
+            """, draft, ct);
 
     public async Task<HabitTemplate?> GetAsync(Guid id, CancellationToken ct = default)
     {

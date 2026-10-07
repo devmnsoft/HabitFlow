@@ -38,7 +38,8 @@ public sealed class SuperAdminService(IClientRepository clients)
     public async Task<SuperAdminDashboardDto> GetDashboardAsync(CancellationToken ct = default)
     {
         var all = await clients.SearchAsync(null, null, null, 0, 500, null, ct);
-        return new SuperAdminDashboardDto(all.Count, all.Count(c => c.IsActive), all.Count(c => c.Plan == ClientPlan.Free), all.Count(c => c.Plan == ClientPlan.Premium), all.Count(c => c.Plan == ClientPlan.Enterprise), all.Take(10).ToList());
+        var overdue = all.Count(c => c.PaymentStatus == ClientPaymentStatus.Overdue || c.SubscriptionStatus == ClientSubscriptionStatus.PastDue);
+        return new SuperAdminDashboardDto(all.Count, all.Count(c => c.IsActive), all.Count(c => c.Plan == ClientPlan.Free), all.Count(c => c.Plan == ClientPlan.Premium), all.Count(c => c.Plan == ClientPlan.Enterprise), all.Take(10).ToList(), overdue, all.Count >= 500);
     }
 }
-public sealed record SuperAdminDashboardDto(int TotalClients, int ActiveClients, int FreeClients, int PremiumClients, int EnterpriseClients, IReadOnlyList<Client> AttentionClients);
+public sealed record SuperAdminDashboardDto(int TotalClients, int ActiveClients, int FreeClients, int PremiumClients, int EnterpriseClients, IReadOnlyList<Client> AttentionClients, int OverdueClients, bool OverdueCapped);

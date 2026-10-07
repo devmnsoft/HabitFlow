@@ -31,7 +31,11 @@ internal static class HabitTemplateProjection
             coalesce(t.minimum_plan_code, 'free') as "MinimumPlanCode",
             coalesce(t.is_featured, false) as "IsFeatured",
             coalesce(t.content_version, 1) as "ContentVersion",
-            t.published_at as "PublishedAt"
+            t.published_at as "PublishedAt",
+            t.audience as "Audience",
+            t.goal_text as "GoalText",
+            t.created_by as "CreatedBy",
+            t.client_id as "ClientId"
         from habitflow.habit_templates t
         """;
 
@@ -69,7 +73,11 @@ internal static class HabitTemplateProjection
         string.IsNullOrWhiteSpace(row.MinimumPlanCode) ? "free" : row.MinimumPlanCode,
         row.IsFeatured,
         row.ContentVersion <= 0 ? 1 : row.ContentVersion,
-        row.PublishedAt);
+        row.PublishedAt,
+        row.Audience,
+        row.GoalText,
+        row.CreatedBy,
+        row.ClientId);
 
     private static HabitDifficulty ParseDifficulty(string? value) =>
         Enum.TryParse<HabitDifficulty>(value, ignoreCase: true, out var parsed)
@@ -108,4 +116,8 @@ internal sealed class HabitTemplateRow
     public bool IsFeatured { get; init; }
     public int ContentVersion { get; init; } = 1;
     public DateTime? PublishedAt { get; init; }
+    public string? Audience { get; init; }
+    public string? GoalText { get; init; }
+    public Guid? CreatedBy { get; init; }
+    public Guid? ClientId { get; init; }
 }

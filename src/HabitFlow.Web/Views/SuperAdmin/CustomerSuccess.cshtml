@@ -1,3 +1,33 @@
-@model HabitFlow.Domain.CustomerHealthScore
-@{ ViewData["Title"] = "Customer Success"; }
-<section class="premium-card"><h1>Saúde dos clientes</h1><div class="metric-grid"><article>Implantação pendente</article><article>Risco de churn</article><article>Inadimplentes</article><article>Alto potencial Premium</article><article>Suporte pendente</article></div><h2>CustomerHealthScore: @Model.Score - @Model.Status</h2><ul>@foreach(var s in Model.Signals){<li>@s</li>}</ul></section>
+@model HabitFlow.Domain.CustomerSuccessPage
+@{ ViewData["Title"] = "Sucesso do cliente"; }
+<section class="hf-activation premium-card">
+  <h1>Sucesso do cliente</h1>
+  <p>Indicadores lidos das contas. Um campo sem dado fica como não disponível.</p>
+  <div class="hf-help"><strong>Como usar.</strong> Saúde considera ativação, uso recente, usuários ativos, conclusão, pendência financeira, limite Free e chamados. Critério sem leitura não entra como zero inventado.</div>
+  @if (Model.Pendencies.Count > 0) { <div class="hf-empty"><ul>@foreach (var item in Model.Pendencies) { <li>@item</li> }</ul></div> }
+  <div class="hf-grid">
+    @foreach (var metric in Model.Indicators)
+    {
+      <article><small>@metric.Label</small><h2>@metric.Display</h2>@if (!metric.Available && metric.Pendency is not null) { <p>@metric.Pendency</p> }</article>
+    }
+  </div>
+  @if (Model.Clients.Count == 0)
+  {
+    <div class="hf-empty">Nenhum cliente retornado nesta leitura.</div>
+  }
+  else
+  {
+    <table class="table"><thead><tr><th>Cliente</th><th>Plano</th><th>Status</th><th>Saúde</th><th>Sinais</th></tr></thead>
+    <tbody>
+    @foreach (var client in Model.Clients)
+    {
+      <tr>
+        <td>@client.Name</td><td>@client.Plan</td><td>@client.Status</td>
+        <td><span class="hf-status">@(client.Score?.ToString() ?? "não disponível") @client.Health</span></td>
+        <td>@string.Join(", ", client.Signals.Concat(client.Pending))</td>
+      </tr>
+    }
+    </tbody></table>
+  }
+  <p><a href="/superadmin/homologation">Abrir homologação</a></p>
+</section>

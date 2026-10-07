@@ -112,7 +112,10 @@ public sealed class AssistantKnowledgeService
         new("Suporte", "suporte", "Ajuda", "Como falar com suporte?", "Abra Suporte e crie um chamado. Não envie senha, chave ou token. Para assunto comercial, escreva para comercial@mnsoft.com.br.", ["suporte","mnsoft","chamado"], true, 10, Updated),
         new("Boas práticas", "boas-praticas", "Hábitos", "Como melhorar minha rotina?", "Escolha poucos hábitos, um horário que caiba no dia e repita. Se a semana falhou, reduza a lista em vez de tentar recuperar tudo.", ["rotina","consistência","semana"], true, 11, Updated),
         new("Limites do plano", "limites", "Conta", "Como funcionam os limites?", "Cada plano tem um teto. O número vigente está na tela Planos. O chat não aumenta esse teto.", ["limites","cotas"], true, 12, Updated),
-        new("Contato comercial", "contato", "Conta", "Qual o contato comercial?", "O contato comercial da MNSOFT é comercial@mnsoft.com.br. Preço e benefício ficam na tela Planos.", ["comercial","contato"], true, 13, Updated)
+        new("Contato comercial", "contato", "Conta", "Qual o contato comercial?", "O contato comercial da MNSOFT é comercial@mnsoft.com.br. Preço e benefício ficam na tela Planos.", ["comercial","contato"], true, 13, Updated),
+        new("Templates", "templates", "Hábitos", "Qual template devo usar?", "Abra a biblioteca e escolha um modelo pela categoria. Um template global não é editado pelo tenant. O plano Free respeita o limite de hábitos.", ["template","modelo"], true, 14, Updated),
+        new("Adesão", "adesao", "Administração", "Como interpretar a adesão?", "A adesão é o uso recente e a conclusão registrada no tenant. Abra o relatório de homologação. O chat não mostra outro tenant nem promete resultado.", ["adesao","adesão"], true, 15, Updated),
+        new("Saúde do cliente", "saude-cliente", "SuperAdmin", "Como ver a saúde dos clientes?", "O SuperAdmin abre Sucesso do cliente. Onde o dado não existe, a tela mostra não disponível. O chat não inventa inadimplência nem churn.", ["churn","saude do cliente"], true, 16, Updated)
     ];
     public IReadOnlyList<HelpArticle> List(string? category = null) => Articles.Where(x => x.Active && (string.IsNullOrWhiteSpace(category) || x.Category.Equals(category, StringComparison.OrdinalIgnoreCase))).OrderBy(x => x.Order).ToArray();
     public HelpArticle? Get(string slug) => Articles.FirstOrDefault(x => x.Active && x.Slug.Equals(slug, StringComparison.OrdinalIgnoreCase));
@@ -140,6 +143,11 @@ public sealed class AssistantKnowledgeService
             "privacidade" => From("privacidade", "/support", "Falar com suporte"),
             "comercial" => From("contato", "/plans", "Ver planos"),
             "sobre" => From("sobre", "/help", "Ver ajuda"),
+            "template" => new(AppliedAssistantGuide.SuggestTemplate(message) ?? From("templates", "/habit-library", "Abrir biblioteca").Message, "Knowledge", "Allowed", "/habit-library", "Abrir biblioteca"),
+            "sugerir" => new(AppliedAssistantGuide.SuggestHabits(message) ?? "Abra a biblioteca e escolha um hábito pequeno.", "Knowledge", "Allowed", "/habit-library", "Abrir biblioteca"),
+            "adesao" => From("adesao", "/admin/homologation", "Ver adesão"),
+            "saude" => From("saude-cliente", "/superadmin/customer-success", "Abrir sucesso do cliente"),
+            "semana" => new(Evolution(context) + " O resumo semanal numérico fica em Relatórios. Se o período não aparecer, ele não está disponível.", "Knowledge", "Allowed", "/reports", "Abrir relatórios"),
             _ => null
         };
     }
@@ -173,6 +181,11 @@ public sealed class AssistantKnowledgeService
     private static string? ResolveGuide(string message)
     {
         var text = Fold(message);
+        if (Has(text, "saude do cliente") || Has(text, "churn") || Has(text, "sucesso do cliente")) return "saude";
+        if (Has(text, "adesao")) return "adesao";
+        if (Has(text, "template") || Has(text, "modelo")) return "template";
+        if (Has(text, "sugerir habit") || Has(text, "sugerir um habit")) return "sugerir";
+        if (Has(text, "resumo semanal")) return "semana";
         if (Has(text, "suporte") || Has(text, "chamado")) return "suporte";
         if (Has(text, "comercial") || Has(text, "mnsoft")) return "comercial";
         if (Has(text, "cancelar")) return "cancelar";

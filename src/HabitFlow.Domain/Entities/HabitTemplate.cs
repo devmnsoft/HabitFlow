@@ -1,5 +1,9 @@
 namespace HabitFlow.Domain;
 
+public sealed record HabitTemplateDraft(
+    Guid Id, Guid ObjectiveId, Guid? ClientId, Guid? CreatedBy, string Name, string Description,
+    string Category, string Frequency, string Difficulty, int Minutes, string Audience, string Goal, string MinimumPlan);
+
 public sealed record HabitTemplate(Guid Id, Guid ObjectiveId, string Name, string Description, string Category, string SuggestedFrequency, string SuggestedColor, HabitDifficulty Difficulty, int? EstimatedTimeMinutes, string? BenefitText, int SortOrder, bool IsActive, DateTime CreatedAt, DateTime UpdatedAt,
     SuggestedWeekDays SuggestedDays = SuggestedWeekDays.EveryDay,
     int? SuggestedTargetPerWeek = null,
@@ -12,7 +16,11 @@ public sealed record HabitTemplate(Guid Id, Guid ObjectiveId, string Name, strin
     string MinimumPlanCode = "free",
     bool IsFeatured = false,
     int ContentVersion = 1,
-    DateTime? PublishedAt = null)
+    DateTime? PublishedAt = null,
+    string? Audience = null,
+    string? GoalText = null,
+    Guid? CreatedBy = null,
+    Guid? ClientId = null)
 {
     public bool CanBeUsed() => IsActive;
 
