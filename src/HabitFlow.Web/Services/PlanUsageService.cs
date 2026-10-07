@@ -9,6 +9,7 @@ public sealed class PlanUsageService(
     IHabitRepository habits,
     IUserGoalRepository goals,
     SubscriptionService subscriptions,
+    AccountCapacityService accountCapacity,
     ILogger<PlanUsageService> logger)
 {
     public async Task<PlanUsageViewModel?> BuildAsync(Guid clientId, Guid userId, CancellationToken ct)
@@ -22,18 +23,17 @@ public sealed class PlanUsageService(
         {
             var access = await catalog.GetClientAccessAsync(clientId, ct);
             var planCode = access?.EffectivePlanCode ?? PlanCodes.Free;
+            var contractedPlanCode = access?.ContractedPlanCode ?? PlanCodes.Free;
             var features = await catalog.GetFeaturesAsync(planCode, ct);
             var subscription = await subscriptions.GetUserSubscriptionAsync(userId, ct);
             var activeHabits = await habits.CountActiveAsync(clientId, userId, ct);
             var activeGoals = await goals.CountActiveAsync(clientId, userId, ct);
+            var people = await accountCapacity.GetUsageAsync(clientId, ct);
             int? Limit(string code) => features.TryGetValue(code, out var value) ? value.IntValue : null;
             bool Enabled(string code) => features.TryGetValue(code, out var value) && value.BoolValue == true;
             var paid = !planCode.Equals(PlanCodes.Free, StringComparison.OrdinalIgnoreCase)
                 && subscription is { Status: SubscriptionStatus.Active or SubscriptionStatus.Trial or SubscriptionStatus.PastDue };
-            var publicName = planCode.Equals(PlanCodes.Free, StringComparison.OrdinalIgnoreCase) ? "Gratuito" :
-                planCode.Equals(PlanCodes.Ritmo, StringComparison.OrdinalIgnoreCase) ? "Ritmo" :
-                planCode.Equals(PlanCodes.Team, StringComparison.OrdinalIgnoreCase) ? "Team" :
-                planCode.Equals(PlanCodes.Enterprise, StringComparison.OrdinalIgnoreCase) ? "Enterprise" : "Evolução";
+            var publicName = PlanName(planCode);
             var featureUsage = new[]
             {
                 new PlanFeatureUsageViewModel("Relatórios", Enabled(PlanFeatureCodes.BasicReports) ? "Resumo do seu progresso disponível." : "Relatórios ampliados não estão incluídos neste plano.", Enabled(PlanFeatureCodes.BasicReports)),
@@ -41,9 +41,11 @@ public sealed class PlanUsageService(
                 new PlanFeatureUsageViewModel("Biblioteca de hábitos", Enabled(PlanFeatureCodes.FullHabitLibrary) ? "Biblioteca completa disponível." : "Uma seleção da biblioteca está disponível.", Enabled(PlanFeatureCodes.FullHabitLibrary))
             };
             var historyDays = Limit(PlanFeatureCodes.HistoryDaysLimit);
-            return new(publicName, paid,
+            return new(publicName, PlanName(contractedPlanCode), access?.RestrictionReason, paid,
                 new("Hábitos ativos", activeHabits, Limit(PlanFeatureCodes.ActiveHabitsLimit)),
                 new("Objetivos ativos", activeGoals, Limit(PlanFeatureCodes.ActiveGoalsLimit)),
+                new("Pessoas da conta", people.Occupied, people.Limit),
+                people.Excess,
                 featureUsage, featureUsage.Where(x => !x.Available).ToArray(),
                 Enabled(PlanFeatureCodes.FullHistory) ? "Seu histórico completo está disponível." : historyDays is > 0 ? $"Histórico dos últimos {historyDays} dias." : "Este recurso ainda não tem uso registrado.",
                 subscription?.Status.ToString(), subscription?.CurrentPeriodEnd,
@@ -56,4 +58,13 @@ public sealed class PlanUsageService(
             throw;
         }
     }
+
+    private static string PlanName(string planCode) => planCode.ToLowerInvariant() switch
+    {
+        PlanCodes.Free => "Gratuito",
+        PlanCodes.Ritmo => "Ritmo",
+        PlanCodes.Team => "Team",
+        PlanCodes.Enterprise => "Enterprise",
+        _ => "Evolução"
+    };
 }

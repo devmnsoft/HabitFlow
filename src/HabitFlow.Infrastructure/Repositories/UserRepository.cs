@@ -12,8 +12,10 @@ public sealed class UserRepository(SqlExecutor db) : IUserRepository
         "select " + Columns.Replace(", ", ",u.").Insert(0, "u.") + " from habitflow.users u left join habitflow.user_documents d on d.user_id=u.id and d.enabled_for_login where u.email=@login or d.document_normalized=@login order by case when u.email=@login then 0 else 1 end limit 1",
         new { login = normalizedLogin }, ct);
     public async Task<IReadOnlyList<User>> SearchAsync(string? term, CancellationToken ct = default) => (await db.QueryAsync<User>("select " + Columns + " from habitflow.users where @term is null or email ilike @like or name ilike @like order by created_at desc", new { term = string.IsNullOrWhiteSpace(term) ? null : term, like = "%" + term + "%" }, ct)).ToList();
-    public Task CreateAsync(User u, CancellationToken ct = default) => db.ExecuteAsync("insert into habitflow.users(id,name,email,password_hash,photo_url,role,account_status,risk_status,plan,plan_status,wants_premium_notice,onboarding_completed,accepted_terms_at,accepted_privacy_at,last_login_at,last_activity_at,created_at,updated_at,client_id) values(@Id,@Name,@Email,@PasswordHash,@PhotoUrl,@Role,@AccountStatus,@RiskStatus,@Plan,@PlanStatus,@WantsPremiumNotice,@OnboardingCompleted,@AcceptedTermsAt,@AcceptedPrivacyAt,@LastLoginAt,@LastActivityAt,@CreatedAt,@UpdatedAt,@ClientId)", ToParameters(u), ct);
+    public Task CreateAsync(User u, CancellationToken ct = default) => db.ExecuteAsync("insert into habitflow.users(id,name,email,password_hash,photo_url,role,account_status,risk_status,plan,plan_status,wants_premium_notice,onboarding_completed,accepted_terms_at,accepted_privacy_at,last_login_at,last_activity_at,created_at,updated_at,client_id,client_joined_at) values(@Id,@Name,@Email,@PasswordHash,@PhotoUrl,@Role,@AccountStatus,@RiskStatus,@Plan,@PlanStatus,@WantsPremiumNotice,@OnboardingCompleted,@AcceptedTermsAt,@AcceptedPrivacyAt,@LastLoginAt,@LastActivityAt,@CreatedAt,@UpdatedAt,@ClientId,@ClientJoinedAt)", ToParameters(u), ct);
     public Task UpdateAsync(User u, CancellationToken ct = default) => db.ExecuteAsync("update habitflow.users set name=@Name, photo_url=@PhotoUrl, role=@Role, account_status=@AccountStatus, risk_status=@RiskStatus, plan=@Plan, plan_status=@PlanStatus, updated_at=@UpdatedAt, client_id=@ClientId where id=@Id", ToParameters(u), ct);
+    public async Task<bool> LinkToClientFromInviteAsync(Guid userId, Guid clientId, UserRole role, DateTime utcNow, CancellationToken ct = default) =>
+        await db.ExecuteAsync("update habitflow.users set client_id=@clientId, client_joined_at=@utcNow, role=@role, updated_at=@utcNow, session_version=session_version+1 where id=@userId and client_id is null and account_status='Active'", new { userId, clientId, role = DbEnum.Text(role), utcNow }, ct) == 1;
     public Task UpdatePasswordAndSessionVersionAsync(Guid userId, string passwordHash, CancellationToken ct = default) =>
         db.ExecuteAsync("update habitflow.users set password_hash=@passwordHash, session_version=session_version+1, must_change_password=false, updated_at=now() where id=@userId", new { userId, passwordHash }, ct);
     public Task IncrementSessionVersionAsync(Guid userId, CancellationToken ct = default) =>
@@ -38,7 +40,8 @@ public sealed class UserRepository(SqlExecutor db) : IUserRepository
         u.LastActivityAt,
         u.CreatedAt,
         u.UpdatedAt,
-        u.ClientId
+        u.ClientId,
+        ClientJoinedAt = u.ClientId.HasValue ? (DateTime?)u.CreatedAt : null
     };
 
     public Task AddLoginAttemptAsync(LoginAttempt a, CancellationToken ct = default) => db.ExecuteAsync("insert into habitflow.login_attempts(id,email,success,ip_address,user_agent,created_at) values(@Id,@Email,@Success,@IpAddress,@UserAgent,@CreatedAt)", a, ct);

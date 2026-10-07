@@ -15,11 +15,6 @@ builder.Logging.AddEventSourceLogger();
 if (!builder.Environment.IsProduction())
     builder.Host.UseDefaultServiceProvider(options => { options.ValidateScopes = true; options.ValidateOnBuild = true; });
 
-if (builder.Environment.IsDevelopment())
-{
-    builder.Configuration.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
-}
-
 builder.WebHost.UseUrls("http://0.0.0.0:5097");
 
 builder.Services

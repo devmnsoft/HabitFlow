@@ -11,5 +11,8 @@ public interface IClientRepository
     Task<bool> DocumentExistsAsync(string documentNormalized, Guid? ignoreClientId = null, CancellationToken ct = default);
     Task<Client?> GetByDocumentAsync(string documentNormalized, CancellationToken ct = default);
     Task<IReadOnlyList<ClientUserSummary>> GetUsersAsync(Guid clientId, CancellationToken ct = default);
+    Task<IReadOnlyList<ClientUserSummary>> SearchUsersAsync(Guid clientId, string? search, string? role, string? accountStatus, int offset, int pageSize, CancellationToken ct = default);
+    Task<int> CountUsersAsync(Guid clientId, string? search, string? role, string? accountStatus, CancellationToken ct = default);
+    Task<ClientUserSummary?> GetUserByClientEmailAsync(Guid clientId, string normalizedEmail, CancellationToken ct = default);
     Task<ClientMetrics> GetMetricsAsync(Guid clientId, CancellationToken ct = default);
 }

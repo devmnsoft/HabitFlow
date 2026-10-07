@@ -49,7 +49,37 @@ public sealed class ClientRepository(SqlExecutor db) : IClientRepository
         db.QuerySingleOrDefaultAsync<Client>($"select {Columns} from habitflow.clients where document_normalized = @documentNormalized", new { documentNormalized }, ct);
 
     public async Task<IReadOnlyList<ClientUserSummary>> GetUsersAsync(Guid clientId, CancellationToken ct = default) =>
-        (await db.QueryAsync<ClientUserSummary>("select id, name, email, role, account_status, created_at from habitflow.users where client_id = @clientId order by created_at desc", new { clientId }, ct)).ToList();
+        (await db.QueryAsync<ClientUserSummary>("select id, name, email, role, account_status, coalesce(client_joined_at,created_at) as created_at from habitflow.users where client_id = @clientId order by coalesce(client_joined_at,created_at) desc", new { clientId }, ct)).ToList();
+
+    public async Task<IReadOnlyList<ClientUserSummary>> SearchUsersAsync(Guid clientId, string? search, string? role, string? accountStatus, int offset, int pageSize, CancellationToken ct = default) =>
+        (await db.QueryAsync<ClientUserSummary>("""
+            select id, name, email, role, account_status, coalesce(client_joined_at,created_at) as created_at
+            from habitflow.users
+            where client_id = @clientId
+              and role <> 'SuperAdmin'
+              and (@search is null or name ilike @like or email ilike @like)
+              and (@role is null or role = @role)
+              and (@accountStatus is null or account_status = @accountStatus)
+            order by coalesce(client_joined_at,created_at) desc, id
+            offset @offset limit @pageSize
+            """, new { clientId, search = string.IsNullOrWhiteSpace(search) ? null : search.Trim(), like = $"%{search?.Trim()}%", role, accountStatus, offset, pageSize }, ct)).ToList();
+
+    public Task<int> CountUsersAsync(Guid clientId, string? search, string? role, string? accountStatus, CancellationToken ct = default) =>
+        db.QuerySingleOrDefaultAsync<int>("""
+            select count(*)::int from habitflow.users
+            where client_id = @clientId
+              and role <> 'SuperAdmin'
+              and (@search is null or name ilike @like or email ilike @like)
+              and (@role is null or role = @role)
+              and (@accountStatus is null or account_status = @accountStatus)
+            """, new { clientId, search = string.IsNullOrWhiteSpace(search) ? null : search.Trim(), like = $"%{search?.Trim()}%", role, accountStatus }, ct);
+
+    public Task<ClientUserSummary?> GetUserByClientEmailAsync(Guid clientId, string normalizedEmail, CancellationToken ct = default) =>
+        db.QuerySingleOrDefaultAsync<ClientUserSummary>("""
+            select id, name, email, role, account_status, coalesce(client_joined_at,created_at) as created_at
+            from habitflow.users
+            where client_id=@clientId and lower(trim(email))=@normalizedEmail and role <> 'SuperAdmin'
+            """, new { clientId, normalizedEmail }, ct);
 
     public async Task<ClientMetrics> GetMetricsAsync(Guid clientId, CancellationToken ct = default)
     {

@@ -66,6 +66,8 @@ public static class DependencyInjection
         services.AddScoped<ClientAccountRegistrationService>();
         services.AddScoped<UserService>();
         services.AddScoped<UserInviteService>();
+        services.AddScoped<AccountCapacityService>();
+        services.AddScoped<AccountPeopleService>();
         services.AddScoped<ClientService>();
         services.AddScoped<HabitService>();
         services.AddScoped<HabitQueryService>();

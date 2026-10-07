@@ -2,6 +2,8 @@
 begin;
 set local search_path to habitflow, public;
 
+alter table habitflow.notifications add column if not exists is_archived boolean not null default false;
+
 -- Disabled is an explicit product state. Internal remains reserved for operational
 -- capabilities which are real but must never be advertised as customer benefits.
 update habitflow.feature_catalog

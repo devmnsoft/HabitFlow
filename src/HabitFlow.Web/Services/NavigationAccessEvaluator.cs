@@ -44,6 +44,8 @@ public sealed class NavigationAccessEvaluator(
 
     private static bool HasPermission(ClaimsPrincipal user, string? permission) =>
         permission is null || user.IsInRole("SuperAdmin") ||
+        permission.Equals("Client.Users.Manage", StringComparison.OrdinalIgnoreCase) &&
+            (user.IsInRole("Admin") || user.IsInRole("TenantAdmin") || user.IsInRole("TenantOwner")) ||
         user.Claims.Any(claim => claim.Type == "permission" &&
             (claim.Value.Equals(permission, StringComparison.OrdinalIgnoreCase) ||
              claim.Value.Equals("Platform.FullAccess", StringComparison.OrdinalIgnoreCase) ||

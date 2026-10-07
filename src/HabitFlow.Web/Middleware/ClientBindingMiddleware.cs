@@ -4,7 +4,7 @@ namespace HabitFlow.Web.Middleware;
 
 public sealed class ClientBindingMiddleware(RequestDelegate next)
 {
-    private static readonly string[] AllowedPrefixes = ["/logout", "/login", "/register", "/admin/onboarding/recover-client", "/css", "/js", "/lib", "/images", "/health"];
+    private static readonly string[] AllowedPrefixes = ["/logout", "/login", "/register", "/invite", "/admin/onboarding/recover-client", "/css", "/js", "/lib", "/images", "/health"];
 
     public async Task InvokeAsync(HttpContext context)
     {

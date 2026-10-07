@@ -15,7 +15,7 @@ public class DashboardController(DashboardOverviewService dashboard, ILogger<Das
             if (currentUser.IsAdmin && currentUser.ClientId.HasValue)
             {
                 var state = await onboarding.GetOrCreateAsync(currentUser.ClientId.Value, ct);
-                if (!state.Completed) return RedirectToAction("Onboarding", "AdminOperations");
+                if (!state.Completed) return RedirectToAction("Index", "ClientOnboarding");
             }
             return View(await dashboard.BuildAsync(currentUser.ClientId.Value, this.CurrentUserId(), ct));
         }

@@ -1,3 +1,5 @@
+using HabitFlow.Application;
+
 namespace HabitFlow.Web.Models;
 
 public sealed record PlanUsageLimitViewModel(string Label, int Current, int? Limit)
@@ -13,9 +15,13 @@ public sealed record PlanUpgradeSuggestionViewModel(string Title, string Descrip
 
 public sealed record PlanUsageViewModel(
     string PlanName,
+    string ContractedPlanName,
+    string? RestrictionReason,
     bool HasPaidSubscription,
     PlanUsageLimitViewModel ActiveHabits,
     PlanUsageLimitViewModel ActiveGoals,
+    PlanUsageLimitViewModel AccountPeople,
+    int ExcessAccountPeople,
     IReadOnlyList<PlanFeatureUsageViewModel> Features,
     IReadOnlyList<PlanFeatureUsageViewModel> BlockedFeatures,
     string HistoryDescription,
@@ -25,3 +31,5 @@ public sealed record PlanUsageViewModel(
 
 public sealed record PlanChangeImpactViewModel(string PlanCode, string PlanName, bool IsCurrent,
     IReadOnlyList<string> Changes, string ConfirmationMessage);
+
+public sealed record AccountInvitesViewModel(IReadOnlyList<AccountInviteItem> Invites, Guid? ClientId, AccountCapacityUsage Capacity);

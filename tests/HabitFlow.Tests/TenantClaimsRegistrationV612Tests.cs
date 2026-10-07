@@ -41,6 +41,7 @@ public sealed class TenantClaimsRegistrationV612Tests
         var middleware = Read("src/HabitFlow.Web/Middleware/ClientBindingMiddleware.cs");
         Assert.Contains("client_id", middleware);
         Assert.Contains("/admin/onboarding/recover-client", middleware);
+        Assert.Contains("\"/invite\"", middleware);
         var view = Read("src/HabitFlow.Web/Views/Admin/RecoverClient.cshtml");
         Assert.Contains("Seu usuário ainda não está vinculado a uma conta", view);
     }
