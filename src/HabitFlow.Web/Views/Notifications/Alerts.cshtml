@@ -1,0 +1,27 @@
+@model IReadOnlyList<HabitFlow.Domain.AlertEvaluation>
+@{ ViewData["Title"] = "Alertas"; }
+<section class="hf-activation premium-card">
+  <h1>Alertas</h1>
+  <div class="hf-help"><strong>Como usar.</strong> O aviso no aplicativo só é criado quando a condição é verdadeira e a sua preferência permite. E-mail e WhatsApp não são disparados nesta tela. @ViewData["Channels"] Contato manual: @ViewData["ManualContact"]</div>
+  @if (TempData["Success"] is string ok) { <div class="alert alert-success">@ok</div> }
+  @if (TempData["Error"] is string error) { <div class="alert alert-danger hf-error">@error</div> }
+  @if (Model.Count == 0) { <div class="hf-empty">Nenhum alerta disponível.</div> }
+  <div class="hf-steps">
+    @foreach (var alert in Model)
+    {
+      <article class="hf-step">
+        <h2 class="h5">@alert.Title</h2>
+        <p>Condição: @(alert.Condition is null ? "não disponível" : alert.Condition.Value ? "presente" : "não encontrada")</p>
+        <p>Preferência: @(alert.PreferenceAllows ? "permite" : "bloqueia")</p>
+        @if (alert.CanCreateInApp)
+        {
+          <form method="post" action="/notifications/alerts/@alert.Code">
+            @Html.AntiForgeryToken()
+            <button type="submit" data-loading-text="Criando">Criar aviso no aplicativo</button>
+          </form>
+        }
+      </article>
+    }
+  </div>
+  <p><a href="/notifications/preferences">Abrir preferências</a> · <a href="/reminders">Abrir lembretes</a></p>
+</section>

@@ -7,7 +7,7 @@ namespace HabitFlow.Web.Controllers;
 
 [Authorize(Roles = "SuperAdmin")]
 [Route("superadmin")]
-public sealed class SuperAdminController(SuperAdminService dashboard, ClientService clients, EntitlementService entitlements, ClientCommunicationService communications, CustomerHealthService health, SuperAdminOperationalService operations, SchemaMigrationStatusService schema, Domain.IPlanCatalogRepository planCatalog) : Controller
+public sealed class SuperAdminController(SuperAdminService dashboard, ClientService clients, EntitlementService entitlements, ClientCommunicationService communications, SuperAdminOperationalService operations, SchemaMigrationStatusService schema, Domain.IPlanCatalogRepository planCatalog, ProductActivationService activation, ILogger<SuperAdminController> logger) : Controller
 {
     [HttpGet("")]
     public async Task<IActionResult> Index(CancellationToken ct) => View(await dashboard.GetDashboardAsync(ct));
@@ -154,7 +154,31 @@ public sealed class SuperAdminController(SuperAdminService dashboard, ClientServ
         });
     }
     [HttpGet("communications")] public async Task<IActionResult> Communications(CancellationToken ct) => View("~/Views/SuperAdmin/Communications.cshtml", await communications.ListAllAsync(new Domain.ClientCommunicationFilter(), ct));
-    [HttpGet("customer-success")] public IActionResult CustomerSuccess() => View("~/Views/SuperAdmin/CustomerSuccess.cshtml", health.Calculate(Guid.Empty, false, false, false, false, true, false, false, false, true));
+    [HttpGet("customer-success")]
+    public async Task<IActionResult> CustomerSuccess(CancellationToken ct)
+    {
+        try { return View("~/Views/SuperAdmin/CustomerSuccess.cshtml", await activation.BoardAsync(ct)); }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Painel de sucesso do cliente indisponível");
+            return View("~/Views/SuperAdmin/CustomerSuccess.cshtml", new Domain.CustomerSuccessPage([], [], ["Painel não disponível. A leitura dos clientes falhou."]));
+        }
+    }
+
+    [HttpGet("homologation")]
+    public async Task<IActionResult> Homologation(DateOnly? from, DateOnly? to, string? tenant, string? plan, string? status, CancellationToken ct)
+    {
+        var query = Domain.HomologationAccess.Scope("SuperAdmin", null, new Domain.HomologationQuery(from, to, tenant, plan, status, null));
+        return View("~/Views/SuperAdmin/Homologation.cshtml", await activation.ReportAsync(query, ct));
+    }
+
+    [HttpGet("homologation/export")]
+    public async Task<IActionResult> HomologationCsvExport(DateOnly? from, DateOnly? to, string? tenant, string? plan, string? status, CancellationToken ct)
+    {
+        var query = Domain.HomologationAccess.Scope("SuperAdmin", null, new Domain.HomologationQuery(from, to, tenant, plan, status, null));
+        var report = await activation.ReportAsync(query, ct);
+        return File(Encoding.UTF8.GetBytes(Domain.HomologationCsv.Write(report)), "text/csv", "habitflow-homologacao.csv");
+    }
     [HttpGet("support")] public IActionResult SupportOperations() => View("~/Views/SuperAdmin/Support/Index.cshtml");
 
     [HttpGet("export/clients")]

@@ -1,0 +1,60 @@
+@model IReadOnlyList<HabitFlow.Domain.HabitTemplate>
+@{
+  ViewData["Title"] = "Templates de hábitos";
+  var objectives = ViewData["Objectives"] as IReadOnlyList<HabitFlow.Domain.HabitObjective> ?? [];
+  var canOwn = ViewData["CanOwn"] as bool? == true;
+}
+<section class="hf-activation premium-card">
+  <h1>Templates de hábitos</h1>
+  <div class="hf-help"><strong>Como usar.</strong> Crie um hábito pela biblioteca. Um template global não é editado pelo tenant. Confirme antes de duplicar um hábito já existente.</div>
+  @if (TempData["Success"] is string ok) { <div class="alert alert-success">@ok</div> }
+  @if (TempData["Error"] is string error) { <div class="alert alert-danger hf-error">@error</div> }
+  @if (!canOwn) { <div class="hf-empty">Seu plano usa a biblioteca global. Templates próprios ficam disponíveis no Team e no Enterprise.</div> }
+  else
+  {
+    <form method="post" action="/admin/templates" class="hf-grid">
+      @Html.AntiForgeryToken()
+      <label>Nome <input name="Name" required minlength="2" maxlength="120" /></label>
+      <label>Descrição <textarea name="Description" required minlength="10" maxlength="300"></textarea></label>
+      <label>Categoria <select name="Category">@foreach (var category in HabitFlow.Domain.HabitTemplateAccess.Categories) { <option>@category</option> }</select></label>
+      <label>Frequência <select name="Frequency"><option value="Daily">Diária</option><option value="Weekdays">Dias úteis</option><option value="Weekends">Fim de semana</option><option value="CustomWeekly">Personalizada</option></select></label>
+      <label>Dificuldade <select name="Difficulty"><option value="Easy">Fácil</option><option value="Medium">Média</option><option value="Hard">Difícil</option></select></label>
+      <label>Duração em minutos <input name="Minutes" type="number" min="1" max="240" value="10" /></label>
+      <label>Objetivo <select name="ObjectiveSlug">@foreach (var objective in objectives) { <option value="@objective.Slug">@objective.Name</option> }</select></label>
+      <label>Público <input name="Audience" required minlength="2" maxlength="160" /></label>
+      <label>Objetivo do hábito <input name="Goal" required minlength="2" maxlength="300" /></label>
+      <label>Plano mínimo <select name="MinimumPlan"><option value="free">Free</option><option value="ritmo">Premium</option><option value="team">Team</option><option value="enterprise">Enterprise</option></select></label>
+      <button type="submit" data-loading-text="Salvando">Salvar template do tenant</button>
+    </form>
+  }
+  @if (User.IsInRole("SuperAdmin"))
+  {
+    <form method="post" action="/superadmin/templates" class="hf-grid">
+      @Html.AntiForgeryToken()
+      <h2 class="h5">Template global</h2>
+      <label>Nome <input name="Name" required minlength="2" maxlength="120" /></label>
+      <label>Descrição <textarea name="Description" required minlength="10" maxlength="300"></textarea></label>
+      <label>Categoria <select name="Category">@foreach (var category in HabitFlow.Domain.HabitTemplateAccess.Categories) { <option>@category</option> }</select></label>
+      <label>Frequência <select name="Frequency"><option value="Daily">Diária</option><option value="Weekdays">Dias úteis</option><option value="Weekends">Fim de semana</option><option value="CustomWeekly">Personalizada</option></select></label>
+      <label>Dificuldade <select name="Difficulty"><option value="Easy">Fácil</option><option value="Medium">Média</option><option value="Hard">Difícil</option></select></label>
+      <label>Duração <input name="Minutes" type="number" min="1" max="240" value="10" /></label>
+      <label>Objetivo <select name="ObjectiveSlug">@foreach (var objective in objectives) { <option value="@objective.Slug">@objective.Name</option> }</select></label>
+      <label>Público <input name="Audience" required minlength="2" maxlength="160" /></label>
+      <label>Meta <input name="Goal" required minlength="2" maxlength="300" /></label>
+      <label>Plano mínimo <select name="MinimumPlan"><option value="free">Free</option><option value="ritmo">Premium</option><option value="team">Team</option><option value="enterprise">Enterprise</option></select></label>
+      <button type="submit" data-loading-text="Salvando">Publicar template global</button>
+    </form>
+  }
+  @if (Model.Count == 0) { <div class="hf-empty">Nenhum template visível para esta conta.</div> }
+  else
+  {
+    <table class="table"><thead><tr><th>Nome</th><th>Categoria</th><th>Plano mínimo</th><th>Escopo</th><th>Ativo</th></tr></thead>
+    <tbody>
+    @foreach (var template in Model)
+    {
+      <tr><td>@template.Name</td><td>@template.Category</td><td>@template.MinimumPlanCode</td><td>@(template.ClientId is null ? "Global" : "Tenant")</td><td>@(template.IsActive ? "Ativo" : "Inativo")</td></tr>
+    }
+    </tbody></table>
+  }
+  <p><a href="/habit-library">Criar hábito a partir da biblioteca</a></p>
+</section>

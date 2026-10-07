@@ -49,7 +49,7 @@ public sealed class OnboardingController(GuidedJourneyService journey, PersonalO
     {
         var objective = await objectives.GetBySlugAsync(slug, ct);
         if (objective is null) return NotFound();
-        var templates = await library.GetTemplatesByObjectiveAsync(slug, ct);
+        var templates = await library.GetTemplatesByObjectiveAsync(slug, this.CurrentClientId() == Guid.Empty ? null : this.CurrentClientId(), ct);
         return View((objective, Templates: templates.Value ?? Array.Empty<HabitTemplate>()));
     }
 

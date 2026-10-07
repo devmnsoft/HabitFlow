@@ -47,7 +47,7 @@ public sealed class HabitLibraryController(HabitLibraryService library, HabitTem
     public async Task<IActionResult> Index(string? focus, string? category, string? difficulty, string? duration, string? frequency, string? minimumPlan, bool favoritesOnly, CancellationToken ct)
     {
         var objectivesResult = await library.GetObjectivesAsync(ct);
-        var templatesResult = await library.GetTemplatesAsync(ct);
+        var templatesResult = await library.GetTemplatesAsync(this.CurrentClientId() == Guid.Empty ? null : this.CurrentClientId(), ct);
         if (objectivesResult.IsFailure || templatesResult.IsFailure) { TempData["Warning"] = "A biblioteca completa não pôde ser carregada agora."; ViewData["UsingFallback"] = true; }
         var objectivesList = objectivesResult.Value?.Any() == true ? objectivesResult.Value : HabitLibraryFallback.Objectives;
         var templatesList = templatesResult.Value ?? [];
@@ -163,7 +163,7 @@ public sealed class HabitLibraryController(HabitLibraryService library, HabitTem
         catch (Exception ex) { logger.LogError(ex, "Erro ao obter objetivo {Slug}", slug); objective = HabitLibraryFallback.Objectives.FirstOrDefault(o => o.Slug == slug); ViewData["UsingFallback"] = true; }
         if (objective is null) objective = HabitLibraryFallback.Objectives.FirstOrDefault(o => o.Slug == slug);
         if (objective is null) return NotFound();
-        var templates = await library.GetTemplatesByObjectiveAsync(slug, ct);
+        var templates = await library.GetTemplatesByObjectiveAsync(slug, this.CurrentClientId() == Guid.Empty ? null : this.CurrentClientId(), ct);
         if (templates.IsFailure) { TempData["Warning"] = errorMapper.ToPublicMessage(templates.Error.Code, "habit-library"); ViewData["UsingFallback"] = true; }
         return View((objective, Templates: templates.Value?.Any() == true ? templates.Value : HabitLibraryFallback.TemplatesFor(objective.Id, slug)));
     }

@@ -137,7 +137,12 @@ public sealed class AiKnowledgeBaseService(AssistantKnowledgeService articles)
         ["/support"] = "Suporte reúne dúvidas e abertura de chamado. Não envie senha nem token.",
         ["/assistant"] = "O Coach explica o HabitFlow com dados agregados. Ele não altera plano, senha ou dados de outro tenant.",
         ["/admin"] = "A área administrativa é restrita ao papel Admin e não mostra segredos de integração.",
-        ["/superadmin"] = "O SuperAdmin opera a plataforma. Cada ação crítica pede confirmação e fica auditada."
+        ["/superadmin"] = "O SuperAdmin opera a plataforma. Cada ação crítica pede confirmação e fica auditada.",
+        ["/admin/onboarding"] = "A implantação mostra o que já foi feito, o que está pendente e o que pode ser ignorado com justificativa. A conclusão só libera quando cada etapa está encerrada.",
+        ["/admin/templates"] = "Templates globais são só leitura para o tenant. Templates próprios dependem do plano e nascem já ligados à conta, sem digitar ID.",
+        ["/superadmin/customer-success"] = "O painel mostra indicadores lidos do banco. Onde a leitura falha, o texto é não disponível.",
+        ["/notifications/alerts"] = "Os avisos entram no aplicativo só quando a condição e a preferência permitem. E-mail e WhatsApp não são enviados por esta tela.",
+        ["/habit-library"] = "Escolha um template e confirme antes de duplicar um hábito. O plano Free respeita o limite de hábitos ativos."
     };
 
     public bool MatchesGuide(string message) => articles.MatchesGuide(message);

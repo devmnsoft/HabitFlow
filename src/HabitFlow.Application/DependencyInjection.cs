@@ -200,6 +200,7 @@ public static class DependencyInjection
         services.AddScoped<PaymentAuditService>();
         services.AddScoped<FinancialDashboardService>();
         services.AddScoped<ClientOnboardingService>();
+        services.AddScoped<ProductActivationService>();
         services.AddScoped<ClientCommunicationService>();
         services.AddScoped<CustomerHealthService>();
         services.AddScoped<SchemaMigrationStatusService>();

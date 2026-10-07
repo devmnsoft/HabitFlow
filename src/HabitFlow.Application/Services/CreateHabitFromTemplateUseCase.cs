@@ -97,6 +97,10 @@ public sealed class CreateHabitFromTemplateUseCase(
                 await unitOfWork.CommitAsync(ct);
                 return Result<CreateHabitFromTemplateResult>.Success(new(existing, null, false, true, existing.IsTemplateVariation, usage, false, [], [], false, "Este hábito já havia sido adicionado."));
             }
+            var planCode = await entitlements.GetEffectivePlanForUserAsync(command.UserId, ct);
+            var access = HabitTemplateAccess.CanUse(template.ClientId, command.ClientId, planCode, template.MinimumPlanCode, active, limit, false, command.AllowVariation);
+            if (!access.Allowed)
+                return await Rollback(access.Code!, access.Message, ct);
             if (!await entitlements.CanCreateHabitAsync(command.UserId, active, ct))
                 return await Rollback("template.habit_limit", "Seu plano não possui espaço para outro hábito ativo.", ct);
             if (!string.Equals(template.MinimumPlanCode, PlanCodes.Free, StringComparison.OrdinalIgnoreCase) &&

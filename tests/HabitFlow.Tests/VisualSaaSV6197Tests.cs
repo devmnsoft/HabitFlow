@@ -13,10 +13,10 @@ public sealed class VisualSaaSV6197Tests
     private static string Read(params string[] parts) => File.ReadAllText(Path.Combine(Root, Path.Combine(parts)));
 
     [Fact]
-    public void Version_is_6197()
+    public void Version_is_current_release()
     {
-        Assert.Contains("<Version>6.19.7</Version>", Read("src", "HabitFlow.Web", "HabitFlow.Web.csproj"));
-        Assert.Contains("\"Version\": \"v6.19.7\"", Read("src", "HabitFlow.Web", "appsettings.json"));
+        Assert.Contains("<Version>6.19.8</Version>", Read("src", "HabitFlow.Web", "HabitFlow.Web.csproj"));
+        Assert.Contains("\"Version\": \"v6.19.8\"", Read("src", "HabitFlow.Web", "appsettings.json"));
     }
 
     [Fact]

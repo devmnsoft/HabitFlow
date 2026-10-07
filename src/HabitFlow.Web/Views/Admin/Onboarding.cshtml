@@ -1,3 +1,56 @@
-@model IReadOnlyList<HabitFlow.Domain.OnboardingChecklistItem>
-@{ ViewData["Title"] = "Onboarding do cliente"; }
-<section class="premium-card"><h1>@(ViewData["OnboardingTitle"] ?? "Onboarding") HabitFlow</h1><p>Configure sua conta em poucos passos, sem pop-ups invasivos.</p>@if(Model.All(i=>i.Completed)){<div class="alert alert-success">Tudo pronto. Sua conta já está preparada para uso.</div>}<div class="checklist">@foreach(var item in Model){<article class="checklist-item"><span>@item.Icon</span><div><strong>@item.Text</strong><p>@item.HelpText</p><a href="@item.ActionUrl">Ação</a></div><span>@(item.Completed ? "Concluído" : "Pendente")</span></article>}</div><form method="post" action="/admin/onboarding/finish">@Html.AntiForgeryToken()<button>Finalizar implantação</button></form></section>
+@model HabitFlow.Application.ImplantationPage
+@{ ViewData["Title"] = "Implantação do cliente"; }
+<section class="hf-activation premium-card">
+  <h1>Implantação do workspace</h1>
+  <p>Conclua os dados reais da conta. Nenhuma etapa pede um identificador técnico.</p>
+  <div class="hf-help"><strong>Como usar.</strong> Abra a ação de cada item pendente. Se a etapa não se aplica, ignore com uma justificativa. A ativação só segue quando todas estão concluídas, bloqueadas pelo plano ou ignoradas.</div>
+  @if (TempData["Success"] is string ok) { <div class="alert alert-success">@ok</div> }
+  @if (TempData["Error"] is string error) { <div class="alert alert-danger hf-error">@error</div> }
+  @if (Model.Pendencies.Count > 0)
+  {
+    <div class="hf-empty"><strong>Pendências de leitura</strong><ul>@foreach (var item in Model.Pendencies) { <li>@item</li> }</ul></div>
+  }
+  @if (Model.Steps.Count == 0)
+  {
+    <div class="hf-empty">Nenhum checklist disponível para esta conta.</div>
+  }
+  else
+  {
+    <div class="hf-steps">
+      @foreach (var step in Model.Steps)
+      {
+        <article class="hf-step">
+          <span class="hf-status hf-status-@step.Status.ToString().ToLowerInvariant()">@step.StatusLabel</span>
+          <h2 class="h5">@step.Title</h2>
+          <p>@step.Help</p>
+          @if (!string.IsNullOrWhiteSpace(step.Reason)) { <p>Justificativa: @step.Reason</p> }
+          <div class="hf-actions">
+            <a class="btn btn-outline-success" href="@step.ActionUrl">Abrir</a>
+            @if (step.Status is HabitFlow.Domain.ImplantationStepStatus.Pendente)
+            {
+              <form method="post" action="/admin/onboarding/progress">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="stepCode" value="@step.Code" />
+                <button type="submit" data-loading-text="Salvando">Marcar em andamento</button>
+              </form>
+            }
+            @if (step.Status is HabitFlow.Domain.ImplantationStepStatus.Pendente or HabitFlow.Domain.ImplantationStepStatus.EmAndamento)
+            {
+              <form method="post" action="/admin/onboarding/ignore">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="stepCode" value="@step.Code" />
+                <label>Ignorar com justificativa <input name="reason" minlength="5" maxlength="500" required /></label>
+                <button type="submit" data-loading-text="Salvando">Ignorar</button>
+              </form>
+            }
+          </div>
+        </article>
+      }
+    </div>
+    <form method="post" action="/admin/onboarding/finish" class="hf-actions">
+      @Html.AntiForgeryToken()
+      <button type="submit" data-loading-text="Ativando" @(Model.CanFinish ? null : "disabled")>Ativar tenant</button>
+    </form>
+  }
+  <p><a href="/admin/templates">Templates</a> · <a href="/admin/homologation">Relatório do tenant</a> · <a href="/notifications/alerts">Alertas</a></p>
+</section>

@@ -1,0 +1,26 @@
+@model HabitFlow.Domain.HomologationReport
+@{ ViewData["Title"] = "Homologação do tenant"; }
+<section class="hf-activation premium-card">
+  <h1>Uso deste tenant</h1>
+  <div class="hf-help"><strong>Como usar.</strong> Esta leitura mostra só a conta autenticada. Usuário comum não entra aqui.</div>
+  <form method="get" action="/admin/homologation" class="hf-grid">
+    <label>De <input type="date" name="from" /></label>
+    <label>Até <input type="date" name="to" /></label>
+    <label>Plano <select name="plan"><option value="">Todos</option><option>Free</option><option>Premium</option><option>Enterprise</option></select></label>
+    <label>Status <select name="status"><option value="">Todos</option><option>Active</option><option>Inactive</option><option>Blocked</option></select></label>
+    <button type="submit">Filtrar</button>
+  </form>
+  @if (Model.Pendencies.Count > 0) { <div class="hf-empty"><ul>@foreach (var item in Model.Pendencies) { <li>@item</li> }</ul></div> }
+  @if (Model.Rows.Count == 0) { <div class="hf-empty">Nenhum dado no filtro informado.</div> }
+  else
+  {
+    <table class="table"><thead><tr><th>Cliente</th><th>Usuários ativos</th><th>Inativos</th><th>Hábitos</th><th>Conclusões</th><th>Templates</th></tr></thead>
+    <tbody>
+    @foreach (var row in Model.Rows)
+    {
+      <tr><td>@row.Name</td><td>@row.ActiveUsers</td><td>@row.InactiveUsers</td><td>@row.Habits</td><td>@(row.CompletionsKnown ? row.Completions7Days.ToString() : "não disponível")</td><td>@(row.TemplateUsesKnown ? row.TemplateUses.ToString() : "não disponível")</td></tr>
+    }
+    </tbody></table>
+  }
+  <p><a href="/admin/homologation/export">Exportar CSV</a></p>
+</section>

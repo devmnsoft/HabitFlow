@@ -13,21 +13,21 @@ public sealed class HabitLibraryService(IHabitObjectiveRepository objectives, IH
         catch (Exception ex) { logger.LogError(ex, "Erro ao listar objetivos"); return Result<IReadOnlyList<HabitObjective>>.Failure("library.objectives_error", "Não foi possível carregar os objetivos agora."); }
     }
 
-    public async Task<Result<IReadOnlyList<HabitTemplate>>> GetTemplatesAsync(CancellationToken ct = default)
+    public async Task<Result<IReadOnlyList<HabitTemplate>>> GetTemplatesAsync(Guid? clientId = null, CancellationToken ct = default)
     {
-        try { return Result<IReadOnlyList<HabitTemplate>>.Success(await templates.ListActiveAsync(ct)); }
+        try { return Result<IReadOnlyList<HabitTemplate>>.Success(await templates.ListActiveAsync(clientId, ct)); }
         catch (Exception ex) when (IsMissingTable(ex)) { logger.LogWarning(ex, "Habit Library sem tabelas; usando fallback completo"); return Result<IReadOnlyList<HabitTemplate>>.Success(fallback.GetObjectives().SelectMany(x => fallback.GetTemplatesBySlug(x.Slug)).DistinctBy(x => x.Id).ToArray()); }
         catch (Exception ex) { logger.LogError(ex, "Erro ao listar templates"); return Result<IReadOnlyList<HabitTemplate>>.Failure("library.templates_error", "Não foi possível carregar os hábitos prontos agora."); }
     }
 
-    public async Task<Result<IReadOnlyList<HabitTemplate>>> GetTemplatesByObjectiveAsync(string slug, CancellationToken ct = default)
+    public async Task<Result<IReadOnlyList<HabitTemplate>>> GetTemplatesByObjectiveAsync(string slug, Guid? clientId = null, CancellationToken ct = default)
     {
         try
         {
             var objective = await objectives.GetBySlugAsync(slug, ct);
             if (objective is null || !objective.IsActive) return Result<IReadOnlyList<HabitTemplate>>.Failure("library.objective_not_found", "Objetivo não encontrado.");
             await audit.LogAsync("objective_selected", "Objetivo selecionado na biblioteca", metadata: new { slug }, ct: ct);
-            return Result<IReadOnlyList<HabitTemplate>>.Success(await templates.ListActiveByObjectiveAsync(objective.Id, ct));
+            return Result<IReadOnlyList<HabitTemplate>>.Success(await templates.ListActiveByObjectiveAsync(objective.Id, clientId, ct));
         }
         catch (Exception ex) when (IsMissingTable(ex)) { logger.LogWarning(ex, "Habit Library sem tabelas; usando fallback para {Slug}", slug); return Result<IReadOnlyList<HabitTemplate>>.Success(fallback.GetTemplatesBySlug(slug)); }
         catch (Exception ex) { logger.LogError(ex, "Erro ao listar templates de {Slug}", slug); return Result<IReadOnlyList<HabitTemplate>>.Failure("library.templates_error", "Não foi possível carregar os hábitos prontos agora."); }

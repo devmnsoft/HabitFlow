@@ -20,7 +20,7 @@ public sealed class ClientOnboardingService(IClientOnboardingRepository reposito
         new OnboardingChecklistItem("Primeiro usuário convidado", o.FirstUserInvited, "✉️", "/admin/users/invite", "Convide sua equipe com isolamento por cliente."),
         new OnboardingChecklistItem("Primeiro hábito criado", o.FirstHabitCreated, "✅", "/habits", "Comece com um hábito próprio ou modelo da biblioteca."),
         new OnboardingChecklistItem("Plano revisado", o.PlanReviewed, "⭐", "/plans", "Revise o plano atual e benefícios disponíveis."),
-        new OnboardingChecklistItem("Suporte conhecido", true, "🛟", "/admin/support", "Conheça a central de suporte e canais oficiais."),
+        new OnboardingChecklistItem("Suporte configurado", false, "🛟", "/admin/support", "Confirme o canal de suporte. Esta etapa não é concluída automaticamente."),
         new OnboardingChecklistItem("Onboarding concluído", o.Completed, "🚀", "/admin/onboarding", "Finalize a implantação quando tudo estiver pronto.")
     };
 }

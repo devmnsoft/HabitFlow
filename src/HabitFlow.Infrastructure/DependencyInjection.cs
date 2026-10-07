@@ -73,6 +73,7 @@ public static class DependencyInjection
         services.AddScoped<IPaymentAuditRepository, PaymentAuditRepository>();
         services.AddScoped<IFinancialDashboardRepository, FinancialDashboardRepository>();
         services.AddScoped<IClientOnboardingRepository, ClientOnboardingRepository>();
+        services.AddScoped<IProductActivationRepository, ProductActivationRepository>();
         services.AddScoped<IClientCommunicationRepository, ClientCommunicationRepository>();
         services.AddScoped<IBillingCommunicationRuleRepository, BillingCommunicationRuleRepository>();
         services.AddScoped<IJobExecutionLogRepository, JobExecutionLogRepository>();
