@@ -16,6 +16,18 @@
   closeStaleOverlays();
   addEventListener('pageshow', closeStaleOverlays);
 
+  /* Menus em strategy fixed saem do recorte de header, overflow e formulários. */
+  if (window.bootstrap?.Dropdown) {
+    document.querySelectorAll('[data-bs-toggle="dropdown"]').forEach(trigger => {
+      window.bootstrap.Dropdown.getInstance(trigger)?.dispose();
+      new window.bootstrap.Dropdown(trigger, {
+        popperConfig(defaults) {
+          return { ...(defaults || {}), strategy: 'fixed' };
+        }
+      });
+    });
+  }
+
   document.addEventListener('hidden.bs.dropdown', event => event.target.querySelector('[data-bs-toggle="dropdown"]')?.focus());
   document.addEventListener('hidden.bs.offcanvas', event => {
     const trigger = document.querySelector(`[data-bs-target="#${CSS.escape(event.target.id)}"]`);

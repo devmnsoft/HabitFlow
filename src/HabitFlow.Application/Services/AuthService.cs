@@ -46,7 +46,10 @@ public sealed class AuthService(IUserRepository users, IPasswordHasher hasher, A
             logger.LogInformation("Login attempt LoginKind={LoginKind}", login.Contains('@') ? "email" : "document");
             var recordedLogin = MaskLogin(login);
             if (await users.CountRecentFailedLoginsAsync(recordedLogin, DateTime.UtcNow.AddMinutes(-15), ct) >= 5)
+            {
+                logger.LogWarning(ApplicationEvents.SecuritySuspiciousActivityDetected, "security.suspicious_activity_detected CorrelationId={CorrelationId} Result={Result} Ip={Ip}", "login", "rate_limited", ip);
                 return Result<User>.Failure("login.invalid", "Login ou senha inválidos.");
+            }
             var user = await users.GetByLoginAsync(login, ct);
             var passwordOk = false;
             if (user is not null)
@@ -57,6 +60,8 @@ public sealed class AuthService(IUserRepository users, IPasswordHasher hasher, A
             var ok = user is not null && user.AccountStatus == AccountStatus.Active && passwordOk;
             var auditLogin = user is null ? recordedLogin : MaskLogin(user.Email);
             await users.AddLoginAttemptAsync(new LoginAttempt(Guid.NewGuid(), auditLogin, ok, ip, userAgent, DateTime.UtcNow), ct);
+            var agent = userAgent is null ? "" : userAgent.Length <= 160 ? userAgent : userAgent[..160];
+            logger.LogInformation(ok ? ApplicationEvents.SecurityLoginSucceeded : ApplicationEvents.SecurityLoginFailed, "{Code} UserId={UserId} Result={Result} Ip={Ip} UserAgent={UserAgent}", ok ? "security.login.succeeded" : "security.login.failed", user?.Id, ok ? "success" : "denied", ip, agent);
             var action = user?.Role == UserRole.SuperAdmin
                 ? (ok ? "security.superadmin.login.succeeded" : "security.superadmin.login.failed")
                 : (ok ? "login_success" : "login_failed");

@@ -1,8 +1,9 @@
 using HabitFlow.Domain;
+using Microsoft.Extensions.Logging;
 
 namespace HabitFlow.Application;
 
-public sealed class CurrentTenantService(CurrentUserContext currentUser)
+public sealed class CurrentTenantService(CurrentUserContext currentUser, ILogger<CurrentTenantService> logger)
 {
     public Guid? GetCurrentClientId() => currentUser.ClientId;
 
@@ -17,6 +18,7 @@ public sealed class CurrentTenantService(CurrentUserContext currentUser)
     {
         if (!CanAccessClient(clientId))
         {
+            logger.LogWarning(ApplicationEvents.SecurityTenantIsolationViolationBlocked, "security.tenant_isolation_violation_blocked ClientId={ClientId} RequestedClientId={RequestedClientId} Result={Result}", currentUser.ClientId, clientId, "blocked");
             throw new TenantAccessDeniedException("Acesso negado ao cliente solicitado.");
         }
     }

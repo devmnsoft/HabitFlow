@@ -21,8 +21,8 @@ public static class AuthenticationConfig
             options.Events.OnRedirectToAccessDenied = context =>
             {
                 var logger = context.HttpContext.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger("HabitFlow.Security");
-                logger.LogWarning("security.access_denied UserId={UserId} Path={Path}",
-                    context.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "anonymous", context.Request.Path.Value);
+                logger.LogWarning(ApplicationEvents.SecurityAccessDenied, "security.access_denied CorrelationId={CorrelationId} UserId={UserId} Path={Path} Result={Result}",
+                    context.HttpContext.TraceIdentifier, context.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "anonymous", context.Request.Path.Value, "denied");
                 context.Response.Redirect(context.RedirectUri);
                 return Task.CompletedTask;
             };

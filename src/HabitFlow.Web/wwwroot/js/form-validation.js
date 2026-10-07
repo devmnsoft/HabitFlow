@@ -3,6 +3,12 @@
   const mutationForms = [...document.forms].filter(form =>
     (form.method || 'get').toLowerCase() !== 'get' && form.method.toLowerCase() !== 'dialog');
 
+  const messageFor = field => {
+    const validity = field.validity;
+    if (validity.valueMissing) return 'Preencha este campo obrigatório.';
+    if (validity.typeMismatch || validity.patternMismatch || validity.badInput || validity.rangeUnderflow || validity.rangeOverflow || validity.tooLong || validity.tooShort || validity.stepMismatch) return 'O formato informado não é válido.';
+    return 'Revise este campo.';
+  };
   const fieldFor = (form, name, fallback) => form.elements.namedItem(name) || fallback;
   const describeError = (field, error) => {
     if (!(field instanceof HTMLElement)) return;
@@ -33,10 +39,10 @@
       field.setAttribute('aria-invalid', 'true');
       const label = field.labels?.[0]?.textContent?.trim() || field.name || `Campo ${index + 1}`;
       const error = document.createElement('span');
-      error.className = 'hf-validation-message'; error.textContent = field.validationMessage;
+      error.className = 'hf-validation-message'; error.textContent = messageFor(field);
       error.dataset.hfClientError = '';
       field.insertAdjacentElement('afterend', error); describeError(field, error);
-      const item = document.createElement('li'); item.textContent = `${label}: ${field.validationMessage}`; list.append(item);
+      const item = document.createElement('li'); item.textContent = `${label}: ${messageFor(field)}`; list.append(item);
     });
     summary.focus(); invalid[0]?.focus();
   };
@@ -61,11 +67,13 @@
     form.addEventListener('submit', event => {
       connectServerErrors(form);
       if (!form.checkValidity()) { event.preventDefault(); showClientErrors(form); return; }
+      if (form.dataset.hfAsync === 'true') return;
       if (form.dataset.submitting === 'true') { event.preventDefault(); return; }
       form.dataset.submitting = 'true'; form.setAttribute('aria-busy', 'true');
       form.querySelectorAll('button[type="submit"], button:not([type])').forEach(button => {
         button.disabled = true; button.dataset.hfBusy = 'true';
-        if (button.dataset.loadingText) { button.dataset.originalText = button.textContent; button.textContent = button.dataset.loadingText; }
+        const loading = button.dataset.loadingText || 'Salvando…';
+        button.dataset.originalText = button.textContent; button.textContent = loading;
       });
     });
   });

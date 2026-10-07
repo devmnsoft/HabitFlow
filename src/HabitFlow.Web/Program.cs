@@ -16,6 +16,7 @@ if (!builder.Environment.IsProduction())
     builder.Host.UseDefaultServiceProvider(options => { options.ValidateScopes = true; options.ValidateOnBuild = true; });
 
 builder.WebHost.UseUrls("http://0.0.0.0:5097");
+builder.WebHost.ConfigureKestrel(options => options.AddServerHeader = false);
 
 builder.Services
     .AddHabitFlowApplication(builder.Configuration)

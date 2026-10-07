@@ -29,6 +29,8 @@ public sealed class PlansController(HabitFlow.Web.Services.PlanLandingPageServic
         }
         logger.LogInformation("plans.page.viewed Authenticated={Authenticated} Plan={PlanCode}", result.Viewer.IsAuthenticated, result.Viewer.PlanCode);
         logger.LogInformation("plans.current_plan.rendered Plan={PlanCode} Status={Status}", result.Viewer.PlanCode, result.Viewer.Status);
+        if (result.Plans.SelectMany(plan => plan.Benefits).Any(benefit => benefit.Contains("-1", StringComparison.Ordinal)))
+            logger.LogWarning(ApplicationEvents.DesignValidationFailed, "design.validation.failed CorrelationId={CorrelationId} ClientId={ClientId}", HttpContext.TraceIdentifier, User.Identity?.IsAuthenticated == true ? this.CurrentClientId() : Guid.Empty);
         ViewBag.PaymentMode = config["Payment:Mode"] ?? "Sandbox";
         ViewBag.CheckoutEnabled = config.GetValue<bool>("Payments:Enabled")
             && string.Equals(config["Payments:Provider"], "MercadoPago", StringComparison.OrdinalIgnoreCase);
@@ -47,7 +49,7 @@ public sealed class PlansController(HabitFlow.Web.Services.PlanLandingPageServic
             HabitFlow.Domain.SubscriptionStatus.Active when subscription.CanceledAt is not null => new(true, subscription.PlanCode, cycle, "Cancelamento agendado", $"Seu Premium continua ativo até {end:dd/MM/yyyy}.", end, null, true),
             HabitFlow.Domain.SubscriptionStatus.Active => new(true, subscription.PlanCode, cycle, "Ativo", "Seu Premium está ativo.", end, end, true),
             HabitFlow.Domain.SubscriptionStatus.Trial or HabitFlow.Domain.SubscriptionStatus.Trialing => new(true, subscription.PlanCode, cycle, "Trial", "Seu período de avaliação está ativo.", end, end, true),
-            HabitFlow.Domain.SubscriptionStatus.Pending or HabitFlow.Domain.SubscriptionStatus.PaymentPending => new(true, HabitFlow.Domain.PlanCodes.Free, cycle, "Pagamento pendente", "Aguardando confirmação do pagamento. Os recursos Premium ainda não foram liberados.", null, null, true),
+            HabitFlow.Domain.SubscriptionStatus.Pending or HabitFlow.Domain.SubscriptionStatus.PaymentPending => new(true, subscription.PlanCode, cycle, "Pagamento pendente", "Aguardando confirmação do pagamento. Os recursos pagos ainda não foram liberados. Se o checkout estiver indisponível, fale com comercial@mnsoft.com.br.", null, null, true),
             HabitFlow.Domain.SubscriptionStatus.PastDue => new(true, subscription.PlanCode, cycle, "Pagamento pendente", "Regularize o pagamento para evitar a perda dos recursos Premium.", end, null, true),
             HabitFlow.Domain.SubscriptionStatus.Canceled => new(true, HabitFlow.Domain.PlanCodes.Free, cycle, "Cancelado", "Sua assinatura terminou. Seus hábitos continuam guardados no Gratuito.", end, null, true),
             _ => new(true, HabitFlow.Domain.PlanCodes.Free, null, "Gratuito", "Você está no Gratuito e pode fazer upgrade quando quiser.", null, null, false)

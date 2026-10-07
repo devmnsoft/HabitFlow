@@ -93,3 +93,4 @@
 \i database/migrations/091_account_people_join_date.sql
 \i database/migrations/092_market_implemented_user_invites.sql
 \i database/migrations/093_restore_schema_contract_constraints.sql
+\i database/migrations/094_v6197_ai_admin_usage.sql

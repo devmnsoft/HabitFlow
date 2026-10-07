@@ -1,0 +1,97 @@
+/* v6.19.7 — contraste de campos e menus acima de formulários.
+   Camada final: pares explícitos de cor para não herdar letra escura em fundo escuro
+   nem texto claro em campo branco. */
+
+html { color-scheme: light; }
+
+.form-control,
+.form-select,
+textarea,
+select,
+input[type="text"],
+input[type="search"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="tel"],
+input[type="url"],
+input[type="date"],
+input:not([type]) {
+  color: var(--hf-color-text);
+  background-color: var(--hf-color-surface);
+  border-color: var(--hf-color-border-strong);
+  caret-color: var(--hf-color-text);
+}
+
+:where(input, textarea)::placeholder {
+  color: #5b6b64;
+  opacity: 1;
+}
+
+input:-webkit-autofill,
+textarea:-webkit-autofill,
+select:-webkit-autofill {
+  -webkit-text-fill-color: #17251f;
+  box-shadow: 0 0 0 1000px #ffffff inset;
+  caret-color: #17251f;
+}
+
+.ops-filters :is(input, select, textarea),
+.ops :is(input, select, textarea):not([type="checkbox"]):not([type="radio"]) {
+  color: #eaf2ff;
+  background-color: #0b1624;
+  caret-color: #eaf2ff;
+}
+
+.ops-filters :is(input, textarea)::placeholder,
+.ops :is(input, textarea)::placeholder {
+  color: #9aabc2;
+}
+
+:where(
+  .assist-hero,
+  .ops,
+  .ops-hero,
+  .support-hero,
+  .privacy-hero,
+  .dashboard-card--focus,
+  .hf-habit-hero,
+  .hf-habit-detail-hero,
+  .hf-goal-hero,
+  .hf-goal-detail-hero,
+  .routine-preview
+) :is(h1, h2, h3) {
+  color: #f8fafc;
+}
+
+.header-v4,
+.app-header-v2,
+.hf-topbar {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  background-color: #ffffff;
+  overflow: visible;
+}
+
+.dropdown.show { position: relative; z-index: 1080; }
+
+.dropdown-menu {
+  z-index: 1080;
+  background-color: #ffffff;
+  color: #17251f;
+  border: 1px solid #dce4e0;
+}
+
+.dropdown-menu :is(.dropdown-item, a, button) {
+  color: #17251f;
+}
+
+.dropdown-menu .dropdown-item:hover,
+.dropdown-menu .dropdown-item:focus,
+.dropdown-menu .dropdown-item:active,
+.dropdown-menu .is-active {
+  background-color: #e7f6ef;
+  color: #075e47;
+}
+
+.hf-form-actions { z-index: 20; }

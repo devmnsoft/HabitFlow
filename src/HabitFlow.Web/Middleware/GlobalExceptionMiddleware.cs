@@ -23,13 +23,11 @@ public sealed class GlobalExceptionMiddleware(RequestDelegate next, ILogger<Glob
             var fingerprint = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(ex.GetType().FullName + ex.Message)))[..16];
             var correlationId = context.TraceIdentifier;
             var mapped = Map(ex);
-            logger.LogError(ApplicationEvents.SystemUnhandled, ex,
-                "system.error.unhandled Code={Code} CorrelationId={CorrelationId} Fingerprint={Fingerprint} Route={Route} Method={Method} UserId={UserId} ClientId={ClientId} FailureType={FailureType} DurationMs={DurationMs} Result={Result}",
-                mapped.Code,
-                correlationId, fingerprint, context.Request.Path.Value, context.Request.Method,
-                Mask(context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value),
-                Mask(context.User.FindFirst("client_id")?.Value), ex.GetType().Name,
-                Stopwatch.GetElapsedTime(started).TotalMilliseconds, mapped.StatusCode);
+            var detail = AiLogSanitizer.Clean(ex.Message);
+            if (environment.IsDevelopment())
+                logger.LogError(ApplicationEvents.SystemUnhandled, ex, "system.error.unhandled Code={Code} CorrelationId={CorrelationId} Fingerprint={Fingerprint} Route={Route} Method={Method} UserId={UserId} ClientId={ClientId} FailureType={FailureType} DurationMs={DurationMs} Result={Result} Detail={Detail}", mapped.Code, correlationId, fingerprint, context.Request.Path.Value, context.Request.Method, Mask(context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value), Mask(context.User.FindFirst("client_id")?.Value), ex.GetType().Name, Stopwatch.GetElapsedTime(started).TotalMilliseconds, mapped.StatusCode, detail);
+            else
+                logger.LogError(ApplicationEvents.SystemUnhandled, "system.error.unhandled Code={Code} CorrelationId={CorrelationId} Fingerprint={Fingerprint} Route={Route} Method={Method} UserId={UserId} ClientId={ClientId} FailureType={FailureType} DurationMs={DurationMs} Result={Result} Detail={Detail}", mapped.Code, correlationId, fingerprint, context.Request.Path.Value, context.Request.Method, Mask(context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value), Mask(context.User.FindFirst("client_id")?.Value), ex.GetType().Name, Stopwatch.GetElapsedTime(started).TotalMilliseconds, mapped.StatusCode, detail);
             await TryAuditAsync(context, fingerprint, correlationId);
             context.Response.Clear();
             context.Response.StatusCode = mapped.StatusCode;

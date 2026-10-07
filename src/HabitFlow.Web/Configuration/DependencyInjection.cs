@@ -34,6 +34,16 @@ public static class DependencyInjection
         {
             limiter.PermitLimit = 60; limiter.Window = TimeSpan.FromMinutes(1); limiter.QueueLimit = 0;
         }));
+        services.AddRateLimiter(options =>
+        {
+            options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+            options.OnRejected = (context, _) =>
+            {
+                var logger = context.HttpContext.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger("HabitFlow.Security");
+                logger.LogWarning(ApplicationEvents.SecurityRateLimitTriggered, "security.rate_limit_triggered CorrelationId={CorrelationId} Path={Path} Result={Result}", context.HttpContext.TraceIdentifier, context.HttpContext.Request.Path.Value, "blocked");
+                return ValueTask.CompletedTask;
+            };
+        });
         services.AddOptions<PushNotificationOptions>().Bind(configuration.GetSection("WebPush")).Validate(options =>
             !options.Enabled || (!string.IsNullOrWhiteSpace(options.Subject) && !string.IsNullOrWhiteSpace(options.PublicKey) && !string.IsNullOrWhiteSpace(options.PrivateKey)),
             "WebPush habilitado exige Subject, PublicKey e PrivateKey.").ValidateOnStart();

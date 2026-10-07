@@ -10,6 +10,7 @@ public static class DependencyInjection
     public static IServiceCollection AddHabitFlowApplication(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddOptions<AssistantOptions>().Bind(configuration.GetSection(AssistantOptions.SectionName));
+        services.AddOptions<AiOptions>().Bind(configuration.GetSection(AiOptions.SectionName));
         services.AddOptions<GroqOptions>().Bind(configuration.GetSection(GroqOptions.SectionName));
         services.AddOptions<GeminiOptions>().Bind(configuration.GetSection(GeminiOptions.SectionName));
         services.AddOptions<DeepSeekOptions>().Bind(configuration.GetSection(DeepSeekOptions.SectionName));
@@ -140,6 +141,16 @@ public static class DependencyInjection
         services.AddSingleton<IAssistantProvider>(sp => sp.GetRequiredService<ConfiguredAssistantProvider>());
         services.AddScoped<AssistantConversationRepository>();
         services.AddScoped<AssistantAuditService>();
+        services.AddSingleton<AiPromptGuardrailService>();
+        services.AddSingleton<AiUsageLimiter>();
+        services.AddSingleton<AiAuditService>();
+        services.AddScoped<AiAdminService>();
+        services.AddSingleton<AiKnowledgeBaseService>();
+        services.AddScoped<GroqAiProvider>();
+        services.AddScoped<GeminiAiProvider>();
+        services.AddScoped<DeepSeekAiProvider>();
+        services.AddScoped<IAiProviderFactory, AiProviderFactory>();
+        services.AddScoped<AiChatService>();
         services.AddScoped<AssistantChatService>();
         services.AddScoped<AssistantConversationService>();
         services.AddScoped<SupportCenterService>();
@@ -194,22 +205,18 @@ public static class DependencyInjection
         services.AddScoped<SchemaMigrationStatusService>();
         services.AddScoped<SuperAdminOperationalService>();
         services.AddScoped<OperationsCenterService>();
-        services.AddHttpClient<GroqAssistantProvider>((sp, client) =>
-        {
-            var opts = sp.GetRequiredService<IOptions<GroqOptions>>().Value;
-            if (!string.IsNullOrWhiteSpace(opts.BaseUrl) && Uri.TryCreate(opts.BaseUrl, UriKind.Absolute, out var uri)) client.BaseAddress = new Uri(uri.GetLeftPart(UriPartial.Path).TrimEnd('/') + "/");
-        });
-        services.AddHttpClient<GeminiAssistantProvider>((sp, client) =>
-        {
-            var opts = sp.GetRequiredService<IOptions<GeminiOptions>>().Value;
-            if (!string.IsNullOrWhiteSpace(opts.BaseUrl) && Uri.TryCreate(opts.BaseUrl, UriKind.Absolute, out var uri)) client.BaseAddress = new Uri(uri.GetLeftPart(UriPartial.Path).TrimEnd('/') + "/");
-        });
-        services.AddHttpClient<DeepSeekAssistantProvider>((sp, client) =>
-        {
-            var opts = sp.GetRequiredService<IOptions<DeepSeekOptions>>().Value;
-            if (!string.IsNullOrWhiteSpace(opts.BaseUrl) && Uri.TryCreate(opts.BaseUrl, UriKind.Absolute, out var uri)) client.BaseAddress = new Uri(uri.GetLeftPart(UriPartial.Path).TrimEnd('/') + "/");
-        });
+        services.AddHttpClient<GroqAssistantProvider>((sp, client) => ConfigureAssistantClient(client, sp.GetRequiredService<IOptions<GroqOptions>>().Value.BaseUrl, sp));
+        services.AddHttpClient<GeminiAssistantProvider>((sp, client) => ConfigureAssistantClient(client, sp.GetRequiredService<IOptions<GeminiOptions>>().Value.BaseUrl, sp));
+        services.AddHttpClient<DeepSeekAssistantProvider>((sp, client) => ConfigureAssistantClient(client, sp.GetRequiredService<IOptions<DeepSeekOptions>>().Value.BaseUrl, sp));
         services.AddHttpClient<IPaymentProviderService, MercadoPagoService>();
+
+        static void ConfigureAssistantClient(HttpClient client, string? baseUrl, IServiceProvider sp)
+        {
+            var timeout = sp.GetRequiredService<IOptions<AssistantOptions>>().Value.TimeoutSeconds;
+            client.Timeout = TimeSpan.FromSeconds(Math.Clamp(timeout, 1, 120));
+            if (!string.IsNullOrWhiteSpace(baseUrl) && Uri.TryCreate(baseUrl, UriKind.Absolute, out var uri))
+                client.BaseAddress = new Uri(uri.GetLeftPart(UriPartial.Path).TrimEnd('/') + "/");
+        }
         services.AddHttpClient<TelegramService>();
         return services;
     }

@@ -6,12 +6,17 @@ using Microsoft.AspNetCore.Mvc;
 namespace HabitFlow.Web.Controllers;
 
 [Authorize]
-public sealed class BillingController(SubscriptionService subscriptions, PaymentCheckoutService checkout, IPaymentTransactionRepository transactions, ILogger<BillingController> logger) : Controller
+public sealed class BillingController(SubscriptionService subscriptions, PaymentCheckoutService checkout, IPaymentTransactionRepository transactions, IConfiguration config, ILogger<BillingController> logger) : Controller
 {
     [HttpGet("billing")]
     [HttpGet("account/billing")]
     public async Task<IActionResult> Index(CancellationToken ct)
-    { var userId = this.CurrentUserId(); ViewBag.Subscription = await subscriptions.GetUserSubscriptionAsync(userId, ct); return View(await transactions.ListByUserAsync(userId, ct)); }
+    {
+        var userId = this.CurrentUserId();
+        ViewBag.Subscription = await subscriptions.GetUserSubscriptionAsync(userId, ct);
+        ViewBag.CheckoutEnabled = config.GetValue<bool>("Payments:Enabled") && string.Equals(config["Payments:Provider"], "MercadoPago", StringComparison.OrdinalIgnoreCase);
+        return View(await transactions.ListByUserAsync(userId, ct));
+    }
 
     [HttpPost("billing/checkout")]
     [ValidateAntiForgeryToken]

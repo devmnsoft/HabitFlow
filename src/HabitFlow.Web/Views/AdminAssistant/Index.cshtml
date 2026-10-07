@@ -2,14 +2,22 @@
 @{ ViewData["Title"] = "Administração do Coach IA"; }
 <section class="container py-4">
   <header class="mb-4"><span class="text-uppercase text-muted small">Administração protegida</span><h1>Coach IA</h1><p>Controle operacional sem exibir chaves, prompts internos ou connection strings.</p></header>
+  @if (TempData["Success"] is string success)
+  {
+    <div class="alert alert-success" role="status">@success</div>
+  }
   <div class="card shadow-sm"><div class="card-body">
     <form method="post" action="/admin/assistant/configuration">@Html.AntiForgeryToken()
-      <div asp-validation-summary="All" class="text-danger"></div>
-      <div class="form-check form-switch mb-3"><input class="form-check-input" id="enabled" name="enabled" type="checkbox" value="true" checked="@Model.Enabled"><label class="form-check-label" for="enabled">Assistente ativo</label></div>
-      <div class="row g-3"><div class="col-md-6"><label class="form-label" for="provider">Provider</label><select class="form-select" id="provider" name="provider"><option selected="@(Model.Provider=="Disabled")">Disabled</option><option selected="@(Model.Provider=="Knowledge")">Knowledge</option><option selected="@(Model.Provider=="Groq")">Groq</option><option selected="@(Model.Provider=="Gemini")">Gemini</option><option selected="@(Model.Provider=="DeepSeek")">DeepSeek</option></select></div><div class="col-md-6"><label class="form-label" for="model">Modelo (sem credenciais)</label><input class="form-control" id="model" name="model" maxlength="100" value="@Model.Model"></div>
-      <div class="col-md-6"><label class="form-label" for="maxInputChars">Máximo de entrada</label><input class="form-control" id="maxInputChars" name="maxInputChars" type="number" min="100" max="10000" value="@Model.MaxInputChars"></div><div class="col-md-6"><label class="form-label" for="maxOutputChars">Máximo de saída</label><input class="form-control" id="maxOutputChars" name="maxOutputChars" type="number" min="100" max="10000" value="@Model.MaxOutputChars"></div></div>
-      <label class="form-label mt-3" for="defaultMessage">Mensagem padrão</label><textarea class="form-control" id="defaultMessage" name="defaultMessage" maxlength="500">@Model.DefaultMessage</textarea>
-      <button class="btn btn-primary mt-3" type="submit">Aplicar configuração</button>
+      <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
+      <div class="form-check form-switch mb-3"><input class="form-check-input" id="enabled" name="enabled" type="checkbox" value="true" @(Model.Enabled ? "checked" : null)><label class="form-check-label" for="enabled">Assistente ativo</label></div>
+      <div class="row g-3">
+        <div class="col-md-6"><label class="form-label" for="provider">Provedor</label><select class="form-select" id="provider" name="provider" required><!option value="">Selecione</!option><!option value="Disabled" @(Model.Provider=="Disabled" ? "selected" : null)>Desativado</!option><!option value="Knowledge" @(Model.Provider=="Knowledge" ? "selected" : null)>Base interna</!option><!option value="Groq" @(Model.Provider=="Groq" ? "selected" : null)>Groq</!option><!option value="Gemini" @(Model.Provider=="Gemini" ? "selected" : null)>Gemini</!option><!option value="DeepSeek" @(Model.Provider=="DeepSeek" ? "selected" : null)>DeepSeek</!option></select></div>
+        <div class="col-md-6"><label class="form-label" for="model">Modelo</label><input class="form-control" id="model" name="model" maxlength="100" pattern="[A-Za-z0-9._:-]*" value="@Model.Model" placeholder="Vazio usa o padrão do provedor" autocomplete="off"><small class="text-muted">Padrões: Groq llama-3.3-70b-versatile, Gemini gemini-2.0-flash, DeepSeek deepseek-chat. A chave fica só na variável de ambiente.</small></div>
+        <div class="col-md-6"><label class="form-label" for="maxInputChars">Máximo de entrada</label><input class="form-control" id="maxInputChars" name="maxInputChars" type="number" min="100" max="10000" required value="@Model.MaxInputChars"></div>
+        <div class="col-md-6"><label class="form-label" for="maxOutputChars">Máximo de saída</label><input class="form-control" id="maxOutputChars" name="maxOutputChars" type="number" min="100" max="10000" required value="@Model.MaxOutputChars"></div>
+      </div>
+      <label class="form-label mt-3" for="defaultMessage">Mensagem padrão</label><textarea class="form-control" id="defaultMessage" name="defaultMessage" maxlength="500" required>@Model.DefaultMessage</textarea>
+      <button class="btn btn-primary mt-3" type="submit" data-loading-text="Salvando…" data-confirm="Aplicar a configuração do Coach IA nesta instância?" data-confirm-label="Aplicar">Aplicar configuração</button>
     </form>
   </div></div>
   <div class="alert alert-info mt-4"><strong>Observabilidade:</strong> eventos usam códigos estáveis, correlation ID, tenant, usuário, status, provider e duração. Conteúdo integral e secrets não são registrados. Consulte os logs administrativos para eventos e falhas.</div>

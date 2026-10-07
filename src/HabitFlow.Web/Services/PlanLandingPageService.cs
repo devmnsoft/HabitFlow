@@ -48,19 +48,24 @@ public sealed class PlanLandingPageService(IPlanCatalogRepository repository)
             ? $"Economize cerca de {(1 - yearly.Amount / (monthly.Amount * 12)):P0}" : null;
         var free = plan.Code.Equals(PlanCodes.Free, StringComparison.OrdinalIgnoreCase);
         var benefits = plan.Features.Take(7).Select(DescribeFeature).Where(x => x is not null).Cast<string>().ToArray();
-        return new(plan.Code, plan.PublicName, plan.AudienceText ?? (free ? "Para começar com o essencial" : "Para transformar intenção em consistência"),
+        var name = plan.Code.Equals(PlanCodes.Ritmo, StringComparison.OrdinalIgnoreCase) ? "Premium"
+            : plan.Code.Equals(PlanCodes.Free, StringComparison.OrdinalIgnoreCase) ? "Free"
+            : plan.PublicName;
+        return new(plan.Code, name, plan.AudienceText ?? (free ? "Para começar com o essencial" : "Para transformar intenção em consistência"),
             plan.Description ?? plan.Headline ?? "Uma rotina mais clara, no seu ritmo.", plan.BadgeText ?? (!free ? "Mais recomendado" : null),
             plan.IsFeatured || plan.Code.Equals(PlanCodes.Ritmo, StringComparison.OrdinalIgnoreCase),
             monthly is null ? null : monthly.Amount.ToString("C", PtBr) + "/mês",
             yearly is null ? null : yearly.Amount.ToString("C", PtBr) + "/ano", saving, benefits,
-            free ? "Começar grátis" : "Assinar Ritmo", free ? "/register" : $"/register?intent={Uri.EscapeDataString(plan.Code)}&cycle=Monthly",
+            free ? "Começar grátis" : $"Assinar {name}", free ? "/register" : $"/register?intent={Uri.EscapeDataString(plan.Code)}&cycle=Monthly",
             free || monthly is not null || yearly is not null);
     }
+
+    public static string FormatLimit(int? value) => value is null ? "Não informado" : value < 0 ? "Ilimitado" : value.Value.ToString(PtBr);
 
     private static string? DescribeFeature(PlanFeatureValue feature) => feature.ValueType.ToLowerInvariant() switch
     {
         "boolean" when feature.BoolValue == true => feature.Name,
-        "integer" when feature.IntValue is not null => $"{feature.Name}: {feature.IntValue}",
+        "integer" when feature.IntValue is not null => $"{feature.Name}: {FormatLimit(feature.IntValue)}",
         "string" when !string.IsNullOrWhiteSpace(feature.StringValue) => $"{feature.Name}: {feature.StringValue}",
         _ => null
     };
@@ -71,13 +76,19 @@ public sealed class PlanLandingPageService(IPlanCatalogRepository repository)
             var value = plans.FirstOrDefault(p => p.Code.Equals(code, StringComparison.OrdinalIgnoreCase))?.Features.FirstOrDefault(f => f.Code == feature);
             if (value is null) return unavailable;
             if (format is not null) return format(value);
-            return value.IntValue?.ToString(PtBr) ?? (value.BoolValue == true ? "Incluído" : value.StringValue) ?? unavailable;
+            if (value.IntValue is not null) return FormatLimit(value.IntValue);
+            return value.BoolValue == true ? "Incluído" : value.StringValue ?? unavailable;
+        }
+        string Ai(string code)
+        {
+            var value = plans.FirstOrDefault(p => p.Code.Equals(code, StringComparison.OrdinalIgnoreCase))?.Features.FirstOrDefault(f => f.Code == PlanFeatureCodes.AiAssistant);
+            return value?.BoolValue == true ? "Incluído" : "Não incluído";
         }
         return [
             new("Usuários na equipe", "1", "1", null, "Até 10", "Ilimitado"),
             new("Hábitos ativos", Value(PlanCodes.Free, PlanFeatureCodes.ActiveHabitsLimit, "Não informado"), Value(PlanCodes.Ritmo, PlanFeatureCodes.ActiveHabitsLimit, "Não informado"), null, "Ilimitado", "Ilimitado"),
             new("Objetivos ativos", Value(PlanCodes.Free, PlanFeatureCodes.ActiveGoalsLimit, "Não informado"), Value(PlanCodes.Ritmo, PlanFeatureCodes.ActiveGoalsLimit, "Não informado"), null, "Ilimitado", "Ilimitado"),
-            new("Histórico", Value(PlanCodes.Free, PlanFeatureCodes.HistoryDaysLimit, "Não informado", x => x.IntValue is null ? "Não informado" : $"{x.IntValue} dias"), Value(PlanCodes.Ritmo, PlanFeatureCodes.FullHistory, "Não incluído", _ => "Histórico completo"), null, "Completo", "Completo"),
+            new("Histórico", Value(PlanCodes.Free, PlanFeatureCodes.HistoryDaysLimit, "Não informado", x => x.IntValue is null ? "Não informado" : x.IntValue < 0 ? "Ilimitado" : $"{x.IntValue} dias"), Value(PlanCodes.Ritmo, PlanFeatureCodes.FullHistory, "Não incluído", _ => "Histórico completo"), null, "Completo", "Completo"),
             new("Biblioteca", Value(PlanCodes.Free, PlanFeatureCodes.FullHabitLibrary, "Não incluída"), Value(PlanCodes.Ritmo, PlanFeatureCodes.FullHabitLibrary, "Não incluída"), null, "Incluída", "Incluída"),
             new("Desafios", Value(PlanCodes.Free, "challenge_7_days", "7 dias", _ => "7 dias"), Value(PlanCodes.Ritmo, "challenge_90_days", "7, 30 e 90 dias", _ => "7, 30 e 90 dias"), "O progresso considera uma conclusão por dia, a partir do início do desafio.", "7, 30 e 90 dias", "7, 30 e 90 dias"),
             new("Relatórios", Value(PlanCodes.Free, PlanFeatureCodes.BasicReports, "Não incluídos", _ => "Resumo semanal básico"), Value(PlanCodes.Ritmo, PlanFeatureCodes.BasicReports, "Não incluídos", _ => "Relatórios disponíveis implementados"), null, "Avançados", "Avançados e consolidados"),
@@ -85,7 +96,7 @@ public sealed class PlanLandingPageService(IPlanCatalogRepository repository)
             new("Lembretes por hábito", "Conforme catálogo", "Conforme catálogo", null, "Ampliados", "Ilimitados"),
             new("Metas compartilhadas / times", "—", "—", null, "Incluído", "Incluído"),
             new("PWA", "Incluído", "Incluído", null, "Incluído", "Incluído"), new("Push notifications", "Em breve", "Em breve", null, "Em breve", "Em breve"),
-            new("Assistente", "Em breve", "Em breve", null, "Em breve", "Em breve"), new("Conquistas e metas semanais", "Em breve", "Em breve", null, "Incluído", "Incluído"),
+            new("Assistente", Ai(PlanCodes.Free), Ai(PlanCodes.Ritmo), "O assistente usa só totais da própria conta e não libera recurso pago.", Ai(PlanCodes.Team), Ai(PlanCodes.Enterprise)), new("Conquistas e metas semanais", "Em breve", "Em breve", null, "Incluído", "Incluído"),
             new("Suporte", "Incluído", "Incluído", null, "Prioritário", "Dedicado"), new("Exportação PDF", "Em breve", "Em breve", null, "Em breve", "Incluída"),
             new("Segurança da conta", "Incluída", "Incluída", null, "Incluída", "Incluída"), new("Central de Privacidade", "Incluída", "Incluída", null, "Incluída", "Incluída")];
     }

@@ -1,0 +1,49 @@
+@model HabitFlow.Domain.AiRuntimeSettings
+@using HabitFlow.Domain
+@{
+    ViewData["Title"] = "Administração da IA";
+    var limits = ViewBag.Limits as IReadOnlyList<AiPlanLimit> ?? Array.Empty<AiPlanLimit>();
+    int Limit(string code) => limits.FirstOrDefault(item => item.PlanCode == code)?.DailyLimit ?? 0;
+    var recent = ViewBag.Recent as IReadOnlyList<AiUsageEventRow> ?? Array.Empty<AiUsageEventRow>();
+    var failures = ViewBag.Failures as IReadOnlyList<AiUsageEventRow> ?? Array.Empty<AiUsageEventRow>();
+    var consumption = ViewBag.Consumption as IReadOnlyList<AiTenantConsumption> ?? Array.Empty<AiTenantConsumption>();
+}
+<section class="container py-4">
+  <a href="/superadmin">← SuperAdmin</a>
+  <h1>IA da plataforma</h1>
+  <p>Somente SuperAdmin altera provider, modelos e limites. A chave de API não entra nesta tela nem no banco.</p>
+  @if (TempData["Success"] is string success) { <div class="alert alert-success" role="status">@success</div> }
+  <form method="post" action="/superadmin/ai">
+    @Html.AntiForgeryToken()
+    <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
+    <div class="form-check form-switch mb-3"><input class="form-check-input" id="enabled" name="enabled" type="checkbox" value="true" @(Model.Enabled ? "checked" : null)><label class="form-check-label" for="enabled">IA habilitada no painel</label></div>
+    <div class="row g-3">
+      <div class="col-md-4"><label class="form-label" for="defaultProvider">Provider padrão</label><select class="form-select" id="defaultProvider" name="defaultProvider" required><!option value="">Nenhum</!option><!option value="Groq" @(Model.DefaultProvider=="Groq" ? "selected" : null)>Groq</!option><!option value="Gemini" @(Model.DefaultProvider=="Gemini" ? "selected" : null)>Gemini</!option><!option value="DeepSeek" @(Model.DefaultProvider=="DeepSeek" ? "selected" : null)>DeepSeek</!option></select></div>
+      <div class="col-md-4"><label class="form-label" for="globalDailyLimit">Limite global diário</label><input class="form-control" id="globalDailyLimit" name="globalDailyLimit" type="number" min="0" max="100000" required value="@Model.GlobalDailyLimit"></div>
+    </div>
+    <div class="row g-3 mt-1">
+      <div class="col-md-4"><div class="form-check"><input class="form-check-input" id="groqEnabled" name="groqEnabled" type="checkbox" value="true" @(Model.GroqEnabled ? "checked" : null)><label class="form-check-label" for="groqEnabled">Groq habilitado</label></div><label class="form-label" for="groqModels">Modelos Groq</label><input class="form-control" id="groqModels" name="groqModels" pattern="([A-Za-z0-9._:-]+(,[A-Za-z0-9._:-]+)*)?" value="@Model.GroqModels" placeholder="vazio usa o padrão"><small>Chave configurada: @(ViewBag.GroqKey is true ? "sim" : "não")</small></div>
+      <div class="col-md-4"><div class="form-check"><input class="form-check-input" id="geminiEnabled" name="geminiEnabled" type="checkbox" value="true" @(Model.GeminiEnabled ? "checked" : null)><label class="form-check-label" for="geminiEnabled">Gemini habilitado</label></div><label class="form-label" for="geminiModels">Modelos Gemini</label><input class="form-control" id="geminiModels" name="geminiModels" pattern="([A-Za-z0-9._:-]+(,[A-Za-z0-9._:-]+)*)?" value="@Model.GeminiModels"><small>Chave configurada: @(ViewBag.GeminiKey is true ? "sim" : "não")</small></div>
+      <div class="col-md-4"><div class="form-check"><input class="form-check-input" id="deepSeekEnabled" name="deepSeekEnabled" type="checkbox" value="true" @(Model.DeepSeekEnabled ? "checked" : null)><label class="form-check-label" for="deepSeekEnabled">DeepSeek habilitado</label></div><label class="form-label" for="deepSeekModels">Modelos DeepSeek</label><input class="form-control" id="deepSeekModels" name="deepSeekModels" pattern="([A-Za-z0-9._:-]+(,[A-Za-z0-9._:-]+)*)?" value="@Model.DeepSeekModels"><small>Chave configurada: @(ViewBag.DeepSeekKey is true ? "sim" : "não")</small></div>
+    </div>
+    <div class="row g-3 mt-1">
+      <div class="col-md-3"><label class="form-label" for="freeLimit">Limite Free</label><input class="form-control" id="freeLimit" name="freeLimit" type="number" min="0" max="100000" required value="@Limit("free")"></div>
+      <div class="col-md-3"><label class="form-label" for="ritmoLimit">Limite Premium</label><input class="form-control" id="ritmoLimit" name="ritmoLimit" type="number" min="0" max="100000" required value="@Limit("ritmo")"></div>
+      <div class="col-md-3"><label class="form-label" for="teamLimit">Limite Team</label><input class="form-control" id="teamLimit" name="teamLimit" type="number" min="0" max="100000" required value="@Limit("team")"></div>
+      <div class="col-md-3"><label class="form-label" for="enterpriseLimit">Limite Enterprise</label><input class="form-control" id="enterpriseLimit" name="enterpriseLimit" type="number" min="0" max="100000" required value="@Limit("enterprise")"></div>
+    </div>
+    <button class="btn btn-primary mt-3" type="submit" data-loading-text="Salvando…" data-confirm="Aplicar a configuração global de IA?" data-confirm-label="Aplicar">Salvar</button>
+  </form>
+  <h2 class="h5 mt-4">Consumo por tenant hoje</h2>
+  <table class="table"><thead><tr><th>Tenant</th><th>Concluídas</th><th>Bloqueios</th><th>Falhas</th></tr></thead><tbody>
+    @foreach (var row in consumption) { <tr><td>@row.ClientId</td><td>@row.Calls</td><td>@row.Blocked</td><td>@row.Failed</td></tr> }
+  </tbody></table>
+  <h2 class="h5">Histórico recente</h2>
+  <table class="table"><thead><tr><th>Quando (UTC)</th><th>Tenant</th><th>Usuário</th><th>Provider</th><th>Modelo</th><th>Status</th><th>Evento</th></tr></thead><tbody>
+    @foreach (var row in recent) { <tr><td>@row.CreatedAt.ToUniversalTime().ToString("dd/MM/yyyy HH:mm")</td><td>@row.ClientId</td><td>@row.UserId</td><td>@row.Provider</td><td>@row.Model</td><td>@row.Status</td><td>@row.EventCode</td></tr> }
+  </tbody></table>
+  <h2 class="h5">Falhas recentes</h2>
+  <table class="table"><thead><tr><th>Quando (UTC)</th><th>Tenant</th><th>Provider</th><th>Status</th><th>Evento</th></tr></thead><tbody>
+    @foreach (var row in failures) { <tr><td>@row.CreatedAt.ToUniversalTime().ToString("dd/MM/yyyy HH:mm")</td><td>@row.ClientId</td><td>@row.Provider</td><td>@row.Status</td><td>@row.EventCode</td></tr> }
+  </tbody></table>
+</section>

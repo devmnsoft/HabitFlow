@@ -2,6 +2,16 @@
 @{
     ViewData["Title"] = "Minha assinatura";
     var subscription = ViewBag.Subscription as HabitFlow.Domain.Subscription;
+    var checkoutEnabled = ViewBag.CheckoutEnabled as bool? ?? false;
+    string PlanName(string? code) => code?.ToLowerInvariant() switch { "free" => "Free", "ritmo" or "premium" => "Premium", "team" => "Team", "enterprise" => "Enterprise", _ => code ?? "Free" };
+    string StatusName(HabitFlow.Domain.SubscriptionStatus status) => status switch
+    {
+        HabitFlow.Domain.SubscriptionStatus.Active => "Ativa",
+        HabitFlow.Domain.SubscriptionStatus.Pending or HabitFlow.Domain.SubscriptionStatus.PaymentPending or HabitFlow.Domain.SubscriptionStatus.PastDue => "Pagamento pendente",
+        HabitFlow.Domain.SubscriptionStatus.Canceled => "Cancelada",
+        HabitFlow.Domain.SubscriptionStatus.Trial or HabitFlow.Domain.SubscriptionStatus.Trialing => "Avaliação",
+        _ => "Em análise"
+    };
 }
 
 <div class="py-4">
@@ -19,18 +29,27 @@
     <div class="card mb-4">
         <div class="card-body">
             <h2 class="h5">Assinatura atual</h2>
+            @if (!checkoutEnabled)
+            {
+                <div class="alert alert-info" role="status">Checkout online indisponível neste ambiente. Nenhuma cobrança é simulada. Para contratar ou regularizar, fale com <a href="mailto:comercial@mnsoft.com.br">comercial@mnsoft.com.br</a> ou <a href="/support">abra um chamado</a>.</div>
+            }
             @if (subscription is null)
             {
-                <p>Você está no plano Gratuito.</p>
+                <p>Você está no plano Free. Os limites desse plano continuam valendo.</p>
                 <a href="/plans" class="btn btn-primary">Ver planos</a>
             }
             else
             {
+                var pending = subscription.Status is HabitFlow.Domain.SubscriptionStatus.Pending or HabitFlow.Domain.SubscriptionStatus.PaymentPending or HabitFlow.Domain.SubscriptionStatus.PastDue;
+                if (pending)
+                {
+                    <div class="alert alert-warning" role="status">Pagamento pendente. Os recursos pagos ainda não foram liberados.</div>
+                }
                 <dl class="row">
                     <dt class="col-sm-3">Plano</dt>
-                    <dd class="col-sm-9">@subscription.PlanCode</dd>
+                    <dd class="col-sm-9">@PlanName(subscription.PlanCode)</dd>
                     <dt class="col-sm-3">Status</dt>
-                    <dd class="col-sm-9">@subscription.Status</dd>
+                    <dd class="col-sm-9">@StatusName(subscription.Status)</dd>
                     <dt class="col-sm-3">Ciclo</dt>
                     <dd class="col-sm-9">@subscription.BillingCycle</dd>
                     <dt class="col-sm-3">Próxima cobrança / fim do período</dt>
@@ -47,7 +66,7 @@
                     <form action="/account/billing/cancel" method="post">
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="reason" value="Cancelamento solicitado pelo titular" />
-                        <button class="btn btn-outline-danger" type="submit">Cancelar assinatura</button>
+                        <button class="btn btn-outline-danger" type="submit" data-confirm="Cancelar a assinatura ao fim do período já pago?" data-confirm-label="Cancelar assinatura" data-loading-text="Cancelando…">Cancelar assinatura</button>
                     </form>
                 }
             }

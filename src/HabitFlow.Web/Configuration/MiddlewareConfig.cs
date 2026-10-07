@@ -11,6 +11,7 @@ public static class MiddlewareConfig
             app.UseHsts();
         }
 
+        app.UseMiddleware<SecurityHeadersMiddleware>();
         app.UseMiddleware<CorrelationIdMiddleware>();
         app.UseMiddleware<GlobalExceptionMiddleware>();
         app.UseStaticFiles();

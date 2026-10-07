@@ -3,7 +3,7 @@ import { join, relative } from "node:path";
 
 const distOnly = process.argv.includes("--dist-only");
 const roots = distOnly ? ["dist"] : ["."];
-const ignoredDirs = new Set([".git", "node_modules", ".firebase", "dist"]);
+const ignoredDirs = new Set([".git", "node_modules", ".firebase", "dist", "bin", "obj", "test-results", "playwright-report"]);
 const allowedFiles = new Set(["package-lock.json", ".gitignore", ".firebaseignore", "scripts/security-scan.js", "scripts/security-dist-scan.js"]);
 // Reviewed false positives. Keep this list file- and rule-specific: adding a
 // directory or suppressing every rule would hide newly committed credentials.
@@ -63,7 +63,7 @@ async function walk(dir) {
 let findings = [];
 for (const root of roots) {
   for (const file of await walk(root)) {
-    const rel = relative(process.cwd(), file);
+    const rel = relative(process.cwd(), file).replaceAll("\\", "/");
     if (!distOnly && /(^|\/)\.runtimeconfig\.json$/i.test(rel)) findings.push(`${rel}:1 .runtimeconfig.json versionado`);
     if (!distOnly && /(^|\/)\.env($|\.)/i.test(rel) && !/\.env(\.[^.]+)?\.example$/i.test(rel)) findings.push(`${rel}:1 .env versionado`);
     if (allowedFiles.has(rel) || /\.(png|jpg|jpeg|gif|webp|ico|svg|woff2?)$/i.test(rel)) continue;

@@ -1,0 +1,20 @@
+@model IReadOnlyList<HabitFlow.Domain.AiUsageEventRow>
+@{
+    ViewData["Title"] = "Uso da IA";
+    var usage = ViewBag.Usage as HabitFlow.Domain.AiTenantConsumption;
+}
+<section class="container py-4">
+  <h1>IA da sua conta</h1>
+  <p>Esta tela mostra só o consumo deste tenant. Chaves, tokens e a configuração global não aparecem aqui.</p>
+  @if (ViewBag.Unavailable is true) { <div class="alert alert-warning" role="status">Não foi possível consultar o uso agora. O restante do HabitFlow continua disponível.</div> }
+  <dl class="row">
+    <dt class="col-sm-3">Status no plano</dt><dd class="col-sm-9">@(ViewBag.Included is true ? "Incluído" : "Não incluído")</dd>
+    <dt class="col-sm-3">Limite diário</dt><dd class="col-sm-9">@ViewBag.Limit</dd>
+    <dt class="col-sm-3">Concluídas hoje</dt><dd class="col-sm-9">@(usage?.Calls ?? 0)</dd>
+    <dt class="col-sm-3">Bloqueios hoje</dt><dd class="col-sm-9">@(usage?.Blocked ?? 0)</dd>
+  </dl>
+  <h2 class="h5">Chamadas recentes</h2>
+  <table class="table"><thead><tr><th>Quando (UTC)</th><th>Provider</th><th>Modelo</th><th>Status</th></tr></thead><tbody>
+    @foreach (var row in Model) { <tr><td>@row.CreatedAt.ToUniversalTime().ToString("dd/MM/yyyy HH:mm")</td><td>@row.Provider</td><td>@row.Model</td><td>@row.Status</td></tr> }
+  </tbody></table>
+</section>
