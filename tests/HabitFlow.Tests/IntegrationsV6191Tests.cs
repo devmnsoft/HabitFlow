@@ -50,6 +50,23 @@ public sealed class IntegrationsV6191Tests
         Assert.Contains("ListAsync(clientId, current.UserId", source);
     }
 
+    [Fact]
+    public void CalendarIntegrationProvidesAuthenticatedDownloadRevocationAndNoFakeRoutineToggle()
+    {
+        var root = FindRoot();
+        var controller = File.ReadAllText(Path.Combine(root, "src/HabitFlow.Web/Controllers/IntegrationsController.cs"));
+        var view = File.ReadAllText(Path.Combine(root, "src/HabitFlow.Web/Views/Integrations/Index.cshtml"));
+
+        Assert.Contains("[HttpGet(\"calendar/download\")]", controller);
+        Assert.Contains("calendarExport.ExportAsync", controller);
+        Assert.Contains("[HttpPost(\"calendar/revoke\")]", controller);
+        Assert.Contains("RevokeCalendarAsync", controller);
+        Assert.Contains("routines: false", controller);
+        Assert.Contains("/integrations/calendar/download", view);
+        Assert.Contains("/integrations/calendar/revoke", view);
+        Assert.DoesNotContain("name=\"includeRoutines\"", view, StringComparison.OrdinalIgnoreCase);
+    }
+
     static string FindRoot()
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);

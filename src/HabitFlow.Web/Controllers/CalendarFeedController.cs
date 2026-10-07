@@ -5,23 +5,39 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace HabitFlow.Web.Controllers;
 
-public sealed class CalendarFeedController(IIntegrationRepository integrations, IHabitRepository habits) : ControllerBase
+public sealed class CalendarFeedController(
+    IIntegrationRepository integrations,
+    ICalendarExportService calendarExport) : ControllerBase
 {
     [HttpGet("calendar/{token}.ics")]
     [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
-    public async Task<IActionResult> Feed(string token, CancellationToken ct)
+    public async Task<IActionResult> Feed(string token, DateOnly? from, DateOnly? to, CancellationToken ct)
     {
-        if (token.Length != 64) return NotFound();
+        if (token.Length != 64 || !token.All(Uri.IsHexDigit)) return NotFound();
+        var periodStart = from ?? DateOnly.FromDateTime(DateTime.UtcNow);
+        if (periodStart == DateOnly.MaxValue)
+            return BadRequest(new ProblemDetails
+            {
+                Title = "Período inválido",
+                Detail = "Informe um período de até 366 dias, com a data inicial antes da data final."
+            });
+        var periodEnd = to ?? periodStart.AddDays(30);
+        if (!CalendarExportService.IsValidPeriod(periodStart, periodEnd))
+        {
+            return BadRequest(new ProblemDetails
+            {
+                Title = "Período inválido",
+                Detail = "Informe um período de até 366 dias, com a data inicial antes da data final."
+            });
+        }
+
         var feed = await integrations.FindCalendarFeedAsync(IntegrationService.HashSecret(token), ct);
         if (feed is null) return NotFound();
-        var output = new StringBuilder("BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//HabitFlow//Calendar 6.19.1//PT-BR\r\nCALSCALE:GREGORIAN\r\n");
-        if (feed.IncludeHabits)
-            foreach (var habit in await habits.ListActiveAsync(feed.ClientId, feed.UserId, ct))
-                output.Append("BEGIN:VEVENT\r\nUID:").Append(habit.Id).Append("@habitflow\r\nDTSTART;VALUE=DATE:").Append(DateTime.UtcNow.ToString("yyyyMMdd")).Append("\r\nRRULE:FREQ=DAILY\r\nSUMMARY:").Append(Escape(habit.Name)).Append("\r\nEND:VEVENT\r\n");
-        output.Append("END:VCALENDAR\r\n");
+
+        var calendar = await calendarExport.ExportAsync(feed, periodStart, periodEnd, ct);
         await integrations.TouchCalendarFeedAsync(feed.Id, ct);
         Response.Headers.CacheControl = "no-store";
-        return Content(output.ToString(), "text/calendar; charset=utf-8", Encoding.UTF8);
+        return File(Encoding.UTF8.GetBytes(calendar), "text/calendar; charset=utf-8",
+            $"habitflow-{periodStart:yyyyMMdd}-{periodEnd:yyyyMMdd}.ics");
     }
-    static string Escape(string value) => value.Replace("\\", "\\\\").Replace(";", "\\;").Replace(",", "\\,").Replace("\r", "").Replace("\n", "\\n");
 }

@@ -43,6 +43,7 @@ public static class DependencyInjection
         services.AddScoped<CurrentUserContext>();
         services.AddScoped<CurrentTenantService>();
         services.AddScoped<IntegrationService>();
+        services.AddScoped<ICalendarExportService, CalendarExportService>();
         services.AddScoped<GlobalSearchService>();
         services.AddScoped<HabitPolicy>();
         services.AddScoped<HabitScheduleNormalizer>();
