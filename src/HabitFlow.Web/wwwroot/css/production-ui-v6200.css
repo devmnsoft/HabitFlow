@@ -135,6 +135,11 @@ small {
   border-radius: var(--hf-prod-radius);
 }
 
+select option {
+  color: #12231d;
+  background-color: #ffffff;
+}
+
 :is(input, textarea)::placeholder {
   color: var(--hf-prod-disabled);
   opacity: 1;

@@ -1,20 +1,92 @@
-@model IReadOnlyList<HabitFlow.Domain.AiUsageEventRow>
+@model HabitFlow.Application.AssistantOptions
 @{
-    ViewData["Title"] = "Uso da IA";
-    var usage = ViewBag.Usage as HabitFlow.Domain.AiTenantConsumption;
+    ViewData["Title"] = "IA do Tenant — Governança e Limites";
+    var plan = ViewBag.EffectivePlan as string ?? "Premium";
+    var canUseAi = ViewBag.CanUseAi is true;
 }
-<section class="container py-4">
-  <h1>IA da sua conta</h1>
-  <p>Esta tela mostra só o consumo deste tenant. Chaves, tokens e a configuração global não aparecem aqui.</p>
-  @if (ViewBag.Unavailable is true) { <div class="alert alert-warning" role="status">Não foi possível consultar o uso agora. O restante do HabitFlow continua disponível.</div> }
-  <dl class="row">
-    <dt class="col-sm-3">Status no plano</dt><dd class="col-sm-9">@(ViewBag.Included is true ? "Incluído" : "Não incluído")</dd>
-    <dt class="col-sm-3">Limite diário</dt><dd class="col-sm-9">@ViewBag.Limit</dd>
-    <dt class="col-sm-3">Concluídas hoje</dt><dd class="col-sm-9">@(usage?.Calls ?? 0)</dd>
-    <dt class="col-sm-3">Bloqueios hoje</dt><dd class="col-sm-9">@(usage?.Blocked ?? 0)</dd>
-  </dl>
-  <h2 class="h5">Chamadas recentes</h2>
-  <table class="table"><thead><tr><th>Quando (UTC)</th><th>Provider</th><th>Modelo</th><th>Status</th></tr></thead><tbody>
-    @foreach (var row in Model) { <tr><td>@row.CreatedAt.ToUniversalTime().ToString("dd/MM/yyyy HH:mm")</td><td>@row.Provider</td><td>@row.Model</td><td>@row.Status</td></tr> }
-  </tbody></table>
+
+<section class="hf-shell hf-space-y-6">
+    <header class="hf-page-header">
+        <div>
+            <span class="hf-badge hf-badge-commercial">SaaS v6.20.0</span>
+            <h1 class="hf-title-1">IA do Tenant e Assistente</h1>
+            <p class="hf-subtitle">Gerencie o uso do coach inteligente, provedores permitidos e limites de consumo da organização.</p>
+        </div>
+        <div class="hf-header-actions">
+            <a href="/admin/assistant" class="btn btn-outline-secondary">Parâmetros Avançados</a>
+            <a href="/assistant" class="btn btn-primary">Testar Assistente</a>
+        </div>
+    </header>
+
+    @if (TempData["Success"] is not null)
+    {
+        <div class="alert alert-success" role="alert">
+            @TempData["Success"]
+        </div>
+    }
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="hf-card hf-space-y-4">
+                <h2 class="hf-title-2">Políticas do Assistente IA</h2>
+                <p class="text-muted">Os provedores utilizam credenciais seguras do ambiente de produção (Groq, Gemini e DeepSeek). Chaves, tokens e a configuração global não aparecem nesta tela para preservar a segurança da infraestrutura.</p>
+
+                <form method="post" action="/tenant-ai/update" class="hf-space-y-4">
+                    @Html.AntiForgeryToken()
+
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="enabled" name="enabled" value="true" @(Model.Enabled && canUseAi ? "checked" : "") @(!canUseAi ? "disabled" : "") />
+                        <label class="form-check-label fw-bold" for="enabled">Habilitar Assistente IA para Membros do Tenant</label>
+                    </div>
+
+                    @if (!canUseAi)
+                    {
+                        <div class="alert alert-warning">
+                            O plano atual (<strong>@plan</strong>) não possui o recurso de IA ativo. Para liberar o coach inteligente para seu time, faça upgrade para o plano <strong>Team</strong> ou <strong>Enterprise</strong>.
+                        </div>
+                    }
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="provider" class="form-label">Provedor Ativo</label>
+                            <select id="provider" name="provider" class="form-select" @(!canUseAi ? "disabled" : "")>
+                                <option value="Disabled" selected="@(Model.Provider == "Disabled")">Desabilitado</option>
+                                <option value="Knowledge" selected="@(Model.Provider == "Knowledge")">Base de Conhecimento Local (Sem custo)</option>
+                                <option value="Groq" selected="@(Model.Provider == "Groq")">Groq (Llama 3)</option>
+                                <option value="Gemini" selected="@(Model.Provider == "Gemini")">Google Gemini</option>
+                                <option value="DeepSeek" selected="@(Model.Provider == "DeepSeek")">DeepSeek</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="model" class="form-label">Modelo Customizado (Opcional)</label>
+                            <input type="text" id="model" name="model" class="form-control" value="@Model.Model" placeholder="Padrão recomendado da plataforma" @(!canUseAi ? "disabled" : "") />
+                        </div>
+                    </div>
+
+                    <div class="hf-actions-bar">
+                        <button type="submit" class="btn btn-primary" @(!canUseAi ? "disabled" : "")>Salvar Diretrizes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="hf-card hf-space-y-4">
+                <h3 class="hf-title-3">Cota e Diretrizes</h3>
+                <dl class="hf-dl">
+                    <dt>Plano Ativo</dt>
+                    <dd><span class="badge bg-success">@plan</span></dd>
+                    <dt>Cota Diária por Usuário</dt>
+                    <dd>@(plan.Equals("Enterprise", StringComparison.OrdinalIgnoreCase) ? "500 req/dia" : plan.Equals("Team", StringComparison.OrdinalIgnoreCase) ? "100 req/dia" : "40 req/dia")</dd>
+                    <dt>Proteção de Dados</dt>
+                    <dd class="text-success">Ativa (Sanitização LGPD)</dd>
+                    <dt>Isolamento Multi-Tenant</dt>
+                    <dd class="text-success">Garantido por ID de Cliente</dd>
+                </dl>
+                <div class="alert alert-info small mb-0">
+                    A IA nunca acessa credenciais, senhas, cartões, CPF/CNPJ de outros clientes ou dados de terceiros.
+                </div>
+            </div>
+        </div>
+    </div>
 </section>

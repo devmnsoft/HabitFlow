@@ -103,9 +103,31 @@ public sealed class AiUsageLimiter
 
     public int LimitFor(UserPlan plan) => plan == UserPlan.Premium ? 40 : 5;
 
+    public int LimitFor(string? planCode) => (planCode ?? "").ToLowerInvariant() switch
+    {
+        "enterprise" or "evolucao" => 500,
+        "team" => 100,
+        "premium" or "ritmo" or "premium_monthly" or "premium_yearly" => 40,
+        _ => 0
+    };
+
     public bool TryConsume(Guid clientId, Guid userId, UserPlan plan)
     {
         var limit = LimitFor(plan);
+        if (limit <= 0) return false;
+        var key = $"{DateTime.UtcNow:yyyyMMdd}:{clientId:N}:{userId:N}";
+        while (true)
+        {
+            var current = counts.GetOrAdd(key, 0);
+            if (current >= limit) return false;
+            if (counts.TryUpdate(key, current + 1, current)) return true;
+        }
+    }
+
+    public bool TryConsume(Guid clientId, Guid userId, string planCode)
+    {
+        var limit = LimitFor(planCode);
+        if (limit <= 0) return false;
         var key = $"{DateTime.UtcNow:yyyyMMdd}:{clientId:N}:{userId:N}";
         while (true)
         {
@@ -132,17 +154,19 @@ public sealed class AiKnowledgeBaseService(AssistantKnowledgeService articles)
         ["/my-day"] = "Meu Dia mostra a rotina de hoje. Marque o que concluiu ou adie sem apagar o hábito.",
         ["/reminders"] = "Em Lembretes, escolha o hábito e o horário. Push depende da permissão do navegador.",
         ["/reports"] = "Relatórios mostram consistência no período permitido pelo seu plano.",
-        ["/plans"] = "Planos compara Free, Premium, Team e Enterprise. A contratação usa o fluxo de checkout, não o chat.",
+        ["/plans"] = "Planos compara Premium, Team e Enterprise com 15 dias de teste grátis. A contratação usa o fluxo seguro de checkout.",
         ["/billing"] = "Minha assinatura mostra o plano atual e o estado da cobrança. Alterações de pagamento ficam nesta tela.",
         ["/support"] = "Suporte reúne dúvidas e abertura de chamado. Não envie senha nem token.",
         ["/assistant"] = "O Coach explica o HabitFlow com dados agregados. Ele não altera plano, senha ou dados de outro tenant.",
+        ["/tenant-ai"] = "Em IA do Tenant, o administrador acompanha as políticas de IA, cotas e consumo da organização.",
         ["/admin"] = "A área administrativa é restrita ao papel Admin e não mostra segredos de integração.",
         ["/superadmin"] = "O SuperAdmin opera a plataforma. Cada ação crítica pede confirmação e fica auditada.",
+        ["/superadmin/ai"] = "No SuperAdmin IA, a plataforma ativa ou desativa provedores Groq, Gemini e DeepSeek com segredos seguros.",
         ["/admin/onboarding"] = "A implantação mostra o que já foi feito, o que está pendente e o que pode ser ignorado com justificativa. A conclusão só libera quando cada etapa está encerrada.",
         ["/admin/templates"] = "Templates globais são só leitura para o tenant. Templates próprios dependem do plano e nascem já ligados à conta, sem digitar ID.",
         ["/superadmin/customer-success"] = "O painel mostra indicadores lidos do banco. Onde a leitura falha, o texto é não disponível.",
         ["/notifications/alerts"] = "Os avisos entram no aplicativo só quando a condição e a preferência permitem. E-mail e WhatsApp não são enviados por esta tela.",
-        ["/habit-library"] = "Escolha um template e confirme antes de duplicar um hábito. O plano Free respeita o limite de hábitos ativos."
+        ["/habit-library"] = "Escolha um template e confirme antes de duplicar um hábito. Durante o trial de 15 dias, você tem acesso completo à biblioteca."
     };
 
     public bool MatchesGuide(string message) => articles.MatchesGuide(message);
