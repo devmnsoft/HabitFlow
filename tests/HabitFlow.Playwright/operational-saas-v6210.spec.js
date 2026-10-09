@@ -65,9 +65,8 @@ test.describe('HabitFlow v6.21.0 - Operação SaaS e Homologação Visual', () =
     ];
 
     for (const route of protectedRoutes) {
-      const res = await page.goto(route);
+      await page.goto(route, { waitUntil: 'domcontentloaded' });
       const url = page.url();
-      // Não autenticado é redirecionado para login ou acesso negado
       expect(url).toMatch(/login|access-denied|forbidden/i);
     }
 
