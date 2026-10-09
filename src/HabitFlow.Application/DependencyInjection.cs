@@ -226,6 +226,11 @@ public static class DependencyInjection
                 client.BaseAddress = new Uri(uri.GetLeftPart(UriPartial.Path).TrimEnd('/') + "/");
         }
         services.AddHttpClient<TelegramService>();
+        services.AddHttpClient<WebhookDispatcherService>();
+        services.AddScoped<OfflineSyncService>();
+        services.AddScoped<DataPortabilityService>();
+        services.AddScoped<AiMobileIntegrationService>();
+        services.AddScoped<NotificationEventDispatcher>();
         return services;
     }
 }

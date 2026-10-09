@@ -1,2 +1,46 @@
 @{ Layout=null; }
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#10b981"><title>HabitFlow · Offline</title><style>body{margin:0;min-height:100svh;display:grid;place-items:center;padding:20px;background:linear-gradient(145deg,#ecfdf5,#f8fafc);font:16px system-ui;color:#17352b}.card{max-width:520px;background:#fff;padding:clamp(24px,7vw,48px);border-radius:28px;box-shadow:0 24px 60px #064e3b1a;text-align:center}.mark{font-size:48px}h1{font-size:clamp(28px,8vw,42px);margin:.3em}p{line-height:1.6}.sync{color:#64748b;font-size:14px}button{min-height:48px;padding:0 24px;border:0;border-radius:14px;background:#047857;color:#fff;font-weight:700;font-size:16px;cursor:pointer}button:focus-visible{outline:3px solid #34d399;outline-offset:3px}</style></head><body><main class="card"><div class="mark">🌱</div><h1>Você está offline</h1><p>Suas informações recentes continuam visíveis quando possível. Assim que a conexão voltar, o HabitFlow atualiza tudo.</p><p class="sync" id="last-sync">Última sincronização não disponível.</p><button onclick="location.reload()">Tentar novamente</button></main><script>const value=localStorage.getItem('habitflow:last-sync');if(value)document.querySelector('#last-sync').textContent='Última sincronização: '+new Date(value).toLocaleString('pt-BR');</script></body></html>
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#10B981">
+  <title>HabitFlow · Modo Offline</title>
+  <style>
+    body { margin:0; min-height:100svh; display:grid; place-items:center; padding:20px; background:linear-gradient(145deg,#ecfdf5,#f8fafc); font:16px system-ui,-apple-system,sans-serif; color:#17352b; }
+    .card { max-width:540px; width:100%; background:#fff; padding:clamp(24px,6vw,44px); border-radius:24px; box-shadow:0 20px 50px rgba(6,78,59,.12); text-align:center; box-sizing:border-box; }
+    .mark { font-size:44px; margin-bottom:8px; }
+    h1 { font-size:clamp(24px,6vw,32px); margin:0 0 12px; color:#064e3b; }
+    p { line-height:1.6; margin:0 0 16px; color:#334155; }
+    .sync-info { color:#64748b; font-size:14px; margin-bottom:24px; background:#f1f5f9; padding:10px 14px; border-radius:12px; }
+    .actions { display:flex; flex-direction:column; gap:10px; }
+    button, a.btn { display:inline-block; box-sizing:border-box; width:100%; min-height:48px; line-height:48px; padding:0 24px; border:0; border-radius:12px; font-weight:700; font-size:16px; cursor:pointer; text-decoration:none; }
+    .primary { background:#047857; color:#fff; }
+    .primary:hover { background:#065f46; }
+    .secondary { background:#f1f5f9; color:#1e293b; }
+    .secondary:hover { background:#e2e8f0; }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <div class="mark">🌱</div>
+    <h1>Modo Offline Controlado</h1>
+    <p>Você está temporariamente sem conexão com a internet. Suas ações e check-ins continuam sendo guardados com segurança na fila local e serão sincronizados automaticamente assim que você reconectar.</p>
+    <div class="sync-info" id="sync-status">Verificando status da fila...</div>
+    <div class="actions">
+      <button class="primary" type="button" onclick="location.reload()">Tentar reconectar agora</button>
+      <a class="btn secondary" href="/my-day">Voltar para Meu Dia</a>
+    </div>
+  </main>
+  <script src="/js/offline-sync.js"></script>
+  <script>
+    const queue = window.HabitFlowOffline ? window.HabitFlowOffline.getQueue() : [];
+    const statusEl = document.getElementById('sync-status');
+    if (statusEl) {
+      statusEl.textContent = queue.length > 0
+        ? `${queue.length} ação(ões) pendente(s) na fila para envio.`
+        : 'Fila local limpa. Nenhuma ação pendente.';
+    }
+  </script>
+</body>
+</html>

@@ -3,7 +3,7 @@ import { join, relative } from "node:path";
 
 const distOnly = process.argv.includes("--dist-only");
 const roots = distOnly ? ["dist"] : ["."];
-const ignoredDirs = new Set([".git", "node_modules", ".firebase", "dist", "bin", "obj", "test-results", "playwright-report"]);
+const ignoredDirs = new Set([".git", "node_modules", ".firebase", "dist", "bin", "obj", "publish", "test-results", "playwright-report"]);
 const allowedFiles = new Set(["package-lock.json", ".gitignore", ".firebaseignore", "scripts/security-scan.js", "scripts/security-dist-scan.js"]);
 // Reviewed false positives. Keep this list file- and rule-specific: adding a
 // directory or suppressing every rule would hide newly committed credentials.

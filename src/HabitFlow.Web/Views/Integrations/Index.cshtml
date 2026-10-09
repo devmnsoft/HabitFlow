@@ -1,17 +1,370 @@
 @using HabitFlow.Domain
-@{ ViewData["Title"] = "Integrações"; var keys=(IReadOnlyList<ApiKeyRecord>)ViewBag.ApiKeys; var hooks=(IReadOnlyList<IntegrationWebhook>)ViewBag.Webhooks; var calendar=(CalendarFeed?)ViewBag.Calendar; }
+@{
+    ViewData["Title"] = "Central de Integrações e Portabilidade";
+    var keys = (IReadOnlyList<ApiKeyRecord>)ViewBag.ApiKeys;
+    var hooks = (IReadOnlyList<IntegrationWebhook>)ViewBag.Webhooks;
+    var calendar = (CalendarFeed?)ViewBag.Calendar;
+    var smtpOk = (bool)(ViewBag.SmtpConfigured ?? false);
+    var waOk = (bool)(ViewBag.WhatsAppConfigured ?? false);
+}
+
 <link rel="stylesheet" href="~/css/integrations.css" asp-append-version="true" />
-<main class="integrations-shell">
-  <header class="integrations-hero"><span class="eyebrow">HABITFLOW CONNECT</span><h1>Integrações</h1><p>Conecte seus hábitos com segurança. Credenciais e tokens nunca voltam a ser exibidos.</p></header>
-  @if (ViewBag.NewSecret is string secret) { <aside class="secret-once" role="status"><strong>Copie agora — exibida uma única vez</strong><code id="new-key">@secret</code><button type="button" onclick="navigator.clipboard.writeText(document.getElementById('new-key').textContent)">Copiar chave</button></aside> }
-  @if (ViewBag.CalendarUrl is string url) { <aside class="secret-once"><strong>Nova URL do calendário</strong><code id="calendar-url">@url</code><button type="button" onclick="navigator.clipboard.writeText(document.getElementById('calendar-url').textContent)">Copiar link</button></aside> }
+
+<main class="integrations-shell" id="integrations-page">
+  <header class="integrations-hero">
+    <span class="eyebrow">HABITFLOW CONNECT &amp; PORTABILIDADE</span>
+    <h1>Central de Integrações</h1>
+    <p>Conecte seus hábitos, automatize processos, acesse a API pública e exerça a portabilidade segura dos seus dados.</p>
+  </header>
+
+  @if (TempData["Success"] is string success)
+  {
+    <aside class="alert alert-success mt-3" role="alert">@success</aside>
+  }
+  @if (TempData["Error"] is string error)
+  {
+    <aside class="alert alert-danger mt-3" role="alert">@error</aside>
+  }
+  @if (TempData["Info"] is string info)
+  {
+    <aside class="alert alert-info mt-3" role="alert">@info</aside>
+  }
+
+  @if (ViewBag.NewSecret is string secret)
+  {
+    <aside class="secret-once" role="status">
+      <strong>Chave de API criada — Atenção: Esta chave é exibida uma única vez!</strong>
+      <code id="new-key">@secret</code>
+      <button type="button" class="btn btn-sm btn-outline-dark" onclick="navigator.clipboard.writeText(document.getElementById('new-key').textContent); this.textContent='Copiado!';">Copiar chave</button>
+    </aside>
+  }
+
+  @if (ViewBag.NewWebhookSecret is string whSecret)
+  {
+    <aside class="secret-once" role="status">
+      <strong>Webhook registrado — Segredo de assinatura HMAC (exibido apenas agora):</strong>
+      <code id="new-wh-key">@whSecret</code>
+      <button type="button" class="btn btn-sm btn-outline-dark" onclick="navigator.clipboard.writeText(document.getElementById('new-wh-key').textContent); this.textContent='Copiado!';">Copiar segredo</button>
+    </aside>
+  }
+
+  @if (ViewBag.CalendarUrl is string url)
+  {
+    <aside class="secret-once" role="status">
+      <strong>URL do Feed Privado de Calendário:</strong>
+      <code id="calendar-url">@url</code>
+      <button type="button" class="btn btn-sm btn-outline-dark" onclick="navigator.clipboard.writeText(document.getElementById('calendar-url').textContent); this.textContent='Copiado!';">Copiar link</button>
+    </aside>
+  }
+
   <section class="integration-grid">
-    <article class="integration-card"><h2>Chaves de API</h2><p>Use no cabeçalho <code>X-Api-Key</code>. Limite de 60 requisições/minuto.</p>
-      <form method="post" action="/integrations/api-keys">@Html.AntiForgeryToken()<label>Nome<input name="name" required maxlength="80" /></label><fieldset><legend>Escopos</legend>@foreach(var scope in IntegrationScopes.Allowed){<label><input type="checkbox" name="scopes" value="@scope" /> @scope</label>}</fieldset><button class="primary">Criar chave</button></form>
-      <ul class="credential-list">@foreach(var key in keys){<li><span><strong>@key.Name</strong><small>@key.KeyPrefix… · último uso: @(key.LastUsedAt?.ToString("g") ?? "nunca")</small></span>@if(key.RevokedAt is null){<form method="post" action="/integrations/api-keys/@key.Id/revoke">@Html.AntiForgeryToken()<button>Revogar</button></form>}else{<span class="badge">Revogada</span>}</li>}</ul>
+    <!-- Card 1: Calendários -->
+    <article class="integration-card">
+      <div class="card-header-flex">
+        <h2>Calendários (Google &amp; Outlook)</h2>
+        <span class="badge @(calendar?.Enabled == true ? "bg-success" : "bg-secondary")">@(calendar?.Enabled == true ? "Feed Ativo" : "Inativo")</span>
+      </div>
+      <p>Sincronize seus hábitos com Google Agenda, Outlook ou Apple Calendar via feed privado ou arquivo <code>.ics</code>.</p>
+
+      <div class="d-flex flex-wrap gap-2 mb-3">
+        <a class="btn btn-outline-primary btn-sm" href="/integrations/calendar/download">Baixar .ics</a>
+        <form method="post" action="/integrations/calendar/rotate" class="d-inline">
+          @Html.AntiForgeryToken()
+          <input type="hidden" name="enabled" value="true" />
+          <input type="hidden" name="includeHabits" value="true" />
+          <button type="submit" class="btn btn-primary btn-sm">@(calendar?.Enabled == true ? "Rotacionar link" : "Ativar feed privado")</button>
+        </form>
+        @if (calendar?.Enabled == true)
+        {
+          <form method="post" action="/integrations/calendar/revoke" class="d-inline">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn btn-outline-danger btn-sm">Revogar feed</button>
+          </form>
+        }
+      </div>
+      <small class="text-muted d-block">Ao rotacionar ou revogar, a URL anterior é imediatamente invalidada para preservar sua privacidade.</small>
     </article>
-    <article class="integration-card"><h2>Calendário</h2><p>Exporte seus hábitos por arquivo ou feed privado. A rotação invalida imediatamente a URL anterior.</p><form method="get" action="/integrations/calendar/download"><button class="primary">Baixar .ics</button></form><form method="post" action="/integrations/calendar/rotate">@Html.AntiForgeryToken()<input type="hidden" name="enabled" value="true" /><input type="hidden" name="includeHabits" value="true" /><button>Gerar ou rotacionar link</button></form>@if(calendar?.Enabled == true){<form method="post" action="/integrations/calendar/revoke">@Html.AntiForgeryToken()<button>Revogar link atual</button></form>}else{<span class="badge">Feed externo inativo</span>}<p><small>Rotinas entram no calendário quando houver exportador próprio; esta tela não cria integração falsa.</small></p></article>
-    <article class="integration-card"><h2>Webhooks</h2><p>Disponível para Team/Empresarial. Entregas reais usam HTTPS, assinatura HMAC e retentativas idempotentes.</p><span class="badge premium">Recurso empresarial</span>@if(hooks.Count==0){<p>Nenhum endpoint configurado.</p>}</article>
-    <article class="integration-card"><h2>Importar e exportar</h2><p>CSV e JSON passam por prévia, validação de tamanho e detecção de duplicidade.</p><span class="badge">Em configuração segura</span><p>O processamento permanece desabilitado até que o plano e armazenamento de jobs estejam configurados.</p></article>
+
+    <!-- Card 2: Provedores Externos (SMTP & WhatsApp) -->
+    <article class="integration-card">
+      <div class="card-header-flex">
+        <h2>Canais e Notificações Externas</h2>
+      </div>
+      <ul class="provider-status-list">
+        <li>
+          <div>
+            <strong>E-mail Transacional (SMTP)</strong>
+            <small class="d-block text-muted">Usado para redefinição de senha e alertas críticos.</small>
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            <span class="badge @(smtpOk ? "bg-success" : "bg-warning text-dark")">@(smtpOk ? "Configurado" : "Não ativo")</span>
+            <form method="post" action="/integrations/test-provider" class="d-inline">
+              @Html.AntiForgeryToken()
+              <input type="hidden" name="provider" value="smtp" />
+              <button class="btn btn-outline-secondary btn-sm">Testar</button>
+            </form>
+          </div>
+        </li>
+        <li>
+          <div>
+            <strong>WhatsApp Comercial</strong>
+            <small class="d-block text-muted">Disparos de lembretes e avisos operacionais via API oficial.</small>
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            <span class="badge @(waOk ? "bg-success" : "bg-light text-muted border")">@(waOk ? "Conectado" : "Não configurado")</span>
+            <form method="post" action="/integrations/test-provider" class="d-inline">
+              @Html.AntiForgeryToken()
+              <input type="hidden" name="provider" value="whatsapp" />
+              <button class="btn btn-outline-secondary btn-sm">Diagnóstico</button>
+            </form>
+          </div>
+        </li>
+      </ul>
+      <small class="text-muted">Integrações externas com credenciais são configuradas pelo Administrador nas variáveis de ambiente.</small>
+    </article>
+
+    <!-- Card 3: Chaves de API Pública -->
+    <article class="integration-card">
+      <div class="card-header-flex">
+        <h2>API Pública por Tenant</h2>
+        <span class="badge bg-info text-dark">60 req/min</span>
+      </div>
+      <p>Integre seus hábitos a sistemas internos, scripts ou automações via cabeçalho <code>X-Api-Key</code>.</p>
+
+      <form method="post" action="/integrations/api-keys" class="mb-3">
+        @Html.AntiForgeryToken()
+        <div class="mb-2">
+          <label class="form-label" for="key-name">Nome da aplicação ou chave</label>
+          <input id="key-name" class="form-control form-control-sm" name="name" required maxlength="80" placeholder="Ex: Script Backup / Zapier" />
+        </div>
+        <fieldset class="mb-2">
+          <legend class="form-label fs-6">Escopos autorizados</legend>
+          <div class="d-flex flex-wrap gap-2">
+            <label class="form-check-label border p-1 rounded bg-light"><input class="form-check-input" type="checkbox" name="scopes" value="habits:read" checked /> habits:read</label>
+            <label class="form-check-label border p-1 rounded bg-light"><input class="form-check-input" type="checkbox" name="scopes" value="habits:write" checked /> habits:write</label>
+            <label class="form-check-label border p-1 rounded bg-light"><input class="form-check-input" type="checkbox" name="scopes" value="checkins:write" checked /> checkins:write</label>
+            <label class="form-check-label border p-1 rounded bg-light"><input class="form-check-input" type="checkbox" name="scopes" value="reports:read" /> reports:read</label>
+            <label class="form-check-label border p-1 rounded bg-light"><input class="form-check-input" type="checkbox" name="scopes" value="templates:read" /> templates:read</label>
+            <label class="form-check-label border p-1 rounded bg-light"><input class="form-check-input" type="checkbox" name="scopes" value="notifications:read" /> notifications:read</label>
+            <label class="form-check-label border p-1 rounded bg-light"><input class="form-check-input" type="checkbox" name="scopes" value="webhooks:manage" /> webhooks:manage</label>
+          </div>
+        </fieldset>
+        <button type="submit" class="btn btn-primary btn-sm">Criar nova chave</button>
+      </form>
+
+      <h4>Chaves ativas</h4>
+      @if (keys.Count == 0)
+      {
+        <p class="text-muted">Nenhuma chave de API criada até o momento.</p>
+      }
+      else
+      {
+        <ul class="credential-list">
+          @foreach (var key in keys)
+          {
+            <li>
+              <div>
+                <strong>@key.Name</strong>
+                <small>@key.KeyPrefix… · Criada em: @key.CreatedAt.ToString("d") · Último uso: @(key.LastUsedAt?.ToString("g") ?? "nunca")</small>
+                <small class="text-muted d-block">Escopos: @string.Join(", ", key.Scopes)</small>
+              </div>
+              <div>
+                @if (key.RevokedAt is null)
+                {
+                  <form method="post" action="/integrations/api-keys/@key.Id/revoke" onsubmit="return confirm('Revogar esta chave imediatamente?');">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-outline-danger btn-sm">Revogar</button>
+                  </form>
+                }
+                else
+                {
+                  <span class="badge bg-secondary">Revogada</span>
+                }
+              </div>
+            </li>
+          }
+        </ul>
+      }
+    </article>
+
+    <!-- Card 4: Webhooks de Saída -->
+    <article class="integration-card">
+      <div class="card-header-flex">
+        <h2>Webhooks de Saída (Eventos SaaS)</h2>
+        <span class="badge bg-primary">HMAC-SHA256</span>
+      </div>
+      <p>Receba notificações HTTP em tempo real sempre que eventos ocorrerem no HabitFlow.</p>
+
+      <form method="post" action="/integrations/webhooks" class="mb-3">
+        @Html.AntiForgeryToken()
+        <div class="mb-2">
+          <label class="form-label" for="wh-name">Nome do Endpoint</label>
+          <input id="wh-name" class="form-control form-control-sm" name="name" required maxlength="80" placeholder="Ex: Servidor de CRM / Webhook Make" />
+        </div>
+        <div class="mb-2">
+          <label class="form-label" for="wh-url">URL de Destino (deve ser HTTPS)</label>
+          <input id="wh-url" class="form-control form-control-sm" name="url" required type="url" placeholder="https://seu-servidor.com/webhook" />
+        </div>
+        <fieldset class="mb-2">
+          <legend class="form-label fs-6">Eventos a monitorar</legend>
+          <div class="d-flex flex-wrap gap-2">
+            @foreach (var ev in WebhookEvents.All)
+            {
+              <label class="form-check-label border p-1 rounded bg-light">
+                <input class="form-check-input" type="checkbox" name="events" value="@ev" checked /> @ev
+              </label>
+            }
+          </div>
+        </fieldset>
+        <button type="submit" class="btn btn-primary btn-sm">Cadastrar Webhook</button>
+      </form>
+
+      <h4>Webhooks cadastrados</h4>
+      @if (hooks.Count == 0)
+      {
+        <p class="text-muted">Nenhum webhook cadastrado.</p>
+      }
+      else
+      {
+        <ul class="credential-list">
+          @foreach (var wh in hooks)
+          {
+            <li>
+              <div>
+                <strong>@wh.Name</strong>
+                <small class="d-block text-break">@wh.Url</small>
+                <small class="text-muted">
+                  Status: @(wh.IsPaused ? "Pausado (falhas consecutivas)" : wh.Enabled ? "Ativo" : "Desativado") ·
+                  Último sucesso: @(wh.LastSuccessAt?.ToString("g") ?? "nunca")
+                </small>
+              </div>
+              <div class="d-flex gap-1">
+                <form method="post" action="/integrations/webhooks/@wh.Id/toggle" class="d-inline">
+                  @Html.AntiForgeryToken()
+                  <input type="hidden" name="enabled" value="@(wh.Enabled ? "false" : "true")" />
+                  <button type="submit" class="btn btn-sm @(wh.Enabled ? "btn-outline-warning" : "btn-outline-success")">
+                    @(wh.Enabled ? "Pausar" : "Ativar")
+                  </button>
+                </form>
+                <form method="post" action="/integrations/webhooks/@wh.Id/delete" class="d-inline" onsubmit="return confirm('Excluir este webhook definitivamente?');">
+                  @Html.AntiForgeryToken()
+                  <button type="submit" class="btn btn-sm btn-outline-danger">Excluir</button>
+                </form>
+              </div>
+            </li>
+          }
+        </ul>
+      }
+    </article>
+
+    <!-- Card 5: Portabilidade LGPD (Exportação e Importação) -->
+    <article class="integration-card" style="grid-column: 1 / -1;">
+      <div class="card-header-flex">
+        <h2>Portabilidade de Dados (Exportação &amp; Importação)</h2>
+        <span class="badge bg-success">LGPD Conforme</span>
+      </div>
+      <p>Exporte seu histórico integral em formato padronizado ou importe novos hábitos via planilha CSV.</p>
+
+      <div class="row g-3">
+        <div class="col-md-6 border-end pe-3">
+          <h4>Exportar Dados Pessoais</h4>
+          <p class="text-muted">Faça o download de todos os seus hábitos, check-ins, metas, revisões e notificações.</p>
+          <div class="d-flex gap-2">
+            <a class="btn btn-outline-primary" href="/integrations/export?format=csv">Exportar Planilha CSV</a>
+            <a class="btn btn-outline-secondary" href="/integrations/export?format=json">Exportar JSON Completo</a>
+          </div>
+        </div>
+
+        <div class="col-md-6 ps-3">
+          <h4>Importar Hábitos via CSV</h4>
+          <p class="text-muted">Formato esperado: <code>nome,categoria,frequencia,descricao,meta_dias_semana</code></p>
+
+          <form id="form-import-csv" method="post" enctype="multipart/form-data" action="/integrations/import/simulate">
+            @Html.AntiForgeryToken()
+            <div class="mb-2">
+              <input type="file" id="import-file" name="file" accept=".csv" class="form-control form-control-sm" required />
+            </div>
+            <button type="button" class="btn btn-outline-dark btn-sm" onclick="simulateCsvImport()">Simular importação</button>
+          </form>
+
+          <div id="simulation-results" class="mt-3" hidden>
+            <div class="alert alert-info py-2" id="simulation-summary"></div>
+            <ul id="simulation-errors" class="text-danger small ps-3"></ul>
+            <button type="button" id="btn-confirm-import" class="btn btn-success btn-sm mt-2" onclick="confirmImport()" hidden>Confirmar e Importar Válidos</button>
+          </div>
+        </div>
+      </div>
+    </article>
   </section>
 </main>
+
+<script>
+  let simulatedItems = [];
+
+  async function simulateCsvImport() {
+    const fileInput = document.getElementById('import-file');
+    if (!fileInput.files || fileInput.files.length === 0) {
+      alert('Selecione um arquivo CSV primeiro.');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', fileInput.files[0]);
+    const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+
+    try {
+      const response = await fetch('/integrations/import/simulate', {
+        method: 'POST',
+        headers: { 'RequestVerificationToken': token },
+        body: formData
+      });
+
+      const res = await response.json();
+      const summaryDiv = document.getElementById('simulation-summary');
+      const errorsList = document.getElementById('simulation-errors');
+      const confirmBtn = document.getElementById('btn-confirm-import');
+      const resContainer = document.getElementById('simulation-results');
+
+      resContainer.hidden = false;
+      summaryDiv.textContent = `Total no arquivo: ${res.totalRows} | Válidos: ${res.validRows} | Inconsistências: ${res.invalidRows}`;
+
+      errorsList.innerHTML = '';
+      (res.errors || []).forEach(err => {
+        const li = document.createElement('li');
+        li.textContent = err;
+        errorsList.appendChild(li);
+      });
+
+      simulatedItems = res.validItems || [];
+      confirmBtn.hidden = simulatedItems.length === 0;
+    } catch (err) {
+      alert('Erro ao simular importação: ' + err.message);
+    }
+  }
+
+  async function confirmImport() {
+    if (simulatedItems.length === 0) return;
+    const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+
+    try {
+      const response = await fetch('/integrations/import/execute', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'RequestVerificationToken': token
+        },
+        body: JSON.stringify(simulatedItems)
+      });
+
+      const res = await response.json();
+      if (response.ok) {
+        alert(`${res.importedCount} hábito(s) importado(s) com sucesso!`);
+        window.location.reload();
+      } else {
+        alert('Erro na importação: ' + (res.error || 'Falha ao processar.'));
+      }
+    } catch (err) {
+      alert('Erro na execução da importação: ' + err.message);
+    }
+  }
+</script>

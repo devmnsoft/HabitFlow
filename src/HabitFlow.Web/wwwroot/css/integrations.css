@@ -1,1 +1,141 @@
-.integrations-shell{max-width:1200px;margin:auto;padding:clamp(1rem,3vw,3rem)}.integrations-hero{padding:2.5rem;border-radius:24px;color:#fff;background:linear-gradient(135deg,#172554,#312e81 55%,#0f766e);box-shadow:0 18px 45px #17255433}.eyebrow{font-size:.75rem;letter-spacing:.18em;color:#99f6e4}.integration-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem;margin-top:1rem}.integration-card,.secret-once{padding:1.5rem;border:1px solid #dbe4f0;border-radius:18px;background:#fff;box-shadow:0 8px 28px #0f172a0d}.secret-once{margin-top:1rem;border-color:#14b8a6;background:#f0fdfa}.secret-once code{display:block;overflow-wrap:anywhere;margin:.75rem 0}.integration-card form{display:grid;gap:.75rem}.integration-card input[type=text],.integration-card input:not([type]){width:100%;padding:.7rem;border:1px solid #94a3b8;border-radius:9px}.integration-card fieldset{display:grid;grid-template-columns:1fr 1fr;border:0;padding:0}.primary{padding:.7rem 1rem;border:0;border-radius:10px;color:#fff;background:#4f46e5}.credential-list{padding:0;list-style:none}.credential-list li{display:flex;justify-content:space-between;align-items:center;padding:.75rem 0;border-top:1px solid #e2e8f0}.credential-list small{display:block;color:#64748b}.badge{display:inline-block;padding:.3rem .6rem;border-radius:999px;background:#e2e8f0}.badge.premium{background:#fef3c7;color:#92400e}@media(max-width:700px){.integration-grid{grid-template-columns:1fr}.integrations-hero{padding:1.5rem}.integration-card fieldset{grid-template-columns:1fr}}
+.integrations-shell {
+  max-width: 1200px;
+  margin: auto;
+  padding: clamp(1rem, 3vw, 2.5rem);
+}
+
+.integrations-hero {
+  padding: 2.2rem 2.5rem;
+  border-radius: 20px;
+  color: #fff;
+  background: linear-gradient(135deg, #064e3b, #047857 55%, #0f766e);
+  box-shadow: 0 16px 36px rgba(6, 78, 59, 0.2);
+  margin-bottom: 1.5rem;
+}
+
+.integrations-hero h1 {
+  font-size: clamp(1.75rem, 4vw, 2.25rem);
+  font-weight: 800;
+  margin: 0.25rem 0 0.5rem;
+  color: #fff;
+}
+
+.integrations-hero p {
+  color: #ecfdf5;
+  font-size: 1rem;
+  margin: 0;
+  max-width: 700px;
+}
+
+.eyebrow {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  color: #a7f3d0;
+  text-transform: uppercase;
+}
+
+.integration-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem;
+}
+
+.integration-card, .secret-once {
+  padding: 1.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 4px 18px rgba(15, 23, 42, 0.05);
+}
+
+.card-header-flex {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.integration-card h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.integration-card h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #334155;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.secret-once {
+  margin-bottom: 1.5rem;
+  border: 2px solid #059669;
+  background: #ecfdf5;
+  color: #064e3b;
+}
+
+.secret-once code {
+  display: block;
+  overflow-wrap: anywhere;
+  margin: 0.75rem 0;
+  padding: 0.75rem 1rem;
+  background: #ffffff;
+  border: 1px solid #a7f3d0;
+  border-radius: 8px;
+  font-family: monospace;
+  font-size: 0.95rem;
+  color: #065f46;
+  font-weight: 700;
+}
+
+.credential-list {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.credential-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 0.85rem 0;
+  border-top: 1px solid #f1f5f9;
+}
+
+.credential-list small {
+  display: block;
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+.provider-status-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1rem;
+}
+
+.provider-status-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.85rem 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+@media (max-width: 768px) {
+  .integration-grid {
+    grid-template-columns: 1fr;
+  }
+  .integrations-hero {
+    padding: 1.5rem;
+  }
+  .credential-list li {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+}

@@ -33,6 +33,11 @@ public static class PlanFeatureCodes
     public const string AiAssistant = "ai_assistant";
     public const string Teams = "teams";
     public const string CorporateFeatures = "corporate_features";
+    public const string Webhooks = "webhooks";
+    public const string PublicApi = "public_api";
+    public const string DataPortability = "data_portability";
+    public const string PushNotifications = "push_notifications";
+    public const string AdvancedOffline = "advanced_offline";
 }
 
 public sealed record PlanFeatureValue(string Code, string Name, string ValueType, bool? BoolValue, int? IntValue, string? StringValue);

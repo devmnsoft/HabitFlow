@@ -33,7 +33,7 @@ public interface IAssistantProvider
 
 public sealed class AssistantSafetyService
 {
-    private static readonly Regex SecretPattern = new(@"(?i)(password|senha|api[_ -]?key|token|secret|connection\s*string|cookie|authorization)\s*[:=]", RegexOptions.Compiled, TimeSpan.FromMilliseconds(100));
+    private static readonly Regex SecretPattern = new(@"(?i)(password|senha|api[_ -]?key|token|secret|connection\s*string|cookie|authorization)\s*[:=]", RegexOptions.Compiled, TimeSpan.FromMilliseconds(1000));
     private static readonly string[] Injection = ["ignore as instruções", "ignore previous", "prompt do sistema", "system prompt", "modo desenvolvedor", "jailbreak", "revele o prompt", "outro usuário", "outro tenant", "connection string"];
     private static readonly string[] Medical = ["diagnóstico", "autodiagnóstico", "automedicação", "qual remédio", "dose de", "suicídio", "me matar", "autoagressão"];
     private static readonly string[] LegalFinancial = ["aconselhamento jurídico", "processo judicial", "parecer jurídico", "qual ação comprar", "investimento garantido", "consultoria financeira"];

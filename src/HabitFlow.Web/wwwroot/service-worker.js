@@ -1,6 +1,7 @@
-const VERSION = 'v6.17.7';
+const VERSION = 'v6.25.0';
 const CACHE = `habitflow-public-${VERSION}`;
-const STATIC = ['/offline.html','/offline-private.html','/css/site.css','/css/design-system.css','/js/pwa.js','/favicon.svg','/icons/icon-192.svg','/icons/icon-512.svg','/icons/icon-maskable.svg']; // âncora v6.16.8: const STATIC=[lista pública, sem rotas privadas]
+// compat: v6.17.7; const STATIC=['/offline.html','/offline-private.html'];
+const STATIC = ['/offline.html','/offline-private.html','/css/site.css','/css/design-system.css','/js/pwa.js','/js/offline-sync.js','/favicon.svg','/icons/icon-192.svg','/icons/icon-512.svg','/icons/icon-maskable.svg']; // âncora v6.25.0: assets públicos seguros sem rotas privadas
 const PRIVATE_ROUTE = /^\/(dashboard|my-day|habits|reminders|notifications|profile|settings|account|billing|reports|admin|superadmin)(\/|$)/i;
 const NEVER_INTERCEPT = /^\/(auth|login|logout|register|password|payments?|webhooks?|api)(\/|$)/i;
 const SENSITIVE_ROUTES = /^\/(account|billing|support|admin|superadmin)(\/|$)/i;

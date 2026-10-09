@@ -13,6 +13,15 @@ public interface IIntegrationRepository
     Task UpsertCalendarFeedAsync(CalendarFeed feed, CancellationToken ct = default);
     Task TouchCalendarFeedAsync(Guid id, CancellationToken ct = default);
     Task<IReadOnlyList<IntegrationWebhook>> ListWebhooksAsync(Guid clientId, Guid userId, CancellationToken ct = default);
+    Task<IntegrationWebhook?> GetWebhookByIdAsync(Guid clientId, Guid id, CancellationToken ct = default);
+    Task<IReadOnlyList<IntegrationWebhook>> ListActiveWebhooksForEventAsync(Guid clientId, string eventName, CancellationToken ct = default);
     Task CreateWebhookAsync(IntegrationWebhook webhook, CancellationToken ct = default);
+    Task<bool> ToggleWebhookAsync(Guid clientId, Guid userId, Guid id, bool enabled, CancellationToken ct = default);
+    Task<bool> DeleteWebhookAsync(Guid clientId, Guid userId, Guid id, CancellationToken ct = default);
+    Task UpdateWebhookSuccessAsync(Guid id, CancellationToken ct = default);
+    Task UpdateWebhookFailureAsync(Guid id, bool autoPause, CancellationToken ct = default);
+    Task RecordDeliveryAttemptAsync(WebhookDeliveryAttemptRecord attempt, CancellationToken ct = default);
+    Task<IReadOnlyList<WebhookDeliveryAttemptRecord>> ListDeliveryAttemptsAsync(Guid clientId, Guid webhookId, int limit = 20, CancellationToken ct = default);
+    Task<WebhookDeliveryAttemptRecord?> GetDeliveryAttemptAsync(Guid clientId, Guid attemptId, CancellationToken ct = default);
     Task AddAuditAsync(Guid clientId, Guid userId, string eventName, object metadata, CancellationToken ct = default);
 }
