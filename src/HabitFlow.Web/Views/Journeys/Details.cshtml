@@ -1,0 +1,57 @@
+@model HabitFlow.Web.Models.JourneyDetailsViewModel
+@{
+    var journey = Model.Details.Journey;
+    ViewData["Title"] = journey.Name;
+}
+
+<section class="hf-page-shell">
+    <header class="hf-page-header">
+        <div>
+            <p class="hf-eyebrow">@journey.Category</p>
+            <h1>@journey.Name</h1>
+            <p>@journey.Description</p>
+        </div>
+        <a class="btn btn-outline-primary" href="/journeys">Voltar</a>
+    </header>
+
+    <div class="hf-split">
+        <article class="hf-panel">
+            <h2>Plano sugerido</h2>
+            <dl class="hf-definition-list">
+                <dt>Objetivo</dt><dd>@journey.Goal</dd>
+                <dt>Duracao</dt><dd>@journey.SuggestedDurationDays dias</dd>
+                <dt>Frequencia</dt><dd>@journey.Frequency</dd>
+                <dt>Plano minimo</dt><dd>@journey.MinimumPlan</dd>
+            </dl>
+            @if (Model.Details.Membership?.Status == "Active")
+            {
+                <form method="post" action="/journeys/@journey.Id/leave">
+                    @Html.AntiForgeryToken()
+                    <button class="btn btn-outline-danger" type="submit">Sair da jornada</button>
+                </form>
+            }
+            else
+            {
+                <form method="post" action="/journeys/@journey.Id/join">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="confirmed" value="true" />
+                    <button class="btn btn-primary" type="submit">Aderir com confirmacao</button>
+                </form>
+            }
+        </article>
+
+        <article class="hf-panel">
+            <h2>Habitos sugeridos</h2>
+            <ol class="hf-step-list">
+                @foreach (var step in Model.Details.Steps)
+                {
+                    <li>
+                        <strong>@step.Title</strong>
+                        <span>@step.Description</span>
+                        <small>@step.SuggestedHabitName - @step.SuggestedFrequency</small>
+                    </li>
+                }
+            </ol>
+        </article>
+    </div>
+</section>

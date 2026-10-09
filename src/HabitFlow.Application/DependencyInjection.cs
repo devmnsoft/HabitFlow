@@ -100,6 +100,8 @@ public static class DependencyInjection
         services.AddScoped<HabitTemplateFavoriteService>();
         services.AddScoped<HabitTemplateCollectionService>();
         services.AddScoped<GuidedJourneyService>();
+        services.AddScoped<HabitJourneyService>();
+        services.AddScoped<HabitAutomationService>();
         services.AddScoped<HabitScheduleService>();
         services.AddScoped<NotificationService>();
         services.AddScoped<NotificationCenterService>();

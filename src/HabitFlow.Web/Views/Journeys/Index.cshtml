@@ -1,0 +1,38 @@
+@model HabitFlow.Web.Models.JourneysIndexViewModel
+@{
+    ViewData["Title"] = "Jornadas guiadas";
+}
+
+<section class="hf-page-shell">
+    <header class="hf-page-header">
+        <div>
+            <p class="hf-eyebrow">HabitFlow v6.23</p>
+            <h1>Jornadas guiadas</h1>
+            <p>Escolha um objetivo e confirme os habitos sugeridos no seu ritmo.</p>
+        </div>
+        <a class="btn btn-outline-primary" href="/habit-library">Abrir marketplace</a>
+    </header>
+
+    <div class="hf-card-grid">
+        @foreach (var item in Model.Journeys)
+        {
+            <article class="hf-card">
+                <div class="hf-card-meta">
+                    <span>@item.Category</span>
+                    <span>@item.Difficulty</span>
+                    <span>@item.SuggestedDurationDays dias</span>
+                </div>
+                <h2>@item.Name</h2>
+                <p>@item.Description</p>
+                <p><strong>Objetivo:</strong> @item.Goal</p>
+                <div class="hf-tags">
+                    @foreach (var tag in item.Tags.Take(4))
+                    {
+                        <span>@tag</span>
+                    }
+                </div>
+                <a class="btn btn-primary" href="/journeys/@item.Id">Ver jornada</a>
+            </article>
+        }
+    </div>
+</section>
