@@ -177,6 +177,17 @@ public sealed class OperationalAiService(
             @"\b(?:\d[ -]*?){13,16}\b",
             "****-****-****-****");
 
+        masked = System.Text.RegularExpressions.Regex.Replace(
+            masked,
+            @"\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b",
+            "[email-removido]",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+        masked = System.Text.RegularExpressions.Regex.Replace(
+            masked,
+            @"(?i)\b(token|api[_-]?key|secret|senha|password)\s*[:=]\s*\S+",
+            "$1=[REMOVIDO]");
+
         return masked;
     }
 }

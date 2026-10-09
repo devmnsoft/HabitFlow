@@ -98,3 +98,4 @@
 \i database/migrations/096_v6200_commercial_homologation_trial.sql
 \i database/migrations/097_v6210_operational_saas_cs_incidents.sql
 \i database/migrations/098_v6230_smart_automation_journeys.sql
+\i database/migrations/099_v6240_customer_operations_growth.sql

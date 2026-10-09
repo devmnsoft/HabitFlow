@@ -90,6 +90,7 @@ public static class DependencyInjection
         services.AddScoped<IDatabaseDiagnosticsRepository, DatabaseDiagnosticsRepository>();
         services.AddScoped<IOperationsCenterRepository, OperationsCenterRepository>();
         services.AddScoped<IOperationalIncidentRepository, OperationalIncidentRepository>();
+        services.AddScoped<ICustomerOperationsRepository, CustomerOperationsRepository>();
         return services;
     }
 }

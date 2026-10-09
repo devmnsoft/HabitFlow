@@ -75,4 +75,13 @@ public static class ApplicationEvents
     public static readonly EventId BillingTrialEnding = new(621011, "billing.trial.ending");
     public static readonly EventId BillingPaymentIssueDetected = new(621012, "billing.payment.issue_detected");
     public static readonly EventId AiUsageLimitReached = new(621013, "ai.usage.limit_reached");
+
+    // v6.24.0 - Operacao SaaS Inteligente, Retencao e Growth
+    public static readonly EventId CustomerHealthCalculated = new(624001, "customer.health.calculated");
+    public static readonly EventId CustomerHealthChanged = new(624002, "customer.health.changed");
+    public static readonly EventId ActivationStepCompleted = new(624003, "activation.step.completed");
+    public static readonly EventId RetentionRiskDetected = new(624004, "retention.risk.detected");
+    public static readonly EventId OperationNoteCreated = new(624005, "operation.note.created");
+    public static readonly EventId NotificationRead = new(624006, "notification.read");
+    public static readonly EventId AiOperationInsightCreated = new(624007, "ai.operation.insight.created");
 }
