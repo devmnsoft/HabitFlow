@@ -23,5 +23,5 @@
   <partial name="Partials/_PlanFaq" model="Model.Faq" />
   <partial name="Partials/_PlanFinalCta" model="Model.Conversion" />
 </div>
-<div class="plans-mobile-cta"><a href="@(Model.Viewer.IsAuthenticated?"/dashboard":"/register")" class="btn btn-success">@(Model.Viewer.IsAuthenticated?"Ir ao app":"Começar grátis")</a><a href="#planos" class="btn btn-outline-success">Ver planos</a></div>
+<div class="plans-mobile-cta"><a href="@(Model.Viewer.IsAuthenticated?"/dashboard":"/register")" class="btn btn-success">@(Model.Viewer.IsAuthenticated?"Ir ao app":"Começar 15 dias grátis")</a><a href="#planos" class="btn btn-outline-success">Ver planos</a></div>
 @section Scripts { <script src="~/js/plans-premium.js" asp-append-version="true"></script> }

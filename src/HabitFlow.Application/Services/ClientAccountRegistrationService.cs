@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 
 namespace HabitFlow.Application;
 
-public sealed class ClientAccountRegistrationService(IClientRepository clients, IUserRepository users, IPasswordHasher hasher, DocumentValidator documents, ClientOnboardingService onboarding, ClientCommunicationService communications, AuditService audit, ILogger<ClientAccountRegistrationService> logger, IUnitOfWork unitOfWork)
+public sealed class ClientAccountRegistrationService(IClientRepository clients, IUserRepository users, ISubscriptionRepository subscriptions, IPasswordHasher hasher, DocumentValidator documents, ClientOnboardingService onboarding, ClientCommunicationService communications, AuditService audit, ILogger<ClientAccountRegistrationService> logger, IUnitOfWork unitOfWork)
 {
     public async Task<Result<Client>> RegisterAsync(RegisterClientAccountDto dto, CancellationToken ct = default)
     {
@@ -27,18 +27,22 @@ public sealed class ClientAccountRegistrationService(IClientRepository clients, 
 
             await unitOfWork.BeginTransactionAsync(ct);
             var now = DateTime.UtcNow;
+            var trialEnd = now.AddDays(15);
             var formatted = isCpf ? documents.FormatCpf(normalized) : documents.FormatCnpj(normalized);
             var clientName = isCpf ? dto.ClientName.Trim() : (dto.LegalName ?? dto.ClientName).Trim();
             if (string.IsNullOrWhiteSpace(clientName)) return Result<Client>.Failure("validation.name_required", isCpf ? "Informe seu nome completo." : "Informe a razão social.");
-            if (!isCpf && string.IsNullOrWhiteSpace(dto.ResponsibleName)) return Result<Client>.Failure("validation.responsible_required", "Informe o nome do responsável.");
-            var client = new Client(Guid.NewGuid(), clientName, isCpf ? null : dto.LegalName?.Trim(), formatted, email, dto.Phone?.Trim(), isCpf ? dto.ClientName.Trim() : dto.ResponsibleName?.Trim(), ClientPlan.Free, ClientStatus.Active, "Cadastro público SaaS Free", true, now, now, personType, Enum.Parse<ClientDocumentType>(expectedDocumentType), formatted, normalized, dto.TradeName?.Trim(), null, null, email, dto.Phone?.Trim(), isCpf ? dto.ClientName.Trim() : dto.ResponsibleName?.Trim(), null, null, null, null, null, null, null, ClientSubscriptionStatus.Free, ClientBenefitsStatus.Free, ClientPaymentStatus.None);
+            // Note: SaaS v6.20.0 initializes new accounts in 15-day Trial (UserPlan.Premium, ClientPlan.Premium, ClientSubscriptionStatus.Trial, ClientBenefitsStatus.PremiumActive).
+            // Legacy fallback defaults were UserPlan.Free, ClientPlan.Free, ClientSubscriptionStatus.Free, ClientBenefitsStatus.Free.
+            var client = new Client(Guid.NewGuid(), clientName, isCpf ? null : dto.LegalName?.Trim(), formatted, email, dto.Phone?.Trim(), isCpf ? dto.ClientName.Trim() : dto.ResponsibleName?.Trim(), ClientPlan.Premium, ClientStatus.Active, "Cadastro público SaaS - Trial de 15 dias", true, now, now, personType, Enum.Parse<ClientDocumentType>(expectedDocumentType), formatted, normalized, dto.TradeName?.Trim(), null, null, email, dto.Phone?.Trim(), isCpf ? dto.ClientName.Trim() : dto.ResponsibleName?.Trim(), null, null, null, null, null, null, null, ClientSubscriptionStatus.Trial, ClientBenefitsStatus.PremiumActive, ClientPaymentStatus.None);
             await clients.CreateAsync(client, ct);
             var userName = isCpf ? dto.ClientName.Trim() : dto.ResponsibleName!.Trim();
-            var user = new User(Guid.NewGuid(), userName, email, hasher.Hash(dto.Password), null, UserRole.Admin, AccountStatus.Active, RiskStatus.Normal, UserPlan.Free, PlanStatus.Active, false, false, now, now, null, null, now, now, client.Id);
+            var user = new User(Guid.NewGuid(), userName, email, hasher.Hash(dto.Password), null, UserRole.Admin, AccountStatus.Active, RiskStatus.Normal, UserPlan.Premium, PlanStatus.Trial, false, false, now, now, null, null, now, now, client.Id);
             await users.CreateAsync(user, ct);
+            var subscription = new Subscription(Guid.NewGuid(), user.Id, "premium_monthly", SubscriptionStatus.Trial, BillingCycle.Monthly, PaymentProvider.Manual, null, null, null, null, now, trialEnd, trialEnd, null, now, now);
+            await subscriptions.CreateAsync(subscription, ct);
             await onboarding.GetOrCreateAsync(client.Id, ct);
-            await communications.CreateInternalMessageAsync(client.Id, user.Id, "Welcome", "Conta criada", "Sua conta gratuita foi criada com sucesso.", null, ct);
-            await audit.LogAsync("client_registered", "Cliente criado no cadastro público", AuditSeverity.Info, user.Id, email, new { client.Id, personType = personType.ToString(), documentType = expectedDocumentType, document = Mask(normalized) }, ct);
+            await communications.CreateInternalMessageAsync(client.Id, user.Id, "Welcome", "Bem-vindo ao HabitFlow!", "Seu período de avaliação de 15 dias grátis foi ativado com sucesso. Aproveite todos os recursos Premium!", null, ct);
+            await audit.LogAsync("client_registered", "Cliente criado no cadastro público com trial de 15 dias", AuditSeverity.Info, user.Id, email, new { client.Id, personType = personType.ToString(), documentType = expectedDocumentType, document = Mask(normalized), trialEndsAt = trialEnd }, ct);
             await unitOfWork.CommitAsync(ct);
             return Result<Client>.Success(client);
         }

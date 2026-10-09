@@ -25,20 +25,20 @@ public sealed class PlanLandingPageService(IPlanCatalogRepository repository)
         [
             new("Privacidade por padrão", "Política clara e Central de Privacidade para controlar seus dados.", "shield"),
             new("Conta sob seu controle", "Sessões gerenciáveis e proteção reforçada para a administração.", "lock"),
-            new("Sem cartão no gratuito", "Experimente o fluxo essencial antes de decidir assinar.", "card"),
-            new("Cancelamento simples", "Ao cancelar, seus dados não são apagados automaticamente.", "check")
-        ], new("Comece pequeno. Evolua no seu ritmo.", "Crie sua conta grátis e descubra uma rotina mais clara, sem cartão.", "Começar grátis", "/register"));
+            new("15 dias grátis", "Experimente todos os recursos Premium sem cobrança inicial.", "card"),
+            new("Dados preservados", "Ao cancelar ou alterar o plano, seus dados e hábitos nunca são apagados.", "check")
+        ], new("Comece pequeno. Evolua no seu ritmo.", "Crie sua conta e descubra uma rotina consistente com 15 dias grátis.", "Começar 15 dias grátis", "/register"));
     }
 
     public static PlanLandingPageViewModel BuildFallback() => new(
-        [new(PlanCodes.Free, "Gratuito", "Para começar com o essencial", "Organize sua rotina e acompanhe o que importa hoje.", null, false, null, null, null,
-            ["Comece sem cartão", "Hábitos e objetivos em um só lugar", "Privacidade sob seu controle"], "Começar grátis", "/register", true)],
+        [new(PlanCodes.Ritmo, "Premium", "Para transformar intenção em consistência", "Experimente por 15 dias grátis todos os recursos de hábitos, metas e coach inteligente.", "15 dias grátis", true, "R$ 29,90/mês", "R$ 299,00/ano", "Economize cerca de 17%",
+            ["15 dias de teste grátis", "Hábitos e objetivos ilimitados", "Coach IA assistido", "Relatórios e exportações", "Privacidade sob seu controle"], "Começar 15 dias grátis", "/register", true)],
         [new("Mais clareza no dia", "Organize os próximos passos sem transformar sua rotina em pressão.", "calendar"),
          new("Evolução sem perder dados", "Seus dados não são apagados quando sua assinatura muda.", "shield")],
-        [new("Começar", "Hábitos e objetivos essenciais", "Mais limites e recursos quando disponíveis"),
+        [new("Avaliação", "15 dias grátis com recursos completos", "Mais limites e governança de time sob medida"),
          new("Privacidade", "Central de Privacidade incluída", "Central de Privacidade incluída")], BuildFaq(),
         [new("Privacidade por padrão", "Você controla seus dados pela Central de Privacidade.", "shield")],
-        new("Comece gratuitamente", "Os detalhes das assinaturas estão sendo atualizados. O plano gratuito continua disponível.", "Começar grátis", "/register"));
+        new("Comece com 15 dias grátis", "Os detalhes dos planos estão sendo atualizados. O teste de 15 dias grátis continua disponível para novos cadastros.", "Começar 15 dias grátis", "/register"));
 
     private static CommercialPlanCardViewModel ToCard(PublicPlan plan)
     {
@@ -102,13 +102,13 @@ public sealed class PlanLandingPageService(IPlanCatalogRepository repository)
     }
 
     private static IReadOnlyList<PlanFaqItemViewModel> BuildFaq() => [
-        new("Posso começar grátis?", "Sim. O Free não exige cartão e mantém os recursos e limites exibidos na comparação."),
-        new("O que muda no Premium?", "O Premium amplia somente os limites e recursos implementados que aparecem na comparação. Mensal e anual têm os mesmos recursos."),
-        new("Meus hábitos somem se eu cancelar?", "Não. Depois do período contratado, sua conta volta aos limites do Free; cancelar não exclui seus dados."),
+        new("Posso começar grátis?", "Sim! Novos usuários começam com 15 dias grátis de teste com acesso completo a hábitos, metas e coach inteligente, sem necessidade de cartão de crédito antecipado."),
+        new("O que muda no Premium?", "O Premium amplia limites e recursos implementados que aparecem na comparação. Mensal e anual têm os mesmos recursos."),
+        new("Meus hábitos somem se eu cancelar?", "Não. Seus hábitos e dados continuam preservados; após o período ou cancelamento, novos hábitos ficam restritos até a reativação de um plano."),
         new("Posso usar no celular?", "Sim. A interface é responsiva e o PWA pode ser instalado quando o navegador e o dispositivo oferecem suporte."),
         new("Relatórios e exportações estão inclusos?", "O resumo e a exportação CSV aparecem conforme o catálogo. PDF e recursos parciais não são vendidos como disponíveis."),
         new("Como funcionam desafios?", "Os desafios disponíveis registram uma conclusão por dia desde o início. As durações liberadas constam na comparação."),
-        new("Posso cancelar depois?", "Sim. O Premium permanece ativo até o fim do período já pago quando aplicável, e depois sua conta retorna ao Free."),
+        new("Posso cancelar depois?", "Sim. O plano contratado permanece ativo até o fim do período já pago quando aplicável. Cancelar ou fazer downgrade nunca apaga seus dados."),
         new("O pagamento já está ativo?", "O checkout usa a integração real com Mercado Pago quando configurada. A ativação só ocorre após confirmação segura pelo webhook; se o ambiente não estiver configurado, mostramos uma mensagem e o suporte."),
         new("Tem plano para equipes ou empresas?", "Sim. O Team libera até 10 usuários e recursos de colaboração; para volume maior e condições sob medida existe o Enterprise."),
         new("Como assinar o Enterprise?", "O Enterprise é vendido por contato, sem checkout online. Fale com o comercial em comercial@mnsoft.com.br (CNPJ 18.160.057/0001-13).")];

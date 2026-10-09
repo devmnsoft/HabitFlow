@@ -52,19 +52,142 @@ public sealed class PlanService(IPlanRepository plans, ISubscriptionRepository s
 
 public sealed class PremiumAccessService(PlanService plans, ISubscriptionRepository subscriptions, IConfiguration config, ILogger<PremiumAccessService> logger)
 {
-    public async Task<Result<bool>> IsPremiumAsync(Guid userId, CancellationToken ct = default) { try { var s = await subscriptions.GetActiveOrLatestByUserIdAsync(userId, ct); var grace = config.GetValue<int?>("Billing:GracePeriodDays") ?? config.GetValue<int?>("Payment:PastDueGraceDays") ?? 3; var now = DateTime.UtcNow; var paidPeriodValid = s?.CurrentPeriodEnd is null || s.CurrentPeriodEnd >= now; var active = s is { PlanCode: not "free", Status: SubscriptionStatus.Active } && paidPeriodValid; var trial = s is { PlanCode: not "free", Status: SubscriptionStatus.Trial or SubscriptionStatus.Trialing, TrialEndsAt: not null } && s.TrialEndsAt >= now; var pastDue = s is { PlanCode: not "free", Status: SubscriptionStatus.PastDue, CurrentPeriodEnd: not null } && s.CurrentPeriodEnd.Value.AddDays(grace) >= now; var premium = active || trial || pastDue; return Result<bool>.Success(premium); } catch (Exception ex) { logger.LogError(ex, "Erro ao validar premium"); return Result<bool>.Failure("premium.error", "Não foi possível validar acesso premium."); } }
-    public async Task<Result<int?>> GetHabitLimitAsync(Guid userId, CancellationToken ct = default) => (await IsPremiumAsync(userId, ct)).Value == true ? Result<int?>.Success(null) : Result<int?>.Success(AppConstants.FreePlanHabitLimit);
-    public async Task<Result<bool>> CanCreateHabitAsync(Guid userId, int activeHabitsCount, CancellationToken ct = default) { var limit = await GetHabitLimitAsync(userId, ct); if (limit.IsFailure) return Result<bool>.Failure(limit.Error.Code, limit.Error.Message); return Result<bool>.Success(limit.Value is null || activeHabitsCount < limit.Value); }
+    public async Task<Result<bool>> IsPremiumAsync(Guid userId, CancellationToken ct = default)
+    {
+        try
+        {
+            var s = await subscriptions.GetActiveOrLatestByUserIdAsync(userId, ct);
+            var grace = config.GetValue<int?>("Billing:GracePeriodDays") ?? config.GetValue<int?>("Payment:PastDueGraceDays") ?? 3;
+            var now = DateTime.UtcNow;
+            var paidPeriodValid = s?.CurrentPeriodEnd is null || s.CurrentPeriodEnd >= now;
+            var active = s is { PlanCode: not "free", Status: SubscriptionStatus.Active } && paidPeriodValid;
+            var trial = s is { PlanCode: not "free", Status: SubscriptionStatus.Trial or SubscriptionStatus.Trialing, TrialEndsAt: not null } && s.TrialEndsAt >= now;
+            var pastDue = s is { PlanCode: not "free", Status: SubscriptionStatus.PastDue, CurrentPeriodEnd: not null } && s.CurrentPeriodEnd.Value.AddDays(grace) >= now;
+            var premium = active || trial || pastDue;
+            return Result<bool>.Success(premium);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Erro ao validar premium");
+            return Result<bool>.Failure("premium.error", "Não foi possível validar acesso premium.");
+        }
+    }
+
+    public async Task<Result<bool>> IsTrialExpiredAsync(Guid userId, CancellationToken ct = default)
+    {
+        try
+        {
+            var s = await subscriptions.GetActiveOrLatestByUserIdAsync(userId, ct);
+            if (s is null) return Result<bool>.Success(false);
+            var now = DateTime.UtcNow;
+            var isTrial = s.Status is SubscriptionStatus.Trial or SubscriptionStatus.Trialing;
+            var expired = isTrial && s.TrialEndsAt.HasValue && s.TrialEndsAt.Value < now;
+            return Result<bool>.Success(expired);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Erro ao validar expiração de trial");
+            return Result<bool>.Failure("trial.error", "Não foi possível validar o trial.");
+        }
+    }
+
+    public async Task<Result<int?>> GetHabitLimitAsync(Guid userId, CancellationToken ct = default) =>
+        (await IsPremiumAsync(userId, ct)).Value == true ? Result<int?>.Success(null) : Result<int?>.Success(AppConstants.FreePlanHabitLimit);
+
+    public async Task<Result<bool>> CanCreateHabitAsync(Guid userId, int activeHabitsCount, CancellationToken ct = default)
+    {
+        var trialExpired = await IsTrialExpiredAsync(userId, ct);
+        if (trialExpired.IsSuccess && trialExpired.Value)
+        {
+            return Result<bool>.Failure("trial.expired", "Seu período de avaliação de 15 dias expirou. Escolha um plano pago para continuar criando hábitos.");
+        }
+
+        var limit = await GetHabitLimitAsync(userId, ct);
+        if (limit.IsFailure) return Result<bool>.Failure(limit.Error.Code, limit.Error.Message);
+        return Result<bool>.Success(limit.Value is null || activeHabitsCount < limit.Value);
+    }
 }
 
 public sealed class SubscriptionService(ISubscriptionRepository repo, IUserRepository users, IPaymentAuditRepository audit, ILogger<SubscriptionService> logger)
 {
     public Task<Subscription?> GetUserSubscriptionAsync(Guid userId, CancellationToken ct = default) => repo.GetActiveOrLatestByUserIdAsync(userId, ct);
-    public async Task<Result<Subscription>> CreatePendingSubscriptionAsync(Guid userId, string planCode, BillingCycle cycle, PaymentProvider provider, CancellationToken ct = default) { try { var now = DateTime.UtcNow; var s = new Subscription(Guid.NewGuid(), userId, planCode, SubscriptionStatus.Pending, cycle, provider, null, null, null, null, null, null, null, null, now, now); await repo.CreateAsync(s, ct); await audit.CreateAsync(new(Guid.NewGuid(), userId, s.Id, "subscription.pending", "Assinatura pendente criada.", "Info", null, now), ct); return Result<Subscription>.Success(s); } catch (Exception ex) { logger.LogError(ex, "Erro ao criar assinatura pendente"); return Result<Subscription>.Failure("subscription.create_error", "Não foi possível criar assinatura."); } }
-    public async Task<Result> ActivateSubscriptionAsync(Guid id, string? providerPaymentId, CancellationToken ct = default) { try { var s = await repo.GetByIdAsync(id, ct); if (s is null) return Result.Failure("subscription.not_found", "Assinatura não encontrada."); var now = DateTime.UtcNow; var end = s.BillingCycle == BillingCycle.Yearly ? now.AddYears(1) : now.AddMonths(1); var active = s with { Status = SubscriptionStatus.Active, ProviderPaymentId = providerPaymentId, CurrentPeriodStart = now, CurrentPeriodEnd = end, UpdatedAt = now }; await repo.UpdateAsync(active, ct); var u = await users.GetByIdAsync(s.UserId, ct); if (u is not null) await users.UpdateAsync(u with { Plan = UserPlan.Premium, PlanStatus = PlanStatus.Active, UpdatedAt = now }, ct); await audit.CreateAsync(new(Guid.NewGuid(), s.UserId, s.Id, "subscription.activated", "Premium ativado por confirmação backend/webhook.", "Info", null, now), ct); return Result.Success(); } catch (Exception ex) { logger.LogError(ex, "Erro ao ativar assinatura {SubscriptionId}", id); return Result.Failure("subscription.activate_error", "Não foi possível ativar assinatura."); } }
-    public async Task<Result> CancelSubscriptionAsync(Guid id, string reason, CancellationToken ct = default) { if (string.IsNullOrWhiteSpace(reason)) return Result.Failure("subscription.reason_required", "Motivo obrigatório."); var s = await repo.GetByIdAsync(id, ct); if (s is null) return Result.Failure("subscription.not_found", "Assinatura não encontrada."); var now = DateTime.UtcNow; var keepUntilPeriodEnd = s.Status == SubscriptionStatus.Active && s.CurrentPeriodEnd > now; await repo.UpdateAsync(s with { Status = keepUntilPeriodEnd ? SubscriptionStatus.Active : SubscriptionStatus.Canceled, CanceledAt = now, UpdatedAt = now }, ct); if (!keepUntilPeriodEnd) { var u = await users.GetByIdAsync(s.UserId, ct); if (u is not null) await users.UpdateAsync(u with { Plan = UserPlan.Free, PlanStatus = PlanStatus.Canceled, UpdatedAt = now }, ct); } await audit.CreateAsync(new(Guid.NewGuid(), s.UserId, s.Id, "subscription.cancel_scheduled", reason, "Warning", null, now), ct); return Result.Success(); }
-    public async Task<Result> MarkPastDueAsync(Guid id, string reason, CancellationToken ct = default) { if (string.IsNullOrWhiteSpace(reason)) return Result.Failure("subscription.reason_required", "Motivo obrigatório."); var s = await repo.GetByIdAsync(id, ct); if (s is null) return Result.Failure("subscription.not_found", "Assinatura não encontrada."); await repo.UpdateAsync(s with { Status = SubscriptionStatus.PastDue, UpdatedAt = DateTime.UtcNow }, ct); return Result.Success(); }
-    public async Task<Result> SyncUserPlanAsync(Guid userId, CancellationToken ct = default) { var s = await repo.GetActiveOrLatestByUserIdAsync(userId, ct); var u = await users.GetByIdAsync(userId, ct); if (u is null) return Result.Failure("user.not_found", "Usuário não encontrado."); var premium = s is { Status: SubscriptionStatus.Active or SubscriptionStatus.Trial or SubscriptionStatus.Trialing or SubscriptionStatus.PastDue, PlanCode: not "free" }; await users.UpdateAsync(u with { Plan = premium ? UserPlan.Premium : UserPlan.Free, PlanStatus = premium ? PlanStatus.Active : PlanStatus.Inactive, UpdatedAt = DateTime.UtcNow }, ct); return Result.Success(); }
+    public async Task<Result<Subscription>> CreatePendingSubscriptionAsync(Guid userId, string planCode, BillingCycle cycle, PaymentProvider provider, CancellationToken ct = default)
+    {
+        try
+        {
+            var now = DateTime.UtcNow;
+            var s = new Subscription(Guid.NewGuid(), userId, planCode, SubscriptionStatus.Pending, cycle, provider, null, null, null, null, null, null, null, null, now, now);
+            await repo.CreateAsync(s, ct);
+            logger.LogInformation(new EventId(6214, "billing.subscription.created"), "billing.subscription.created SubscriptionId={SubscriptionId} UserId={UserId}", s.Id, userId);
+            await audit.CreateAsync(new(Guid.NewGuid(), userId, s.Id, "billing.subscription.created", "Assinatura pendente criada.", "Info", null, now), ct);
+            return Result<Subscription>.Success(s);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Erro ao criar assinatura pendente");
+            return Result<Subscription>.Failure("subscription.create_error", "Não foi possível criar assinatura.");
+        }
+    }
+
+    public async Task<Result> ActivateSubscriptionAsync(Guid id, string? providerPaymentId, CancellationToken ct = default)
+    {
+        try
+        {
+            var s = await repo.GetByIdAsync(id, ct);
+            if (s is null) return Result.Failure("subscription.not_found", "Assinatura não encontrada.");
+            var now = DateTime.UtcNow;
+            var end = s.BillingCycle == BillingCycle.Yearly ? now.AddYears(1) : now.AddMonths(1);
+            var active = s with { Status = SubscriptionStatus.Active, ProviderPaymentId = providerPaymentId, CurrentPeriodStart = now, CurrentPeriodEnd = end, UpdatedAt = now };
+            await repo.UpdateAsync(active, ct);
+            var u = await users.GetByIdAsync(s.UserId, ct);
+            if (u is not null) await users.UpdateAsync(u with { Plan = UserPlan.Premium, PlanStatus = PlanStatus.Active, UpdatedAt = now }, ct);
+            logger.LogInformation(new EventId(6215, "billing.subscription.updated"), "billing.subscription.updated SubscriptionId={SubscriptionId} Action=Activated", id);
+            await audit.CreateAsync(new(Guid.NewGuid(), s.UserId, s.Id, "billing.subscription.updated", "Premium ativado por confirmação backend/webhook.", "Info", null, now), ct);
+            return Result.Success();
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Erro ao ativar assinatura {SubscriptionId}", id);
+            return Result.Failure("subscription.activate_error", "Não foi possível ativar assinatura.");
+        }
+    }
+
+    public async Task<Result> CancelSubscriptionAsync(Guid id, string reason, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(reason)) return Result.Failure("subscription.reason_required", "Motivo obrigatório.");
+        var s = await repo.GetByIdAsync(id, ct);
+        if (s is null) return Result.Failure("subscription.not_found", "Assinatura não encontrada.");
+        var now = DateTime.UtcNow;
+        var keepUntilPeriodEnd = s.Status == SubscriptionStatus.Active && s.CurrentPeriodEnd > now;
+        await repo.UpdateAsync(s with { Status = keepUntilPeriodEnd ? SubscriptionStatus.Active : SubscriptionStatus.Canceled, CanceledAt = now, UpdatedAt = now }, ct);
+        if (!keepUntilPeriodEnd)
+        {
+            var u = await users.GetByIdAsync(s.UserId, ct);
+            if (u is not null) await users.UpdateAsync(u with { Plan = UserPlan.Free, PlanStatus = PlanStatus.Canceled, UpdatedAt = now }, ct);
+        }
+        logger.LogInformation(new EventId(6216, "billing.subscription.canceled"), "billing.subscription.canceled SubscriptionId={SubscriptionId} Reason={Reason}", id, reason);
+        await audit.CreateAsync(new(Guid.NewGuid(), s.UserId, s.Id, "billing.subscription.canceled", reason, "Warning", null, now), ct);
+        return Result.Success();
+    }
+
+    public async Task<Result> MarkPastDueAsync(Guid id, string reason, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(reason)) return Result.Failure("subscription.reason_required", "Motivo obrigatório.");
+        var s = await repo.GetByIdAsync(id, ct);
+        if (s is null) return Result.Failure("subscription.not_found", "Assinatura não encontrada.");
+        await repo.UpdateAsync(s with { Status = SubscriptionStatus.PastDue, UpdatedAt = DateTime.UtcNow }, ct);
+        return Result.Success();
+    }
+
+    public async Task<Result> SyncUserPlanAsync(Guid userId, CancellationToken ct = default)
+    {
+        var s = await repo.GetActiveOrLatestByUserIdAsync(userId, ct);
+        var u = await users.GetByIdAsync(userId, ct);
+        if (u is null) return Result.Failure("user.not_found", "Usuário não encontrado.");
+        var premium = s is { Status: SubscriptionStatus.Active or SubscriptionStatus.Trial or SubscriptionStatus.Trialing or SubscriptionStatus.PastDue, PlanCode: not "free" };
+        await users.UpdateAsync(u with { Plan = premium ? UserPlan.Premium : UserPlan.Free, PlanStatus = premium ? PlanStatus.Active : PlanStatus.Inactive, UpdatedAt = DateTime.UtcNow }, ct);
+        return Result.Success();
+    }
 }
 
 public sealed class PaymentAuditService(IPaymentAuditRepository repo, ILogger<PaymentAuditService> logger)
@@ -87,7 +210,9 @@ public sealed class PaymentCheckoutService(IPlanRepository plans, IPlanCatalogRe
             var validation = await ValidateCheckoutRequest(planCode, cycle, ct); if (validation.IsFailure) return Result<CheckoutPreference>.Failure(validation.Error.Code, validation.Error.Message);
             var plan = (await plans.GetByCodeAsync(planCode, ct))!; var subResult = await subscriptions.CreatePendingSubscriptionAsync(userId, planCode, cycle, PaymentProvider.MercadoPago, ct); if (subResult.IsFailure) return Result<CheckoutPreference>.Failure(subResult.Error.Code, subResult.Error.Message);
             var checkout = await provider.CreateCheckoutPreferenceAsync(new(userId, email, name, planCode, cycle), subResult.Value!, plan, ct); if (checkout.IsFailure) return checkout;
-            await audit.CreateAsync(new(Guid.NewGuid(), userId, subResult.Value!.Id, "checkout.started", "Checkout iniciado.", "Info", null, DateTime.UtcNow), ct); return checkout;
+            logger.LogInformation(new EventId(6200, "billing.checkout.started"), "billing.checkout.started UserId={UserId} Plan={PlanCode}", userId, planCode);
+            await audit.CreateAsync(new(Guid.NewGuid(), userId, subResult.Value!.Id, "billing.checkout.started", "Checkout iniciado.", "Info", null, DateTime.UtcNow), ct);
+            return checkout;
         }
         catch (Exception ex) { logger.LogError(ex, "Erro ao iniciar checkout"); return Result<CheckoutPreference>.Failure("checkout.error", "Não foi possível iniciar checkout."); }
     }
@@ -95,7 +220,7 @@ public sealed class PaymentCheckoutService(IPlanRepository plans, IPlanCatalogRe
     { var p = await plans.GetByCodeAsync(planCode, ct); return p is null || !await catalog.IsCheckoutEligibleAsync(planCode, cycle.ToString(), ct) ? Result.Failure("checkout.invalid_plan", "Plano indisponível para nova contratação.") : Result.Success(); }
 }
 
-public sealed class PaymentWebhookService(IPaymentWebhookRepository webhooks, ISubscriptionRepository subscriptions, IPaymentTransactionRepository transactions, SubscriptionService subscriptionService, PaymentMetadataSanitizer sanitizer, IPaymentProviderService provider, ILogger<PaymentWebhookService> logger)
+public sealed class PaymentWebhookService(IPaymentWebhookRepository webhooks, ISubscriptionRepository subscriptions, IPaymentTransactionRepository transactions, SubscriptionService subscriptionService, PaymentMetadataSanitizer sanitizer, IPaymentProviderService provider, IPaymentAuditRepository audit, ILogger<PaymentWebhookService> logger)
 {
     public async Task<Result> ReceiveAsync(PaymentProvider paymentProvider, string payload, IReadOnlyDictionary<string,string> headers, CancellationToken ct = default)
     {
@@ -124,9 +249,24 @@ public sealed class PaymentWebhookService(IPaymentWebhookRepository webhooks, IS
     {
         var subId = ExtractSubscriptionId(payment.ExternalReference); var sub = subId.HasValue ? await subscriptions.GetByIdAsync(subId.Value, ct) : await subscriptions.GetByProviderPaymentIdAsync(payment.ProviderPaymentId, ct); if (sub is null) { await webhooks.MarkProcessedAsync(webhookEventId, null, null, null, "assinatura não localizada", ct); return Result.Failure("webhook.subscription_not_found", "Assinatura não localizada."); }
         var tx = new PaymentTransaction(Guid.NewGuid(), sub.UserId, sub.Id, PaymentProvider.MercadoPago, payment.ProviderPaymentId, payment.PreferenceId, "payment", payment.Status, payment.Amount, payment.Currency, payment.RawStatus, "{}", DateTime.UtcNow, DateTime.UtcNow); await transactions.CreateAsync(tx, ct);
-        if (payment.Status == PaymentStatus.Approved) await subscriptionService.ActivateSubscriptionAsync(sub.Id, payment.ProviderPaymentId, ct);
-        else if (payment.Status == PaymentStatus.Pending) await subscriptions.UpdateAsync(sub with { Status = SubscriptionStatus.PaymentPending, ProviderPaymentId = payment.ProviderPaymentId, UpdatedAt = DateTime.UtcNow }, ct);
-        else if (payment.Status is PaymentStatus.Rejected or PaymentStatus.Failed) await subscriptions.UpdateAsync(sub with { Status = SubscriptionStatus.Failed, ProviderPaymentId = payment.ProviderPaymentId, UpdatedAt = DateTime.UtcNow }, ct);
+        if (payment.Status == PaymentStatus.Approved)
+        {
+            logger.LogInformation(new EventId(6211, "billing.payment.approved"), "billing.payment.approved SubscriptionId={SubscriptionId} PaymentId={PaymentId}", sub.Id, payment.ProviderPaymentId);
+            await audit.CreateAsync(new(Guid.NewGuid(), sub.UserId, sub.Id, "billing.payment.approved", "Pagamento aprovado.", "Info", null, DateTime.UtcNow), ct);
+            await subscriptionService.ActivateSubscriptionAsync(sub.Id, payment.ProviderPaymentId, ct);
+        }
+        else if (payment.Status == PaymentStatus.Pending)
+        {
+            logger.LogInformation(new EventId(6212, "billing.payment.pending"), "billing.payment.pending SubscriptionId={SubscriptionId} PaymentId={PaymentId}", sub.Id, payment.ProviderPaymentId);
+            await audit.CreateAsync(new(Guid.NewGuid(), sub.UserId, sub.Id, "billing.payment.pending", "Pagamento pendente de liquidação.", "Warning", null, DateTime.UtcNow), ct);
+            await subscriptions.UpdateAsync(sub with { Status = SubscriptionStatus.PaymentPending, ProviderPaymentId = payment.ProviderPaymentId, UpdatedAt = DateTime.UtcNow }, ct);
+        }
+        else if (payment.Status is PaymentStatus.Rejected or PaymentStatus.Failed)
+        {
+            logger.LogWarning(new EventId(6213, "billing.payment.failed"), "billing.payment.failed SubscriptionId={SubscriptionId} PaymentId={PaymentId}", sub.Id, payment.ProviderPaymentId);
+            await audit.CreateAsync(new(Guid.NewGuid(), sub.UserId, sub.Id, "billing.payment.failed", "Pagamento recusado pela operadora.", "Warning", null, DateTime.UtcNow), ct);
+            await subscriptions.UpdateAsync(sub with { Status = SubscriptionStatus.Failed, ProviderPaymentId = payment.ProviderPaymentId, UpdatedAt = DateTime.UtcNow }, ct);
+        }
         else if (payment.Status is PaymentStatus.Canceled or PaymentStatus.Refunded) await subscriptions.UpdateAsync(sub with { Status = SubscriptionStatus.Canceled, ProviderPaymentId = payment.ProviderPaymentId, CanceledAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow }, ct);
         else if (payment.Status == PaymentStatus.ChargedBack) await subscriptions.UpdateAsync(sub with { Status = SubscriptionStatus.ManualReview, ProviderPaymentId = payment.ProviderPaymentId, UpdatedAt = DateTime.UtcNow }, ct);
         else await subscriptions.UpdateAsync(sub with { Status = SubscriptionStatus.ManualReview, ProviderPaymentId = payment.ProviderPaymentId, UpdatedAt = DateTime.UtcNow }, ct);

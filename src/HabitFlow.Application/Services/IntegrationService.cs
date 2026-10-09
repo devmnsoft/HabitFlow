@@ -32,4 +32,16 @@ public sealed class IntegrationService(IIntegrationRepository repository)
         await repository.AddAuditAsync(clientId, userId, current is null ? "calendar_feed.enabled" : "calendar_feed.token_rotated", new { feed.Id, enabled, habits, routines }, ct);
         return new(feed, token);
     }
+
+    public async Task<bool> RevokeCalendarAsync(Guid clientId, Guid userId, CancellationToken ct = default)
+    {
+        var current = await repository.GetCalendarFeedAsync(clientId, userId, ct);
+        if (current is null || !current.Enabled)
+            return false;
+
+        var revoked = current with { Enabled = false, IncludeHabits = false, IncludeRoutines = false };
+        await repository.UpsertCalendarFeedAsync(revoked, ct);
+        await repository.AddAuditAsync(clientId, userId, "calendar_feed.revoked", new { current.Id }, ct);
+        return true;
+    }
 }

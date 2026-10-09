@@ -1,9 +1,10 @@
 using HabitFlow.Domain;
 using HabitFlow.Shared;
+using Microsoft.Extensions.Logging;
 
 namespace HabitFlow.Application;
 
-public sealed class EntitlementService(IClientRepository clients, AuditService audit, PlanEntitlementService plans)
+public sealed class EntitlementService(IClientRepository clients, AuditService audit, PlanEntitlementService plans, ILogger<EntitlementService> logger)
 {
     public async Task<ClientPlan> GetEffectivePlanAsync(Guid userId, CancellationToken ct = default) => (await plans.GetEffectivePlanForUserAsync(userId, ct)) switch { PlanCodes.Ritmo => ClientPlan.Premium, PlanCodes.Team => ClientPlan.Premium, PlanCodes.Evolucao => ClientPlan.Enterprise, PlanCodes.Enterprise => ClientPlan.Enterprise, _ => ClientPlan.Free };
     public async Task<Result<ClientEntitlementsDto>> GetClientEntitlementsAsync(Guid clientId, CancellationToken ct = default)
@@ -28,6 +29,8 @@ public sealed class EntitlementService(IClientRepository clients, AuditService a
         var target = block ? (c.Plan == ClientPlan.Enterprise ? ClientBenefitsStatus.EnterpriseBlocked : ClientBenefitsStatus.PremiumBlocked) : (c.Plan == ClientPlan.Enterprise ? ClientBenefitsStatus.EnterpriseActive : c.Plan == ClientPlan.Premium ? ClientBenefitsStatus.PremiumActive : ClientBenefitsStatus.Free);
         var updated = c with { BenefitsStatus = target, BlockedPaidBenefitsAt = block ? DateTime.UtcNow : null, BlockedPaidBenefitsReason = block ? reason : null, UpdatedAt = DateTime.UtcNow };
         await clients.UpdateAsync(updated, ct);
+        logger.LogInformation(new Microsoft.Extensions.Logging.EventId(6217, "billing.manual_adjustment.created"), "billing.manual_adjustment.created ClientId={ClientId} Reason={Reason} TargetStatus={TargetStatus}", clientId, reason, target);
+        await audit.LogAsync("billing.manual_adjustment.created", reason, AuditSeverity.Warning, superAdmin.Id, superAdmin.Email, new { clientId, previous, target, block }, ct);
         await audit.LogAsync(block ? "paid_benefits_blocked" : "paid_benefits_released", reason, AuditSeverity.Warning, superAdmin.Id, superAdmin.Email, new { clientId, previous, target }, ct);
         return Result<Client>.Success(updated);
     }

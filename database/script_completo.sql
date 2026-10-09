@@ -2985,3 +2985,28 @@ CREATE INDEX IF NOT EXISTS ix_notification_events_client ON habitflow.notificati
 
 COMMIT;
 -- END include database/migrations/095_v6198_product_activation.sql
+
+-- BEGIN include database/migrations/096_v6200_commercial_homologation_trial.sql
+-- 096: Homologação SaaS de Produção - Catálogo Comercial, Trial de 15 Dias e Desativação do Free Público
+BEGIN;
+
+UPDATE habitflow.plans
+SET is_public = false,
+    updated_at = now()
+WHERE code = 'free';
+
+UPDATE habitflow.plans
+SET is_public = true,
+    is_active = true,
+    updated_at = now()
+WHERE code IN ('premium_monthly', 'premium_yearly', 'ritmo', 'team', 'enterprise');
+
+CREATE INDEX IF NOT EXISTS ix_plans_public_active
+ON habitflow.plans(is_active, is_public, sort_order);
+
+ALTER TABLE habitflow.clients
+ADD COLUMN IF NOT EXISTS last_commercial_adjustment_at timestamp without time zone,
+ADD COLUMN IF NOT EXISTS last_commercial_adjustment_reason text;
+
+COMMIT;
+-- END include database/migrations/096_v6200_commercial_homologation_trial.sql

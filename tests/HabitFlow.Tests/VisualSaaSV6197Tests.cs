@@ -15,8 +15,8 @@ public sealed class VisualSaaSV6197Tests
     [Fact]
     public void Version_is_current_release()
     {
-        Assert.Contains("<Version>6.19.8</Version>", Read("src", "HabitFlow.Web", "HabitFlow.Web.csproj"));
-        Assert.Contains("\"Version\": \"v6.19.8\"", Read("src", "HabitFlow.Web", "appsettings.json"));
+        Assert.Contains("<Version>6.20.0</Version>", Read("src", "HabitFlow.Web", "HabitFlow.Web.csproj"));
+        Assert.Contains("\"Version\": \"v6.20.0\"", Read("src", "HabitFlow.Web", "appsettings.json"));
     }
 
     [Fact]

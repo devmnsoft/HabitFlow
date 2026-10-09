@@ -12,11 +12,13 @@ namespace HabitFlow.Web.Controllers;
 public class AuthController(AuthService authService, ClientAccountRegistrationService clientRegistration, UserSessionService sessionService, IOptions<SessionSecurityOptions> sessionOptions, IWebHostEnvironment env, IUserFacingErrorMapper errorMapper, ILogger<AuthController> logger) : Controller
 {
     [HttpGet("/login")]
+    [HttpGet("/auth/login")]
     public IActionResult Login(string? returnUrl = null) =>
         View(new LoginDto(string.Empty, string.Empty, Url.IsLocalUrl(returnUrl) ? returnUrl : null));
 
     [ValidateAntiForgeryToken]
     [HttpPost("/login")]
+    [HttpPost("/auth/login")]
     public async Task<IActionResult> Login(LoginDto dto, CancellationToken ct)
     {
         try
@@ -57,10 +59,12 @@ public class AuthController(AuthService authService, ClientAccountRegistrationSe
     }
 
     [HttpGet("/register")]
+    [HttpGet("/auth/register")]
     public IActionResult Register() => View(new RegisterViewModel());
 
     [ValidateAntiForgeryToken]
     [HttpPost("/register")]
+    [HttpPost("/auth/register")]
     public async Task<IActionResult> Register(RegisterViewModel model, CancellationToken ct)
     {
         try

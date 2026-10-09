@@ -5,6 +5,8 @@ using HabitFlow.Web.Services;
 
 var builder = WebApplication.CreateBuilder(new WebApplicationOptions { Args = args });
 
+builder.Configuration.AddJsonFile("appsettings.Development.local.json", optional: true, reloadOnChange: true);
+
 // Avoid Windows EventLog writes in restricted environments (tests/sandboxes).
 // Console/Debug/EventSource remain enabled for operational observability.
 builder.Logging.ClearProviders();
