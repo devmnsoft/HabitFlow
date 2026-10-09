@@ -1,33 +1,253 @@
-@model HabitFlow.Domain.CustomerSuccessPage
-@{ ViewData["Title"] = "Sucesso do cliente"; }
-<section class="hf-activation premium-card">
-  <h1>Sucesso do cliente</h1>
-  <p>Indicadores lidos das contas. Um campo sem dado fica como não disponível.</p>
-  <div class="hf-help"><strong>Como usar.</strong> Saúde considera ativação, uso recente, usuários ativos, conclusão, pendência financeira, limite Free e chamados. Critério sem leitura não entra como zero inventado.</div>
-  @if (Model.Pendencies.Count > 0) { <div class="hf-empty"><ul>@foreach (var item in Model.Pendencies) { <li>@item</li> }</ul></div> }
-  <div class="hf-grid">
-    @foreach (var metric in Model.Indicators)
+@model IReadOnlyList<HabitFlow.Domain.TenantCustomerSuccessIndicator>
+@{
+    ViewData["Title"] = "Customer Success e Saúde do Cliente";
+    var totalTenants = Model.Count;
+    var healthyCount = Model.Count(t => t.HealthCategory == HabitFlow.Domain.TenantHealthStatus.Healthy);
+    var attentionCount = Model.Count(t => t.HealthCategory == HabitFlow.Domain.TenantHealthStatus.Attention);
+    var atRiskCount = Model.Count(t => t.HealthCategory == HabitFlow.Domain.TenantHealthStatus.AtRisk);
+    var trialEndingCount = Model.Count(t => t.HealthCategory == HabitFlow.Domain.TenantHealthStatus.TrialEnding);
+    var paymentIssueCount = Model.Count(t => t.HealthCategory == HabitFlow.Domain.TenantHealthStatus.PaymentIssue);
+    var blockedCount = Model.Count(t => t.HealthCategory == HabitFlow.Domain.TenantHealthStatus.Blocked);
+}
+
+<section class="premium-card hf-cs-dashboard">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
+        <div>
+            <h1 style="margin: 0; font-size: 1.6rem; font-weight: 700; color: #0f172a;">Customer Success e Saúde do Cliente</h1>
+            <p style="margin: 0.25rem 0 0 0; color: #64748b;">Acompanhamento proativo de retenção, risco de churn, implantação guiada e saúde multi-tenant.</p>
+        </div>
+        <div>
+            <a href="/superadmin/homologation" class="btn btn-outline-secondary" style="padding: 0.5rem 1rem; border-radius: 6px; font-weight: 600; text-decoration: none;">
+                Relatório de Homologação
+            </a>
+        </div>
+    </div>
+
+    <div class="hf-help" style="background: rgba(16,185,129,0.06); border-left: 4px solid #10b981; padding: 0.85rem 1.1rem; border-radius: 6px; margin-bottom: 1.5rem; font-size: 0.9rem; color: #065f46;">
+        <strong>Regra de Cálculo:</strong> O score de saúde é calculado estritamente na camada de aplicação (0 a 100), ponderando ativação, uso nos últimos 7/15 dias, pagamento e suporte. A categoria é priorizada por bloqueio, inadimplência e proximidade do fim do trial.
+    </div>
+
+    <!-- Cards de Saúde Resumida -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 0.85rem; margin-bottom: 1.5rem;">
+        <article style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 1rem;">
+            <small style="color: #166534; font-weight: 600; font-size: 0.75rem; text-transform: uppercase;">Saudáveis (Healthy)</small>
+            <h2 style="margin: 0.2rem 0 0 0; font-size: 1.6rem; font-weight: 700; color: #15803d;">@healthyCount</h2>
+        </article>
+        <article style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 1rem;">
+            <small style="color: #92400e; font-weight: 600; font-size: 0.75rem; text-transform: uppercase;">Atenção (Attention)</small>
+            <h2 style="margin: 0.2rem 0 0 0; font-size: 1.6rem; font-weight: 700; color: #b45309;">@attentionCount</h2>
+        </article>
+        <article style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 1rem;">
+            <small style="color: #991b1b; font-weight: 600; font-size: 0.75rem; text-transform: uppercase;">Em Risco (AtRisk)</small>
+            <h2 style="margin: 0.2rem 0 0 0; font-size: 1.6rem; font-weight: 700; color: #dc2626;">@atRiskCount</h2>
+        </article>
+        <article style="background: #f5f3ff; border: 1px solid #ddd6fe; border-radius: 8px; padding: 1rem;">
+            <small style="color: #5b21b6; font-weight: 600; font-size: 0.75rem; text-transform: uppercase;">Trial Expirando</small>
+            <h2 style="margin: 0.2rem 0 0 0; font-size: 1.6rem; font-weight: 700; color: #6d28d9;">@trialEndingCount</h2>
+        </article>
+        <article style="background: #fff1f2; border: 1px solid #fecdd3; border-radius: 8px; padding: 1rem;">
+            <small style="color: #9f1239; font-weight: 600; font-size: 0.75rem; text-transform: uppercase;">Cobrança Pendente</small>
+            <h2 style="margin: 0.2rem 0 0 0; font-size: 1.6rem; font-weight: 700; color: #be123c;">@paymentIssueCount</h2>
+        </article>
+        <article style="background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 8px; padding: 1rem;">
+            <small style="color: #334155; font-weight: 600; font-size: 0.75rem; text-transform: uppercase;">Bloqueados</small>
+            <h2 style="margin: 0.2rem 0 0 0; font-size: 1.6rem; font-weight: 700; color: #475569;">@blockedCount</h2>
+        </article>
+    </div>
+
+    <!-- Filtros -->
+    <form method="get" action="/superadmin/customer-success" style="display: flex; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1.5rem; align-items: center;">
+        <select name="health" class="form-select" style="max-width: 190px; padding: 0.45rem 0.75rem; border-radius: 6px; border: 1px solid #cbd5e1;">
+            <option value="">Todas as categorias</option>
+            <option value="Healthy" selected="@(ViewData["SelectedHealth"]?.ToString() == "Healthy")">Healthy (Saudável)</option>
+            <option value="Attention" selected="@(ViewData["SelectedHealth"]?.ToString() == "Attention")">Attention (Atenção)</option>
+            <option value="AtRisk" selected="@(ViewData["SelectedHealth"]?.ToString() == "AtRisk")">AtRisk (Em Risco)</option>
+            <option value="TrialEnding" selected="@(ViewData["SelectedHealth"]?.ToString() == "TrialEnding")">TrialEnding (Trial Próximo)</option>
+            <option value="PaymentIssue" selected="@(ViewData["SelectedHealth"]?.ToString() == "PaymentIssue")">PaymentIssue (Inadimplente)</option>
+            <option value="Blocked" selected="@(ViewData["SelectedHealth"]?.ToString() == "Blocked")">Blocked (Bloqueado)</option>
+        </select>
+        <select name="plan" class="form-select" style="max-width: 170px; padding: 0.45rem 0.75rem; border-radius: 6px; border: 1px solid #cbd5e1;">
+            <option value="">Todos os planos</option>
+            <option value="Free" selected="@(ViewData["SelectedPlan"]?.ToString() == "Free")">Free</option>
+            <option value="Premium" selected="@(ViewData["SelectedPlan"]?.ToString() == "Premium")">Premium</option>
+            <option value="Enterprise" selected="@(ViewData["SelectedPlan"]?.ToString() == "Enterprise")">Enterprise</option>
+        </select>
+        <input type="text" name="search" value="@ViewData["Search"]" placeholder="Buscar por nome do cliente..." class="form-control" style="flex: 1; min-width: 200px; padding: 0.45rem 0.75rem; border-radius: 6px; border: 1px solid #cbd5e1;" />
+        <button type="submit" class="btn btn-secondary" style="padding: 0.45rem 1rem; border-radius: 6px;">Filtrar</button>
+        @if (ViewData["SelectedHealth"] != null || ViewData["SelectedPlan"] != null || ViewData["Search"] != null)
+        {
+            <a href="/superadmin/customer-success" class="btn btn-link" style="text-decoration: none; font-size: 0.9rem;">Limpar</a>
+        }
+    </form>
+
+    <!-- Tabela de Tenants -->
+    @if (Model.Count == 0)
     {
-      <article><small>@metric.Label</small><h2>@metric.Display</h2>@if (!metric.Available && metric.Pendency is not null) { <p>@metric.Pendency</p> }</article>
+        <div style="text-align: center; padding: 3rem 1rem; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 10px; color: #64748b;">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5" style="margin-bottom: 0.75rem;"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+            <h3 style="margin: 0; font-size: 1.1rem; color: #334155;">Nenhum cliente retornado para os critérios</h3>
+            <p style="margin: 0.25rem 0 0 0; font-size: 0.9rem;">Ajuste os filtros de saúde ou nome do tenant.</p>
+        </div>
     }
-  </div>
-  @if (Model.Clients.Count == 0)
-  {
-    <div class="hf-empty">Nenhum cliente retornado nesta leitura.</div>
-  }
-  else
-  {
-    <table class="table"><thead><tr><th>Cliente</th><th>Plano</th><th>Status</th><th>Saúde</th><th>Sinais</th></tr></thead>
-    <tbody>
-    @foreach (var client in Model.Clients)
+    else
     {
-      <tr>
-        <td>@client.Name</td><td>@client.Plan</td><td>@client.Status</td>
-        <td><span class="hf-status">@(client.Score?.ToString() ?? "não disponível") @client.Health</span></td>
-        <td>@string.Join(", ", client.Signals.Concat(client.Pending))</td>
-      </tr>
+        <div style="overflow-x: auto;">
+            <table class="table" style="width: 100%; border-collapse: collapse; font-size: 0.88rem;">
+                <thead>
+                    <tr style="border-bottom: 2px solid #e2e8f0; text-align: left; color: #475569;">
+                        <th style="padding: 0.75rem;">Cliente</th>
+                        <th style="padding: 0.75rem;">Plano / Assinatura</th>
+                        <th style="padding: 0.75rem;">Score & Saúde</th>
+                        <th style="padding: 0.75rem;">Usuários / Hábitos</th>
+                        <th style="padding: 0.75rem;">Conclusões (7d/30d)</th>
+                        <th style="padding: 0.75rem;">Tickets / IA</th>
+                        <th style="padding: 0.75rem;">Implantação</th>
+                        <th style="padding: 0.75rem; text-align: right;">Ações CS</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var c in Model)
+                    {
+                        var isHealthy = c.HealthCategory == HabitFlow.Domain.TenantHealthStatus.Healthy;
+                        var isAttention = c.HealthCategory == HabitFlow.Domain.TenantHealthStatus.Attention;
+                        var isRisk = c.HealthCategory == HabitFlow.Domain.TenantHealthStatus.AtRisk;
+                        var isTrial = c.HealthCategory == HabitFlow.Domain.TenantHealthStatus.TrialEnding;
+                        var isPay = c.HealthCategory == HabitFlow.Domain.TenantHealthStatus.PaymentIssue;
+
+                        var badgeBg = isHealthy ? "#dcfce7" : isAttention ? "#fef3c7" : isRisk ? "#fee2e2" : isTrial ? "#ede9fe" : isPay ? "#ffe4e6" : "#f1f5f9";
+                        var badgeColor = isHealthy ? "#166534" : isAttention ? "#92400e" : isRisk ? "#991b1b" : isTrial ? "#5b21b6" : isPay ? "#9f1239" : "#334155";
+
+                        <tr style="border-bottom: 1px solid #f1f5f9;">
+                            <td style="padding: 0.85rem 0.75rem;">
+                                <strong style="color: #0f172a; display: block;">@c.ClientName</strong>
+                                <small style="color: #64748b;">Status: @c.ClientStatus</small>
+                                @if (c.LimitBlocked)
+                                {
+                                    <span style="display: block; color: #d97706; font-size: 0.78rem; font-weight: 600;">⚠ Teto de uso atingido</span>
+                                }
+                            </td>
+                            <td style="padding: 0.85rem 0.75rem;">
+                                <span style="font-weight: 600; color: #1e293b;">@c.Plan</span>
+                                <div style="color: #64748b; font-size: 0.8rem;">
+                                    @c.SubscriptionStatus | @c.PaymentStatus
+                                </div>
+                                @if (c.TrialRemainingDays.HasValue)
+                                {
+                                    <small style="color: #7c3aed; font-weight: 600;">@c.TrialRemainingDays dias de trial</small>
+                                }
+                            </td>
+                            <td style="padding: 0.85rem 0.75rem;">
+                                <div style="display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.2rem;">
+                                    <strong style="font-size: 1.05rem; color: #0f172a;">@c.HealthScore</strong>
+                                    <small style="color: #94a3b8;">/100</small>
+                                </div>
+                                <span style="background: @badgeBg; color: @badgeColor; font-weight: 600; font-size: 0.75rem; padding: 0.2rem 0.55rem; border-radius: 9999px;">
+                                    @c.HealthCategory
+                                </span>
+                            </td>
+                            <td style="padding: 0.85rem 0.75rem; color: #334155;">
+                                <div>Ativos: <strong>@c.ActiveUsers</strong> (Inativos: @c.InactiveUsers)</div>
+                                <div style="color: #64748b; font-size: 0.8rem;">Hábitos cadastrados: @c.HabitsCount</div>
+                            </td>
+                            <td style="padding: 0.85rem 0.75rem; color: #334155;">
+                                <div>7 dias: <strong>@c.Completions7Days</strong></div>
+                                <div style="color: #64748b; font-size: 0.8rem;">30 dias: @c.Completions30Days</div>
+                            </td>
+                            <td style="padding: 0.85rem 0.75rem;">
+                                <div>Tickets abertos: <strong style="color: @(c.OpenTicketsCount > 0 ? "#dc2626" : "#16a34a");">@c.OpenTicketsCount</strong></div>
+                                <div style="color: #64748b; font-size: 0.8rem;">Eventos IA: @c.AiRequestsCount</div>
+                            </td>
+                            <td style="padding: 0.85rem 0.75rem;">
+                                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <div style="flex: 1; background: #e2e8f0; height: 6px; border-radius: 9999px; overflow: hidden; min-width: 60px;">
+                                        <div style="background: #2563eb; height: 100%; width: @(c.OnboardingCompletedPercent)%;"></div>
+                                    </div>
+                                    <span style="font-size: 0.78rem; font-weight: 600; color: #475569;">@(c.OnboardingCompletedPercent)%</span>
+                                </div>
+                                <small style="color: #64748b; font-size: 0.78rem;">@c.OnboardingStep</small>
+                            </td>
+                            <td style="padding: 0.85rem 0.75rem; text-align: right;">
+                                <div style="display: inline-flex; gap: 0.35rem; justify-content: flex-end;">
+                                    <a href="/superadmin/clients/@c.ClientId" class="btn btn-sm btn-outline-secondary" style="padding: 0.3rem 0.55rem; font-size: 0.78rem; text-decoration: none; border-radius: 5px;">
+                                        Ver Conta
+                                    </a>
+                                    @if (c.ChurnRisk || c.HealthCategory != HabitFlow.Domain.TenantHealthStatus.Healthy)
+                                    {
+                                        var factorsStr = string.Join("; ", c.RiskFactors.Concat(c.CommercialPendencies));
+                                        <button type="button" class="btn btn-sm btn-outline-danger btn-churn-ai" data-client="@c.ClientName" data-score="@c.HealthScore" data-factors="@factorsStr" onclick="openChurnAiModalFromButton(this)" style="padding: 0.3rem 0.55rem; font-size: 0.78rem; border-radius: 5px;">
+                                            IA Churn
+                                        </button>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
     }
-    </tbody></table>
-  }
-  <p><a href="/superadmin/homologation">Abrir homologação</a></p>
 </section>
+
+<!-- Modal Churn AI -->
+<div id="modalChurnAi" style="display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.6); align-items: center; justify-content: center; z-index: 9999; padding: 1rem;">
+    <div style="background: #ffffff; border-radius: 12px; max-width: 540px; width: 100%; padding: 1.75rem; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h2 style="margin: 0; font-size: 1.2rem; font-weight: 700; color: #0f172a;">Diagnóstico e Ação de CS (IA)</h2>
+            <button type="button" onclick="document.getElementById('modalChurnAi').style.display='none';" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #64748b;">&times;</button>
+        </div>
+        <div style="margin-bottom: 0.75rem; font-size: 0.85rem; color: #475569;">
+            Análise segura baseada no score e indicadores observados:
+        </div>
+        <div id="churnAiLoading" style="display: none; text-align: center; padding: 2rem; color: #2563eb;">
+            Analisando fatores de risco via IA operacional...
+        </div>
+        <textarea id="churnAiOutput" rows="6" readonly class="form-control" style="width: 100%; padding: 0.75rem; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.9rem; background: #f8fafc; margin-bottom: 1rem;"></textarea>
+        <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
+            <button type="button" class="btn btn-outline-secondary" onclick="navigator.clipboard.writeText(document.getElementById('churnAiOutput').value); alert('Diagnóstico copiado!');" style="padding: 0.45rem 1rem; border-radius: 6px;">Copiar</button>
+            <button type="button" class="btn btn-primary" onclick="document.getElementById('modalChurnAi').style.display='none';" style="padding: 0.45rem 1rem; border-radius: 6px;">Fechar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openChurnAiModalFromButton(btn) {
+        const clientName = btn.dataset.client;
+        const score = btn.dataset.score;
+        const riskFactors = btn.dataset.factors;
+        openChurnAiModal(clientName, score, riskFactors);
+    }
+
+    async function openChurnAiModal(clientName, score, riskFactors) {
+        const modal = document.getElementById('modalChurnAi');
+        const output = document.getElementById('churnAiOutput');
+        const loading = document.getElementById('churnAiLoading');
+
+        output.value = '';
+        output.style.display = 'none';
+        loading.style.display = 'block';
+        modal.style.display = 'flex';
+
+        try {
+            const formData = new FormData();
+            formData.append('clientName', clientName);
+            formData.append('score', score);
+            formData.append('riskFactors', riskFactors);
+
+            const tokenInput = document.querySelector('input[name="__RequestVerificationToken"]');
+            if (tokenInput) formData.append('__RequestVerificationToken', tokenInput.value);
+
+            const resp = await fetch('/superadmin/customer-success/ai-churn-analysis', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await resp.json();
+            output.value = data.suggestion || 'Não foi possível gerar análise.';
+        } catch (e) {
+            output.value = 'Erro ao consultar IA de Customer Success.';
+        } finally {
+            loading.style.display = 'none';
+            output.style.display = 'block';
+        }
+    }
+</script>

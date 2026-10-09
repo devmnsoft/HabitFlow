@@ -4,23 +4,109 @@ namespace HabitFlow.Infrastructure;
 
 public sealed class AssistanceRepository(SqlExecutor db) : IAssistanceRepository
 {
+    private const string TicketColumns = "id,client_id,user_id,protocol,category,priority,status,subject,description,safe_context,assigned_user_id,sla_due_at,created_at,updated_at,closed_at,resolution_reason,satisfaction_rating,satisfaction_feedback,reopened_at,resolved_at";
+
     public async Task<Guid> GetOrCreateConversationAsync(Guid clientId, Guid userId, CancellationToken ct = default)
     {
-        var id=await db.QuerySingleOrDefaultAsync<Guid?>("select id from habitflow.assistant_conversations where client_id=@clientId and user_id=@userId order by updated_at desc limit 1",new{clientId,userId},ct);
-        if(id.HasValue)return id.Value; var created=Guid.NewGuid(); await db.ExecuteAsync("insert into habitflow.assistant_conversations(id,client_id,user_id,created_at,updated_at) values(@created,@clientId,@userId,now(),now())",new{created,clientId,userId},ct); return created;
+        var id = await db.QuerySingleOrDefaultAsync<Guid?>("select id from habitflow.assistant_conversations where client_id=@clientId and user_id=@userId order by updated_at desc limit 1", new { clientId, userId }, ct);
+        if (id.HasValue) return id.Value;
+        var created = Guid.NewGuid();
+        await db.ExecuteAsync("insert into habitflow.assistant_conversations(id,client_id,user_id,created_at,updated_at) values(@created,@clientId,@userId,now(),now())", new { created, clientId, userId }, ct);
+        return created;
     }
-    public Task AddMessageAsync(AssistantMessage m,CancellationToken ct=default)=>db.ExecuteAsync("insert into habitflow.assistant_messages(id,client_id,user_id,conversation_id,role,message,sanitized_message,safety_status,provider,created_at,correlation_id) values(@Id,@ClientId,@UserId,@ConversationId,@Role,@Message,@SanitizedMessage,@SafetyStatus,@Provider,@CreatedAt,@CorrelationId); update habitflow.assistant_conversations set updated_at=now() where id=@ConversationId and client_id=@ClientId and user_id=@UserId",m,ct);
-    public async Task<IReadOnlyList<AssistantMessage>> ListMessagesAsync(Guid clientId,Guid userId,Guid conversationId,CancellationToken ct=default)=>(await db.QueryAsync<AssistantMessage>("select id,client_id,user_id,conversation_id,role,message,sanitized_message,safety_status,provider,created_at,correlation_id from habitflow.assistant_messages where client_id=@clientId and user_id=@userId and conversation_id=@conversationId order by created_at",new{clientId,userId,conversationId},ct)).ToArray();
-    public Task DeleteHistoryAsync(Guid clientId,Guid userId,CancellationToken ct=default)=>db.ExecuteAsync("delete from habitflow.assistant_conversations where client_id=@clientId and user_id=@userId",new{clientId,userId},ct);
-    public async Task<SupportSettings> GetSupportSettingsAsync(CancellationToken ct=default)=>await db.QuerySingleOrDefaultAsync<SupportSettings>("select id,company_name,company_document,support_email,whatsapp_phone,default_message,business_hours,is_active,button_text,updated_at from habitflow.support_settings order by updated_at desc limit 1",null,ct) ?? new(Guid.Empty,"MNSOFT","18.160.057/0001-13","comercial@mnsoft.com.br",null,"Olá! Preciso de ajuda com o HabitFlow.","Segunda a sexta, 9h às 18h",true,"Falar com a MNSOFT",DateTime.UtcNow);
-    public Task UpdateSupportSettingsAsync(SupportSettings s,CancellationToken ct=default)=>db.ExecuteAsync("insert into habitflow.support_settings(id,company_name,company_document,support_email,whatsapp_phone,default_message,business_hours,is_active,button_text,updated_at) values(@Id,@CompanyName,@CompanyDocument,@SupportEmail,@WhatsAppPhone,@DefaultMessage,@BusinessHours,@IsActive,@ButtonText,now()) on conflict(id) do update set company_name=excluded.company_name,company_document=excluded.company_document,support_email=excluded.support_email,whatsapp_phone=excluded.whatsapp_phone,default_message=excluded.default_message,business_hours=excluded.business_hours,is_active=excluded.is_active,button_text=excluded.button_text,updated_at=now()",s,ct);
-    public Task CreateTicketAsync(SupportTicketDetail t,CancellationToken ct=default)=>db.ExecuteAsync("insert into habitflow.support_tickets_v2(id,client_id,user_id,protocol,category,priority,status,subject,description,safe_context,assigned_user_id,sla_due_at,created_at,updated_at,closed_at) values(@Id,@ClientId,@UserId,@Protocol,@Category,@Priority,@Status,@Subject,@Description,@SafeContext,@AssignedUserId,@SlaDueAt,@CreatedAt,@UpdatedAt,@ClosedAt)",t,ct);
-    private const string TicketColumns="id,client_id,user_id,protocol,category,priority,status,subject,description,safe_context,assigned_user_id,sla_due_at,created_at,updated_at,closed_at";
-    public async Task<IReadOnlyList<SupportTicketDetail>> ListTicketsAsync(Guid clientId,Guid userId,bool admin,CancellationToken ct=default)=>(await db.QueryAsync<SupportTicketDetail>($"select {TicketColumns} from habitflow.support_tickets_v2 where client_id=@clientId and (@admin or user_id=@userId) order by updated_at desc",new{clientId,userId,admin},ct)).ToArray();
-    public Task<SupportTicketDetail?> GetTicketAsync(Guid clientId,Guid userId,Guid ticketId,bool admin,CancellationToken ct=default)=>db.QuerySingleOrDefaultAsync<SupportTicketDetail>($"select {TicketColumns} from habitflow.support_tickets_v2 where id=@ticketId and client_id=@clientId and (@admin or user_id=@userId)",new{clientId,userId,ticketId,admin},ct);
-    public Task AddTicketMessageAsync(SupportTicketMessage m,CancellationToken ct=default)=>db.ExecuteAsync("insert into habitflow.support_ticket_messages_v2(id,client_id,ticket_id,user_id,is_staff,is_internal,message,created_at) select @Id,@ClientId,@TicketId,@UserId,@IsStaff,@IsInternal,@Message,@CreatedAt where exists(select 1 from habitflow.support_tickets_v2 where id=@TicketId and client_id=@ClientId and status not in ('Closed','Cancelled')); update habitflow.support_tickets_v2 set status=case when @IsStaff then 'WaitingCustomer' else 'WaitingMnsoft' end,updated_at=now() where id=@TicketId and client_id=@ClientId and status not in ('Closed','Cancelled')",m,ct);
-    public async Task<IReadOnlyList<SupportTicketMessage>> ListTicketMessagesAsync(Guid clientId,Guid ticketId,CancellationToken ct=default)=>(await db.QueryAsync<SupportTicketMessage>("select id,client_id,ticket_id,user_id,is_staff,is_internal,message,created_at from habitflow.support_ticket_messages_v2 where client_id=@clientId and ticket_id=@ticketId order by created_at",new{clientId,ticketId},ct)).ToArray();
-    public Task UpdateTicketStatusAsync(Guid clientId,Guid ticketId,string status,DateTime? closedAt,CancellationToken ct=default)=>db.ExecuteAsync("update habitflow.support_tickets_v2 set status=@status,closed_at=@closedAt,updated_at=now() where id=@ticketId and client_id=@clientId",new{clientId,ticketId,status,closedAt},ct);
-    public Task ReopenTicketAsync(Guid clientId,Guid ticketId,Guid actorUserId,string reason,DateTime slaDueAt,CancellationToken ct=default)=>db.ExecuteAsync("update habitflow.support_tickets_v2 set status='Open',closed_at=null,sla_due_at=@slaDueAt,updated_at=now() where id=@ticketId and client_id=@clientId and status in ('Closed','Resolved'); insert into habitflow.support_ticket_status_history(id,client_id,ticket_id,actor_user_id,from_status,to_status,reason,created_at) values(@id,@clientId,@ticketId,@actorUserId,'Closed','Open',@reason,now())",new{id=Guid.NewGuid(),clientId,ticketId,actorUserId,reason,slaDueAt},ct);
-    public async Task<IReadOnlyList<SupportTicketHistory>> ListTicketHistoryAsync(Guid clientId,Guid ticketId,CancellationToken ct=default)=>(await db.QueryAsync<SupportTicketHistory>("select id,client_id,ticket_id,actor_user_id,from_status,to_status,reason,created_at from habitflow.support_ticket_status_history where client_id=@clientId and ticket_id=@ticketId order by created_at",new{clientId,ticketId},ct)).ToArray();
+
+    public Task AddMessageAsync(AssistantMessage m, CancellationToken ct = default) =>
+        db.ExecuteAsync("insert into habitflow.assistant_messages(id,client_id,user_id,conversation_id,role,message,sanitized_message,safety_status,provider,created_at,correlation_id) values(@Id,@ClientId,@UserId,@ConversationId,@Role,@Message,@SanitizedMessage,@SafetyStatus,@Provider,@CreatedAt,@CorrelationId); update habitflow.assistant_conversations set updated_at=now() where id=@ConversationId and client_id=@ClientId and user_id=@UserId", m, ct);
+
+    public async Task<IReadOnlyList<AssistantMessage>> ListMessagesAsync(Guid clientId, Guid userId, Guid conversationId, CancellationToken ct = default) =>
+        (await db.QueryAsync<AssistantMessage>("select id,client_id,user_id,conversation_id,role,message,sanitized_message,safety_status,provider,created_at,correlation_id from habitflow.assistant_messages where client_id=@clientId and user_id=@userId and conversation_id=@conversationId order by created_at", new { clientId, userId, conversationId }, ct)).ToArray();
+
+    public Task DeleteHistoryAsync(Guid clientId, Guid userId, CancellationToken ct = default) =>
+        db.ExecuteAsync("delete from habitflow.assistant_conversations where client_id=@clientId and user_id=@userId", new { clientId, userId }, ct);
+
+    public async Task<SupportSettings> GetSupportSettingsAsync(CancellationToken ct = default) =>
+        await db.QuerySingleOrDefaultAsync<SupportSettings>("select id,company_name,company_document,support_email,whatsapp_phone,default_message,business_hours,is_active,button_text,updated_at from habitflow.support_settings order by updated_at desc limit 1", null, ct)
+        ?? new(Guid.Empty, "MNSOFT", "18.160.057/0001-13", "comercial@mnsoft.com.br", null, "Olá! Preciso de ajuda com o HabitFlow.", "Segunda a sexta, 9h às 18h", true, "Falar com a MNSOFT", DateTime.UtcNow);
+
+    public Task UpdateSupportSettingsAsync(SupportSettings s, CancellationToken ct = default) =>
+        db.ExecuteAsync("insert into habitflow.support_settings(id,company_name,company_document,support_email,whatsapp_phone,default_message,business_hours,is_active,button_text,updated_at) values(@Id,@CompanyName,@CompanyDocument,@SupportEmail,@WhatsAppPhone,@DefaultMessage,@BusinessHours,@IsActive,@ButtonText,now()) on conflict(id) do update set company_name=excluded.company_name,company_document=excluded.company_document,support_email=excluded.support_email,whatsapp_phone=excluded.whatsapp_phone,default_message=excluded.default_message,business_hours=excluded.business_hours,is_active=excluded.is_active,button_text=excluded.button_text,updated_at=now()", s, ct);
+
+    public Task CreateTicketAsync(SupportTicketDetail t, CancellationToken ct = default) =>
+        db.ExecuteAsync("insert into habitflow.support_tickets_v2(id,client_id,user_id,protocol,category,priority,status,subject,description,safe_context,assigned_user_id,sla_due_at,created_at,updated_at,closed_at,resolution_reason,satisfaction_rating,satisfaction_feedback,reopened_at,resolved_at) values(@Id,@ClientId,@UserId,@Protocol,@Category,@Priority,@Status,@Subject,@Description,@SafeContext,@AssignedUserId,@SlaDueAt,@CreatedAt,@UpdatedAt,@ClosedAt,@ResolutionReason,@SatisfactionRating,@SatisfactionFeedback,@ReopenedAt,@ResolvedAt)", t, ct);
+
+    public async Task<IReadOnlyList<SupportTicketDetail>> ListTicketsAsync(Guid clientId, Guid userId, bool admin, CancellationToken ct = default) =>
+        (await db.QueryAsync<SupportTicketDetail>($"select {TicketColumns} from habitflow.support_tickets_v2 where client_id=@clientId and (@admin or user_id=@userId) order by updated_at desc", new { clientId, userId, admin }, ct)).ToArray();
+
+    public async Task<IReadOnlyList<SupportTicketDetail>> ListAllTicketsAsync(string? status = null, string? priority = null, string? category = null, string? search = null, CancellationToken ct = default)
+    {
+        var sql = $"select {TicketColumns} from habitflow.support_tickets_v2 where 1=1";
+        if (!string.IsNullOrWhiteSpace(status)) sql += " and status = @status";
+        if (!string.IsNullOrWhiteSpace(priority)) sql += " and priority = @priority";
+        if (!string.IsNullOrWhiteSpace(category)) sql += " and category = @category";
+        if (!string.IsNullOrWhiteSpace(search)) sql += " and (subject ilike @like or protocol ilike @like or description ilike @like)";
+        sql += " order by case when priority='Critical' then 1 when priority='High' then 2 when priority='Medium' then 3 else 4 end, updated_at desc limit 200";
+
+        var like = string.IsNullOrWhiteSpace(search) ? null : $"%{search.Trim()}%";
+        return (await db.QueryAsync<SupportTicketDetail>(sql, new { status, priority, category, like }, ct)).ToArray();
+    }
+
+    public Task<SupportTicketDetail?> GetTicketAsync(Guid clientId, Guid userId, Guid ticketId, bool admin, CancellationToken ct = default) =>
+        db.QuerySingleOrDefaultAsync<SupportTicketDetail>($"select {TicketColumns} from habitflow.support_tickets_v2 where id=@ticketId and client_id=@clientId and (@admin or user_id=@userId)", new { clientId, userId, ticketId, admin }, ct);
+
+    public Task<SupportTicketDetail?> GetTicketByIdGlobalAsync(Guid ticketId, CancellationToken ct = default) =>
+        db.QuerySingleOrDefaultAsync<SupportTicketDetail>($"select {TicketColumns} from habitflow.support_tickets_v2 where id=@ticketId", new { ticketId }, ct);
+
+    public Task AddTicketMessageAsync(SupportTicketMessage m, CancellationToken ct = default) =>
+        db.ExecuteAsync("""
+            insert into habitflow.support_ticket_messages_v2(id,client_id,ticket_id,user_id,is_staff,is_internal,message,created_at)
+            select @Id,@ClientId,@TicketId,@UserId,@IsStaff,@IsInternal,@Message,@CreatedAt
+            where exists(select 1 from habitflow.support_tickets_v2 where id=@TicketId and client_id=@ClientId and status not in ('Closed','Canceled','Cancelled'));
+            
+            update habitflow.support_tickets_v2 
+            set status = case 
+                    when @IsInternal then status 
+                    when @IsStaff then 'WaitingCustomer' 
+                    else 'InProgress' 
+                end,
+                updated_at = now() 
+            where id=@TicketId and client_id=@ClientId and status not in ('Closed','Canceled','Cancelled')
+            """, m, ct);
+
+    public async Task<IReadOnlyList<SupportTicketMessage>> ListTicketMessagesAsync(Guid clientId, Guid ticketId, CancellationToken ct = default) =>
+        (await db.QueryAsync<SupportTicketMessage>("select id,client_id,ticket_id,user_id,is_staff,is_internal,message,created_at from habitflow.support_ticket_messages_v2 where client_id=@clientId and ticket_id=@ticketId order by created_at", new { clientId, ticketId }, ct)).ToArray();
+
+    public Task UpdateTicketStatusAsync(Guid clientId, Guid ticketId, string status, DateTime? closedAt, CancellationToken ct = default) =>
+        db.ExecuteAsync("update habitflow.support_tickets_v2 set status=@status,closed_at=@closedAt,updated_at=now() where id=@ticketId and client_id=@clientId", new { clientId, ticketId, status, closedAt }, ct);
+
+    public Task ResolveTicketAsync(Guid clientId, Guid ticketId, Guid actorUserId, string resolutionReason, CancellationToken ct = default) =>
+        db.ExecuteAsync("""
+            update habitflow.support_tickets_v2 
+            set status='Resolved', resolved_at=now(), resolution_reason=@resolutionReason, updated_at=now() 
+            where id=@ticketId and client_id=@clientId;
+            
+            insert into habitflow.support_ticket_status_history(id,client_id,ticket_id,actor_user_id,from_status,to_status,reason,created_at)
+            values(@id,@clientId,@ticketId,@actorUserId,'InProgress','Resolved',@resolutionReason,now())
+            """, new { id = Guid.NewGuid(), clientId, ticketId, actorUserId, resolutionReason }, ct);
+
+    public Task ReopenTicketAsync(Guid clientId, Guid ticketId, Guid actorUserId, string reason, DateTime slaDueAt, CancellationToken ct = default) =>
+        db.ExecuteAsync("""
+            update habitflow.support_tickets_v2 
+            set status='Reopened', closed_at=null, reopened_at=now(), sla_due_at=@slaDueAt, updated_at=now() 
+            where id=@ticketId and client_id=@clientId and status in ('Closed','Resolved','Canceled','Cancelled');
+            
+            insert into habitflow.support_ticket_status_history(id,client_id,ticket_id,actor_user_id,from_status,to_status,reason,created_at) 
+            values(@id,@clientId,@ticketId,@actorUserId,'Closed','Reopened',@reason,now())
+            """, new { id = Guid.NewGuid(), clientId, ticketId, actorUserId, reason, slaDueAt }, ct);
+
+    public Task SubmitSatisfactionAsync(Guid clientId, Guid ticketId, Guid userId, int rating, string? feedback, CancellationToken ct = default) =>
+        db.ExecuteAsync("""
+            update habitflow.support_tickets_v2 
+            set satisfaction_rating = @rating, 
+                satisfaction_feedback = @feedback, 
+                updated_at = now() 
+            where id = @ticketId and client_id = @clientId and user_id = @userId and status in ('Resolved', 'Closed')
+            """, new { clientId, ticketId, userId, rating, feedback }, ct);
+
+    public async Task<IReadOnlyList<SupportTicketHistory>> ListTicketHistoryAsync(Guid clientId, Guid ticketId, CancellationToken ct = default) =>
+        (await db.QueryAsync<SupportTicketHistory>("select id,client_id,ticket_id,actor_user_id,from_status,to_status,reason,created_at from habitflow.support_ticket_status_history where client_id=@clientId and ticket_id=@ticketId order by created_at", new { clientId, ticketId }, ct)).ToArray();
 }

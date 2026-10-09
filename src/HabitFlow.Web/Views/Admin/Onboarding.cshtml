@@ -1,56 +1,130 @@
 @model HabitFlow.Application.ImplantationPage
-@{ ViewData["Title"] = "Implantação do cliente"; }
+@{
+    ViewData["Title"] = "Implantação Guiada do Workspace";
+    var completedCount = Model.Steps.Count(s => s.Status is HabitFlow.Domain.ImplantationStepStatus.Concluido);
+    var terminalCount = Model.Steps.Count(s => s.IsTerminal);
+    var totalSteps = Model.Steps.Count;
+    var progressPercent = totalSteps > 0 ? (int)Math.Round((double)terminalCount * 100 / totalSteps) : 0;
+}
+
 <section class="hf-activation premium-card">
-  <h1>Implantação do workspace</h1>
-  <p>Conclua os dados reais da conta. Nenhuma etapa pede um identificador técnico.</p>
-  <div class="hf-help"><strong>Como usar.</strong> Abra a ação de cada item pendente. Se a etapa não se aplica, ignore com uma justificativa. A ativação só segue quando todas estão concluídas, bloqueadas pelo plano ou ignoradas.</div>
-  @if (TempData["Success"] is string ok) { <div class="alert alert-success">@ok</div> }
-  @if (TempData["Error"] is string error) { <div class="alert alert-danger hf-error">@error</div> }
-  @if (Model.Pendencies.Count > 0)
-  {
-    <div class="hf-empty"><strong>Pendências de leitura</strong><ul>@foreach (var item in Model.Pendencies) { <li>@item</li> }</ul></div>
-  }
-  @if (Model.Steps.Count == 0)
-  {
-    <div class="hf-empty">Nenhum checklist disponível para esta conta.</div>
-  }
-  else
-  {
-    <div class="hf-steps">
-      @foreach (var step in Model.Steps)
-      {
-        <article class="hf-step">
-          <span class="hf-status hf-status-@step.Status.ToString().ToLowerInvariant()">@step.StatusLabel</span>
-          <h2 class="h5">@step.Title</h2>
-          <p>@step.Help</p>
-          @if (!string.IsNullOrWhiteSpace(step.Reason)) { <p>Justificativa: @step.Reason</p> }
-          <div class="hf-actions">
-            <a class="btn btn-outline-success" href="@step.ActionUrl">Abrir</a>
-            @if (step.Status is HabitFlow.Domain.ImplantationStepStatus.Pendente)
-            {
-              <form method="post" action="/admin/onboarding/progress">
-                @Html.AntiForgeryToken()
-                <input type="hidden" name="stepCode" value="@step.Code" />
-                <button type="submit" data-loading-text="Salvando">Marcar em andamento</button>
-              </form>
-            }
-            @if (step.Status is HabitFlow.Domain.ImplantationStepStatus.Pendente or HabitFlow.Domain.ImplantationStepStatus.EmAndamento)
-            {
-              <form method="post" action="/admin/onboarding/ignore">
-                @Html.AntiForgeryToken()
-                <input type="hidden" name="stepCode" value="@step.Code" />
-                <label>Ignorar com justificativa <input name="reason" minlength="5" maxlength="500" required /></label>
-                <button type="submit" data-loading-text="Salvando">Ignorar</button>
-              </form>
-            }
-          </div>
-        </article>
-      }
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
+        <div>
+            <h1 style="margin: 0; font-size: 1.6rem; font-weight: 700; color: #0f172a;">Implantação Guiada do Workspace</h1>
+            <p style="margin: 0.25rem 0 0 0; color: #64748b;">Checklist estruturado em 10 etapas para operação em produção.</p>
+        </div>
+        <div style="text-align: right;">
+            <span style="font-size: 1.25rem; font-weight: 700; color: @(Model.CanFinish ? "#16a34a" : "#2563eb");">@progressPercent% Concluído</span>
+            <div style="width: 140px; background: #e2e8f0; height: 8px; border-radius: 9999px; overflow: hidden; margin-top: 0.3rem;">
+                <div style="background: @(Model.CanFinish ? "#16a34a" : "#2563eb"); height: 100%; width: @(progressPercent)%;"></div>
+            </div>
+        </div>
     </div>
-    <form method="post" action="/admin/onboarding/finish" class="hf-actions">
-      @Html.AntiForgeryToken()
-      <button type="submit" data-loading-text="Ativando" @(Model.CanFinish ? null : "disabled")>Ativar tenant</button>
-    </form>
-  }
-  <p><a href="/admin/templates">Templates</a> · <a href="/admin/homologation">Relatório do tenant</a> · <a href="/notifications/alerts">Alertas</a></p>
+
+    <div class="hf-help" style="background: rgba(37,99,235,0.06); border-left: 4px solid #2563eb; padding: 0.85rem 1.1rem; border-radius: 6px; margin-bottom: 1.5rem; font-size: 0.9rem; color: #1e3a8a;">
+        <strong>Como usar.</strong> Cada etapa requer evidência de execução no sistema. Se alguma etapa corporativa ou opcional não se aplicar ao seu fluxo de trabalho, você pode ignorá-la informando uma justificativa obrigatória com mais de 5 caracteres.
+    </div>
+
+    @if (TempData["Success"] is string ok) { <div class="alert alert-success" style="background: #ecfdf5; color: #065f46; padding: 0.75rem 1rem; border-radius: 6px; margin-bottom: 1rem;">@ok</div> }
+    @if (TempData["Error"] is string error) { <div class="alert alert-danger hf-error" style="background: #fef2f2; color: #991b1b; padding: 0.75rem 1rem; border-radius: 6px; margin-bottom: 1rem;">@error</div> }
+
+    @if (Model.Pendencies.Count > 0)
+    {
+        <div class="hf-empty" style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 1rem; margin-bottom: 1.25rem;">
+            <strong style="color: #92400e;">Pendências de leitura:</strong>
+            <ul style="margin: 0.5rem 0 0 1.25rem; color: #78350f; font-size: 0.88rem;">
+                @foreach (var item in Model.Pendencies) { <li>@item</li> }
+            </ul>
+        </div>
+    }
+
+    @if (Model.Steps.Count == 0)
+    {
+        <div class="hf-empty" style="padding: 2.5rem; text-align: center; color: #64748b;">Nenhum checklist disponível para esta conta.</div>
+    }
+    else
+    {
+        <div class="hf-steps" style="display: flex; flex-direction: column; gap: 0.85rem; margin-bottom: 1.5rem;">
+            @for (var i = 0; i < Model.Steps.Count; i++)
+            {
+                var step = Model.Steps[i];
+                var isDone = step.Status == HabitFlow.Domain.ImplantationStepStatus.Concluido;
+                var isIgnored = step.Status == HabitFlow.Domain.ImplantationStepStatus.Ignorado;
+                var isBlocked = step.Status == HabitFlow.Domain.ImplantationStepStatus.Bloqueado;
+                var isProgress = step.Status == HabitFlow.Domain.ImplantationStepStatus.EmAndamento;
+
+                var badgeBg = isDone ? "#dcfce7" : isIgnored ? "#f1f5f9" : isBlocked ? "#fee2e2" : isProgress ? "#e0f2fe" : "#fef3c7";
+                var badgeColor = isDone ? "#166534" : isIgnored ? "#475569" : isBlocked ? "#991b1b" : isProgress ? "#0369a1" : "#92400e";
+
+                <article class="hf-step" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1.2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                    <div style="flex: 1; min-width: 260px;">
+                        <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.25rem;">
+                            <span style="font-weight: 700; color: #64748b; font-size: 0.85rem;">Etapa @(i + 1)</span>
+                            <span class="hf-status" style="background: @badgeBg; color: @badgeColor; font-size: 0.75rem; font-weight: 600; padding: 0.2rem 0.55rem; border-radius: 9999px;">
+                                @step.StatusLabel
+                            </span>
+                        </div>
+                        <h2 class="h5" style="margin: 0 0 0.25rem 0; font-size: 1.05rem; font-weight: 700; color: #0f172a;">@step.Title</h2>
+                        <p style="margin: 0; color: #475569; font-size: 0.88rem;">@step.Help</p>
+                        @if (!string.IsNullOrWhiteSpace(step.Reason))
+                        {
+                            <p style="margin: 0.35rem 0 0 0; color: #64748b; font-size: 0.82rem; font-style: italic;">
+                                Justificativa registrada: @step.Reason
+                            </p>
+                        }
+                    </div>
+
+                    <div class="hf-actions" style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                        <a class="btn btn-outline-primary" href="@step.ActionUrl" style="padding: 0.4rem 0.9rem; font-size: 0.85rem; border-radius: 6px; text-decoration: none; font-weight: 600;">
+                            Acessar
+                        </a>
+
+                        @if (step.Status is HabitFlow.Domain.ImplantationStepStatus.Pendente)
+                        {
+                            <form method="post" action="/admin/onboarding/progress" style="display: inline;">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="stepCode" value="@step.Code" />
+                                <button type="submit" class="btn btn-outline-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; border-radius: 6px;">
+                                    Em Andamento
+                                </button>
+                            </form>
+                        }
+
+                        @if (step.Status is HabitFlow.Domain.ImplantationStepStatus.Pendente or HabitFlow.Domain.ImplantationStepStatus.EmAndamento)
+                        {
+                            <form method="post" action="/admin/onboarding/ignore" style="display: inline-flex; gap: 0.3rem; align-items: center;">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="stepCode" value="@step.Code" />
+                                <input name="reason" minlength="5" maxlength="500" required placeholder="Justificativa (min 5)..." style="padding: 0.35rem 0.5rem; font-size: 0.8rem; border: 1px solid #cbd5e1; border-radius: 5px; width: 140px;" />
+                                <button type="submit" class="btn btn-outline-warning" style="padding: 0.4rem 0.75rem; font-size: 0.85rem; border-radius: 6px;">
+                                    Ignorar
+                                </button>
+                            </form>
+                        }
+                    </div>
+                </article>
+            }
+        </div>
+
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1.25rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+            <div>
+                <strong style="color: #0f172a; font-size: 1rem;">Finalizar Checklist de Implantação</strong>
+                <p style="margin: 0.2rem 0 0 0; color: #64748b; font-size: 0.85rem;">
+                    @(Model.CanFinish ? "Todas as etapas estão resolvidas. O workspace está liberado para operação final." : "Resolva ou justifique todas as etapas pendentes para habilitar a ativação.")
+                </p>
+            </div>
+            <form method="post" action="/admin/onboarding/finish">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-success" style="padding: 0.6rem 1.4rem; font-size: 0.95rem; font-weight: 700; border-radius: 8px;" @(Model.CanFinish ? null : "disabled")>
+                    Concluir Implantação
+                </button>
+            </form>
+        </div>
+    }
+
+    <p style="margin-top: 1.5rem; color: #64748b; font-size: 0.88rem;">
+        <a href="/admin/templates" style="color: #2563eb; text-decoration: none;">Templates</a> · 
+        <a href="/admin/homologation" style="color: #2563eb; text-decoration: none;">Relatório do tenant</a> · 
+        <a href="/notifications/alerts" style="color: #2563eb; text-decoration: none;">Alertas</a>
+    </p>
 </section>
