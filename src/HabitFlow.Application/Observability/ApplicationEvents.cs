@@ -63,4 +63,16 @@ public static class ApplicationEvents
     public static readonly EventId SystemUnhandled = new(617670, "system.error.unhandled");
     public static readonly EventId DatabaseUnavailable = new(617671, "system.database.unavailable");
     public static readonly EventId HealthFailed = new(617672, "system.health.failed");
+
+    // v6.21.0 - Eventos Operacionais SaaS Obrigatórios
+    public static readonly EventId TenantHealthUpdated = new(621001, "tenant.health.updated");
+    public static readonly EventId TenantOnboardingStepCompleted = new(621002, "tenant.onboarding.step_completed");
+    public static readonly EventId TenantOnboardingStepSkipped = new(621003, "tenant.onboarding.step_skipped");
+    public static readonly EventId IncidentCreated = new(621007, "incident.created");
+    public static readonly EventId IncidentUpdated = new(621008, "incident.updated");
+    public static readonly EventId IncidentResolved = new(621009, "incident.resolved");
+    public static readonly EventId CustomerSuccessRiskDetected = new(621010, "customer_success.risk_detected");
+    public static readonly EventId BillingTrialEnding = new(621011, "billing.trial.ending");
+    public static readonly EventId BillingPaymentIssueDetected = new(621012, "billing.payment.issue_detected");
+    public static readonly EventId AiUsageLimitReached = new(621013, "ai.usage.limit_reached");
 }

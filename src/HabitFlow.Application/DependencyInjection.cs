@@ -207,6 +207,9 @@ public static class DependencyInjection
         services.AddScoped<SchemaMigrationStatusService>();
         services.AddScoped<SuperAdminOperationalService>();
         services.AddScoped<OperationsCenterService>();
+        services.AddScoped<OperationalIncidentService>();
+        services.AddScoped<TenantHealthEvaluationService>();
+        services.AddScoped<OperationalAiService>();
         services.AddHttpClient<GroqAssistantProvider>((sp, client) => ConfigureAssistantClient(client, sp.GetRequiredService<IOptions<GroqOptions>>().Value.BaseUrl, sp));
         services.AddHttpClient<GeminiAssistantProvider>((sp, client) => ConfigureAssistantClient(client, sp.GetRequiredService<IOptions<GeminiOptions>>().Value.BaseUrl, sp));
         services.AddHttpClient<DeepSeekAssistantProvider>((sp, client) => ConfigureAssistantClient(client, sp.GetRequiredService<IOptions<DeepSeekOptions>>().Value.BaseUrl, sp));

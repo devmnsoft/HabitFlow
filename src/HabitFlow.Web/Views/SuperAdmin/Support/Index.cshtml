@@ -1,2 +1,142 @@
-@{ ViewData["Title"] = "Suporte SuperAdmin"; }
-<section class="premium-card"><h1>Suporte operacional</h1><p>Fila global de suporte com SLA, auditoria e triagem operacional. Use os filtros administrativos para investigar clientes, status e prioridade.</p></section>
+@model IReadOnlyList<HabitFlow.Domain.SupportTicketDetail>
+@{
+    ViewData["Title"] = "Central de Suporte Operacional";
+    var openCount = Model.Count(t => t.Status is "Open" or "InProgress" or "Reopened");
+    var criticalCount = Model.Count(t => t.Priority == "Critical" && t.Status != "Closed" && t.Status != "Resolved");
+    var waitingCustomerCount = Model.Count(t => t.Status == "WaitingCustomer");
+    var resolvedCount = Model.Count(t => t.Status == "Resolved" || t.Status == "Closed");
+}
+
+<section class="premium-card hf-support-operations">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
+        <div>
+            <h1 style="margin: 0; font-size: 1.6rem; font-weight: 700; color: #0f172a;">Central de Suporte Operacional</h1>
+            <p style="margin: 0.25rem 0 0 0; color: #64748b;">Fila global multitenant de chamados com SLA dinâmico por plano, notas internas e auditoria.</p>
+        </div>
+    </div>
+
+    <div class="hf-help" style="background: rgba(14,165,233,0.06); border-left: 4px solid #0284c7; padding: 0.85rem 1.1rem; border-radius: 6px; margin-bottom: 1.5rem; font-size: 0.9rem; color: #0369a1;">
+        <strong>Como operar:</strong> Chamados críticos possuem SLA prioritário de 4h (Enterprise) a 24h (Free/Trial). Use as respostas sugeridas por IA como base e mantenha notas internas separadas das mensagens visíveis ao cliente.
+    </div>
+
+    <!-- Indicadores -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+        <article class="hf-kpi-card" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1.1rem;">
+            <small style="color: #64748b; font-weight: 600; text-transform: uppercase; font-size: 0.75rem;">Fila Aberta</small>
+            <h2 style="margin: 0.3rem 0 0 0; font-size: 1.8rem; font-weight: 700; color: @(openCount > 0 ? "#0284c7" : "#16a34a");">@openCount</h2>
+        </article>
+        <article class="hf-kpi-card" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1.1rem;">
+            <small style="color: #64748b; font-weight: 600; text-transform: uppercase; font-size: 0.75rem;">Críticos em Aberto</small>
+            <h2 style="margin: 0.3rem 0 0 0; font-size: 1.8rem; font-weight: 700; color: @(criticalCount > 0 ? "#dc2626" : "#475569");">@criticalCount</h2>
+        </article>
+        <article class="hf-kpi-card" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1.1rem;">
+            <small style="color: #64748b; font-weight: 600; text-transform: uppercase; font-size: 0.75rem;">Aguardando Cliente</small>
+            <h2 style="margin: 0.3rem 0 0 0; font-size: 1.8rem; font-weight: 700; color: #d97706;">@waitingCustomerCount</h2>
+        </article>
+        <article class="hf-kpi-card" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1.1rem;">
+            <small style="color: #64748b; font-weight: 600; text-transform: uppercase; font-size: 0.75rem;">Resolvidos / Fechados</small>
+            <h2 style="margin: 0.3rem 0 0 0; font-size: 1.8rem; font-weight: 700; color: #16a34a;">@resolvedCount</h2>
+        </article>
+    </div>
+
+    <!-- Filtros -->
+    <form method="get" action="/superadmin/support" style="display: flex; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1.5rem; align-items: center;">
+        <select name="status" class="form-select" style="max-width: 170px; padding: 0.45rem 0.75rem; border-radius: 6px; border: 1px solid #cbd5e1;">
+            <option value="">Todos os status</option>
+            <option value="Open" selected="@(ViewData["SelectedStatus"]?.ToString() == "Open")">Aberto (Open)</option>
+            <option value="InProgress" selected="@(ViewData["SelectedStatus"]?.ToString() == "InProgress")">Em Andamento</option>
+            <option value="WaitingCustomer" selected="@(ViewData["SelectedStatus"]?.ToString() == "WaitingCustomer")">Aguardando Cliente</option>
+            <option value="Resolved" selected="@(ViewData["SelectedStatus"]?.ToString() == "Resolved")">Resolvido</option>
+            <option value="Closed" selected="@(ViewData["SelectedStatus"]?.ToString() == "Closed")">Encerrado</option>
+            <option value="Reopened" selected="@(ViewData["SelectedStatus"]?.ToString() == "Reopened")">Reaberto</option>
+        </select>
+        <select name="priority" class="form-select" style="max-width: 170px; padding: 0.45rem 0.75rem; border-radius: 6px; border: 1px solid #cbd5e1;">
+            <option value="">Todas prioridades</option>
+            <option value="Critical" selected="@(ViewData["SelectedPriority"]?.ToString() == "Critical")">Crítica</option>
+            <option value="High" selected="@(ViewData["SelectedPriority"]?.ToString() == "High")">Alta</option>
+            <option value="Medium" selected="@(ViewData["SelectedPriority"]?.ToString() == "Medium")">Média</option>
+            <option value="Low" selected="@(ViewData["SelectedPriority"]?.ToString() == "Low")">Baixa</option>
+        </select>
+        <input type="text" name="search" value="@ViewData["Search"]" placeholder="Buscar por protocolo ou assunto..." class="form-control" style="flex: 1; min-width: 200px; padding: 0.45rem 0.75rem; border-radius: 6px; border: 1px solid #cbd5e1;" />
+        <button type="submit" class="btn btn-secondary" style="padding: 0.45rem 1rem; border-radius: 6px;">Filtrar</button>
+        @if (ViewData["SelectedStatus"] != null || ViewData["SelectedPriority"] != null || ViewData["Search"] != null)
+        {
+            <a href="/superadmin/support" class="btn btn-link" style="text-decoration: none; font-size: 0.9rem;">Limpar</a>
+        }
+    </form>
+
+    <!-- Fila de Tickets -->
+    @if (Model.Count == 0)
+    {
+        <div style="text-align: center; padding: 3rem 1rem; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 10px; color: #64748b;">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5" style="margin-bottom: 0.75rem;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <h3 style="margin: 0; font-size: 1.1rem; color: #334155;">Nenhum chamado retornado</h3>
+            <p style="margin: 0.25rem 0 0 0; font-size: 0.9rem;">Fila limpa ou nenhum registro corresponde aos filtros selecionados.</p>
+        </div>
+    }
+    else
+    {
+        <div style="overflow-x: auto;">
+            <table class="table" style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+                <thead>
+                    <tr style="border-bottom: 2px solid #e2e8f0; text-align: left; color: #475569;">
+                        <th style="padding: 0.75rem;">Protocolo / Assunto</th>
+                        <th style="padding: 0.75rem;">Categoria</th>
+                        <th style="padding: 0.75rem;">Prioridade</th>
+                        <th style="padding: 0.75rem;">Status</th>
+                        <th style="padding: 0.75rem;">SLA / Prazo</th>
+                        <th style="padding: 0.75rem;">Abertura</th>
+                        <th style="padding: 0.75rem; text-align: right;">Ação</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var t in Model)
+                    {
+                        var isCrit = t.Priority == "Critical";
+                        var isHigh = t.Priority == "High";
+                        var prioBg = isCrit ? "#fee2e2" : isHigh ? "#ffedd5" : t.Priority == "Medium" ? "#fef3c7" : "#e0f2fe";
+                        var prioColor = isCrit ? "#991b1b" : isHigh ? "#9a3412" : t.Priority == "Medium" ? "#92400e" : "#075985";
+
+                        var isOverdue = t.SlaDueAt < DateTime.UtcNow && t.Status != "Closed" && t.Status != "Resolved";
+
+                        <tr style="border-bottom: 1px solid #f1f5f9;">
+                            <td style="padding: 0.85rem 0.75rem;">
+                                <div style="font-family: monospace; font-weight: 700; color: #2563eb; font-size: 0.85rem;">@t.Protocol</div>
+                                <strong style="color: #0f172a; display: block;">@t.Subject</strong>
+                            </td>
+                            <td style="padding: 0.85rem 0.75rem; color: #475569;">@t.Category</td>
+                            <td style="padding: 0.85rem 0.75rem;">
+                                <span style="background: @prioBg; color: @prioColor; font-weight: 600; font-size: 0.75rem; padding: 0.25rem 0.6rem; border-radius: 9999px;">
+                                    @t.Priority
+                                </span>
+                            </td>
+                            <td style="padding: 0.85rem 0.75rem;">
+                                <span class="badge" style="background: #f1f5f9; color: #334155; font-size: 0.75rem; padding: 0.25rem 0.5rem; border-radius: 4px; border: 1px solid #cbd5e1;">
+                                    @t.Status
+                                </span>
+                            </td>
+                            <td style="padding: 0.85rem 0.75rem; font-size: 0.82rem;">
+                                @if (isOverdue)
+                                {
+                                    <span style="color: #dc2626; font-weight: 700;">SLA Estourado</span>
+                                }
+                                else
+                                {
+                                    <span style="color: #16a34a;">Vence @t.SlaDueAt.ToLocalTime().ToString("dd/MM HH:mm")</span>
+                                }
+                            </td>
+                            <td style="padding: 0.85rem 0.75rem; color: #64748b; font-size: 0.82rem;">
+                                @t.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                            </td>
+                            <td style="padding: 0.85rem 0.75rem; text-align: right;">
+                                <a href="/superadmin/support/@t.Id" class="btn btn-sm btn-primary" style="padding: 0.35rem 0.75rem; font-size: 0.8rem; border-radius: 5px; text-decoration: none; font-weight: 600;">
+                                    Atender
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>

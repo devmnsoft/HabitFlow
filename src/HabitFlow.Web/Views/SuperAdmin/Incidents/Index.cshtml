@@ -1,0 +1,263 @@
+@model IReadOnlyList<HabitFlow.Domain.OperationalIncident>
+@{
+    ViewData["Title"] = "Incidentes e Status Operacional";
+    var activeIncidents = Model.Count(i => i.Status is "Investigating" or "Identified" or "Monitoring");
+    var criticalCount = Model.Count(i => i.Severity == "Critical" && i.Status != "Resolved" && i.Status != "Canceled");
+    var affectedCount = Model.Where(i => i.Status is "Investigating" or "Identified" or "Monitoring").Sum(i => i.AffectedTenantsCount);
+}
+
+<section class="premium-card hf-incident-dashboard">
+    <div class="hf-header-row" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
+        <div>
+            <h1 style="margin: 0; font-size: 1.6rem; font-weight: 700; color: var(--hf-text-main, #0f172a);">Incidentes e Status Operacional</h1>
+            <p style="margin: 0.25rem 0 0 0; color: var(--hf-text-muted, #64748b);">Monitoramento de indisponibilidades, severidade, impacto nos tenants e comunicação técnica auditada.</p>
+        </div>
+        <button type="button" class="btn btn-primary" onclick="document.getElementById('modalNewIncident').style.display='flex';" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.2rem; border-radius: 8px; font-weight: 600;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+            Registrar Incidente
+        </button>
+    </div>
+
+    <div class="hf-help" style="background: rgba(37,99,235,0.06); border-left: 4px solid #2563eb; padding: 0.85rem 1.1rem; border-radius: 6px; margin-bottom: 1.5rem; font-size: 0.9rem; color: #1e3a8a;">
+        <strong>Como usar:</strong> Cada incidente registrado gera evento auditado (<code>incident.created</code>). Mantenha as previsões atualizadas e use a IA para redigir comunicados transparentes antes do envio aos clientes afetados.
+    </div>
+
+    <!-- Indicadores no topo -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+        <article class="hf-kpi-card" style="background: var(--hf-surface-card, #f8fafc); border: 1px solid var(--hf-border, #e2e8f0); border-radius: 10px; padding: 1.1rem;">
+            <small style="color: #64748b; font-weight: 600; text-transform: uppercase; font-size: 0.75rem;">Incidentes Ativos</small>
+            <h2 style="margin: 0.3rem 0 0 0; font-size: 1.8rem; font-weight: 700; color: @(activeIncidents > 0 ? "#b91c1c" : "#15803d");">@activeIncidents</h2>
+        </article>
+        <article class="hf-kpi-card" style="background: var(--hf-surface-card, #f8fafc); border: 1px solid var(--hf-border, #e2e8f0); border-radius: 10px; padding: 1.1rem;">
+            <small style="color: #64748b; font-weight: 600; text-transform: uppercase; font-size: 0.75rem;">Críticos Não Resolvidos</small>
+            <h2 style="margin: 0.3rem 0 0 0; font-size: 1.8rem; font-weight: 700; color: @(criticalCount > 0 ? "#dc2626" : "#475569");">@criticalCount</h2>
+        </article>
+        <article class="hf-kpi-card" style="background: var(--hf-surface-card, #f8fafc); border: 1px solid var(--hf-border, #e2e8f0); border-radius: 10px; padding: 1.1rem;">
+            <small style="color: #64748b; font-weight: 600; text-transform: uppercase; font-size: 0.75rem;">Tenants Impactados</small>
+            <h2 style="margin: 0.3rem 0 0 0; font-size: 1.8rem; font-weight: 700; color: #1e293b;">@affectedCount</h2>
+        </article>
+        <article class="hf-kpi-card" style="background: var(--hf-surface-card, #f8fafc); border: 1px solid var(--hf-border, #e2e8f0); border-radius: 10px; padding: 1.1rem;">
+            <small style="color: #64748b; font-weight: 600; text-transform: uppercase; font-size: 0.75rem;">Histórico Registrado</small>
+            <h2 style="margin: 0.3rem 0 0 0; font-size: 1.8rem; font-weight: 700; color: #475569;">@Model.Count</h2>
+        </article>
+    </div>
+
+    <!-- Filtros -->
+    <form method="get" action="/superadmin/incidents" style="display: flex; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1.5rem; align-items: center;">
+        <select name="status" class="form-select" style="max-width: 170px; padding: 0.45rem 0.75rem; border-radius: 6px; border: 1px solid #cbd5e1;">
+            <option value="">Todos os status</option>
+            <option value="Investigating" selected="@(ViewData["SelectedStatus"]?.ToString() == "Investigating")">Investigando</option>
+            <option value="Identified" selected="@(ViewData["SelectedStatus"]?.ToString() == "Identified")">Identificado</option>
+            <option value="Monitoring" selected="@(ViewData["SelectedStatus"]?.ToString() == "Monitoring")">Monitorando</option>
+            <option value="Resolved" selected="@(ViewData["SelectedStatus"]?.ToString() == "Resolved")">Resolvido</option>
+            <option value="Canceled" selected="@(ViewData["SelectedStatus"]?.ToString() == "Canceled")">Cancelado</option>
+        </select>
+        <select name="severity" class="form-select" style="max-width: 170px; padding: 0.45rem 0.75rem; border-radius: 6px; border: 1px solid #cbd5e1;">
+            <option value="">Todas severidades</option>
+            <option value="Critical" selected="@(ViewData["SelectedSeverity"]?.ToString() == "Critical")">Crítica</option>
+            <option value="Major" selected="@(ViewData["SelectedSeverity"]?.ToString() == "Major")">Grave (Major)</option>
+            <option value="Minor" selected="@(ViewData["SelectedSeverity"]?.ToString() == "Minor")">Leve (Minor)</option>
+            <option value="Info" selected="@(ViewData["SelectedSeverity"]?.ToString() == "Info")">Informativa</option>
+        </select>
+        <input type="text" name="search" value="@ViewData["Search"]" placeholder="Buscar por título ou impacto..." class="form-control" style="flex: 1; min-width: 200px; padding: 0.45rem 0.75rem; border-radius: 6px; border: 1px solid #cbd5e1;" />
+        <button type="submit" class="btn btn-secondary" style="padding: 0.45rem 1rem; border-radius: 6px;">Filtrar</button>
+        @if (ViewData["SelectedStatus"] != null || ViewData["SelectedSeverity"] != null || ViewData["Search"] != null)
+        {
+            <a href="/superadmin/incidents" class="btn btn-link" style="text-decoration: none; font-size: 0.9rem;">Limpar</a>
+        }
+    </form>
+
+    <!-- Tabela de incidentes -->
+    @if (Model.Count == 0)
+    {
+        <div style="text-align: center; padding: 3rem 1rem; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 10px; color: #64748b;">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5" style="margin-bottom: 0.75rem;"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+            <h3 style="margin: 0; font-size: 1.1rem; color: #334155;">Nenhum incidente encontrado</h3>
+            <p style="margin: 0.25rem 0 0 0; font-size: 0.9rem;">Todos os sistemas operam normalmente ou nenhum filtro correspondeu.</p>
+        </div>
+    }
+    else
+    {
+        <div style="overflow-x: auto;">
+            <table class="table" style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+                <thead>
+                    <tr style="border-bottom: 2px solid #e2e8f0; text-align: left; color: #475569;">
+                        <th style="padding: 0.75rem;">Título / Impacto</th>
+                        <th style="padding: 0.75rem;">Severidade</th>
+                        <th style="padding: 0.75rem;">Status</th>
+                        <th style="padding: 0.75rem;">Tenants</th>
+                        <th style="padding: 0.75rem;">Início / Previsão</th>
+                        <th style="padding: 0.75rem; text-align: right;">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var incident in Model)
+                    {
+                        var isCrit = incident.Severity == "Critical";
+                        var isMaj = incident.Severity == "Major";
+                        var badgeBg = isCrit ? "#fee2e2" : isMaj ? "#ffedd5" : incident.Severity == "Minor" ? "#fef3c7" : "#e0f2fe";
+                        var badgeColor = isCrit ? "#991b1b" : isMaj ? "#9a3412" : incident.Severity == "Minor" ? "#92400e" : "#075985";
+
+                        var statusBg = incident.Status == "Resolved" ? "#dcfce7" : incident.Status == "Canceled" ? "#f1f5f9" : "#fef9c3";
+                        var statusColor = incident.Status == "Resolved" ? "#166534" : incident.Status == "Canceled" ? "#475569" : "#854d0e";
+
+                        <tr style="border-bottom: 1px solid #f1f5f9;">
+                            <td style="padding: 0.85rem 0.75rem;">
+                                <strong style="color: #0f172a; display: block;">@incident.Title</strong>
+                                <span style="color: #64748b; font-size: 0.82rem; display: block; max-width: 380px;">@incident.Impact</span>
+                            </td>
+                            <td style="padding: 0.85rem 0.75rem;">
+                                <span style="background: @badgeBg; color: @badgeColor; font-weight: 600; font-size: 0.75rem; padding: 0.25rem 0.6rem; border-radius: 9999px;">
+                                    @incident.Severity
+                                </span>
+                            </td>
+                            <td style="padding: 0.85rem 0.75rem;">
+                                <span style="background: @statusBg; color: @statusColor; font-weight: 600; font-size: 0.75rem; padding: 0.25rem 0.6rem; border-radius: 9999px;">
+                                    @incident.Status
+                                </span>
+                            </td>
+                            <td style="padding: 0.85rem 0.75rem; font-weight: 600; color: #334155;">
+                                @(incident.AffectedTenantsCount == 0 ? "Global / Todos" : incident.AffectedTenantsCount.ToString())
+                            </td>
+                            <td style="padding: 0.85rem 0.75rem; color: #64748b; font-size: 0.82rem;">
+                                <div>@incident.StartsAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
+                                @if (incident.EstimatedResolutionAt.HasValue)
+                                {
+                                    <small style="color: #2563eb;">Prev: @incident.EstimatedResolutionAt.Value.ToLocalTime().ToString("dd/MM HH:mm")</small>
+                                }
+                                @if (incident.ResolvedAt.HasValue)
+                                {
+                                    <small style="color: #16a34a; font-weight: 600;">Resolvido: @incident.ResolvedAt.Value.ToLocalTime().ToString("dd/MM HH:mm")</small>
+                                }
+                            </td>
+                            <td style="padding: 0.85rem 0.75rem; text-align: right;">
+                                <div style="display: inline-flex; gap: 0.4rem; justify-content: flex-end;">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="openAiExplainModal('@incident.Title', '@incident.Impact', '@incident.Severity')" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; border-radius: 5px;">
+                                        Comunicado IA
+                                    </button>
+                                    @if (incident.Status is not "Resolved" and not "Canceled")
+                                    {
+                                        <form method="post" action="/superadmin/incidents/@incident.Id/status" style="display: inline;" onsubmit="return confirm('Confirma atualizar este incidente para Resolvido?');">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="newStatus" value="Resolved" />
+                                            <input type="hidden" name="resolutionNotes" value="Mitigado e restaurado via painel SuperAdmin." />
+                                            <button type="submit" class="btn btn-sm btn-success" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; border-radius: 5px;">
+                                                Resolver
+                                            </button>
+                                        </form>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>
+
+<!-- Modal Novo Incidente -->
+<div id="modalNewIncident" style="display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.6); align-items: center; justify-content: center; z-index: 9999; padding: 1rem;">
+    <div style="background: #ffffff; border-radius: 12px; max-width: 580px; width: 100%; padding: 1.75rem; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+            <h2 style="margin: 0; font-size: 1.3rem; font-weight: 700; color: #0f172a;">Registrar Novo Incidente</h2>
+            <button type="button" onclick="document.getElementById('modalNewIncident').style.display='none';" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #64748b;">&times;</button>
+        </div>
+
+        <form method="post" action="/superadmin/incidents">
+            @Html.AntiForgeryToken()
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.3rem; font-size: 0.85rem;">Título do Incidente *</label>
+                <input type="text" name="title" required minlength="5" placeholder="Ex: Lentidão na sincronização de rotinas" class="form-control" style="width: 100%; padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 6px;" />
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem;">
+                <div>
+                    <label style="display: block; font-weight: 600; margin-bottom: 0.3rem; font-size: 0.85rem;">Severidade *</label>
+                    <select name="severity" required class="form-select" style="width: 100%; padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+                        <option value="Critical">Crítica (Interrupção total)</option>
+                        <option value="Major" selected>Grave / Major</option>
+                        <option value="Minor">Leve / Minor</option>
+                        <option value="Info">Informativa</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="display: block; font-weight: 600; margin-bottom: 0.3rem; font-size: 0.85rem;">Tenants Afetados (0 = Todos)</label>
+                    <input type="number" name="affectedTenantsCount" value="0" min="0" class="form-control" style="width: 100%; padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 6px;" />
+                </div>
+            </div>
+
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.3rem; font-size: 0.85rem;">Impacto Operacional *</label>
+                <input type="text" name="impact" required placeholder="Ex: Usuários corporativos enfrentam atraso na listagem de lembretes." class="form-control" style="width: 100%; padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 6px;" />
+            </div>
+
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.3rem; font-size: 0.85rem;">Descrição Técnica Detalhada *</label>
+                <textarea name="description" rows="3" required minlength="10" placeholder="Causa preliminar, escopo observado e ações de mitigação iniciadas..." class="form-control" style="width: 100%; padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 6px;"></textarea>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem;">
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('modalNewIncident').style.display='none';" style="padding: 0.55rem 1.2rem; border-radius: 6px;">Cancelar</button>
+                <button type="submit" class="btn btn-primary" style="padding: 0.55rem 1.4rem; border-radius: 6px; font-weight: 600;">Registrar com Auditoria</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Comunicado IA -->
+<div id="modalAiExplain" style="display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.6); align-items: center; justify-content: center; z-index: 9999; padding: 1rem;">
+    <div style="background: #ffffff; border-radius: 12px; max-width: 540px; width: 100%; padding: 1.75rem; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h2 style="margin: 0; font-size: 1.2rem; font-weight: 700; color: #0f172a;">Comunicado Sugerido por IA</h2>
+            <button type="button" onclick="document.getElementById('modalAiExplain').style.display='none';" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #64748b;">&times;</button>
+        </div>
+        <div style="margin-bottom: 0.75rem; font-size: 0.85rem; color: #475569;">
+            Mensagem formatada para clientes ou status page pública sem expor detalhes internos da infraestrutura:
+        </div>
+        <div id="aiExplainLoading" style="display: none; text-align: center; padding: 2rem; color: #2563eb;">
+            Gerando comunicado via IA segura...
+        </div>
+        <textarea id="aiExplainOutput" rows="6" readonly class="form-control" style="width: 100%; padding: 0.75rem; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.9rem; background: #f8fafc; margin-bottom: 1rem;"></textarea>
+        <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
+            <button type="button" class="btn btn-outline-secondary" onclick="navigator.clipboard.writeText(document.getElementById('aiExplainOutput').value); alert('Comunicado copiado!');" style="padding: 0.45rem 1rem; border-radius: 6px;">Copiar</button>
+            <button type="button" class="btn btn-primary" onclick="document.getElementById('modalAiExplain').style.display='none';" style="padding: 0.45rem 1rem; border-radius: 6px;">Fechar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    async function openAiExplainModal(title, impact, severity) {
+        const modal = document.getElementById('modalAiExplain');
+        const output = document.getElementById('aiExplainOutput');
+        const loading = document.getElementById('aiExplainLoading');
+        
+        output.value = '';
+        output.style.display = 'none';
+        loading.style.display = 'block';
+        modal.style.display = 'flex';
+
+        try {
+            const formData = new FormData();
+            formData.append('title', title);
+            formData.append('impact', impact);
+            formData.append('severity', severity);
+
+            const tokenInput = document.querySelector('input[name="__RequestVerificationToken"]');
+            if (tokenInput) formData.append('__RequestVerificationToken', tokenInput.value);
+
+            const resp = await fetch('/superadmin/incidents/ai-explain', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await resp.json();
+            output.value = data.suggestion || 'Não foi possível gerar a sugestão.';
+        } catch (err) {
+            output.value = 'Erro ao contactar serviço de IA operacional.';
+        } finally {
+            loading.style.display = 'none';
+            output.style.display = 'block';
+        }
+    }
+</script>

@@ -1,0 +1,161 @@
+@model (HabitFlow.Domain.SupportTicketDetail Ticket, IReadOnlyList<HabitFlow.Domain.SupportTicketMessage> Messages)
+@{
+    ViewData["Title"] = $"Atendimento: {Model.Ticket.Protocol}";
+    var t = Model.Ticket;
+}
+
+<section class="premium-card hf-support-detail">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
+        <div>
+            <a href="/superadmin/support" style="text-decoration: none; color: #2563eb; font-size: 0.88rem; font-weight: 600;">&larr; Voltar para a fila de suporte</a>
+            <h1 style="margin: 0.4rem 0 0 0; font-size: 1.5rem; font-weight: 700; color: #0f172a;">
+                [@t.Protocol] @t.Subject
+            </h1>
+        </div>
+        <div style="display: flex; gap: 0.5rem; align-items: center;">
+            <span class="badge" style="background: #e2e8f0; color: #334155; padding: 0.4rem 0.8rem; border-radius: 6px; font-weight: 600;">
+                Status: @t.Status
+            </span>
+            <span class="badge" style="background: @(t.Priority == "Critical" ? "#fee2e2" : "#fef3c7"); color: @(t.Priority == "Critical" ? "#991b1b" : "#92400e"); padding: 0.4rem 0.8rem; border-radius: 6px; font-weight: 600;">
+                Prioridade: @t.Priority
+            </span>
+        </div>
+    </div>
+
+    <!-- Contexto Técnico do Ticket -->
+    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1.25rem; margin-bottom: 1.5rem;">
+        <h3 style="margin: 0 0 0.5rem 0; font-size: 1rem; color: #334155;">Descrição da Solicitação</h3>
+        <p style="margin: 0; color: #1e293b; white-space: pre-wrap; font-size: 0.95rem;">@t.Description</p>
+
+        <div style="margin-top: 1rem; padding-top: 0.75rem; border-top: 1px dashed #cbd5e1; font-size: 0.82rem; color: #64748b;">
+            <strong>Contexto técnico auditado:</strong> <code>@t.SafeContext</code>
+            <div style="margin-top: 0.3rem;">
+                <span>Cliente ID: <code>@t.ClientId</code></span> | 
+                <span>SLA Limite: <strong>@t.SlaDueAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</strong></span>
+                @if (t.ResolutionReason != null)
+                {
+                    <div style="margin-top: 0.3rem; color: #166534;">
+                        <strong>Motivo de Resolução:</strong> @t.ResolutionReason
+                    </div>
+                }
+                @if (t.SatisfactionRating.HasValue)
+                {
+                    <div style="margin-top: 0.3rem; color: #d97706; font-weight: 600;">
+                        ★ Avaliação do Cliente: @t.SatisfactionRating/5 estrelas - "@(t.SatisfactionFeedback ?? "Sem comentário adicional")"
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Histórico de Mensagens -->
+    <h3 style="margin: 1.5rem 0 1rem 0; font-size: 1.1rem; color: #0f172a;">Histórico do Atendimento</h3>
+    @if (Model.Messages.Count == 0)
+    {
+        <div style="padding: 1.5rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; color: #64748b; font-size: 0.9rem; text-align: center; margin-bottom: 1.5rem;">
+            Nenhuma mensagem adicional trocada neste chamado até o momento.
+        </div>
+    }
+    else
+    {
+        <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.5rem;">
+            @foreach (var m in Model.Messages)
+            {
+                var isInternal = m.IsInternal;
+                var isStaff = m.IsStaff;
+                var bg = isInternal ? "#fffbeb" : isStaff ? "#f0fdf4" : "#ffffff";
+                var border = isInternal ? "#fde68a" : isStaff ? "#bbf7d0" : "#e2e8f0";
+
+                <div style="background: @bg; border: 1px solid @border; border-radius: 8px; padding: 1rem;">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: #64748b; margin-bottom: 0.4rem;">
+                        <strong>
+                            @(isInternal ? "🔒 NOTA INTERNA (Equipe)" : isStaff ? "👔 Suporte MNSOFT" : "👤 Cliente")
+                        </strong>
+                        <span>@m.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</span>
+                    </div>
+                    <div style="color: #1e293b; font-size: 0.92rem; white-space: pre-wrap;">@m.Message</div>
+                </div>
+            }
+        </div>
+    }
+
+    <!-- Caixa de Resposta e Ações -->
+    <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 10px; padding: 1.25rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+            <h4 style="margin: 0; font-size: 1rem; color: #0f172a;">Responder / Inserir Nota</h4>
+            <button type="button" id="btnAiSuggest" class="btn btn-sm btn-outline-primary" data-subject="@t.Subject" data-description="@t.Description" onclick="requestAiReplySuggestion()" style="display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.35rem 0.8rem; font-size: 0.85rem; border-radius: 6px;">
+                ✨ Sugerir Resposta IA
+            </button>
+        </div>
+
+        <form method="post" action="/superadmin/support/@t.Id/reply">
+            @Html.AntiForgeryToken()
+            <div style="margin-bottom: 0.75rem;">
+                <textarea id="replyMessageText" name="message" rows="4" required placeholder="Digite sua resposta técnica ou nota interna..." class="form-control" style="width: 100%; padding: 0.75rem; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem;"></textarea>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                <label style="display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.9rem; color: #475569;">
+                    <input type="checkbox" name="isInternal" value="true" style="width: 16px; height: 16px;" />
+                    <span>Gravar como <strong>Nota Interna</strong> (não visível para o cliente)</span>
+                </label>
+
+                <div style="display: flex; gap: 0.5rem;">
+                    <button type="submit" class="btn btn-primary" style="padding: 0.55rem 1.25rem; border-radius: 6px; font-weight: 600;">
+                        Enviar Mensagem
+                    </button>
+                </div>
+            </div>
+        </form>
+
+        @if (t.Status is not "Resolved" and not "Closed")
+        {
+            <div style="margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid #e2e8f0;">
+                <h5 style="margin: 0 0 0.5rem 0; font-size: 0.95rem; color: #166534;">Finalizar Atendimento</h5>
+                <form method="post" action="/superadmin/support/@t.Id/resolve" onsubmit="return confirm('Confirma marcar o chamado como resolvido com este motivo?');">
+                    @Html.AntiForgeryToken()
+                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                        <input type="text" name="resolutionReason" required minlength="5" placeholder="Motivo da resolução (mínimo 5 caracteres)..." class="form-control" style="flex: 1; min-width: 250px; padding: 0.5rem 0.75rem; border: 1px solid #cbd5e1; border-radius: 6px;" />
+                        <button type="submit" class="btn btn-success" style="padding: 0.5rem 1.2rem; border-radius: 6px; font-weight: 600;">
+                            Resolver Chamado
+                        </button>
+                    </div>
+                </form>
+            </div>
+        }
+    </div>
+</section>
+
+<script>
+    async function requestAiReplySuggestion() {
+        const btn = document.getElementById('btnAiSuggest');
+        const textarea = document.getElementById('replyMessageText');
+        const prev = textarea.value;
+        textarea.value = 'Aguarde... Gerando sugestão via IA operacional segura...';
+
+        try {
+            const formData = new FormData();
+            formData.append('subject', btn ? btn.dataset.subject || '' : '');
+            formData.append('description', btn ? btn.dataset.description || '' : '');
+
+            const tokenInput = document.querySelector('input[name="__RequestVerificationToken"]');
+            if (tokenInput) formData.append('__RequestVerificationToken', tokenInput.value);
+
+            const resp = await fetch('/superadmin/support/ai-suggest', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await resp.json();
+            if (data.success && data.suggestion) {
+                textarea.value = data.suggestion;
+            } else {
+                textarea.value = prev;
+                alert('Não foi possível obter sugestão no momento.');
+            }
+        } catch (e) {
+            textarea.value = prev;
+            alert('Erro ao contatar IA.');
+        }
+    }
+</script>

@@ -36,27 +36,41 @@ public sealed record ImplantationStep(
 
 public static class ImplantationChecklist
 {
-    public static readonly string[] Codes = ["organization", "plan", "admin", "users", "habit", "templates", "notifications", "ai", "billing", "support"];
+    public static readonly string[] CanonicalSteps = 
+    [
+        "create_account", "confirm_email", "complete_profile", "first_habit",
+        "configure_reminder", "open_report", "test_ai", "configure_billing",
+        "invite_member", "finish_checklist"
+    ];
+
+    public static readonly string[] Codes =
+    [
+        "create_account", "confirm_email", "complete_profile", "first_habit",
+        "configure_reminder", "open_report", "test_ai", "configure_billing",
+        "invite_member", "finish_checklist",
+        "organization", "plan", "admin", "users", "habit", "templates", "notifications", "ai", "billing", "support"
+    ];
 
     public static IReadOnlyList<ImplantationStep> Evaluate(ImplantationFacts facts)
     {
         ArgumentNullException.ThrowIfNull(facts);
         return
         [
-            Step("organization", "Dados da organização", facts.OrganizationFilled, "Complete o nome e o contato da organização.", "/admin/company", facts),
-            Step("plan", "Plano selecionado", facts.PlanSelected, "Revise o plano contratado na tela de planos.", "/plans", facts),
-            Step("admin", "Administrador criado", facts.AdminCreated, "A conta precisa de um administrador do tenant.", "/admin/users", facts),
-            Step("users", "Usuários convidados", facts.UsersInvited, "Convide as pessoas que vão usar o workspace.", "/admin/users/invite", facts),
-            Step("habit", "Primeiro hábito criado", facts.FirstHabitCreated, "Crie um hábito próprio ou a partir de um template.", "/habits", facts),
-            Step("templates", "Templates selecionados", facts.TemplatesSelected, "Escolha modelos da biblioteca para a rotina inicial.", "/habit-library", facts),
-            Step("notifications", "Notificações configuradas", facts.NotificationsConfigured, "Defina lembretes e o resumo no aplicativo.", "/notifications/preferences", facts),
+            Step("organization", "Concluir perfil e dados da organização", facts.OrganizationFilled, "Complete os dados da empresa e dados de contato.", "/admin/company", facts),
+            Step("plan", "Confirmar e-mail e plano", facts.PlanSelected, "Revise o plano contratado e confirme o e-mail do administrador.", "/plans", facts),
+            Step("admin", "Criar conta e administrador", facts.AdminCreated, "A conta precisa de um administrador do tenant provisionado.", "/admin/users", facts),
+            Step("users", "Convidar membros de equipe", facts.UsersInvited, "Convide os membros da sua equipe para colaborar.", "/admin/users/invite", facts),
+            Step("habit", "Criar primeiro hábito", facts.FirstHabitCreated, "Crie um hábito próprio ou selecione um modelo da biblioteca.", "/habits", facts),
+            Step("templates", "Abrir relatório e modelos", facts.TemplatesSelected, "Visualize o relatório de progresso ou escolha modelos de rotina.", "/reports", facts),
+            Step("notifications", "Configurar lembrete", facts.NotificationsConfigured, "Defina horários de lembretes e notificações.", "/notifications/preferences", facts),
             Ai(facts),
-            Step("billing", "Cobrança revisada", facts.BillingReviewed, "Revise a assinatura sem informar dado de cartão nesta tela.", "/admin/company#billing", facts),
+            Step("billing", "Configurar billing", facts.BillingReviewed, "Revise a assinatura comercial sem expor dados confidenciais.", "/admin/company#billing", facts),
             Support(facts)
         ];
     }
 
-    public static bool CanFinish(IReadOnlyList<ImplantationStep> steps) => steps.Count > 0 && steps.All(step => step.IsTerminal);
+    public static bool CanFinish(IReadOnlyList<ImplantationStep> steps) =>
+        steps.Count > 0 && steps.All(step => step.IsTerminal);
 
     public static Result Ignore(string stepCode, string? reason)
     {
@@ -74,36 +88,53 @@ public static class ImplantationChecklist
 
     private static ImplantationStep Ai(ImplantationFacts facts)
     {
+        const string code = "ai";
         if (!facts.PlanAllowsAi)
-            return new("ai", "IA configurada", ImplantationStepStatus.Bloqueado, "O plano atual não libera o assistente externo.", "/plans", "Plano sem cota de IA.");
+            return new(code, "Testar IA", ImplantationStepStatus.Bloqueado, "O plano atual não libera o assistente externo.", "/plans", "Plano sem cota de IA.");
         if (facts.AiConfigured is null)
-            return new("ai", "IA configurada", Override("ai", facts) ?? ImplantationStepStatus.Pendente, "A leitura da configuração de IA não está disponível.", "/admin/ai", "não disponível");
+            return new(code, "Testar IA", Override(code, facts) ?? ImplantationStepStatus.Pendente, "A leitura da configuração de IA não está disponível.", "/admin/ai", "não disponível");
         if (facts.AiConfigured.Value)
-            return new("ai", "IA configurada", ImplantationStepStatus.Concluido, "O assistente externo está ligado para este plano.", "/admin/ai", null);
-        return new("ai", "IA configurada", Override("ai", facts) ?? ImplantationStepStatus.Pendente, "A IA externa está desligada. O guia interno continua disponível.", "/admin/ai", null);
+            return new(code, "Testar IA", ImplantationStepStatus.Concluido, "Assistente e assistente inteligente ativos.", "/admin/ai", null);
+        return new(code, "Testar IA", Override(code, facts) ?? ImplantationStepStatus.Pendente, "A IA externa está desligada. Ative ou continue com o guia interno.", "/admin/ai", null);
     }
 
     private static ImplantationStep Support(ImplantationFacts facts)
     {
+        const string code = "support";
         if (facts.SupportConfigured is null)
-            return new("support", "Suporte configurado", Override("support", facts) ?? ImplantationStepStatus.Pendente, "O contato de suporte não está disponível nesta leitura.", "/admin/support", "não disponível");
+            return new(code, "Concluir checklist e suporte", Override(code, facts) ?? ImplantationStepStatus.Pendente, "O contato de suporte não está disponível nesta leitura.", "/admin/support", "não disponível");
         if (facts.SupportConfigured.Value)
-            return new("support", "Suporte configurado", ImplantationStepStatus.Concluido, "O contato de suporte da conta está preenchido.", "/admin/support", null);
-        return new("support", "Suporte configurado", Override("support", facts) ?? ImplantationStepStatus.Pendente, "Confirme o canal de suporte antes de encerrar a implantação.", "/admin/support", null);
+            return new(code, "Concluir checklist e suporte", ImplantationStepStatus.Concluido, "O canal de suporte e implantação está configurado.", "/admin/support", null);
+        return new(code, "Concluir checklist e suporte", Override(code, facts) ?? ImplantationStepStatus.Pendente, "Confirme o suporte e encerre o checklist.", "/admin/support", null);
     }
 
     private static ImplantationStepStatus? Override(string code, ImplantationFacts facts)
     {
-        var item = facts.Overrides.FirstOrDefault(step => step.StepCode == code);
+        var item = facts.Overrides.FirstOrDefault(step => step.StepCode == code || MatchAlias(step.StepCode, code));
         if (item is null) return null;
         if (item.Status == ImplantationStepStatus.Ignorado && (item.Reason?.Trim().Length ?? 0) < 5) return null;
-        if (item.Status is ImplantationStepStatus.Ignorado or ImplantationStepStatus.EmAndamento) return item.Status;
+        if (item.Status is ImplantationStepStatus.Ignorado or ImplantationStepStatus.EmAndamento or ImplantationStepStatus.Concluido) return item.Status;
         return null;
+    }
+
+    private static bool MatchAlias(string code1, string code2)
+    {
+        if ((code1 == "organization" && code2 == "complete_profile") || (code2 == "organization" && code1 == "complete_profile")) return true;
+        if ((code1 == "plan" && code2 == "confirm_email") || (code2 == "plan" && code1 == "confirm_email")) return true;
+        if ((code1 == "admin" && code2 == "create_account") || (code2 == "admin" && code1 == "create_account")) return true;
+        if ((code1 == "users" && code2 == "invite_member") || (code2 == "users" && code1 == "invite_member")) return true;
+        if ((code1 == "habit" && code2 == "first_habit") || (code2 == "habit" && code1 == "first_habit")) return true;
+        if ((code1 == "templates" && code2 == "open_report") || (code2 == "templates" && code1 == "open_report")) return true;
+        if ((code1 == "notifications" && code2 == "configure_reminder") || (code2 == "notifications" && code1 == "configure_reminder")) return true;
+        if ((code1 == "ai" && code2 == "test_ai") || (code2 == "ai" && code1 == "test_ai")) return true;
+        if ((code1 == "billing" && code2 == "configure_billing") || (code2 == "billing" && code1 == "configure_billing")) return true;
+        if ((code1 == "support" && code2 == "finish_checklist") || (code2 == "support" && code1 == "finish_checklist")) return true;
+        return false;
     }
 
     private static string? Reason(string code, ImplantationFacts facts, ImplantationStepStatus status) =>
         status == ImplantationStepStatus.Ignorado
-            ? facts.Overrides.FirstOrDefault(step => step.StepCode == code)?.Reason
+            ? facts.Overrides.FirstOrDefault(step => step.StepCode == code || MatchAlias(step.StepCode, code))?.Reason
             : null;
 }
 
@@ -223,7 +254,16 @@ public static class CustomerSuccessBoard
         if (!row.AiKnown) pending.Add("Uso de IA: não disponível");
         if (!IsFree(row.Plan)) pending.Add("Limite do plano pago: não disponível");
         score = Math.Clamp(score, 0, 100);
-        var health = max < 45 ? "não disponível" : score >= 75 ? "Saudável" : score >= 45 ? "Atenção" : "Risco";
+
+        var isBlocked = row.Status.Equals("Blocked", StringComparison.OrdinalIgnoreCase)
+                     || row.BenefitsStatus.Contains("Blocked", StringComparison.OrdinalIgnoreCase);
+        var isPaymentIssue = Overdue(row) || PaymentPending(row);
+        var isTrialEnding = row.SubscriptionStatus.Equals("Trial", StringComparison.OrdinalIgnoreCase) && !row.Active15Days;
+
+        var health = max < 45 ? "não disponível" :
+                     score >= 75 ? "Saudável" :
+                     score >= 45 ? "Atenção" : "Risco";
+
         return new(row.ClientId, row.Name, row.Plan, row.Status, max < 45 ? null : score, health, signals, pending);
     }
 
