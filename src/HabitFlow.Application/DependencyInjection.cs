@@ -231,6 +231,9 @@ public static class DependencyInjection
         services.AddScoped<DataPortabilityService>();
         services.AddScoped<AiMobileIntegrationService>();
         services.AddScoped<NotificationEventDispatcher>();
+        services.AddScoped<ObservabilityHealthService>();
+        services.AddScoped<LgpdGovernanceService>();
+        services.AddScoped<BackupAndReleaseGovernanceService>();
         return services;
     }
 }

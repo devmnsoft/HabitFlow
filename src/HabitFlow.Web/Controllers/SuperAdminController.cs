@@ -21,6 +21,10 @@ public sealed class SuperAdminController(
     SupportCenterService supportService,
     TenantHealthEvaluationService healthService,
     OperationalAiService aiService,
+    ObservabilityHealthService observabilityHealth,
+    LgpdGovernanceService lgpdGovernance,
+    BackupAndReleaseGovernanceService backupAndRelease,
+    IOperationalAuditRepository operationalAuditRepo,
     ILogger<SuperAdminController> logger) : Controller
 {
     [HttpGet("")]
@@ -150,9 +154,137 @@ public sealed class SuperAdminController(
     [HttpGet("billing")] public async Task<IActionResult> Billing(CancellationToken ct) => View("~/Views/SuperAdmin/Payments/Index.cshtml", await operations.ListPaymentsAsync(null, ct));
     [HttpGet("payments")] public async Task<IActionResult> Payments(CancellationToken ct) => View("~/Views/SuperAdmin/Payments/Index.cshtml", await operations.ListPaymentsAsync(null, ct));
     [HttpGet("overdue")] public async Task<IActionResult> Overdue(CancellationToken ct) => View("~/Views/SuperAdmin/Overdue/Index.cshtml", await operations.ListPaymentsAsync("Overdue", ct));
-    [HttpGet("audit")] public async Task<IActionResult> Audit(CancellationToken ct) => View("~/Views/SuperAdmin/Audit/Index.cshtml", await operations.ListAuditAsync(ct));
-    [HttpGet("system")] public async Task<IActionResult> System(CancellationToken ct) => View("~/Views/SuperAdmin/SystemHealth/Index.cshtml", await schema.BuildStatusAsync(ct));
-    [HttpGet("system-health")] public async Task<IActionResult> SystemHealth(CancellationToken ct) => View("~/Views/SuperAdmin/SystemHealth/Index.cshtml", await schema.BuildStatusAsync(ct));
+    [HttpGet("audit")]
+    public async Task<IActionResult> Audit(
+        [FromQuery] Guid? clientId,
+        [FromQuery] string? executor,
+        [FromQuery] string? eventName,
+        [FromQuery] string? severity,
+        [FromQuery] DateTime? from,
+        [FromQuery] DateTime? to,
+        CancellationToken ct = default)
+    {
+        var opEvents = await operationalAuditRepo.SearchAuditAsync(clientId, executor, eventName, severity, from, to, 100, ct);
+        var adminAudits = await operations.ListAuditAsync(ct);
+        ViewData["ClientId"] = clientId;
+        ViewData["Executor"] = executor;
+        ViewData["EventName"] = eventName;
+        ViewData["Severity"] = severity;
+        ViewData["From"] = from?.ToString("yyyy-MM-dd");
+        ViewData["To"] = to?.ToString("yyyy-MM-dd");
+        return View("~/Views/SuperAdmin/Audit/Index.cshtml", (opEvents, adminAudits));
+    }
+
+    [HttpGet("audit/export")]
+    public async Task<IActionResult> ExportAuditCsv(
+        [FromQuery] Guid? clientId,
+        [FromQuery] string? executor,
+        [FromQuery] string? eventName,
+        [FromQuery] string? severity,
+        [FromQuery] DateTime? from,
+        [FromQuery] DateTime? to,
+        CancellationToken ct = default)
+    {
+        var opEvents = await operationalAuditRepo.SearchAuditAsync(clientId, executor, eventName, severity, from, to, 500, ct);
+        var csv = new StringBuilder("Id,Data,Evento,CorrelationId,ClientId,Executor,Severidade,Status,Payload\n");
+        foreach (var e in opEvents)
+        {
+            csv.AppendLine(string.Join(',',
+                Safe(e.Id.ToString()),
+                Safe(e.OccurredAt.ToString("O")),
+                Safe(e.EventName),
+                Safe(e.CorrelationId),
+                Safe(e.ClientId?.ToString()),
+                Safe(e.ExecutorEmail ?? e.ExecutorUserId),
+                Safe(e.Severity),
+                Safe(e.Status),
+                Safe(OperationalAiService.MaskSensitiveData(e.PayloadJson))
+            ));
+        }
+        return File(Encoding.UTF8.GetBytes(csv.ToString()), "text/csv", "habitflow-auditoria-operacional.csv");
+    }
+
+    [HttpGet("health")]
+    [HttpGet("system-health")]
+    [HttpGet("health/recheck")]
+    public async Task<IActionResult> Health(CancellationToken ct = default)
+    {
+        var report = await observabilityHealth.EvaluateComprehensiveHealthAsync(ct);
+        return View("~/Views/SuperAdmin/SystemHealth/Index.cshtml", report);
+    }
+
+    [HttpGet("system")]
+    public async Task<IActionResult> System(CancellationToken ct = default) =>
+        View("~/Views/SuperAdmin/SystemHealth/Index.cshtml", await observabilityHealth.EvaluateComprehensiveHealthAsync(ct));
+
+    [HttpGet("lgpd")]
+    public async Task<IActionResult> Lgpd([FromQuery] string? status, CancellationToken ct = default)
+    {
+        var requests = await lgpdGovernance.ListGlobalRequestsAsync(status, 50, ct);
+        ViewData["SelectedStatus"] = status;
+        return View("~/Views/SuperAdmin/Lgpd/Index.cshtml", requests);
+    }
+
+    [HttpPost("lgpd/{id:guid}/update-status")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UpdateLgpdStatus(Guid id, [FromForm] string status, [FromForm] string? adminNotes, CancellationToken ct = default)
+    {
+        var adminId = this.CurrentUserId();
+        await lgpdGovernance.UpdateRequestStatusAsync(id, status, adminNotes, adminId, ct);
+        TempData["Success"] = $"Solicitação LGPD atualizada para '{status}' com auditoria.";
+        return RedirectToAction(nameof(Lgpd));
+    }
+
+    [HttpGet("backup")]
+    public async Task<IActionResult> Backup(CancellationToken ct = default)
+    {
+        var info = await backupAndRelease.GetBackupGovernanceInfoAsync(ct);
+        return View("~/Views/SuperAdmin/Backup/Index.cshtml", info);
+    }
+
+    [HttpGet("release")]
+    public async Task<IActionResult> Release(CancellationToken ct = default)
+    {
+        var status = await backupAndRelease.GetReleaseStatusAsync("v6.26.0", ct);
+        return View("~/Views/SuperAdmin/Release/Index.cshtml", status);
+    }
+
+    [HttpPost("release/checklist/{id:guid}/toggle")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ToggleChecklistItem(Guid id, [FromForm] bool isCompleted, CancellationToken ct = default)
+    {
+        var completedBy = User.Identity?.Name ?? "SuperAdmin";
+        await backupAndRelease.ToggleChecklistItemAsync(id, isCompleted, isCompleted ? completedBy : null, ct);
+        return RedirectToAction(nameof(Release));
+    }
+
+    [HttpPost("release/ai-summary")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> GenerateReleaseSummaryAi(CancellationToken ct = default)
+    {
+        var status = await backupAndRelease.GetReleaseStatusAsync("v6.26.0", ct);
+        var summary = await aiService.GenerateReleaseSummaryAsync("v6.26.0", status.Checklist, ct);
+        return Json(new { success = true, summary = summary.Suggestion, provider = summary.Provider });
+    }
+
+    [HttpGet("export/metrics")]
+    public async Task<IActionResult> ExportMetrics(CancellationToken ct = default)
+    {
+        var d = await dashboard.GetDashboardAsync(ct);
+        var health = await observabilityHealth.EvaluateComprehensiveHealthAsync(ct);
+        var csv = new StringBuilder("Metrica,Valor\n");
+        csv.AppendLine($"Total Tenants,{d.TotalClients}");
+        csv.AppendLine($"Tenants Ativos,{d.ActiveClients}");
+        csv.AppendLine($"Tenants Free,{d.FreeClients}");
+        csv.AppendLine($"Tenants Premium,{d.PremiumClients}");
+        csv.AppendLine($"Tenants Enterprise,{d.EnterpriseClients}");
+        csv.AppendLine($"Inadimplentes,{(d.OverdueCapped ? "Amostra limitada (>500)" : d.OverdueClients.ToString())}");
+        csv.AppendLine($"Tenants sob Atencao,{d.AttentionClients.Count}");
+        csv.AppendLine($"Health Geral,{health.OverallStatus}");
+        csv.AppendLine($"Latencia Health Checks (ms),{health.DurationMs}");
+        csv.AppendLine($"Componentes Saudaveis,{health.Components.Count(c => c.Status == HealthStatusConstants.Healthy)}/{health.Components.Count}");
+        return File(Encoding.UTF8.GetBytes(csv.ToString()), "text/csv", "habitflow-metricas-saas.csv");
+    }
     
     [HttpGet("system-health/plan-access")]
     public async Task<IActionResult> PlanAccessHealth(CancellationToken ct)
@@ -304,7 +436,12 @@ public sealed class SuperAdminController(
         [FromForm] int affectedTenantsCount,
         [FromForm] DateTime? estimatedResolutionAt,
         [FromForm] string? communicationNotes,
-        CancellationToken ct)
+        [FromForm] string sevCode = "SEV3",
+        [FromForm] string affectedModule = "Geral",
+        [FromForm] string? rootCause = null,
+        [FromForm] string? actionsTaken = null,
+        [FromForm] string? nextSteps = null,
+        CancellationToken ct = default)
     {
         var correlationId = HttpContext.TraceIdentifier;
         var email = User.Identity?.Name ?? "superadmin@habitflow.com";
@@ -313,7 +450,7 @@ public sealed class SuperAdminController(
         var result = await incidentService.CreateAsync(
             title, description, severity, impact, affectedTenantsCount,
             estimatedResolutionAt, userId, email, false, communicationNotes,
-            email, correlationId, ct);
+            email, correlationId, sevCode, affectedModule, rootCause, actionsTaken, nextSteps, ct);
 
         TempData[result.IsSuccess ? "Success" : "Error"] = result.IsSuccess
             ? "Incidente registrado na operação com auditoria."
@@ -328,7 +465,7 @@ public sealed class SuperAdminController(
         Guid id,
         [FromForm] string newStatus,
         [FromForm] string? resolutionNotes,
-        CancellationToken ct)
+        CancellationToken ct = default)
     {
         var correlationId = HttpContext.TraceIdentifier;
         var email = User.Identity?.Name ?? "superadmin@habitflow.com";
@@ -344,9 +481,17 @@ public sealed class SuperAdminController(
 
     [HttpPost("incidents/ai-explain")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> ExplainIncidentAi([FromForm] string title, [FromForm] string impact, [FromForm] string severity, CancellationToken ct)
+    public async Task<IActionResult> ExplainIncidentAi(
+        [FromForm] string title,
+        [FromForm] string impact,
+        [FromForm] string severity,
+        [FromForm] string? module,
+        [FromForm] string? description,
+        CancellationToken ct = default)
     {
-        var suggestion = await aiService.ExplainIncidentAsync(title, impact, severity, ct);
+        var suggestion = !string.IsNullOrWhiteSpace(module) || !string.IsNullOrWhiteSpace(description)
+            ? await aiService.ExplainIncidentRootCauseAsync(title, module ?? "Geral", severity, description ?? impact, ct)
+            : await aiService.ExplainIncidentAsync(title, impact, severity, ct);
         return Json(new { success = true, suggestion = suggestion.Suggestion, provider = suggestion.Provider });
     }
 

@@ -21,7 +21,12 @@ public sealed class OperationalIncidentRepository(SqlExecutor db) : IOperational
         communication_sent as "CommunicationSent",
         communication_notes as "CommunicationNotes",
         created_at as "CreatedAt",
-        updated_at as "UpdatedAt"
+        updated_at as "UpdatedAt",
+        coalesce(sev_code, 'SEV3') as "SevCode",
+        coalesce(affected_module, 'Geral') as "AffectedModule",
+        root_cause as "RootCause",
+        actions_taken as "ActionsTaken",
+        next_steps as "NextSteps"
         """;
 
     public async Task<IReadOnlyList<OperationalIncident>> ListIncidentsAsync(OperationalIncidentFilter filter, CancellationToken ct = default)
@@ -30,11 +35,11 @@ public sealed class OperationalIncidentRepository(SqlExecutor db) : IOperational
         if (!string.IsNullOrWhiteSpace(filter.Status))
             sql += " and status = @Status";
         if (!string.IsNullOrWhiteSpace(filter.Severity))
-            sql += " and severity = @Severity";
+            sql += " and (severity = @Severity or sev_code = @Severity)";
         if (!string.IsNullOrWhiteSpace(filter.Search))
-            sql += " and (title ilike @Like or impact ilike @Like or description ilike @Like)";
+            sql += " and (title ilike @Like or impact ilike @Like or description ilike @Like or affected_module ilike @Like)";
 
-        sql += " order by case when status in ('Investigating','Identified','Monitoring') then 0 else 1 end, created_at desc limit 100";
+        sql += " order by case when status in ('Investigating','Identified','Monitoring','Aberto','Em andamento') then 0 else 1 end, created_at desc limit 100";
 
         var parameters = new
         {
@@ -59,12 +64,12 @@ public sealed class OperationalIncidentRepository(SqlExecutor db) : IOperational
                 id, title, description, severity, status, impact, affected_tenants_count,
                 starts_at, estimated_resolution_at, resolved_at, canceled_at,
                 responsible_user_id, responsible_name, communication_sent, communication_notes,
-                created_at, updated_at
+                created_at, updated_at, sev_code, affected_module, root_cause, actions_taken, next_steps
             ) values (
                 @id, @Title, @Description, @Severity, @Status, @Impact, @AffectedTenantsCount,
                 @StartsAt, @EstimatedResolutionAt, @ResolvedAt, @CanceledAt,
                 @ResponsibleUserId, @ResponsibleName, @CommunicationSent, @CommunicationNotes,
-                now(), now()
+                now(), now(), @SevCode, @AffectedModule, @RootCause, @ActionsTaken, @NextSteps
             )
             """;
 
@@ -84,7 +89,12 @@ public sealed class OperationalIncidentRepository(SqlExecutor db) : IOperational
             incident.ResponsibleUserId,
             incident.ResponsibleName,
             incident.CommunicationSent,
-            incident.CommunicationNotes
+            incident.CommunicationNotes,
+            SevCode = string.IsNullOrWhiteSpace(incident.SevCode) ? "SEV3" : incident.SevCode,
+            AffectedModule = string.IsNullOrWhiteSpace(incident.AffectedModule) ? "Geral" : incident.AffectedModule,
+            incident.RootCause,
+            incident.ActionsTaken,
+            incident.NextSteps
         }, ct);
 
         return id;
@@ -106,9 +116,35 @@ public sealed class OperationalIncidentRepository(SqlExecutor db) : IOperational
                 responsible_name = @ResponsibleName,
                 communication_sent = @CommunicationSent,
                 communication_notes = @CommunicationNotes,
+                sev_code = @SevCode,
+                affected_module = @AffectedModule,
+                root_cause = @RootCause,
+                actions_taken = @ActionsTaken,
+                next_steps = @NextSteps,
                 updated_at = now()
             where id = @Id
-            """, incident, ct);
+            """, new
+            {
+                incident.Id,
+                incident.Title,
+                incident.Description,
+                incident.Severity,
+                incident.Status,
+                incident.Impact,
+                incident.AffectedTenantsCount,
+                incident.EstimatedResolutionAt,
+                incident.ResolvedAt,
+                incident.CanceledAt,
+                incident.ResponsibleUserId,
+                incident.ResponsibleName,
+                incident.CommunicationSent,
+                incident.CommunicationNotes,
+                SevCode = string.IsNullOrWhiteSpace(incident.SevCode) ? "SEV3" : incident.SevCode,
+                AffectedModule = string.IsNullOrWhiteSpace(incident.AffectedModule) ? "Geral" : incident.AffectedModule,
+                incident.RootCause,
+                incident.ActionsTaken,
+                incident.NextSteps
+            }, ct);
 
     public Task RecordIncidentAuditAsync(OperationalAuditEvent auditEvent, CancellationToken ct = default) =>
         db.ExecuteAsync("""

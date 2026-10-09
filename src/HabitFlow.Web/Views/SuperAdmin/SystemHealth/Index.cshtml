@@ -1,3 +1,150 @@
-@model HabitFlow.Domain.SystemHealthStatus
-@{ ViewData["Title"] = "System Health"; }
-<section class="premium-card"><h1>System Health</h1><dl><dt>Banco</dt><dd>@(Model.DatabaseOk ? "Operacional" : "Indisponível")</dd><dt>Ambiente</dt><dd>@Model.EnvironmentName</dd><dt>Versão</dt><dd>@Model.ApplicationVersion</dd><dt>Porta/URLs</dt><dd>@Model.Urls</dd><dt>Docker obrigatório</dt><dd>@Model.DockerRequired</dd><dt>Mercado Pago</dt><dd>@(Model.MercadoPagoConfigured ? "Configurado" : "Não configurado")</dd><dt>Planos</dt><dd>@Model.PlansCount</dd><dt>Biblioteca de hábitos</dt><dd>@Model.HabitTemplatesCount</dd></dl><h2>Migrations</h2><ul>@foreach(var m in Model.Migrations){<li>@m.Id - @m.Name - @(m.Applied ? "aplicada" : "pendente")</li>}</ul><h2>Tabelas ausentes</h2><ul>@foreach(var t in Model.MissingTables){<li>@t</li>}</ul></section>
+@model HabitFlow.Domain.ComprehensiveHealthReport
+@{
+    ViewData["Title"] = "Observabilidade & Health Checks";
+    var isHealthy = Model.OverallStatus == HabitFlow.Domain.HealthStatusConstants.Healthy;
+    var isDegraded = Model.OverallStatus == HabitFlow.Domain.HealthStatusConstants.Degraded;
+    var badgeBg = isHealthy ? "#dcfce7" : isDegraded ? "#fef3c7" : "#fee2e2";
+    var badgeColor = isHealthy ? "#166534" : isDegraded ? "#92400e" : "#991b1b";
+}
+
+<div class="container-fluid py-4" style="max-width: 1300px;">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <span class="badge" style="background: #e0e7ff; color: #3730a3; font-weight: 600; font-size: 0.75rem; padding: 0.35rem 0.65rem; border-radius: 9999px;">
+                    SaaS Governança v6.26.0
+                </span>
+                <span class="badge" style="background: @badgeBg; color: @badgeColor; font-weight: 700; font-size: 0.85rem; padding: 0.35rem 0.75rem; border-radius: 9999px;">
+                    ● @Model.OverallStatus
+                </span>
+            </div>
+            <h1 class="h3 fw-bold mb-1" style="color: #0f172a;">Observabilidade e Health Checks do Sistema</h1>
+            <p class="text-muted small mb-0">
+                Diagnóstico em tempo real dos 11 componentes críticos de infraestrutura, IA, pagamentos e filas com sanitização rigorosa de credenciais.
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="/superadmin/health" class="btn btn-primary d-inline-flex align-items-center gap-2 px-3 py-2 fw-semibold" style="border-radius: 8px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                Reexecutar Diagnóstico
+            </a>
+            <a href="/superadmin" class="btn btn-outline-secondary px-3 py-2" style="border-radius: 8px;">
+                Painel SuperAdmin
+            </a>
+        </div>
+    </div>
+
+    <!-- Guia de Operação -->
+    <div class="alert alert-info border-0 shadow-sm d-flex gap-3 align-items-start mb-4" style="background: #f0fdf4; border-left: 4px solid #16a34a !important; border-radius: 8px; color: #14532d;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" class="flex-shrink-0 mt-1"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+        <div class="small">
+            <strong>Como usar este painel:</strong> Os checks refletem dependências ativas sem expor connection strings ou secrets.
+            Em caso de estado <em>Degraded</em> ou <em>Unhealthy</em>, execute a recomendação operacional sugerida para cada componente antes de acionar o time de SRE.
+        </div>
+    </div>
+
+    <!-- Indicadores Resumo -->
+    <div class="row g-3 mb-4">
+        <div class="col-sm-6 col-md-3">
+            <div class="card h-100 border-0 shadow-sm p-3" style="border-radius: 10px; background: #ffffff;">
+                <span class="text-muted small text-uppercase fw-bold">Status Global</span>
+                <h3 class="fw-bold mt-2 mb-0" style="color: @badgeColor;">@Model.OverallStatus</h3>
+                <small class="text-muted mt-1">SLA monitorado</small>
+            </div>
+        </div>
+        <div class="col-sm-6 col-md-3">
+            <div class="card h-100 border-0 shadow-sm p-3" style="border-radius: 10px; background: #ffffff;">
+                <span class="text-muted small text-uppercase fw-bold">Componentes Verificados</span>
+                <h3 class="fw-bold mt-2 mb-0" style="color: #0f172a;">@Model.Components.Count / 11</h3>
+                <small class="text-muted mt-1">Cobertura completa</small>
+            </div>
+        </div>
+        <div class="col-sm-6 col-md-3">
+            <div class="card h-100 border-0 shadow-sm p-3" style="border-radius: 10px; background: #ffffff;">
+                <span class="text-muted small text-uppercase fw-bold">Latência Total</span>
+                <h3 class="fw-bold mt-2 mb-0" style="color: #0f172a;">@Model.DurationMs ms</h3>
+                <small class="text-muted mt-1">Tempo de execução</small>
+            </div>
+        </div>
+        <div class="col-sm-6 col-md-3">
+            <div class="card h-100 border-0 shadow-sm p-3" style="border-radius: 10px; background: #ffffff;">
+                <span class="text-muted small text-uppercase fw-bold">Última Validação</span>
+                <h3 class="fw-bold mt-2 mb-0" style="color: #0f172a; font-size: 1.25rem;">@Model.GeneratedAt.ToString("HH:mm:ss") UTC</h3>
+                <small class="text-muted mt-1">@Model.GeneratedAt.ToString("dd/MM/yyyy")</small>
+            </div>
+        </div>
+    </div>
+
+    @if (Model.Recommendations.Count > 0)
+    {
+        <div class="card border-0 shadow-sm mb-4" style="border-radius: 10px; background: #fffbeb; border-left: 4px solid #f59e0b !important;">
+            <div class="card-body p-3">
+                <h6 class="fw-bold text-warning-emphasis mb-2 d-flex align-items-center gap-2">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    Ações Operacionais Recomendadas:
+                </h6>
+                <ul class="mb-0 ps-3 small text-muted">
+                    @foreach (var rec in Model.Recommendations)
+                    {
+                        <li>@rec</li>
+                    }
+                </ul>
+            </div>
+        </div>
+    }
+
+    <!-- Grade dos 11 Componentes -->
+    <div class="row g-3">
+        @foreach (var comp in Model.Components)
+        {
+            var compHealthy = comp.Status == HabitFlow.Domain.HealthStatusConstants.Healthy;
+            var compDegraded = comp.Status == HabitFlow.Domain.HealthStatusConstants.Degraded;
+            var compUnhealthy = comp.Status == HabitFlow.Domain.HealthStatusConstants.Unhealthy;
+            var compDisabled = comp.Status == HabitFlow.Domain.HealthStatusConstants.Disabled;
+            var compNotConfig = comp.Status == HabitFlow.Domain.HealthStatusConstants.NotConfigured;
+
+            var compBg = compHealthy ? "#dcfce7" : compDegraded ? "#fef3c7" : compUnhealthy ? "#fee2e2" : compDisabled ? "#f1f5f9" : "#e0f2fe";
+            var compColor = compHealthy ? "#166534" : compDegraded ? "#92400e" : compUnhealthy ? "#991b1b" : compDisabled ? "#475569" : "#075985";
+
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-sm" style="border-radius: 10px; background: #ffffff;">
+                    <div class="card-body p-3 d-flex flex-column justify-content-between">
+                        <div>
+                            <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                                <h5 class="fw-bold mb-0 text-truncate" style="color: #0f172a; font-size: 1.05rem;">@comp.ComponentName</h5>
+                                <span class="badge" style="background: @compBg; color: @compColor; font-weight: 600; font-size: 0.75rem; padding: 0.35rem 0.6rem; border-radius: 6px;">
+                                    @comp.Status
+                                </span>
+                            </div>
+
+                            <p class="text-muted small mb-2" style="min-height: 40px;">
+                                @(comp.Details ?? "Sem detalhes adicionais reportados.")
+                            </p>
+
+                            @if (!string.IsNullOrWhiteSpace(comp.ErrorMessage))
+                            {
+                                <div class="p-2 mb-2 rounded small" style="background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; word-break: break-word;">
+                                    <strong>Erro:</strong> @comp.ErrorMessage
+                                </div>
+                            }
+
+                            @if (!string.IsNullOrWhiteSpace(comp.OperationalRecommendation))
+                            {
+                                <div class="p-2 rounded small" style="background: #f8fafc; border-left: 3px solid #64748b; color: #334155;">
+                                    <small class="text-muted d-block fw-bold text-uppercase" style="font-size: 0.65rem;">Recomendação</small>
+                                    @comp.OperationalRecommendation
+                                </div>
+                            }
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top text-muted" style="font-size: 0.75rem;">
+                            <span>Latência: <strong>@comp.DurationMs ms</strong></span>
+                            <span>@comp.LastCheckedAt.ToString("HH:mm:ss") UTC</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>

@@ -58,7 +58,12 @@ public sealed record OperationalIncident(
     bool CommunicationSent,
     string? CommunicationNotes,
     DateTime CreatedAt,
-    DateTime UpdatedAt
+    DateTime UpdatedAt,
+    string SevCode = "SEV3",
+    string AffectedModule = "Geral",
+    string? RootCause = null,
+    string? ActionsTaken = null,
+    string? NextSteps = null
 );
 
 public sealed record OperationalIncidentFilter(
@@ -109,4 +114,10 @@ public interface IOperationalIncidentRepository
     Task RecordIncidentAuditAsync(OperationalAuditEvent auditEvent, CancellationToken ct = default);
     Task<IReadOnlyList<IncidentTenant>> ListIncidentTenantsAsync(Guid incidentId, CancellationToken ct = default);
     Task LinkIncidentTenantsAsync(Guid incidentId, IEnumerable<Guid> clientIds, string? impactSummary, CancellationToken ct = default);
+}
+
+public interface IOperationalAuditRepository
+{
+    Task RecordAuditAsync(OperationalAuditEvent auditEvent, CancellationToken ct = default);
+    Task<IReadOnlyList<OperationalAuditEvent>> SearchAuditAsync(Guid? clientId = null, string? executorUserId = null, string? eventName = null, string? severity = null, DateTime? from = null, DateTime? to = null, int limit = 100, CancellationToken ct = default);
 }

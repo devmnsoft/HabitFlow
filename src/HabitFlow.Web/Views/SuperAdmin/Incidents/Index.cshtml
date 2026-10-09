@@ -171,7 +171,7 @@
                 <input type="text" name="title" required minlength="5" placeholder="Ex: Lentidão na sincronização de rotinas" class="form-control" style="width: 100%; padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 6px;" />
             </div>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem;">
                 <div>
                     <label style="display: block; font-weight: 600; margin-bottom: 0.3rem; font-size: 0.85rem;">Severidade *</label>
                     <select name="severity" required class="form-select" style="width: 100%; padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 6px;">
@@ -182,8 +182,17 @@
                     </select>
                 </div>
                 <div>
-                    <label style="display: block; font-weight: 600; margin-bottom: 0.3rem; font-size: 0.85rem;">Tenants Afetados (0 = Todos)</label>
-                    <input type="number" name="affectedTenantsCount" value="0" min="0" class="form-control" style="width: 100%; padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 6px;" />
+                    <label style="display: block; font-weight: 600; margin-bottom: 0.3rem; font-size: 0.85rem;">Classificação SEV *</label>
+                    <select name="sevCode" required class="form-select" style="width: 100%; padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+                        <option value="SEV1">SEV1 - Crítico Geral</option>
+                        <option value="SEV2">SEV2 - Impacto Alto</option>
+                        <option value="SEV3" selected>SEV3 - Degradação Parcial</option>
+                        <option value="SEV4">SEV4 - Informativo / Baixo</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="display: block; font-weight: 600; margin-bottom: 0.3rem; font-size: 0.85rem;">Módulo Afetado *</label>
+                    <input type="text" name="affectedModule" value="Geral" required class="form-control" style="width: 100%; padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 6px;" />
                 </div>
             </div>
 
@@ -194,7 +203,23 @@
 
             <div style="margin-bottom: 1rem;">
                 <label style="display: block; font-weight: 600; margin-bottom: 0.3rem; font-size: 0.85rem;">Descrição Técnica Detalhada *</label>
-                <textarea name="description" rows="3" required minlength="10" placeholder="Causa preliminar, escopo observado e ações de mitigação iniciadas..." class="form-control" style="width: 100%; padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 6px;"></textarea>
+                <textarea name="description" rows="2" required minlength="10" placeholder="Escopo observado e sintomas..." class="form-control" style="width: 100%; padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 6px;"></textarea>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem;">
+                <div>
+                    <label style="display: block; font-weight: 600; margin-bottom: 0.3rem; font-size: 0.85rem;">Causa Raiz Preliminar</label>
+                    <input type="text" name="rootCause" placeholder="Ex: Contenção de pool de conexões" class="form-control" style="width: 100%; padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 6px;" />
+                </div>
+                <div>
+                    <label style="display: block; font-weight: 600; margin-bottom: 0.3rem; font-size: 0.85rem;">Ações Tomadas</label>
+                    <input type="text" name="actionsTaken" placeholder="Ex: Reinício de pod, aumento de réplicas" class="form-control" style="width: 100%; padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 6px;" />
+                </div>
+            </div>
+
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.3rem; font-size: 0.85rem;">Próximos Passos & Mitigação Futura</label>
+                <input type="text" name="nextSteps" placeholder="Ex: Revisar índices da tabela e implementar circuit breaker" class="form-control" style="width: 100%; padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 6px;" />
             </div>
 
             <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem;">

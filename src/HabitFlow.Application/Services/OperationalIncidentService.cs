@@ -9,8 +9,8 @@ public sealed class OperationalIncidentService(
     IOperationalIncidentRepository repository,
     ILogger<OperationalIncidentService> logger)
 {
-    private static readonly HashSet<string> ValidSeverities = ["Info", "Minor", "Major", "Critical"];
-    private static readonly HashSet<string> ValidStatuses = ["Investigating", "Identified", "Monitoring", "Resolved", "Canceled"];
+    private static readonly HashSet<string> ValidSeverities = ["Info", "Minor", "Major", "Critical", "SEV1", "SEV2", "SEV3", "SEV4"];
+    private static readonly HashSet<string> ValidStatuses = ["Investigating", "Identified", "Monitoring", "Resolved", "Canceled", "Aberto", "Mitigado"];
 
     public Task<IReadOnlyList<OperationalIncident>> ListAsync(OperationalIncidentFilter filter, CancellationToken ct = default) =>
         repository.ListIncidentsAsync(filter, ct);
@@ -31,6 +31,11 @@ public sealed class OperationalIncidentService(
         string? communicationNotes,
         string executorEmail,
         string correlationId,
+        string sevCode = "SEV3",
+        string affectedModule = "Geral",
+        string? rootCause = null,
+        string? actionsTaken = null,
+        string? nextSteps = null,
         CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(title) || title.Trim().Length < 5)
@@ -40,10 +45,22 @@ public sealed class OperationalIncidentService(
             return Result<Guid>.Failure("incident.invalid_description", "A descrição do incidente deve ter no mínimo 10 caracteres.");
 
         if (!ValidSeverities.Contains(severity))
-            return Result<Guid>.Failure("incident.invalid_severity", "Severidade inválida. Use Info, Minor, Major ou Critical.");
+            return Result<Guid>.Failure("incident.invalid_severity", "Severidade inválida. Use SEV1, SEV2, SEV3, SEV4, Critical, Major, Minor ou Info.");
 
         if (string.IsNullOrWhiteSpace(impact))
             return Result<Guid>.Failure("incident.invalid_impact", "O impacto do incidente é obrigatório.");
+
+        var normalizedSevCode = sevCode;
+        if (string.IsNullOrWhiteSpace(normalizedSevCode) || !normalizedSevCode.StartsWith("SEV", StringComparison.OrdinalIgnoreCase))
+        {
+            normalizedSevCode = severity switch
+            {
+                "Critical" => "SEV1",
+                "Major" => "SEV2",
+                "Minor" => "SEV3",
+                _ => "SEV4"
+            };
+        }
 
         var incident = new OperationalIncident(
             Guid.NewGuid(),
@@ -62,7 +79,12 @@ public sealed class OperationalIncidentService(
             communicationSent,
             communicationNotes,
             DateTime.UtcNow,
-            DateTime.UtcNow
+            DateTime.UtcNow,
+            SevCode: normalizedSevCode,
+            AffectedModule: string.IsNullOrWhiteSpace(affectedModule) ? "Geral" : affectedModule.Trim(),
+            RootCause: rootCause?.Trim(),
+            ActionsTaken: actionsTaken?.Trim(),
+            NextSteps: nextSteps?.Trim()
         );
 
         var id = await repository.CreateIncidentAsync(incident, ct);

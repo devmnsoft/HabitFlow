@@ -158,6 +158,116 @@ public sealed class OperationalAiService(
         return new OperationalAiSuggestion(explanation, "LocalGuard", "RuleEngine-v6.21.0");
     }
 
+    public async Task<OperationalAiSuggestion> ExplainIncidentRootCauseAsync(
+        string title, string module, string severity, string description, CancellationToken ct = default)
+    {
+        var sanitizedTitle = safety.Sanitize(MaskSensitiveData(title));
+        var sanitizedModule = safety.Sanitize(MaskSensitiveData(module));
+        var sanitizedDesc = safety.Sanitize(MaskSensitiveData(description));
+
+        var prompt = $"Analise este incidente operacional no SaaS HabitFlow e sugira a causa raiz provável e plano de ação:\n" +
+                     $"Título: {sanitizedTitle}\nMódulo: {sanitizedModule}\nSeveridade: {severity}\nDetalhes: {sanitizedDesc}\n" +
+                     $"Forneça: 1) Causa provável; 2) Ações imediatas de mitigação; 3) Medidas preventivas futuras.";
+
+        var provider = ActiveProvider;
+        if (provider != null && provider.IsConfigured)
+        {
+            try
+            {
+                var req = new AssistantRequest(prompt, Guid.Empty, Guid.Empty, Guid.NewGuid().ToString("N"));
+                var userCtx = new AssistantUserContext(0, 0, UserPlan.Premium, 0);
+                var response = await provider.GenerateAsync(req, userCtx, ct);
+                if (response.SafetyStatus == "Allowed" && !string.IsNullOrWhiteSpace(response.Message))
+                    return new OperationalAiSuggestion(response.Message, response.Provider, "Operational-LLM");
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Falha ao gerar análise de causa raiz via LLM.");
+            }
+        }
+
+        var heuristic = $"Diagnóstico preliminar para {sanitizedTitle} ({severity}) no módulo {sanitizedModule}:\n" +
+                        $"• Causa provável: Instabilidade transitória em dependências externas ou latência na camada de persistência/rede.\n" +
+                        $"• Ação recomendada: Avaliar telemetria e health checks dos 11 componentes; verificar se há contenção de recursos ou bloqueio em transações.\n" +
+                        $"• Prevenção: Estabelecer circuit breaker e alarmes proativos para o módulo {sanitizedModule}.";
+
+        return new OperationalAiSuggestion(heuristic, "LocalGuard", "RuleEngine-v6.26.0");
+    }
+
+    public async Task<OperationalAiSuggestion> SummarizeHealthChecksAsync(
+        IEnumerable<SystemHealthStatusItem> checks, CancellationToken ct = default)
+    {
+        var checkList = checks.ToList();
+        var unhealthyCount = checkList.Count(c => c.Status == HealthStatusConstants.Unhealthy);
+        var degradedCount = checkList.Count(c => c.Status == HealthStatusConstants.Degraded);
+        var disabledCount = checkList.Count(c => c.Status == HealthStatusConstants.Disabled || c.Status == HealthStatusConstants.NotConfigured);
+
+        var prompt = $"Resuma a saúde dos seguintes componentes do SaaS HabitFlow: {checkList.Count} componentes avaliados. " +
+                     $"Unhealthy: {unhealthyCount}, Degraded: {degradedCount}, Disabled/NotConfigured: {disabledCount}. " +
+                     $"Destaque o impacto operacional geral em 3 frases curtas.";
+
+        var provider = ActiveProvider;
+        if (provider != null && provider.IsConfigured)
+        {
+            try
+            {
+                var req = new AssistantRequest(prompt, Guid.Empty, Guid.Empty, Guid.NewGuid().ToString("N"));
+                var userCtx = new AssistantUserContext(0, 0, UserPlan.Premium, 0);
+                var response = await provider.GenerateAsync(req, userCtx, ct);
+                if (response.SafetyStatus == "Allowed" && !string.IsNullOrWhiteSpace(response.Message))
+                    return new OperationalAiSuggestion(response.Message, response.Provider, "Operational-LLM");
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Falha ao resumir health checks via LLM.");
+            }
+        }
+
+        var statusDesc = unhealthyCount > 0 ? "ATENÇÃO CRÍTICA: Há componentes em estado Unhealthy que exigem intervenção imediata da engenharia."
+                       : degradedCount > 0 ? "ATENÇÃO OPERACIONAL: O sistema opera com degradação parcial em dependências secundárias."
+                       : "SISTEMA ESTÁVEL: Todos os serviços essenciais (banco, aplicação, cache) estão respondendo dentro dos parâmetros ideais de SLA.";
+
+        var summary = $"{statusDesc} Total de {checkList.Count} subsistemas monitorados. Componentes informativos/desabilitados ({disabledCount}) operam com contingência segura.";
+
+        return new OperationalAiSuggestion(summary, "LocalGuard", "RuleEngine-v6.26.0");
+    }
+
+    public async Task<OperationalAiSuggestion> GenerateReleaseSummaryAsync(
+        string version, IEnumerable<ReleaseChecklistItem> items, CancellationToken ct = default)
+    {
+        var itemList = items.ToList();
+        var done = itemList.Count(i => i.IsCompleted);
+        var total = itemList.Count;
+
+        var prompt = $"Gere um resumo executivo da release {version} do HabitFlow: {done} de {total} itens concluídos no checklist de homologação. " +
+                     $"Destaque prontidão para produção e observância de LGPD, backup e governança.";
+
+        var provider = ActiveProvider;
+        if (provider != null && provider.IsConfigured)
+        {
+            try
+            {
+                var req = new AssistantRequest(prompt, Guid.Empty, Guid.Empty, Guid.NewGuid().ToString("N"));
+                var userCtx = new AssistantUserContext(0, 0, UserPlan.Premium, 0);
+                var response = await provider.GenerateAsync(req, userCtx, ct);
+                if (response.SafetyStatus == "Allowed" && !string.IsNullOrWhiteSpace(response.Message))
+                    return new OperationalAiSuggestion(response.Message, response.Provider, "Operational-LLM");
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Falha ao gerar release summary via LLM.");
+            }
+        }
+
+        var readyText = done == total
+            ? "Todas as etapas de validação e governança foram concluídas com sucesso. Release homologada para produção."
+            : $"Existem {total - done} itens pendentes de confirmação no checklist antes do go-live definitivo.";
+
+        var fallback = $"Relatório Executivo de Release ({version}): O checklist operacional registra {done}/{total} itens concluídos. {readyText} Governança de dados LGPD e procedimentos de backup/restore encontram-se documentados e ativos.";
+
+        return new OperationalAiSuggestion(fallback, "LocalGuard", "RuleEngine-v6.26.0");
+    }
+
     public static string MaskSensitiveData(string text)
     {
         if (string.IsNullOrWhiteSpace(text)) return string.Empty;

@@ -1,17 +1,129 @@
 @model HabitFlow.Application.SuperAdminDashboardDto
 @{
-    ViewData["Title"] = "SuperAdmin";
+    ViewData["Title"] = "SuperAdmin SaaS - Governança & Operações";
 }
-<section class="py-4 superadmin-shell">
-    <div class="d-flex justify-content-between align-items-center mb-4"><div><p class="text-uppercase text-primary fw-bold mb-1">HabitFlow SaaS</p><h1>Dashboard Super Administrador</h1><p class="text-muted">Visão global de clientes, planos, pagamentos, inadimplência e bloqueios.</p></div><a class="btn btn-outline-primary" href="/superadmin/export/clients">Exportar clientes CSV</a></div>
-    <div class="row g-3">
-        <div class="col-md-2"><div class="card shadow-sm"><div class="card-body"><span>Total de clientes</span><h2>@Model.TotalClients</h2></div></div></div>
-        <div class="col-md-2"><div class="card shadow-sm"><div class="card-body"><span>Clientes ativos</span><h2>@Model.ActiveClients</h2></div></div></div>
-        <div class="col-md-2"><div class="card shadow-sm"><div class="card-body"><span>Free</span><h2>@Model.FreeClients</h2></div></div></div>
-        <div class="col-md-2"><div class="card shadow-sm"><div class="card-body"><span>Premium</span><h2>@Model.PremiumClients</h2></div></div></div>
-        <div class="col-md-2"><div class="card shadow-sm"><div class="card-body"><span>Enterprise</span><h2>@Model.EnterpriseClients</h2></div></div></div>
-        <div class="col-md-2"><div class="card shadow-sm"><div class="card-body"><span>Inadimplentes</span><h2>@(Model.OverdueCapped ? "não disponível" : Model.OverdueClients.ToString())</h2>@if (Model.OverdueCapped) { <small>Amostra limitada a 500 clientes.</small> }</div></div></div>
+<section class="py-4 superadmin-shell container-fluid" style="max-width: 1400px;">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <span class="badge" style="background: #e0e7ff; color: #3730a3; font-weight: 600; font-size: 0.75rem; padding: 0.35rem 0.65rem; border-radius: 9999px;">
+                    HabitFlow SaaS v6.26.0
+                </span>
+                <span class="badge" style="background: #dcfce7; color: #166534; font-weight: 700; font-size: 0.85rem; padding: 0.35rem 0.75rem; border-radius: 9999px;">
+                    Homologação de Produção
+                </span>
+            </div>
+            <h1 class="h3 fw-bold mb-1" style="color: #0f172a;">Painel Executivo Super Administrador</h1>
+            <p class="text-muted small mb-0">Visão global de métricas SaaS, governança de tenants, observabilidade, LGPD, incidentes e release.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a class="btn btn-outline-success d-inline-flex align-items-center gap-2 px-3 py-2 fw-semibold" href="/superadmin/export/metrics" style="border-radius: 8px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                Exportar Métricas SaaS (CSV)
+            </a>
+            <a class="btn btn-outline-primary d-inline-flex align-items-center gap-2 px-3 py-2 fw-semibold" href="/superadmin/export/clients" style="border-radius: 8px;">
+                Exportar Clientes CSV
+            </a>
+        </div>
     </div>
-    <nav class="nav nav-pills my-4"><a class="nav-link" href="/superadmin/clients">Clientes</a><a class="nav-link" href="/superadmin/plans">Planos</a><a class="nav-link" href="/superadmin/subscriptions">Assinaturas</a><a class="nav-link" href="/superadmin/payments">Pagamentos</a><a class="nav-link" href="/superadmin/overdue">Inadimplentes</a><a class="nav-link" href="/superadmin/customer-success">Sucesso do cliente</a><a class="nav-link" href="/superadmin/homologation">Homologação</a><a class="nav-link" href="/admin/templates">Templates</a><a class="nav-link" href="/superadmin/ai">IA</a><a class="nav-link" href="/superadmin/audit">Logs</a><a class="nav-link" href="/superadmin/system">Sistema</a></nav>
-    <div class="row g-3"><div class="col-lg-6"><div class="card"><div class="card-body"><h2 class="h5">Visão financeira</h2><p>Receita confirmada, pendente, MRR estimado e cobranças Pix/Boleto ficam centralizadas para confirmação backend/webhook.</p></div></div></div><div class="col-lg-6"><div class="card"><div class="card-body"><h2 class="h5">Clientes que precisam de atenção</h2><p>Inadimplentes continuam no Free; apenas benefícios Premium/Enterprise são bloqueados.</p></div></div></div></div>
+
+    <!-- Indicadores Principais -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-2">
+            <div class="card h-100 border-0 shadow-sm p-3" style="border-radius: 10px; background: #ffffff;">
+                <span class="text-muted small text-uppercase fw-bold">Total Tenants</span>
+                <h2 class="fw-bold mt-2 mb-0" style="color: #0f172a;">@Model.TotalClients</h2>
+                <small class="text-muted mt-1">Registrados</small>
+            </div>
+        </div>
+        <div class="col-6 col-md-2">
+            <div class="card h-100 border-0 shadow-sm p-3" style="border-radius: 10px; background: #ffffff;">
+                <span class="text-muted small text-uppercase fw-bold">Tenants Ativos</span>
+                <h2 class="fw-bold mt-2 mb-0" style="color: #166534;">@Model.ActiveClients</h2>
+                <small class="text-muted mt-1">Operando</small>
+            </div>
+        </div>
+        <div class="col-6 col-md-2">
+            <div class="card h-100 border-0 shadow-sm p-3" style="border-radius: 10px; background: #ffffff;">
+                <span class="text-muted small text-uppercase fw-bold">Free</span>
+                <h2 class="fw-bold mt-2 mb-0" style="color: #475569;">@Model.FreeClients</h2>
+                <small class="text-muted mt-1">Sem cobrança</small>
+            </div>
+        </div>
+        <div class="col-6 col-md-2">
+            <div class="card h-100 border-0 shadow-sm p-3" style="border-radius: 10px; background: #ffffff;">
+                <span class="text-muted small text-uppercase fw-bold">Premium</span>
+                <h2 class="fw-bold mt-2 mb-0" style="color: #2563eb;">@Model.PremiumClients</h2>
+                <small class="text-muted mt-1">Planos pagos</small>
+            </div>
+        </div>
+        <div class="col-6 col-md-2">
+            <div class="card h-100 border-0 shadow-sm p-3" style="border-radius: 10px; background: #ffffff;">
+                <span class="text-muted small text-uppercase fw-bold">Enterprise</span>
+                <h2 class="fw-bold mt-2 mb-0" style="color: #7c3aed;">@Model.EnterpriseClients</h2>
+                <small class="text-muted mt-1">Contratos corporate</small>
+            </div>
+        </div>
+        <div class="col-6 col-md-2">
+            <div class="card h-100 border-0 shadow-sm p-3" style="border-radius: 10px; background: #ffffff;">
+                <span class="text-muted small text-uppercase fw-bold">Inadimplentes</span>
+                <h2 class="fw-bold mt-2 mb-0" style="color: @(Model.OverdueClients > 0 ? "#dc2626" : "#166534");">
+                    @(Model.OverdueCapped ? "não disponível" : Model.OverdueClients.ToString())
+                </h2>
+                <small class="text-muted mt-1">@(Model.OverdueCapped ? "Amostra > 500" : "Bloqueio parcial ativo")</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navegação Operacional & Governança -->
+    <nav class="nav nav-pills flex-wrap gap-2 my-4 p-2 bg-light rounded-3">
+        <a class="nav-link active fw-semibold" href="/superadmin">Dashboard</a>
+        <a class="nav-link fw-semibold" href="/superadmin/clients">Clientes</a>
+        <a class="nav-link fw-semibold" href="/superadmin/plans">Planos</a>
+        <a class="nav-link fw-semibold" href="/superadmin/subscriptions">Assinaturas</a>
+        <a class="nav-link fw-semibold" href="/superadmin/payments">Pagamentos</a>
+        <a class="nav-link fw-semibold" href="/superadmin/overdue">Inadimplentes</a>
+        <a class="nav-link fw-semibold" href="/superadmin/health">Health (11 Checks)</a>
+        <a class="nav-link fw-semibold" href="/superadmin/audit">Auditoria</a>
+        <a class="nav-link fw-semibold" href="/superadmin/lgpd">LGPD & Privacidade</a>
+        <a class="nav-link fw-semibold" href="/superadmin/backup">Backup & Restore</a>
+        <a class="nav-link fw-semibold" href="/superadmin/incidents">Incidentes</a>
+        <a class="nav-link fw-semibold" href="/superadmin/release">Release</a>
+        <a class="nav-link fw-semibold" href="/superadmin/customer-success">Customer Success</a>
+        <a class="nav-link fw-semibold" href="/superadmin/homologation">Homologação</a>
+        <a class="nav-link fw-semibold" href="/superadmin/ai">IA Operacional</a>
+    </nav>
+
+    <!-- Cards de Visão Operacional -->
+    <div class="row g-3">
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100" style="border-radius: 10px; background: #ffffff;">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-2" style="color: #0f172a;">Governança Financeira e SaaS Entitlements</h5>
+                    <p class="text-muted small mb-3">
+                        Todas as liberações de benefícios pagos seguem o modelo de entitlements por tenant. Pagamentos via MercadoPago ou faturamento direto geram conciliação auditada no banco PostgreSQL.
+                    </p>
+                    <div class="d-flex gap-2">
+                        <a href="/superadmin/payments" class="btn btn-sm btn-outline-primary">Ver Transações</a>
+                        <a href="/superadmin/overdue" class="btn btn-sm btn-outline-danger">Controle de Inadimplência</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100" style="border-radius: 10px; background: #ffffff;">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-2" style="color: #0f172a;">Observabilidade, Resiliência e LGPD</h5>
+                    <p class="text-muted small mb-3">
+                        Monitoramento contínuo dos 11 componentes críticos, conformidade com a LGPD (Art. 18) e rotinas de backup com RPO ≤ 1h e RTO ≤ 30m testadas em ambiente descartável.
+                    </p>
+                    <div class="d-flex gap-2">
+                        <a href="/superadmin/health" class="btn btn-sm btn-outline-success">Status de Saúde</a>
+                        <a href="/superadmin/backup" class="btn btn-sm btn-outline-secondary">Plano de Backup</a>
+                        <a href="/superadmin/lgpd" class="btn btn-sm btn-outline-info">Direitos dos Titulares</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </section>

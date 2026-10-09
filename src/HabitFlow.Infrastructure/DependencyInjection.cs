@@ -93,6 +93,11 @@ public static class DependencyInjection
         services.AddScoped<ICustomerOperationsRepository, CustomerOperationsRepository>();
         services.AddScoped<IOfflineSyncRepository, OfflineSyncRepository>();
         services.AddScoped<IDataPortabilityRepository, DataPortabilityRepository>();
+        services.AddScoped<ISystemHealthRepository, SystemHealthRepository>();
+        services.AddScoped<ILgpdGovernanceRepository, LgpdGovernanceRepository>();
+        services.AddScoped<IBackupRepository, BackupAndReleaseRepository>();
+        services.AddScoped<IReleaseGovernanceRepository, BackupAndReleaseRepository>();
+        services.AddScoped<IOperationalAuditRepository, OperationalAuditRepository>();
         return services;
     }
 }
