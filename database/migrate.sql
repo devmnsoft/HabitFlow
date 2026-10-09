@@ -95,3 +95,6 @@
 \i database/migrations/093_restore_schema_contract_constraints.sql
 \i database/migrations/094_v6197_ai_admin_usage.sql
 \i database/migrations/095_v6198_product_activation.sql
+\i database/migrations/096_v6200_commercial_homologation_trial.sql
+\i database/migrations/097_v6210_operational_saas_cs_incidents.sql
+\i database/migrations/098_v6230_smart_automation_journeys.sql

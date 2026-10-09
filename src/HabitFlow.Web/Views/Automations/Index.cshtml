@@ -1,0 +1,59 @@
+@model HabitFlow.Web.Models.AutomationsIndexViewModel
+@using HabitFlow.Domain
+@{
+    ViewData["Title"] = "Automacoes";
+}
+
+<section class="hf-page-shell">
+    <header class="hf-page-header">
+        <div>
+            <p class="hf-eyebrow">Acompanhamento</p>
+            <h1>Automacoes</h1>
+            <p>Lembretes, revisoes e retomadas respeitando quiet hours e seu plano.</p>
+        </div>
+    </header>
+
+    <form class="hf-panel hf-inline-form" method="post" action="/automations/create">
+        @Html.AntiForgeryToken()
+        <label>
+            Tipo
+            <select name="type">
+                <option value="@HabitAutomationType.WeeklyReview">Revisao semanal</option>
+                <option value="@HabitAutomationType.SmartReminder">Lembrete inteligente</option>
+                <option value="@HabitAutomationType.ConsistencyAlert">Alerta de consistencia</option>
+                <option value="@HabitAutomationType.RecoveryPlan">Plano de retomada</option>
+                <option value="@HabitAutomationType.MonthlySummary">Resumo mensal</option>
+            </select>
+        </label>
+        <label>
+            Frequencia
+            <select name="frequency">
+                <option>Weekly</option>
+                <option>Daily</option>
+                <option>Monthly</option>
+            </select>
+        </label>
+        <button class="btn btn-primary" type="submit">Criar</button>
+    </form>
+
+    <div class="hf-card-grid">
+        @foreach (var automation in Model.Automations)
+        {
+            <article class="hf-card">
+                <div class="hf-card-meta">
+                    <span>@automation.Type</span>
+                    <span>@automation.Status</span>
+                    <span>@automation.Frequency</span>
+                </div>
+                <p>Quiet hours: @automation.QuietHoursStart.ToString("HH\\:mm") - @automation.QuietHoursEnd.ToString("HH\\:mm")</p>
+                @if (automation.Status == HabitAutomationStatus.Active)
+                {
+                    <form method="post" action="/automations/@automation.Id/pause">
+                        @Html.AntiForgeryToken()
+                        <button class="btn btn-outline-primary" type="submit">Pausar</button>
+                    </form>
+                }
+            </article>
+        }
+    </div>
+</section>

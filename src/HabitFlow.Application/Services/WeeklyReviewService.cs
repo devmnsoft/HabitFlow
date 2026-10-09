@@ -13,7 +13,7 @@ public sealed record WeeklyReviewResult(DateOnly PeriodStart, DateOnly PeriodEnd
     IReadOnlyList<WeeklyReviewHabitResult> Habits, IReadOnlyList<WeeklyReviewCategoryResult> Categories,
     IReadOnlyList<WeeklyReviewGoalResult> Goals, IReadOnlyList<RoutineRecommendation> Recommendations,
     IReadOnlyList<WeeklyReviewSuggestion> Suggestions, IReadOnlyList<RecoverySuggestion> Recovery,
-    bool IsCompleted, string IdempotencyKey);
+    bool IsCompleted, string IdempotencyKey, string SummaryText = "", bool AiGenerated = false, string AiStatus = "");
 
 public sealed class WeeklyReviewService(IHabitRepository habits, IHabitWeekDayRepository weekDays,
     IHabitCompletionRepository completions, IHabitScheduleExceptionRepository exceptions, IWeeklyReviewRepository reviews,
@@ -75,16 +75,29 @@ public sealed class WeeklyReviewService(IHabitRepository habits, IHabitWeekDayRe
         var routineRecommendations = recommendations.Build(new(habitResults, goalResults, overall, source.Count));
         var suggestions = habitResults.Where(x => x.Scheduled >= 3 && x.Percentage < 50).Select(x => new WeeklyReviewSuggestion(x.HabitId, "Ajuste consciente", $"{x.Name} pode ficar mais simples na próxima semana.", "Reduzir frequência")).ToList();
         var recovery = habitResults.Where(x => x.Scheduled >= 5 && x.Percentage < 40).Select(x => new RecoverySuggestion(x.HabitId, "Há espaço para um apoio", "Experimente reduzir a frequência ou escolher um horário mais confortável.")).ToList();
+        var summary = BuildSummary(totalPlanned, totalDone, overall, habitResults.FirstOrDefault()?.Name,
+            habitResults.OrderBy(x => x.Percentage).ThenByDescending(x => x.Scheduled).FirstOrDefault()?.Name);
         return new(periodStart, end, totalPlanned, totalDone, overall,
             byDay.OrderByDescending(x => x.Count).ThenBy(x => x.Date).FirstOrDefault(x => x.Count > 0)?.Date.ToString("dddd"),
             byDay.Where(x => planned.Any(p => p.Date == x.Date)).OrderBy(x => x.Count).ThenBy(x => x.Date).FirstOrDefault()?.Date.ToString("dddd"),
             habitResults.FirstOrDefault()?.Name, habitResults.OrderBy(x => x.Percentage).ThenByDescending(x => x.Scheduled).FirstOrDefault()?.Name,
             goalResults.OrderByDescending(x => x.Percentage).FirstOrDefault()?.Title, byDay.Count(x => x.Count == 0), habitResults, categoryResults,
             goalResults.OrderByDescending(x => x.Percentage).ToList(), routineRecommendations, suggestions, recovery,
-            stored?.Status == "Completed", stored?.IdempotencyKey ?? Guid.NewGuid().ToString("N"));
+            stored?.Status == "Completed", stored?.IdempotencyKey ?? Guid.NewGuid().ToString("N"), summary, false,
+            "IA indisponivel ou desabilitada; resumo gerado por regras deterministicas.");
     }
 
     private static string NormalizeCategory(string? category) => CategoryOrder.FirstOrDefault(x => string.Equals(x, category?.Trim(), StringComparison.OrdinalIgnoreCase)) ?? "Outras";
+    private static string BuildSummary(int scheduled, int completed, int percentage, string? bestHabit, string? attentionHabit)
+    {
+        if (scheduled == 0) return "Ainda nao havia agenda nesta semana. Escolha um habito simples para criar a primeira leitura.";
+        var baseText = percentage >= 70
+            ? "Sua semana manteve boa consistencia."
+            : percentage >= 40
+                ? "Sua semana teve sinais de ritmo, com espaco para simplificar."
+                : "Sua semana pede uma retomada leve e sem julgamento.";
+        return $"{baseText} Voce concluiu {completed} de {scheduled} oportunidades. Destaque: {bestHabit ?? "em construcao"}. Ponto de atencao: {attentionHabit ?? "nenhum ajuste urgente"}.";
+    }
     private static ProgressHabitRow ToProgressRow(Habit habit) => new() { Id = habit.Id, Name = habit.Name, Category = habit.Category,
         CreatedAt = habit.StartDate?.ToDateTime(TimeOnly.MinValue) ?? habit.CreatedAt, ArchivedAt = habit.ArchivedAt,
         IsArchived = habit.IsArchived, FrequencyTypeCode = habit.FrequencyType.ToString(), ReminderTime = habit.ReminderTime };

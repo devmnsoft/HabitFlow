@@ -4,7 +4,7 @@
 @section Styles { <link rel="stylesheet" href="~/css/habit-library.css" asp-append-version="true" /> }
 <main class="hf-library-page" data-library>
   <header class="hf-library-hero">
-    <div><p class="hf-section-kicker">Comece pequeno, do seu jeito</p><h1>Biblioteca guiada de hábitos</h1><p>Encontre uma ação possível para sua rotina, entenda por que ela ajuda e personalize antes de criar.</p><a class="hf-library-hero-cta" href="#sugestoes">explorar hábitos sugeridos</a></div>
+    <div><p class="hf-section-kicker">Marketplace interno</p><h1>Templates inteligentes de hábitos</h1><p>Busque modelos oficiais, do tenant ou privados, revise a origem e personalize antes de criar.</p><a class="hf-library-hero-cta" href="#sugestoes">explorar hábitos sugeridos</a></div>
     @if (User.Identity?.IsAuthenticated == true) { <a class="btn btn-outline-success" href="/habit-library/favorites">Meus favoritos</a> }
   </header>
 
@@ -24,7 +24,7 @@
   <section class="hf-template-grid" id="sugestoes" aria-label="Hábitos prontos">
   @foreach(var template in Model.Templates){ var favorite = Model.FavoriteTemplateIds.Contains(template.Id); var free = template.MinimumPlanCode.Equals(PlanCodes.Free, StringComparison.OrdinalIgnoreCase);
     <article class="hf-template-card" data-template data-focus="@template.ObjectiveId" data-category="@template.Category" data-difficulty="@template.Difficulty" data-duration="@(template.EstimatedTimeMinutes ?? 999)" data-frequency="@template.SuggestedFrequency" data-plan="@template.MinimumPlanCode" data-favorite="@favorite.ToString().ToLowerInvariant()">
-      <div class="hf-template-card__top"><span class="hf-chip">@template.Category</span><span class="hf-chip">@template.Difficulty</span>@if(template.EstimatedTimeMinutes is not null){<span class="hf-chip">@template.EstimatedTimeMinutes min</span>}</div>
+      <div class="hf-template-card__top"><span class="hf-chip">@template.Category</span><span class="hf-chip">@template.Difficulty</span><span class="hf-chip">@template.Language</span><span class="hf-chip">@template.Origin</span>@if(template.EstimatedTimeMinutes is not null){<span class="hf-chip">@template.EstimatedTimeMinutes min</span>}</div>
       <h2>@template.Name</h2><p>@template.Description</p>
       <dl><div><dt>Por que ajuda</dt><dd>@(template.WhyItHelps ?? template.BenefitText)</dd></div><div><dt>Primeiro passo</dt><dd>@(template.FirstAction ?? template.HowToStart)</dd></div><div><dt>Ritmo sugerido</dt><dd>@template.SuggestedFrequency · @(template.SuggestedTargetPerWeek?.ToString() ?? "flexível")x/semana</dd></div></dl>
       @if(!free){<p class="hf-plan-note">Disponível com o plano Ritmo. Veja os detalhes antes de decidir.</p>}

@@ -20,7 +20,10 @@ public sealed record HabitTemplate(Guid Id, Guid ObjectiveId, string Name, strin
     string? Audience = null,
     string? GoalText = null,
     Guid? CreatedBy = null,
-    Guid? ClientId = null)
+    Guid? ClientId = null,
+    string Language = "pt-BR",
+    string Origin = "Official",
+    string MarketplaceStatus = "Published")
 {
     public bool CanBeUsed() => IsActive;
 

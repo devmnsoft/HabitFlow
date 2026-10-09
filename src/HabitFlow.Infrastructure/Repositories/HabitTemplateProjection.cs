@@ -35,7 +35,10 @@ internal static class HabitTemplateProjection
             t.audience as "Audience",
             t.goal_text as "GoalText",
             t.created_by as "CreatedBy",
-            t.client_id as "ClientId"
+            t.client_id as "ClientId",
+            coalesce(t.language, 'pt-BR') as "Language",
+            coalesce(t.origin, 'Official') as "Origin",
+            coalesce(t.marketplace_status, 'Published') as "MarketplaceStatus"
         from habitflow.habit_templates t
         """;
 
@@ -77,7 +80,10 @@ internal static class HabitTemplateProjection
         row.Audience,
         row.GoalText,
         row.CreatedBy,
-        row.ClientId);
+        row.ClientId,
+        string.IsNullOrWhiteSpace(row.Language) ? "pt-BR" : row.Language,
+        string.IsNullOrWhiteSpace(row.Origin) ? "Official" : row.Origin,
+        string.IsNullOrWhiteSpace(row.MarketplaceStatus) ? "Published" : row.MarketplaceStatus);
 
     private static HabitDifficulty ParseDifficulty(string? value) =>
         Enum.TryParse<HabitDifficulty>(value, ignoreCase: true, out var parsed)
@@ -120,4 +126,7 @@ internal sealed class HabitTemplateRow
     public string? GoalText { get; init; }
     public Guid? CreatedBy { get; init; }
     public Guid? ClientId { get; init; }
+    public string Language { get; init; } = "pt-BR";
+    public string Origin { get; init; } = "Official";
+    public string MarketplaceStatus { get; init; } = "Published";
 }

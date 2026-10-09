@@ -31,10 +31,11 @@ public sealed class HabitTemplateRepository(SqlExecutor db) : IHabitTemplateRepo
             insert into habitflow.habit_templates(
                 id, objective_id, name, description, category, suggested_frequency, suggested_color, difficulty,
                 estimated_time_minutes, benefit_text, sort_order, is_active, minimum_plan_code, audience, goal_text,
-                created_by, client_id, published_at)
+                created_by, client_id, published_at, language, origin, marketplace_status)
             values (
                 @Id, @ObjectiveId, @Name, @Description, @Category, @Frequency, '#16A34A', @Difficulty,
-                @Minutes, @Goal, 100, true, @MinimumPlan, @Audience, @Goal, @CreatedBy, @ClientId, now())
+                @Minutes, @Goal, 100, true, @MinimumPlan, @Audience, @Goal, @CreatedBy, @ClientId, now(),
+                'pt-BR', case when @ClientId is null then 'SuperAdmin' else 'Tenant' end, 'Published')
             """, draft, ct);
 
     public async Task<HabitTemplate?> GetAsync(Guid id, CancellationToken ct = default)

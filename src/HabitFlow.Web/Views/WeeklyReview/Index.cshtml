@@ -9,6 +9,7 @@
         <article><strong>@Model.DaysWithoutActivity</strong><span>dias sem atividade</span></article><article><strong>@(Model.MostActiveGoal ?? "Escolha um foco")</strong><span>objetivo em destaque</span></article>
     </section>
     <section class="review-answer-grid" aria-label="Leitura rápida"><article><span>O que você manteve</span><strong>@(Model.BestHabit ?? "A semana ainda pode começar")</strong></article><article><span>Onde simplificar</span><strong>@(Model.MostForgottenHabit ?? "Nenhum ajuste necessário")</strong></article></section>
+    <section class="review-section"><div class="section-heading"><div><span class="eyebrow">Resumo inteligente</span><h2>Leitura da semana</h2></div><p>@Model.AiStatus</p></div><article class="recommendation"><p>@Model.SummaryText</p></article></section>
 
     @if (Model.Recommendations.Count > 0) { <section class="review-section"><div class="section-heading"><div><span class="eyebrow">Próxima semana</span><h2>Ações que podem ajudar</h2></div><p>Regras simples explicam cada sugestão. Nada muda sem sua escolha.</p></div><div class="recommendation-grid">@foreach (var item in Model.Recommendations) { <article class="recommendation recommendation--@item.Severity"><span class="recommendation-code">Sugestão prática</span><h3>@item.Title</h3><p>@item.Message</p>@if (item.ActionUrl is not null) { <a href="@item.ActionUrl" class="btn btn-success">@item.ActionLabel</a> }</article> }</div></section> }
 
