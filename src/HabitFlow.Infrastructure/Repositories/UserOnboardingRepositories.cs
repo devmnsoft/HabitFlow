@@ -16,6 +16,7 @@ public sealed class UserOnboardingProgressRepository(SqlExecutor db) : IUserOnbo
           preferred_frequency=null,preferred_days='{}',preferred_time=null,selected_template_ids='{}',selected_collection_id=null,
           create_goal=false,goal_target_type=null,goal_target_value=null,started_at=now(),last_activity_at=now(),completed_at=null,
           skipped_at=null,version=habitflow.user_onboarding_progress.version+1
+          where habitflow.user_onboarding_progress.completed_at is null
           """, new { clientId, userId }, ct);
         return (await GetAsync(clientId, userId, ct))!;
     }

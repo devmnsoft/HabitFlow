@@ -50,7 +50,14 @@ public sealed class DailyRoutinePlannerService(IHabitRepository habits, IHabitWe
         return new(query.LocalDate,items,scheduled,done,scheduled == 0 ? 0 : (int)Math.Round(done * 100d / scheduled));
     }
 
-    private static ProgressHabitRow ToProgressRow(Habit h) => new() { Id=h.Id,Name=h.Name,Category=h.Category,IsArchived=h.IsArchived,ArchivedAt=h.ArchivedAt,CreatedAt=h.StartDate?.ToDateTime(TimeOnly.MinValue) ?? h.CreatedAt,FrequencyTypeCode=h.FrequencyType.ToString(),ReminderTime=h.ReminderTime };
+    private static ProgressHabitRow ToProgressRow(Habit h) => new()
+    {
+        Id = h.Id, Name = h.Name, Category = h.Category, IsArchived = h.IsArchived, ArchivedAt = h.ArchivedAt,
+        CreatedAt = h.StartDate?.ToDateTime(TimeOnly.MinValue) ?? h.CreatedAt, StartDate = h.StartDate, EndDate = h.EndDate,
+        FrequencyTypeCode = h.FrequencyType.ToString(), ReminderTime = h.ReminderTime, IsPaused = h.IsPaused, PausedAt = h.PausedAt,
+        TargetQuantity = h.TargetQuantity, TargetUnit = h.TargetUnit, MinimumVersionName = h.MinimumVersionName,
+        MinimumVersionQuantity = h.MinimumVersionQuantity, RetroactiveAdjustmentDays = h.RetroactiveAdjustmentDays
+    };
 }
 
 public sealed record RoutineActionResultViewModel(bool Succeeded, string Message, string? ErrorCode = null);

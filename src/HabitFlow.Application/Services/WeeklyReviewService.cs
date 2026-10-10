@@ -98,9 +98,16 @@ public sealed class WeeklyReviewService(IHabitRepository habits, IHabitWeekDayRe
                 : "Sua semana pede uma retomada leve e sem julgamento.";
         return $"{baseText} Voce concluiu {completed} de {scheduled} oportunidades. Destaque: {bestHabit ?? "em construcao"}. Ponto de atencao: {attentionHabit ?? "nenhum ajuste urgente"}.";
     }
-    private static ProgressHabitRow ToProgressRow(Habit habit) => new() { Id = habit.Id, Name = habit.Name, Category = habit.Category,
-        CreatedAt = habit.StartDate?.ToDateTime(TimeOnly.MinValue) ?? habit.CreatedAt, ArchivedAt = habit.ArchivedAt,
-        IsArchived = habit.IsArchived, FrequencyTypeCode = habit.FrequencyType.ToString(), ReminderTime = habit.ReminderTime };
+    private static ProgressHabitRow ToProgressRow(Habit habit) => new()
+    {
+        Id = habit.Id, Name = habit.Name, Category = habit.Category,
+        CreatedAt = habit.StartDate?.ToDateTime(TimeOnly.MinValue) ?? habit.CreatedAt, StartDate = habit.StartDate,
+        EndDate = habit.EndDate, ArchivedAt = habit.ArchivedAt, IsArchived = habit.IsArchived,
+        FrequencyTypeCode = habit.FrequencyType.ToString(), ReminderTime = habit.ReminderTime,
+        IsPaused = habit.IsPaused, PausedAt = habit.PausedAt, TargetQuantity = habit.TargetQuantity,
+        TargetUnit = habit.TargetUnit, MinimumVersionName = habit.MinimumVersionName,
+        MinimumVersionQuantity = habit.MinimumVersionQuantity, RetroactiveAdjustmentDays = habit.RetroactiveAdjustmentDays
+    };
 }
 
 public sealed class CompleteWeeklyReviewUseCase(IWeeklyReviewRepository reviews, TimeProvider clock, AuditService audit)

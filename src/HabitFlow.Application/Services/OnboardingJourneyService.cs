@@ -11,6 +11,21 @@ public sealed class OnboardingJourneyService(IUserOnboardingProgressRepository p
     public Task<UserOnboardingProgress?> ResumeAsync(Guid clientId, Guid userId, CancellationToken ct = default) =>
         progress.GetAsync(clientId, userId, ct);
 
+    public async Task<Result<UserOnboardingProgress>> CompleteAsync(Guid clientId, Guid userId, int expectedVersion, CancellationToken ct = default)
+    {
+        var current = await progress.GetAsync(clientId, userId, ct);
+        if (current is null) return Result<UserOnboardingProgress>.Failure("onboarding.not_started", "Inicie a configuração antes de concluir.");
+        if (current.Version != expectedVersion) return Result<UserOnboardingProgress>.Failure("onboarding.version_conflict", "A configuração foi alterada em outra janela. Recarregue a página.");
+        if (current.Status == OnboardingStatus.Completed) return Result<UserOnboardingProgress>.Success(current);
+        if (current.Status == OnboardingStatus.Skipped)
+            return Result<UserOnboardingProgress>.Failure("onboarding.terminal", "Esta configuração foi pulada. Retome antes de concluir.");
+        var completed = current with { CurrentStep = OnboardingStep.Completed, CompletedAt = clock.GetUtcNow().UtcDateTime, SkippedAt = null };
+        if (!await progress.SaveAsync(completed, expectedVersion, ct))
+            return Result<UserOnboardingProgress>.Failure("onboarding.version_conflict", "A configuração foi alterada em outra janela. Recarregue a página.");
+        await drafts.DeleteAsync(clientId, userId, ct);
+        return Result<UserOnboardingProgress>.Success(completed with { Version = expectedVersion + 1 });
+    }
+
     public async Task<Result<UserOnboardingProgress>> AdvanceAsync(UserOnboardingProgress next, int expectedVersion, CancellationToken ct = default)
     {
         var current = await progress.GetAsync(next.ClientId, next.UserId, ct);

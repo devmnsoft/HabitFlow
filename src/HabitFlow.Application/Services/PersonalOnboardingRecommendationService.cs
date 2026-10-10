@@ -44,5 +44,6 @@ public sealed class PersonalOnboardingJourneyService(IUserOnboardingProgressRepo
     public Task<UserOnboardingProgress> StartAsync(Guid clientId,Guid userId,CancellationToken ct=default)=>inner.StartAsync(clientId,userId,ct);
     public Task<UserOnboardingProgress?> ResumeAsync(Guid clientId,Guid userId,CancellationToken ct=default)=>inner.ResumeAsync(clientId,userId,ct);
     public Task<HabitFlow.Shared.Result<UserOnboardingProgress>> AdvanceAsync(UserOnboardingProgress next,int version,CancellationToken ct=default)=>inner.AdvanceAsync(next,version,ct);
+    public Task<HabitFlow.Shared.Result<UserOnboardingProgress>> CompleteAsync(Guid clientId,Guid userId,int version,CancellationToken ct=default)=>inner.CompleteAsync(clientId,userId,version,ct);
     public Task<HabitFlow.Shared.Result<UserOnboardingProgress>> SkipAsync(Guid clientId,Guid userId,int version,CancellationToken ct=default)=>inner.SkipAsync(clientId,userId,version,ct);
 }

@@ -14,6 +14,11 @@ public sealed class OnboardingController(GuidedJourneyService journey, PersonalO
         try
         {
             var progress = await personalJourney.ResumeAsync(this.CurrentClientId(), this.CurrentUserId(), ct);
+            if (progress?.Status == OnboardingStatus.Completed)
+            {
+                TempData["Success"] = "Sua configuração inicial já foi concluída.";
+                return RedirectToAction("Index", "MyDay");
+            }
             if (progress is null || progress.Status == OnboardingStatus.Skipped)
                 progress = await personalJourney.StartAsync(this.CurrentClientId(), this.CurrentUserId(), ct);
             ViewData["OnboardingVersion"] = progress.Version;
@@ -49,6 +54,17 @@ public sealed class OnboardingController(GuidedJourneyService journey, PersonalO
     {
         var objective = await objectives.GetBySlugAsync(slug, ct);
         if (objective is null) return NotFound();
+        try
+        {
+            var progress = await personalJourney.ResumeAsync(this.CurrentClientId(), this.CurrentUserId(), ct);
+            if (progress?.Status == OnboardingStatus.Completed)
+            {
+                TempData["Success"] = "Sua configuração inicial já foi concluída.";
+                return RedirectToAction("Index", "MyDay");
+            }
+            ViewData["OnboardingVersion"] = progress?.Version;
+        }
+        catch (Exception ex) { logger.LogWarning(ex, "Não foi possível carregar a versão do onboarding em templates"); }
         var templates = await library.GetTemplatesByObjectiveAsync(slug, this.CurrentClientId() == Guid.Empty ? null : this.CurrentClientId(), ct);
         return View((objective, Templates: templates.Value ?? Array.Empty<HabitTemplate>()));
     }
@@ -59,6 +75,16 @@ public sealed class OnboardingController(GuidedJourneyService journey, PersonalO
     {
         var result = await journey.CompleteFirstHabitFromTemplateAsync(this.CurrentUserSnapshot(), templateId, ct);
         if (result.IsFailure) { TempData["Error"] = result.Error.Message; return RedirectToAction(nameof(Index)); }
+        try
+        {
+            var progress = await personalJourney.ResumeAsync(this.CurrentClientId(), this.CurrentUserId(), ct);
+            if (progress is not null && progress.Status == OnboardingStatus.InProgress)
+            {
+                var completed = await personalJourney.CompleteAsync(this.CurrentClientId(), this.CurrentUserId(), progress.Version, ct);
+                if (completed.IsFailure) TempData["Warning"] = completed.Error.Message;
+            }
+        }
+        catch (Exception ex) { logger.LogWarning(ex, "Não foi possível marcar o onboarding como concluído após criação do primeiro hábito"); }
         TempData["Success"] = "Pronto. Seu primeiro hábito foi criado.";
         return RedirectToAction(nameof(Complete));
     }
@@ -68,7 +94,15 @@ public sealed class OnboardingController(GuidedJourneyService journey, PersonalO
 
     [ValidateAntiForgeryToken]
     [HttpPost("/onboarding/complete")]
-    public IActionResult CompletePost() => RedirectToAction("Index", "Dashboard");
+    public async Task<IActionResult> CompletePost(int? version, CancellationToken ct)
+    {
+        if (version is not null)
+        {
+            var result = await personalJourney.CompleteAsync(this.CurrentClientId(), this.CurrentUserId(), version.Value, ct);
+            if (result.IsFailure) TempData["Warning"] = result.Error.Message;
+        }
+        return RedirectToAction("Index", "MyDay");
+    }
 
     [ValidateAntiForgeryToken, HttpPost("/onboarding/skip")]
     public async Task<IActionResult> Skip(int? version, CancellationToken ct)
