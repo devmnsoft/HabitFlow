@@ -101,3 +101,5 @@
 \i database/migrations/099_v6240_customer_operations_growth.sql
 \i database/migrations/100_v6250_pwa_offline_integrations_api_webhooks_portability.sql
 \i database/migrations/101_v6260_production_observability_lgpd_backup_incidents_governance.sql
+\i database/migrations/102_v6280_enterprise_governance.sql
+\i database/migrations/103_adaptive_habit_journey.sql

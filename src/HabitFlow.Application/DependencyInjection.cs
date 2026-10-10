@@ -47,6 +47,7 @@ public static class DependencyInjection
         services.AddScoped<GlobalSearchService>();
         services.AddScoped<HabitPolicy>();
         services.AddScoped<HabitScheduleNormalizer>();
+        services.AddScoped<AdaptiveHabitPlanningService>();
         services.AddScoped<ProgressService>();
         services.AddSingleton<AchievementEvaluator>();
         services.AddScoped<AchievementNotificationService>();

@@ -9,6 +9,10 @@ public sealed class HabitScheduleService(IHabitRepository habits, IHabitWeekDayR
     public bool IsHabitDueOnDate(Habit habit, DateOnly date, IReadOnlyCollection<HabitWeekDay> selectedDays)
     {
         if (habit.IsArchived) return false;
+        var start = habit.StartDate ?? DateOnly.FromDateTime(habit.CreatedAt);
+        if (date < start) return false;
+        if (habit.EndDate.HasValue && date > habit.EndDate.Value) return false;
+        if (habit.IsPaused) return false;
         var day = (int)date.DayOfWeek;
         return habit.FrequencyType switch
         {

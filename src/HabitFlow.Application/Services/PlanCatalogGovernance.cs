@@ -38,6 +38,14 @@ public sealed class PlanFeatureImplementationRegistry
         yield return N(PlanFeatureCodes.PrioritySupport, PlanFeatureImplementationStatus.Planned, "Sem SLA próprio.");
         yield return N(PlanFeatureCodes.InternalCommunications, PlanFeatureImplementationStatus.Internal, "Operação interna.");
         yield return N(PlanFeatureCodes.UsersLimit, PlanFeatureImplementationStatus.Internal, "Entitlement de conta.");
+        yield return I(PlanFeatureCodes.EnterpriseSso, "SSO corporativo", "Base segura para OIDC/OAuth2/SAML, desabilitada por padrao e sem secrets versionados.", "EnterpriseSsoPolicyService", ["/admin/settings"], ["EnterpriseSsoPolicyService"]);
+        yield return I(PlanFeatureCodes.MandatoryMfa, "MFA obrigatorio", "Politicas de MFA por perfil sensivel e SuperAdmin.", "MfaServices", ["/mfa"], ["SuperAdminMfaRequirementService"]);
+        yield return I(PlanFeatureCodes.WhiteLabel, "White label", "Validacao de marca por tenant com contraste minimo e fallback MNSOFT.", "TenantBrandingPolicyService", ["/admin/settings"], ["TenantBrandingPolicyService"]);
+        yield return I(PlanFeatureCodes.CustomDomain, "Dominio personalizado", "Estados de verificacao DNS e bloqueio de ativacao sem verificacao.", "TenantDomainPolicyService", ["/admin/settings"], ["TenantDomainPolicyService"]);
+        yield return I(PlanFeatureCodes.AiGovernance, "Governanca de IA", "Providers e modelos permitidos com falha segura quando desabilitados.", "EnterpriseAiPolicyService", ["/tenant-ai"], ["EnterpriseAiPolicyService"]);
+        yield return I(PlanFeatureCodes.Sla, "SLA contratado", "SLA por plano aplicado a suporte e governanca operacional.", "SupportSla", ["/support"], ["SupportCenterService"]);
+        yield return N(PlanFeatureCodes.ApiKeys, PlanFeatureImplementationStatus.Planned, "Sem emissao completa de API keys Enterprise nesta versao.");
+        yield return N(PlanFeatureCodes.AdvancedAudit, PlanFeatureImplementationStatus.Partial, "Auditoria operacional existe; trilhas granulares por politica Enterprise ainda parciais.");
     }
 }
 

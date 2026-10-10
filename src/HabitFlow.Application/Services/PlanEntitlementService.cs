@@ -88,6 +88,26 @@ public sealed class PlanEntitlementService(IPlanCatalogRepository catalog)
     public Task<bool> CanUseFullLibraryAsync(Guid userId, CancellationToken ct = default) => GetBooleanFeatureAsync(userId, PlanFeatureCodes.FullHabitLibrary, ct);
     public Task<bool> CanExportReportsAsync(Guid userId, CancellationToken ct = default) => GetBooleanFeatureAsync(userId, PlanFeatureCodes.ReportExportCsv, ct);
     public Task<bool> CanUseSharedRoutinesAsync(Guid userId, CancellationToken ct = default) => GetBooleanFeatureAsync(userId, PlanFeatureCodes.SharedRoutines, ct);
+
+    public async Task<bool> CanUseTenantFeatureAsync(Guid clientId, string featureCode, CancellationToken ct = default)
+    {
+        if (clientId == Guid.Empty || string.IsNullOrWhiteSpace(featureCode)) return false;
+        var planCode = await GetEffectivePlanAsync(clientId, ct);
+        var features = await catalog.GetFeaturesAsync(planCode, ct);
+        return features.TryGetValue(featureCode, out var feature) && feature.BoolValue == true;
+    }
+
+    public Task<bool> CanUseSsoAsync(Guid clientId, CancellationToken ct = default) =>
+        CanUseTenantFeatureAsync(clientId, PlanFeatureCodes.EnterpriseSso, ct);
+
+    public Task<bool> CanUseWhiteLabelAsync(Guid clientId, CancellationToken ct = default) =>
+        CanUseTenantFeatureAsync(clientId, PlanFeatureCodes.WhiteLabel, ct);
+
+    public Task<bool> CanUseCustomDomainAsync(Guid clientId, CancellationToken ct = default) =>
+        CanUseTenantFeatureAsync(clientId, PlanFeatureCodes.CustomDomain, ct);
+
+    public Task<bool> CanUseAiGovernanceAsync(Guid clientId, CancellationToken ct = default) =>
+        CanUseTenantFeatureAsync(clientId, PlanFeatureCodes.AiGovernance, ct);
 }
 
 public sealed record PlanAccessSnapshot(

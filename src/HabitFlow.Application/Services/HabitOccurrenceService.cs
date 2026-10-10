@@ -19,15 +19,22 @@ public sealed class HabitOccurrenceService(ILogger<HabitOccurrenceService>? logg
                 habit.FrequencyTypeCode, habit.Id);
             return false;
         }
-        if (frequency == HabitFrequencyType.CustomWeekly)
+
+        var created = DateOnly.FromDateTime(TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(habit.CreatedAt, DateTimeKind.Utc), timeZone));
+        var effectiveStart = habit.StartDate ?? (frequency == HabitFrequencyType.CustomWeekly ? created : DateOnly.MinValue);
+        if (date < effectiveStart) return false;
+        if (habit.EndDate.HasValue && date > habit.EndDate.Value) return false;
+        if (habit.ArchivedAt.HasValue)
         {
-            var created = DateOnly.FromDateTime(TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(habit.CreatedAt, DateTimeKind.Utc), timeZone));
-            if (date < created) return false;
-            if (habit.ArchivedAt.HasValue)
-            {
-                var archived = DateOnly.FromDateTime(TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(habit.ArchivedAt.Value, DateTimeKind.Utc), timeZone));
-                if (date > archived) return false;
-            }
+            var archived = DateOnly.FromDateTime(TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(habit.ArchivedAt.Value, DateTimeKind.Utc), timeZone));
+            if (date > archived) return false;
+        }
+        if (habit.IsPaused)
+        {
+            var paused = habit.PausedAt.HasValue
+                ? DateOnly.FromDateTime(TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(habit.PausedAt.Value, DateTimeKind.Utc), timeZone))
+                : date;
+            if (date >= paused) return false;
         }
         return frequency switch
         {

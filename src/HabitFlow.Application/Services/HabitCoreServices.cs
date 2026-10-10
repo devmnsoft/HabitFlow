@@ -10,7 +10,8 @@ public sealed record HabitListViewModel(IReadOnlyList<HabitListItem> Items, IRea
 public sealed record HabitEditorViewModel(Guid? Id, string Name, string Color, string? Category, string IconCode,
     HabitFrequencyType FrequencyType, int? TargetPerWeek, TimeOnly? ReminderTime, string? Notes,
     IReadOnlyList<int>? SelectedDays, Guid? ObjectiveId, int? EstimatedTimeMinutes, HabitDifficulty? Difficulty,
-    DateOnly? StartDate = null);
+    DateOnly? StartDate = null, DateOnly? EndDate = null, decimal? TargetQuantity = null, string? TargetUnit = null,
+    string? MinimumVersionName = null, decimal? MinimumVersionQuantity = null, int RetroactiveAdjustmentDays = 7);
 public sealed record GoalOptionViewModel(Guid Id, string Title, string Status, string? Description, decimal ProgressPercentage);
 public sealed record HabitEditorPageViewModel(HabitEditorViewModel Editor, IReadOnlyList<string> CategorySuggestions,
     IReadOnlyList<GoalOptionViewModel> GoalOptions);
@@ -96,8 +97,17 @@ public sealed class HabitQueryService(IHabitRepository habits, IHabitCompletionR
         IsArchived = habit.IsArchived,
         ArchivedAt = habit.ArchivedAt,
         CreatedAt = habit.StartDate?.ToDateTime(TimeOnly.MinValue) ?? habit.CreatedAt,
+        StartDate = habit.StartDate,
+        EndDate = habit.EndDate,
         FrequencyTypeCode = habit.FrequencyType.ToString(),
-        ReminderTime = habit.ReminderTime
+        ReminderTime = habit.ReminderTime,
+        IsPaused = habit.IsPaused,
+        PausedAt = habit.PausedAt,
+        TargetQuantity = habit.TargetQuantity,
+        TargetUnit = habit.TargetUnit,
+        MinimumVersionName = habit.MinimumVersionName,
+        MinimumVersionQuantity = habit.MinimumVersionQuantity,
+        RetroactiveAdjustmentDays = habit.RetroactiveAdjustmentDays
     };
     private static bool MatchesStatus(Habit h, string status) => status switch { "archived" => h.IsArchived, "paused" => h.IsPaused && !h.IsArchived, "all" => true, _ => !h.IsArchived && !h.IsPaused };
     private static (int Current, int Best) CalculateStreak(IReadOnlyList<HabitCalendarDay> days, DateOnly today) { var current = 0; var best = 0; var run = 0; foreach (var d in days.Where(x => x.Scheduled)) { run = d.Completed ? run + 1 : 0; best = Math.Max(best, run); if (d.Date <= today) current = run; } return (current, best); }
@@ -118,7 +128,7 @@ public sealed class HabitLifecycleService(IHabitRepository habits, AuditService 
     }
 }
 
-public sealed class HabitEditorService(IHabitRepository habits, IHabitWeekDayRepository weekDays, HabitScheduleNormalizer scheduleNormalizer, PlanEntitlementService entitlements, AuditService audit, IUserGoalRepository goals, UserTimeZoneService clock, IUnitOfWork unitOfWork)
+public sealed class HabitEditorService(IHabitRepository habits, IHabitWeekDayRepository weekDays, HabitScheduleNormalizer scheduleNormalizer, AdaptiveHabitPlanningService planning, PlanEntitlementService entitlements, AuditService audit, IUserGoalRepository goals, UserTimeZoneService clock, IUnitOfWork unitOfWork)
 {
     private static readonly string[] DefaultCategories = ["Saúde", "Movimento", "Estudo", "Trabalho", "Casa", "Finanças", "Sono", "Alimentação", "Leitura", "Espiritualidade", "Bem-estar"];
     private static readonly Regex HexColor = new("^#[0-9a-fA-F]{6}$", RegexOptions.Compiled);
@@ -126,7 +136,7 @@ public sealed class HabitEditorService(IHabitRepository habits, IHabitWeekDayRep
     {
         var h = await habits.GetAsync(clientId, userId, id, ct); if (h is null) return null;
         var days = await weekDays.ListByHabitAsync(id, ct);
-        return new(h.Id, h.Name, h.Color, h.Category, h.IconCode ?? "check-circle", h.FrequencyType, h.TargetPerWeek, h.ReminderTime, h.Notes, days.Select(x => x.DayOfWeek).Distinct().Order().ToList(), h.ObjectiveId, h.EstimatedTimeMinutes, h.Difficulty, h.StartDate);
+        return new(h.Id, h.Name, h.Color, h.Category, h.IconCode ?? "check-circle", h.FrequencyType, h.TargetPerWeek, h.ReminderTime, h.Notes, days.Select(x => x.DayOfWeek).Distinct().Order().ToList(), h.ObjectiveId, h.EstimatedTimeMinutes, h.Difficulty, h.StartDate, h.EndDate, h.TargetQuantity, h.TargetUnit, h.MinimumVersionName, h.MinimumVersionQuantity, h.RetroactiveAdjustmentDays);
     }
     public async Task<HabitEditorPageViewModel> PreparePageAsync(Guid clientId, Guid userId, HabitEditorViewModel editor, CancellationToken ct = default)
     {
@@ -152,6 +162,10 @@ public sealed class HabitEditorService(IHabitRepository habits, IHabitWeekDayRep
         if (input.ObjectiveId == Guid.Empty) return Result<Habit>.Failure("habit.objective_not_found", "Objetivo não encontrado.");
         var schedule = scheduleNormalizer.Normalize(new(input.FrequencyType, input.TargetPerWeek, input.SelectedDays));
         if (schedule.IsFailure) return Result<Habit>.Failure(schedule.Error.Code, schedule.Error.Message);
+        var planningResult = planning.ValidatePlanning(new(input.StartDate, input.EndDate, input.TargetQuantity,
+            planning.NormalizeUnit(input.TargetUnit), Clean(input.MinimumVersionName, 120),
+            input.MinimumVersionQuantity, input.RetroactiveAdjustmentDays));
+        if (planningResult.IsFailure) return Result<Habit>.Failure(planningResult.Error.Code, planningResult.Error.Message);
         var normalized = schedule.Value!;
         if (input.ObjectiveId.HasValue && await goals.GetAsync(input.ObjectiveId.Value, user.ClientId.Value, user.Id, ct) is null)
             return Result<Habit>.Failure("habit.objective_not_found", "Objetivo não encontrado.");
@@ -171,7 +185,7 @@ public sealed class HabitEditorService(IHabitRepository habits, IHabitWeekDayRep
         }
         var now = DateTime.UtcNow;
         var startDate = current?.StartDate ?? input.StartDate ?? clock.Today();
-        var habit = (current ?? new Habit(Guid.NewGuid(), user.Id, name, color, Clean(input.Category, 80), false, null, now, now, ClientId: user.ClientId, StartDate: startDate)) with { Name = name, Color = color, Category = Clean(input.Category, 80), IconCode = icon, FrequencyType = normalized.FrequencyType, TargetPerWeek = normalized.TargetPerWeek, ReminderTime = input.ReminderTime, Notes = Clean(input.Notes, 2000), ObjectiveId = input.ObjectiveId, EstimatedTimeMinutes = input.EstimatedTimeMinutes, Difficulty = input.Difficulty, StartDate = startDate, UpdatedAt = now };
+        var habit = (current ?? new Habit(Guid.NewGuid(), user.Id, name, color, Clean(input.Category, 80), false, null, now, now, ClientId: user.ClientId, StartDate: startDate)) with { Name = name, Color = color, Category = Clean(input.Category, 80), IconCode = icon, FrequencyType = normalized.FrequencyType, TargetPerWeek = normalized.TargetPerWeek, ReminderTime = input.ReminderTime, Notes = Clean(input.Notes, 2000), ObjectiveId = input.ObjectiveId, EstimatedTimeMinutes = input.EstimatedTimeMinutes, Difficulty = input.Difficulty, StartDate = startDate, EndDate = input.EndDate, TargetQuantity = input.TargetQuantity, TargetUnit = planning.NormalizeUnit(input.TargetUnit), MinimumVersionName = Clean(input.MinimumVersionName, 120), MinimumVersionQuantity = input.MinimumVersionQuantity, RetroactiveAdjustmentDays = input.RetroactiveAdjustmentDays, UpdatedAt = now };
         await unitOfWork.BeginTransactionAsync(ct);
         try
         {

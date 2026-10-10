@@ -27,7 +27,13 @@ public sealed record Habit(
     bool IsTemplateVariation = false,
     Guid? TemplateIdempotencyKey = null,
     bool IsPaused = false,
-    DateTime? PausedAt = null)
+    DateTime? PausedAt = null,
+    DateOnly? EndDate = null,
+    decimal? TargetQuantity = null,
+    string? TargetUnit = null,
+    string? MinimumVersionName = null,
+    decimal? MinimumVersionQuantity = null,
+    int RetroactiveAdjustmentDays = 7)
 {
     public bool BelongsTo(Guid userId) => UserId == userId;
 

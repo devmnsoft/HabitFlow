@@ -8,8 +8,13 @@ public sealed class ProgressCalendarRepository(SqlExecutor db) : IProgressCalend
     {
         const string habitsSql = """
             select h.id as Id, h.name as Name, h.category as Category, h.is_archived as IsArchived,
-                   h.archived_at as ArchivedAt, h.created_at as CreatedAt, h.frequency_type as FrequencyTypeCode,
-                   h.reminder_time as ReminderTime
+                   h.archived_at as ArchivedAt, h.created_at as CreatedAt, h.start_date as StartDate,
+                   h.end_date as EndDate, h.frequency_type as FrequencyTypeCode,
+                   h.reminder_time as ReminderTime, h.is_paused as IsPaused, h.paused_at as PausedAt,
+                   h.target_quantity as TargetQuantity, h.target_unit as TargetUnit,
+                   h.minimum_version_name as MinimumVersionName,
+                   h.minimum_version_quantity as MinimumVersionQuantity,
+                   h.retroactive_adjustment_days as RetroactiveAdjustmentDays
               from habitflow.habits h
               join habitflow.users u on u.id = h.user_id
              where h.user_id = @userId and u.client_id = @clientId

@@ -33,6 +33,14 @@ public static class PlanFeatureCodes
     public const string AiAssistant = "ai_assistant";
     public const string Teams = "teams";
     public const string CorporateFeatures = "corporate_features";
+    public const string EnterpriseSso = "enterprise_sso";
+    public const string MandatoryMfa = "mandatory_mfa";
+    public const string WhiteLabel = "white_label";
+    public const string CustomDomain = "custom_domain";
+    public const string ApiKeys = "api_keys";
+    public const string AdvancedAudit = "advanced_audit";
+    public const string Sla = "sla";
+    public const string AiGovernance = "ai_governance";
     public const string Webhooks = "webhooks";
     public const string PublicApi = "public_api";
     public const string DataPortability = "data_portability";

@@ -56,7 +56,7 @@ public sealed class ProgressSnapshotService(IProgressCalendarRepository reposito
     private static DateOnly Max(DateOnly left, DateOnly right) => left > right ? left : right;
 }
 
-public sealed class CompleteHabitUseCase(IUserRepository users, IHabitRepository habits, IHabitCompletionRepository completions, IUnitOfWork unitOfWork, ProgressSnapshotService snapshots, GoalProgressEngine goals, MilestoneEvaluationService milestones, AuditService audit, UserTimeZoneService clock, IGamificationRepository gamification, AchievementService achievements, HealthyPointsService points, Microsoft.Extensions.Logging.ILogger<CompleteHabitUseCase> logger)
+public sealed class CompleteHabitUseCase(IUserRepository users, IHabitRepository habits, IHabitWeekDayRepository weekDays, IHabitCompletionRepository completions, IUnitOfWork unitOfWork, ProgressSnapshotService snapshots, GoalProgressEngine goals, MilestoneEvaluationService milestones, AuditService audit, UserTimeZoneService clock, HabitOccurrenceService occurrences, AdaptiveHabitPlanningService planning, IGamificationRepository gamification, AchievementService achievements, HealthyPointsService points, Microsoft.Extensions.Logging.ILogger<CompleteHabitUseCase> logger)
 {
     public async Task<Result<HabitCompletionResult>> ExecuteAsync(HabitCompletionCommand command, CancellationToken ct = default)
     {
@@ -68,6 +68,9 @@ public sealed class CompleteHabitUseCase(IUserRepository users, IHabitRepository
             var habit = await habits.GetAsync(command.ClientId, command.UserId, command.HabitId, ct);
             if (user is null || user.ClientId != command.ClientId || habit is null || !habit.BelongsTo(command.UserId)) { await unitOfWork.RollbackAsync(ct); return Result<HabitCompletionResult>.Failure("habit.not_found", "Este hábito não foi encontrado."); }
             if (habit.IsArchived) { await unitOfWork.RollbackAsync(ct); return Result<HabitCompletionResult>.Failure("habit.archived", "Um hábito arquivado não pode ser concluído."); }
+            if (!planning.CanAdjustDate(habit, command.LocalDate, clock.Today())) { await unitOfWork.RollbackAsync(ct); return Result<HabitCompletionResult>.Failure("habit.retroactive_window", "A data está fora da janela permitida para ajuste."); }
+            var configuredDays = (await weekDays.ListByHabitAsync(habit.Id, ct)).Select(x => x.DayOfWeek).ToHashSet();
+            if (!occurrences.IsScheduledForDate(ToProgressRow(habit), configuredDays, command.LocalDate, clock.Resolve())) { await unitOfWork.RollbackAsync(ct); return Result<HabitCompletionResult>.Failure("habit.not_scheduled", "Este hábito não está previsto para a data selecionada."); }
             var mutation = await completions.AddIfMissingAsync(command.ClientId, user.Id, habit.Id,
                 command.LocalDate, Guid.NewGuid(), ct);
             var snapshot = await snapshots.BuildDayAsync(command.ClientId, command.UserId, command.LocalDate, ct);
@@ -111,6 +114,16 @@ public sealed class CompleteHabitUseCase(IUserRepository users, IHabitRepository
         new(habitId, s.Date, completed, s.Daily, s.CurrentStreak, s.BestStreak, s.NextHabit,
             goals?.Select(x => new GoalProgressUpdate(x.GoalId, x.Title, x.PreviousValue, x.CurrentValue, x.TargetValue, x.Percentage, x.CompletedNow)).ToList() ?? [],
             milestones?.Select(x => new MilestoneNotification(x.MilestoneId, x.Title, x.Message)).ToList() ?? []);
+    private static ProgressHabitRow ToProgressRow(Habit habit) => new()
+    {
+        Id = habit.Id, Name = habit.Name, Category = habit.Category, IsArchived = habit.IsArchived,
+        ArchivedAt = habit.ArchivedAt, CreatedAt = habit.CreatedAt, StartDate = habit.StartDate,
+        EndDate = habit.EndDate, FrequencyTypeCode = habit.FrequencyType.ToString(),
+        ReminderTime = habit.ReminderTime, IsPaused = habit.IsPaused, PausedAt = habit.PausedAt,
+        TargetQuantity = habit.TargetQuantity, TargetUnit = habit.TargetUnit,
+        MinimumVersionName = habit.MinimumVersionName, MinimumVersionQuantity = habit.MinimumVersionQuantity,
+        RetroactiveAdjustmentDays = habit.RetroactiveAdjustmentDays
+    };
 }
 
 public sealed class UndoHabitCompletionUseCase(IUserRepository users, IHabitRepository habits, IHabitCompletionRepository completions, IUnitOfWork unitOfWork, ProgressSnapshotService snapshots, GoalProgressEngine goals, UserTimeZoneService clock, HealthyPointsService points)

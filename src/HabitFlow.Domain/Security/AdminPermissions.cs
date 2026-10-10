@@ -16,12 +16,22 @@ public static class AdminPermissions
     public const string FeatureFlagsManage = "feature_flags.manage";
     public const string PrivacyManage = "privacy.manage";
     public const string SystemHealthRead = "system_health.read";
+    public const string WhiteLabelManage = "white_label.manage";
+    public const string SsoMfaManage = "sso_mfa.manage";
+    public const string DomainsManage = "domains.manage";
+    public const string IntegrationsManage = "integrations.manage";
+    public const string ApiKeysManage = "api_keys.manage";
+    public const string WebhooksManage = "webhooks.manage";
+    public const string AiManage = "ai.manage";
+    public const string LegalManage = "legal.manage";
 
     public static readonly IReadOnlySet<string> All = new HashSet<string>(StringComparer.Ordinal)
     {
         DashboardRead, UsersRead, UsersInvite, UsersUpdateRole, UsersDisable,
         BillingRead, BillingManage, SupportRead, SupportReply, AuditRead,
-        FeatureFlagsManage, PrivacyManage, SystemHealthRead
+        FeatureFlagsManage, PrivacyManage, SystemHealthRead, WhiteLabelManage,
+        SsoMfaManage, DomainsManage, IntegrationsManage, ApiKeysManage,
+        WebhooksManage, AiManage, LegalManage
     };
 }
 
