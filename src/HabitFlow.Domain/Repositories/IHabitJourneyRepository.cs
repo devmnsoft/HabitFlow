@@ -6,5 +6,6 @@ public interface IHabitJourneyRepository
     Task<HabitJourneyDetails?> GetDetailsAsync(Guid journeyId, Guid clientId, Guid userId, CancellationToken ct = default);
     Task<HabitJourneyMember?> GetMembershipAsync(Guid journeyId, Guid clientId, Guid userId, CancellationToken ct = default);
     Task JoinAsync(HabitJourneyMember member, CancellationToken ct = default);
+    Task LinkHabitAsync(Guid memberId, Guid journeyId, Guid stepId, Guid clientId, Guid userId, Guid habitId, string habitName, CancellationToken ct = default);
     Task LeaveAsync(Guid journeyId, Guid clientId, Guid userId, CancellationToken ct = default);
 }
