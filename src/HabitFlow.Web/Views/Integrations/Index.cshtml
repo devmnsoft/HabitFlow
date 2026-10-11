@@ -277,12 +277,13 @@
 
         <div class="col-md-6 ps-3">
           <h4>Importar Hábitos via CSV</h4>
-          <p class="text-muted">Formato esperado: <code>nome,categoria,frequencia,descricao,meta_dias_semana</code></p>
+          <p class="text-muted">Modelo: <code>nome,categoria,frequencia,descricao,meta_dias_semana</code>. A prévia não grava nada; revise duplicidades antes de confirmar.</p>
 
           <form id="form-import-csv" method="post" enctype="multipart/form-data" action="/integrations/import/simulate">
             @Html.AntiForgeryToken()
             <div class="mb-2">
               <input type="file" id="import-file" name="file" accept=".csv" class="form-control form-control-sm" required />
+              <small class="text-muted d-block mt-1">Limite: 512 KB e 500 linhas. Frequências aceitas: Daily, Weekdays, Weekends ou CustomWeekly.</small>
             </div>
             <button type="button" class="btn btn-outline-dark btn-sm" onclick="simulateCsvImport()">Simular importação</button>
           </form>
@@ -290,6 +291,20 @@
           <div id="simulation-results" class="mt-3" hidden>
             <div class="alert alert-info py-2" id="simulation-summary"></div>
             <ul id="simulation-errors" class="text-danger small ps-3"></ul>
+            <div class="table-responsive" id="simulation-table-wrap" hidden>
+              <table class="table table-sm align-middle">
+                <thead>
+                  <tr>
+                    <th>Linha</th>
+                    <th>Hábito</th>
+                    <th>Frequência</th>
+                    <th>Decisão</th>
+                    <th>Avisos</th>
+                  </tr>
+                </thead>
+                <tbody id="simulation-items"></tbody>
+              </table>
+            </div>
             <button type="button" id="btn-confirm-import" class="btn btn-success btn-sm mt-2" onclick="confirmImport()" hidden>Confirmar e Importar Válidos</button>
           </div>
         </div>
@@ -300,6 +315,12 @@
 
 <script>
   let simulatedItems = [];
+  const decisionLabels = {
+    create: 'Criar novo',
+    ignore: 'Ignorar',
+    create_new: 'Criar novo mesmo assim',
+    update: 'Atualizar campos'
+  };
 
   async function simulateCsvImport() {
     const fileInput = document.getElementById('import-file');
@@ -320,13 +341,18 @@
       });
 
       const res = await response.json();
+      if (!response.ok) {
+        throw new Error(res.error || 'Prévia recusada pelo servidor.');
+      }
       const summaryDiv = document.getElementById('simulation-summary');
       const errorsList = document.getElementById('simulation-errors');
       const confirmBtn = document.getElementById('btn-confirm-import');
       const resContainer = document.getElementById('simulation-results');
+      const itemsBody = document.getElementById('simulation-items');
+      const tableWrap = document.getElementById('simulation-table-wrap');
 
       resContainer.hidden = false;
-      summaryDiv.textContent = `Total no arquivo: ${res.totalRows} | Válidos: ${res.validRows} | Inconsistências: ${res.invalidRows}`;
+      summaryDiv.textContent = `Lote ${res.batchToken} | Total no arquivo: ${res.totalRows} | Revisáveis: ${res.validRows} | Inconsistências: ${res.invalidRows}`;
 
       errorsList.innerHTML = '';
       (res.errors || []).forEach(err => {
@@ -336,6 +362,38 @@
       });
 
       simulatedItems = res.validItems || [];
+      itemsBody.innerHTML = '';
+      tableWrap.hidden = simulatedItems.length === 0;
+      simulatedItems.forEach((item, index) => {
+        const tr = document.createElement('tr');
+        const row = document.createElement('td');
+        row.textContent = item.rowNumber || '';
+        const habit = document.createElement('td');
+        habit.textContent = `${item.name} · ${item.category}`;
+        const frequency = document.createElement('td');
+        frequency.textContent = `${item.frequency} (${item.targetDaysPerWeek}/semana)`;
+        const decision = document.createElement('td');
+        const select = document.createElement('select');
+        select.className = 'form-select form-select-sm';
+        select.setAttribute('aria-label', `Decisão para ${item.name}`);
+        const hasMatch = !!item.existingHabitId;
+        const options = hasMatch ? ['ignore', 'update', 'create_new'] : ['create'];
+        options.forEach(value => {
+          const option = document.createElement('option');
+          option.value = value;
+          option.textContent = decisionLabels[value];
+          option.selected = value === item.decision;
+          select.appendChild(option);
+        });
+        select.addEventListener('change', () => {
+          simulatedItems[index] = { ...simulatedItems[index], decision: select.value };
+        });
+        decision.appendChild(select);
+        const warnings = document.createElement('td');
+        warnings.textContent = (item.warnings || []).join(' ');
+        tr.append(row, habit, frequency, decision, warnings);
+        itemsBody.appendChild(tr);
+      });
       confirmBtn.hidden = simulatedItems.length === 0;
     } catch (err) {
       alert('Erro ao simular importação: ' + err.message);
@@ -358,7 +416,7 @@
 
       const res = await response.json();
       if (response.ok) {
-        alert(`${res.importedCount} hábito(s) importado(s) com sucesso!`);
+        alert(`${res.importedCount} alteração(ões) aplicada(s) com sucesso. Linhas ignoradas ou já aplicadas não são duplicadas.`);
         window.location.reload();
       } else {
         alert('Erro na importação: ' + (res.error || 'Falha ao processar.'));

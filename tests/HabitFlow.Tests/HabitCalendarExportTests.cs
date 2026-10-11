@@ -61,6 +61,8 @@ public sealed class HabitCalendarExportTests
         Assert.Contains("DTSTART:20261007T083000", calendar);
         Assert.Contains("DTEND:20261007T090000", calendar);
         Assert.Contains("SUMMARY:Leitura\\, capítulo\\; nota\\nprivada", calendar);
+        Assert.Contains("X-HABITFLOW-COMPLETION:false", calendar);
+        Assert.Contains("TRANSP:TRANSPARENT", calendar);
         Assert.DoesNotContain("RRULE:FREQ=DAILY", calendar);
         Assert.All(calendar.Split("\r\n", StringSplitOptions.RemoveEmptyEntries),
             line => Assert.True(System.Text.Encoding.UTF8.GetByteCount(line) <= 75, $"ICS line exceeds 75 octets: {line}"));

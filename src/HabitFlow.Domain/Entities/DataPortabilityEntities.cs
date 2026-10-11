@@ -31,10 +31,17 @@ public sealed record HabitImportRow(
     string Category,
     string Frequency,
     string? Description,
-    int TargetDaysPerWeek
+    int TargetDaysPerWeek,
+    string Decision = "create",
+    Guid? ExistingHabitId = null,
+    DateTime? ExpectedUpdatedAt = null,
+    Guid? BatchToken = null,
+    int RowNumber = 0,
+    IReadOnlyList<string>? Warnings = null
 );
 
 public sealed record ImportSimulationResult(
+    Guid BatchToken,
     int TotalRows,
     int ValidRows,
     int InvalidRows,

@@ -54,7 +54,7 @@ internal sealed class HabitRepoMock(List<Habit>? initial = null) : IHabitReposit
         Task.FromResult<IReadOnlyList<Habit>>(Habits.Where(h => h.ClientId == clientId && h.UserId == userId).ToList());
 
     public Task<Habit?> FindByIdempotencyKeyAsync(Guid clientId, Guid userId, Guid idempotencyKey, CancellationToken ct = default) =>
-        Task.FromResult<Habit?>(null);
+        Task.FromResult(Habits.FirstOrDefault(h => h.ClientId == clientId && h.UserId == userId && h.TemplateIdempotencyKey == idempotencyKey));
 
     public Task<Habit?> FindActiveBySourceTemplateAsync(Guid clientId, Guid userId, Guid templateId, bool includeVariations, CancellationToken ct = default) =>
         Task.FromResult<Habit?>(null);
