@@ -136,13 +136,24 @@ public sealed class SubscriptionService(ISubscriptionRepository repo, IUserRepos
             var s = await repo.GetByIdAsync(id, ct);
             if (s is null) return Result.Failure("subscription.not_found", "Assinatura não encontrada.");
             var now = DateTime.UtcNow;
-            var end = s.BillingCycle == BillingCycle.Yearly ? now.AddYears(1) : now.AddMonths(1);
-            var active = s with { Status = SubscriptionStatus.Active, ProviderPaymentId = providerPaymentId, CurrentPeriodStart = now, CurrentPeriodEnd = end, UpdatedAt = now };
+            if (!string.IsNullOrWhiteSpace(providerPaymentId)
+                && s.Status == SubscriptionStatus.Active
+                && string.Equals(s.ProviderPaymentId, providerPaymentId, StringComparison.Ordinal))
+            {
+                logger.LogInformation(new EventId(6215, "billing.subscription.updated"), "billing.subscription.updated SubscriptionId={SubscriptionId} Action=DuplicateActivationIgnored", id);
+                return Result.Success();
+            }
+
+            var renewal = s.Status == SubscriptionStatus.Active && s.CurrentPeriodEnd.HasValue && s.CurrentPeriodEnd.Value > now;
+            var start = renewal ? s.CurrentPeriodEnd!.Value : now;
+            var end = s.BillingCycle == BillingCycle.Yearly ? start.AddYears(1) : start.AddMonths(1);
+            var active = s with { Status = SubscriptionStatus.Active, ProviderPaymentId = providerPaymentId ?? s.ProviderPaymentId, CurrentPeriodStart = start, CurrentPeriodEnd = end, UpdatedAt = now };
             await repo.UpdateAsync(active, ct);
             var u = await users.GetByIdAsync(s.UserId, ct);
             if (u is not null) await users.UpdateAsync(u with { Plan = UserPlan.Premium, PlanStatus = PlanStatus.Active, UpdatedAt = now }, ct);
-            logger.LogInformation(new EventId(6215, "billing.subscription.updated"), "billing.subscription.updated SubscriptionId={SubscriptionId} Action=Activated", id);
-            await audit.CreateAsync(new(Guid.NewGuid(), s.UserId, s.Id, "billing.subscription.updated", "Premium ativado por confirmação backend/webhook.", "Info", null, now), ct);
+            var action = renewal ? "Renewed" : "Activated";
+            logger.LogInformation(new EventId(6215, "billing.subscription.updated"), "billing.subscription.updated SubscriptionId={SubscriptionId} Action={Action}", id, action);
+            await audit.CreateAsync(new(Guid.NewGuid(), s.UserId, s.Id, "billing.subscription.updated", renewal ? "Assinatura renovada por confirmação backend/webhook." : "Premium ativado por confirmação backend/webhook.", "Info", null, now), ct);
             return Result.Success();
         }
         catch (Exception ex)
@@ -234,8 +245,10 @@ public sealed class PaymentWebhookService(IPaymentWebhookRepository webhooks, IS
         if (string.IsNullOrWhiteSpace(eventId)) return Result.Failure("webhook.event_id_missing", "Identificador do evento ausente.");
         var valid = await provider.ValidateWebhookAsync(payload, headers, ct); if (valid.IsFailure) { logger.LogWarning(new EventId(6205, "billing.webhook.rejected"), "billing.webhook.rejected Provider={Provider}", paymentProvider); return valid; }
         logger.LogInformation(new EventId(6201, "billing.webhook.received"), "billing.webhook.received Provider={Provider} EventId={EventId} EventType={EventType}", paymentProvider, eventId, eventType);
-        if (await webhooks.ExistsAsync(paymentProvider, eventId, ct)) { logger.LogInformation(new EventId(6206, "billing.webhook.ignored_duplicate"), "billing.webhook.ignored_duplicate Provider={Provider} EventId={EventId}", paymentProvider, eventId); return Result.Success(); }
-        var webhook = new PaymentWebhookEvent(Guid.NewGuid(), paymentProvider, eventId, eventType, "Received", DateTime.UtcNow, null, null, null, null, safe, null); await webhooks.CreateAsync(webhook, ct);
+        var existing = await webhooks.GetByProviderEventAsync(paymentProvider, eventId, ct);
+        if (existing is { Status: "Processed" }) { logger.LogInformation(new EventId(6206, "billing.webhook.ignored_duplicate"), "billing.webhook.ignored_duplicate Provider={Provider} EventId={EventId}", paymentProvider, eventId); return Result.Success(); }
+        var webhook = existing ?? new PaymentWebhookEvent(Guid.NewGuid(), paymentProvider, eventId, eventType, "Received", DateTime.UtcNow, null, null, null, null, safe, null);
+        if (existing is null) await webhooks.CreateAsync(webhook, ct);
         try { logger.LogInformation(new EventId(6202, "billing.webhook.verified"), "billing.webhook.verified Provider={Provider} EventId={EventId}", paymentProvider, eventId); return await ProcessMercadoPagoEventAsync(webhook.Id, payload, ct); }
         catch (Exception ex) { logger.LogError(ex, "Erro em webhook de pagamento"); await webhooks.MarkProcessedAsync(webhook.Id, null, null, null, "Erro ao processar webhook", ct); return Result.Failure("webhook.error", "Webhook recebido com erro de processamento."); }
         }

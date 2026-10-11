@@ -475,6 +475,8 @@ file class FakePaymentWebhookRepository : IPaymentWebhookRepository
     public List<PaymentWebhookEvent> Events { get; } = [];
     public Task<bool> ExistsAsync(PaymentProvider provider, string eventId, CancellationToken ct = default) =>
         Task.FromResult(Events.Any(e => e.Provider == provider && e.EventId == eventId));
+    public Task<PaymentWebhookEvent?> GetByProviderEventAsync(PaymentProvider provider, string eventId, CancellationToken ct = default) =>
+        Task.FromResult(Events.LastOrDefault(e => e.Provider == provider && e.EventId == eventId));
     public Task CreateAsync(PaymentWebhookEvent webhookEvent, CancellationToken ct = default)
     {
         Events.Add(webhookEvent);
