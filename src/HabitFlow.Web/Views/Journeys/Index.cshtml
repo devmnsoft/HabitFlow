@@ -1,6 +1,8 @@
 @model HabitFlow.Web.Models.JourneysIndexViewModel
 @{
     ViewData["Title"] = "Jornadas guiadas";
+    var selectedPlan = Context.Request.Query["plan"].ToString();
+    bool IsSelected(string value) => string.Equals(selectedPlan, value, StringComparison.OrdinalIgnoreCase);
 }
 
 <section class="hf-page-shell">
@@ -13,7 +15,19 @@
         <a class="btn btn-outline-primary" href="/habit-library">Abrir marketplace</a>
     </header>
 
+    <form class="hf-panel hf-journey-filters" method="get" action="/journeys" aria-label="Filtros de jornadas">
+        <label>Buscar <input class="form-control" name="search" placeholder="objetivo, rotina ou tag" value="@Context.Request.Query["search"]" /></label>
+        <label>Categoria <input class="form-control" name="category" placeholder="Saúde, Estudo..." value="@Context.Request.Query["category"]" /></label>
+        <label>Duração máxima <input class="form-control" type="number" min="1" max="365" name="maxDurationDays" value="@Context.Request.Query["maxDurationDays"]" /></label>
+        <label>Plano <select class="form-select" name="plan"><option value="">Meu acesso</option><option value="free" selected="@IsSelected("free")">Free</option><option value="premium" selected="@IsSelected("premium")">Premium</option><option value="team" selected="@IsSelected("team")">Team</option><option value="enterprise" selected="@IsSelected("enterprise")">Enterprise</option></select></label>
+        <button class="btn btn-primary" type="submit">Filtrar</button>
+    </form>
+
     <div class="hf-card-grid">
+        @if (Model.Journeys.Count == 0)
+        {
+            <article class="hf-card"><h2>Nenhuma jornada encontrada</h2><p>Ajuste os filtros ou abra a biblioteca para criar hábitos avulsos.</p></article>
+        }
         @foreach (var item in Model.Journeys)
         {
             <article class="hf-card">
@@ -25,6 +39,7 @@
                 <h2>@item.Name</h2>
                 <p>@item.Description</p>
                 <p><strong>Objetivo:</strong> @item.Goal</p>
+                <p><strong>Plano:</strong> @item.MinimumPlan · <strong>Frequência:</strong> @item.Frequency</p>
                 <div class="hf-tags">
                     @foreach (var tag in item.Tags.Take(4))
                     {

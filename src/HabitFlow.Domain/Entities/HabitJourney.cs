@@ -29,7 +29,8 @@ public sealed record HabitJourneyDetails(
 
 public sealed record JoinHabitJourneyHabitSelection(
     Guid StepId, string HabitName, HabitFrequencyType FrequencyType, int? TargetPerWeek,
-    IReadOnlyCollection<int> SelectedDays, TimeOnly? ReminderTime);
+    IReadOnlyCollection<int> SelectedDays, TimeOnly? ReminderTime,
+    Guid? ExistingHabitId = null, bool DuplicateExisting = false);
 
 public sealed record JoinHabitJourneyCommand(
     Guid ClientId, Guid UserId, Guid JourneyId, bool Confirmed,

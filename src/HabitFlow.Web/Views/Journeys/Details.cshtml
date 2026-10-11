@@ -88,6 +88,16 @@
                                 <input class="form-control" name="habitName_@key" value="@step.SuggestedHabitName" maxlength="120" autocomplete="off" />
                             </label>
                             <label>
+                                <span>Vincular existente</span>
+                                <select class="form-select" name="existingHabitId_@key">
+                                    <option value="">Criar novo hábito</option>
+                                    @foreach (var existing in Model.ExistingHabits)
+                                    {
+                                        <option value="@existing.Habit.Id">@existing.Habit.Name</option>
+                                    }
+                                </select>
+                            </label>
+                            <label>
                                 <span>Frequencia</span>
                                 <select class="form-select" name="frequency_@key">
                                     <option value="Daily">Diario</option>
@@ -107,6 +117,10 @@
                                     <label><input type="checkbox" name="days_@key" value="@day.Item1" checked="@(day.Item1 is >= 1 and <= 5)" /> @day.Item2</label>
                                 }
                             </fieldset>
+                            <label class="hf-check-row hf-duplicate-confirm">
+                                <input class="form-check-input" type="checkbox" name="duplicateExisting_@key" value="true" />
+                                <span><strong>Duplicar mesmo que já exista equivalente</strong><small>Sem marcar, o backend bloqueia nomes iguais para evitar duplicidade acidental.</small></span>
+                            </label>
                         </div>
                     </li>
                 }
