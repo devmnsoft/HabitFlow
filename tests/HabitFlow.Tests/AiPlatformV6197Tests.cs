@@ -7,6 +7,7 @@ using Xunit;
 
 namespace HabitFlow.Tests;
 
+[Collection(AiEnvironmentCollection.Name)]
 public sealed class AiPlatformV6197Tests
 {
     private static readonly string Root = RepositoryRootLocator.Root;
