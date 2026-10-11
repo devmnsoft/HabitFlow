@@ -81,7 +81,7 @@ public sealed class NotificationEventDispatcher(
         {
             try
             {
-                await push.SendSafeReminderAsync(clientId, userId, ct);
+                await push.SendSafeReminderAsync(clientId, userId, ct: ct);
             }
             catch (Exception ex)
             {

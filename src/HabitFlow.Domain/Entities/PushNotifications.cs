@@ -8,8 +8,11 @@ public sealed record PushNotificationPreference(Guid ClientId, Guid UserId, bool
     bool HabitReminders = true, bool DailySummary = false, bool WeeklySummary = true,
     string Timezone = "America/Sao_Paulo", string Language = "pt-BR");
 
+public sealed record PushReminderContext(Guid? ReminderId, DateTimeOffset ScheduledFor, string Channel = "BrowserPush");
+
 public sealed record PushDeliveryAttempt(Guid Id, Guid ClientId, Guid UserId, Guid SubscriptionId,
-    string Status, string? ErrorCode, DateTime AttemptedAt);
+    string Status, string? ErrorCode, DateTime AttemptedAt, string Channel = "BrowserPush",
+    DateTime? ScheduledFor = null, Guid? ReminderId = null);
 
 public interface IPushSubscriptionRepository
 {
@@ -20,4 +23,8 @@ public interface IPushSubscriptionRepository
     Task<PushNotificationPreference> GetPreferenceAsync(Guid clientId, Guid userId, CancellationToken ct = default);
     Task SavePreferenceAsync(PushNotificationPreference preference, CancellationToken ct = default);
     Task RecordAttemptAsync(PushDeliveryAttempt attempt, CancellationToken ct = default);
+    Task<bool> TryReserveDailyQuotaAsync(Guid clientId, Guid userId, DateOnly localDate, string channel, int maximumPerDay, CancellationToken ct = default);
+    Task ReleaseDailyQuotaAsync(Guid clientId, Guid userId, DateOnly localDate, string channel, CancellationToken ct = default);
+    Task<bool> TryBeginAttemptAsync(PushDeliveryAttempt attempt, CancellationToken ct = default);
+    Task CompleteAttemptAsync(Guid clientId, Guid userId, Guid attemptId, string status, string? errorCode, DateTime attemptedAt, CancellationToken ct = default);
 }

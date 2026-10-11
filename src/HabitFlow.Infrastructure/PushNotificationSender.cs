@@ -14,6 +14,8 @@ public sealed class PushNotificationSender(IOptions<PushNotificationOptions> opt
         var config = options.Value;
         if (!config.Enabled || string.IsNullOrWhiteSpace(config.PublicKey) || string.IsNullOrWhiteSpace(config.PrivateKey))
             return new(false, false, "push_not_configured");
+        if (!await PushEndpointSafetyPolicy.IsAllowedAsync(subscription.Endpoint, ct))
+            return new(false, true, "endpoint_blocked");
         try
         {
             using var client = new WebPushClient();

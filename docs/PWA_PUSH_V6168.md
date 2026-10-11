@@ -12,6 +12,10 @@ O manifest possuía apenas um ícone SVG genérico e não declarava atalhos, cat
 - A fila IndexedDB guarda apenas ID idempotente, URL/ação mínima e expira em 24 horas. Respostas 401 pausam para novo login, 409 é tratado como convergência idempotente e erros 4xx definitivos removem o evento.
 - Web Push usa VAPID configurado somente por configuração/variáveis de ambiente. A chave privada não é enviada ao browser nem registrada em logs. Subscriptions e preferências são sempre filtradas por `client_id` e `user_id` autenticados.
 - O runtime primeiro persiste a notificação interna e conclui o dispatch; depois tenta push de forma complementar. Endpoints expirados são desativados e falha do provider não derruba o worker.
+- O limite diário é backend e atômico por lembrete lógico, usuário, canal e dia local da preferência. Vários dispositivos não multiplicam consumo. Falha total do provider libera a reserva; aceitação por pelo menos um dispositivo consome uma unidade.
+- Estados de push usam linguagem honesta: `Processing`, `ProviderAccepted`, `Failed`, `SubscriptionInvalid` ou `Suppressed`. `ProviderAccepted` significa que o provider aceitou a requisição; não é prova de exibição no dispositivo.
+- Assinaturas são validadas contra destinos locais, privados, link-local, metadata e hosts não resolvíveis antes de salvar e antes de enviar. HTTPS isolado não é tratado como suficiente.
+- Idiomas aceitos nas preferências: `pt-BR`, `en-US`, `es-ES` e `fr-FR`. Idioma e timezone continuam campos separados.
 
 ## Operação
 
