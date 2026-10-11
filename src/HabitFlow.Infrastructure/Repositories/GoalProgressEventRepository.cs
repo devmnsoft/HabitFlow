@@ -12,7 +12,7 @@ public sealed class GoalProgressEventRepository(SqlExecutor db) : IGoalProgressR
               from habitflow.user_goals g
              where g.client_id=@clientId and g.user_id=@userId
                and g.status in ('Active','Completed')
-               and (not exists (select 1 from habitflow.goal_habits x where x.goal_id=g.id)
+                 and (not exists (select 1 from habitflow.goal_habits x where x.goal_id=g.id and x.client_id=@clientId)
                     or exists (select 1 from habitflow.goal_habits x where x.goal_id=g.id and x.client_id=@clientId and x.habit_id=@habitId))
             """, new { clientId, userId, habitId }, ct)).ToList();
 
@@ -26,7 +26,7 @@ public sealed class GoalProgressEventRepository(SqlExecutor db) : IGoalProgressR
                 join habitflow.habits h on h.id=c.habit_id and h.client_id=@ClientId and h.user_id=@UserId
                where c.client_id=@ClientId and c.user_id=@UserId
                  and c.completed_date between @StartDate and coalesce(@EndDate,@LocalDate)
-                 and (not exists(select 1 from habitflow.goal_habits gh where gh.goal_id=@Id)
+                 and (not exists(select 1 from habitflow.goal_habits gh where gh.goal_id=@Id and gh.client_id=@ClientId)
                       or exists(select 1 from habitflow.goal_habits gh where gh.goal_id=@Id and gh.client_id=@ClientId and gh.habit_id=c.habit_id))
             )
             select count(*)::int habit_completions,
@@ -48,9 +48,10 @@ public sealed class GoalProgressEventRepository(SqlExecutor db) : IGoalProgressR
         if (!inserted.HasValue) return false;
         await db.ExecuteAsync("""
             update habitflow.user_goals set current_value=@CurrentValue,status=@Status,
-              completed_at=coalesce(completed_at,@CompletedAtUtc),updated_at=now()
+              completed_at=case when @Status='Completed' then coalesce(completed_at,@CompletedAtUtc,@AppliedAtUtc) else completed_at end,
+              updated_at=@AppliedAtUtc
              where id=@GoalId and client_id=@ClientId and user_id=@UserId
-            """, new { result.CurrentValue, result.Status, result.CompletedAtUtc, result.GoalId, goal.ClientId, goal.UserId }, ct);
+            """, new { result.CurrentValue, result.Status, result.CompletedAtUtc, AppliedAtUtc = e.CreatedAtUtc, result.GoalId, goal.ClientId, goal.UserId }, ct);
         return true;
     }
 

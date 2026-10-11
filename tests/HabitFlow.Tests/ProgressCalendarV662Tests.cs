@@ -76,6 +76,73 @@ public sealed class ProgressCalendarV662Tests
     }
 
     [Fact]
+    public void Consistency_groups_iso_week_across_calendar_year()
+    {
+        var result = new ConsistencyService().Calculate([
+            (new(2020, 12, 28), 1, 1),
+            (new(2020, 12, 29), 1, 1),
+            (new(2020, 12, 30), 1, 1),
+            (new(2020, 12, 31), 1, 1),
+            (new(2021, 1, 1), 1, 1),
+            (new(2021, 1, 2), 1, 1),
+            (new(2021, 1, 3), 1, 1)
+        ], new(2021, 1, 4));
+
+        Assert.Equal(1, result.ConsistentWeeks);
+    }
+
+    [Fact]
+    public void Consistency_does_not_finalize_current_iso_week()
+    {
+        var result = new ConsistencyService().Calculate([
+            (new(2020, 12, 28), 1, 1),
+            (new(2020, 12, 29), 1, 1),
+            (new(2020, 12, 30), 1, 1),
+            (new(2020, 12, 31), 1, 1),
+            (new(2021, 1, 1), 1, 1),
+            (new(2021, 1, 2), 1, 1),
+            (new(2021, 1, 3), 1, 1)
+        ], new(2021, 1, 3));
+
+        Assert.Equal(0, result.ConsistentWeeks);
+    }
+
+    [Fact]
+    public void Consistency_handles_leap_year_and_partial_periods()
+    {
+        var result = new ConsistencyService().Calculate([
+            (new(2024, 2, 28), 1, 1),
+            (new(2024, 2, 29), 1, 1),
+            (new(2024, 3, 1), 1, 0),
+            (new(2024, 3, 2), 0, 0),
+            (new(2024, 3, 3), 1, 1)
+        ], new(2024, 3, 4));
+
+        Assert.Equal(1, result.CurrentStreak);
+        Assert.Equal(2, result.BestStreak);
+        Assert.Equal(4, result.ActiveDays);
+        Assert.Equal(0, result.ConsistentWeeks);
+    }
+
+    [Fact]
+    public void Resumed_after_pause_requires_an_observed_break_before_current_run()
+    {
+        var resumed = new ConsistencyService().Calculate([
+            (new(2026, 7, 20), 1, 1),
+            (new(2026, 7, 21), 1, 0),
+            (new(2026, 7, 22), 1, 1)
+        ], new(2026, 7, 22));
+        var shorterThanBestWithoutBreak = new ConsistencyService().Calculate([
+            (new(2026, 7, 20), 1, 1),
+            (new(2026, 7, 21), 1, 1),
+            (new(2026, 7, 22), 2, 1)
+        ], new(2026, 7, 22));
+
+        Assert.True(resumed.ResumedAfterPause);
+        Assert.False(shorterThanBestWithoutBreak.ResumedAfterPause);
+    }
+
+    [Fact]
     public void Unknown_frequency_is_ignored_without_throwing()
     {
         var habit = Habit(HabitFrequencyType.Daily);

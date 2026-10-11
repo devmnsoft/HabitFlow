@@ -2,8 +2,10 @@ using HabitFlow.Domain;
 
 namespace HabitFlow.Application;
 
-public sealed class GoalProgressCalculator
+public sealed class GoalProgressCalculator(TimeProvider? clock = null)
 {
+    private readonly TimeProvider clock = clock ?? TimeProvider.System;
+
     public GoalProgressResult Calculate(UserGoal goal, GoalProgressContext context, bool undo)
     {
         if (!GoalTargetTypes.TryParse(goal.TargetType, out var targetType))
@@ -20,7 +22,7 @@ public sealed class GoalProgressCalculator
         };
 
         var completedNow = goal.Status == "Active" && goal.CompletedAt is null && value >= goal.TargetValue;
-        var completedAt = goal.CompletedAt ?? (completedNow ? DateTime.UtcNow : null);
+        var completedAt = goal.CompletedAt ?? (completedNow ? clock.GetUtcNow().UtcDateTime : null);
         var status = completedNow ? "Completed" : goal.Status;
         var percentage = goal.TargetValue <= 0 ? 0 : Math.Min(100m, Math.Round(value * 100m / goal.TargetValue, 1));
         var message = completedNow
@@ -40,7 +42,7 @@ public sealed class GoalHabitLinkService(IUserGoalRepository goals)
         goals.UnlinkHabitAsync(goalId, habitId, clientId, userId, ct);
 }
 
-public sealed class GoalProgressEngine(IGoalProgressRepository repository, GoalProgressCalculator calculator)
+public sealed class GoalProgressEngine(IGoalProgressRepository repository, GoalProgressCalculator calculator, TimeProvider clock)
 {
     public async Task<IReadOnlyList<GoalProgressResult>> RecalculateAsync(
         Guid clientId, Guid userId, Guid habitId, DateOnly localDate, Guid? completionId,
@@ -50,7 +52,7 @@ public sealed class GoalProgressEngine(IGoalProgressRepository repository, GoalP
         var results = new List<GoalProgressResult>();
         foreach (var goal in await repository.ListRelatedAsync(clientId, userId, habitId, ct))
         {
-            if (goal.Status is "Paused" or "Cancelled") continue;
+            if (goal.Status is "Paused" or "Canceled") continue;
             if (!GoalTargetTypes.TryParse(goal.TargetType, out var type) || type == GoalTargetType.Custom) continue;
 
             var periodEnd = goal.EndDate ?? localDate;
@@ -61,7 +63,7 @@ public sealed class GoalProgressEngine(IGoalProgressRepository repository, GoalP
             var result = calculator.Calculate(goal, context, undo);
             var progressEvent = new GoalProgressEvent(Guid.NewGuid(), clientId, userId, goal.Id,
                 undo ? "CompletionUndone" : "CompletionCreated", result.PreviousValue, result.CurrentValue,
-                localDate, completionId, scopedKey, correlationId, DateTime.UtcNow, "{}");
+                localDate, completionId, scopedKey, correlationId, clock.GetUtcNow().UtcDateTime, "{}");
             if (await repository.ApplyAsync(goal, result, progressEvent, ct)) results.Add(result);
         }
         return results;
