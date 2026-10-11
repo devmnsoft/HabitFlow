@@ -14,6 +14,23 @@ public sealed record HabitJourneyMember(
     Guid Id, Guid JourneyId, Guid ClientId, Guid UserId, string Status,
     decimal ProgressPercentage, DateTime JoinedAt, DateTime? CompletedAt);
 
-public sealed record HabitJourneyDetails(HabitJourney Journey, IReadOnlyList<HabitJourneyStep> Steps, HabitJourneyMember? Membership);
+public sealed record HabitJourneyLinkedHabit(Guid StepId, Guid HabitId, string HabitName, string Status, DateTime CreatedAt);
 
-public sealed record JoinHabitJourneyCommand(Guid ClientId, Guid UserId, Guid JourneyId, bool Confirmed, string CorrelationId);
+public sealed record HabitJourneyProgress(
+    int ConfirmedHabits, int CompletedActivities, int ExpectedActivities, decimal Percentage,
+    string Explanation, bool HasInsufficientSample);
+
+public sealed record HabitJourneyDetails(
+    HabitJourney Journey,
+    IReadOnlyList<HabitJourneyStep> Steps,
+    HabitJourneyMember? Membership,
+    IReadOnlyList<HabitJourneyLinkedHabit> LinkedHabits,
+    HabitJourneyProgress Progress);
+
+public sealed record JoinHabitJourneyHabitSelection(
+    Guid StepId, string HabitName, HabitFrequencyType FrequencyType, int? TargetPerWeek,
+    IReadOnlyCollection<int> SelectedDays, TimeOnly? ReminderTime);
+
+public sealed record JoinHabitJourneyCommand(
+    Guid ClientId, Guid UserId, Guid JourneyId, bool Confirmed,
+    IReadOnlyList<JoinHabitJourneyHabitSelection> HabitSelections, string CorrelationId);

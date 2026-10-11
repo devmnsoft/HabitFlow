@@ -13,7 +13,10 @@ public sealed class HabitJourneyRepository(SqlExecutor db) : IHabitJourneyReposi
                    target_audience as "TargetAudience", minimum_plan as "MinimumPlan", is_active as "IsActive",
                    is_official as "IsOfficial", created_at as "CreatedAt", updated_at as "UpdatedAt"
             from habitflow.habit_journeys
-            where is_active = true and (client_id is null or client_id = @clientId)
+            where is_active = true
+              and status = 'Published'
+              and (is_private = false or client_id = @clientId)
+              and (client_id is null or client_id = @clientId)
             order by is_official desc, category, name
             """, new { clientId }, ct);
         return rows.Select(Map).ToList();
@@ -28,7 +31,9 @@ public sealed class HabitJourneyRepository(SqlExecutor db) : IHabitJourneyReposi
                    target_audience as "TargetAudience", minimum_plan as "MinimumPlan", is_active as "IsActive",
                    is_official as "IsOfficial", created_at as "CreatedAt", updated_at as "UpdatedAt"
             from habitflow.habit_journeys
-            where id = @journeyId and (client_id is null or client_id = @clientId)
+            where id = @journeyId
+              and (is_private = false or client_id = @clientId)
+              and (client_id is null or client_id = @clientId)
             """, new { journeyId, clientId }, ct)).Select(Map).FirstOrDefault();
         if (journey is null) return null;
 
@@ -41,7 +46,18 @@ public sealed class HabitJourneyRepository(SqlExecutor db) : IHabitJourneyReposi
             order by step_order
             """, new { journeyId }, ct)).Select(MapStep).ToList();
         var membership = await GetMembershipAsync(journeyId, clientId, userId, ct);
-        return new(journey, steps, membership);
+        var linked = (await db.QueryAsync<HabitJourneyLinkedHabitRow>("""
+            select step_id as "StepId", habit_id as "HabitId", habit_name as "HabitName",
+                   status as "Status", created_at as "CreatedAt"
+            from habitflow.habit_journey_member_habits
+            where journey_id = @journeyId and client_id = @clientId and user_id = @userId
+            order by created_at, habit_name
+            """, new { journeyId, clientId, userId }, ct))
+            .Select(x => new HabitJourneyLinkedHabit(x.StepId, x.HabitId, x.HabitName, x.Status, x.CreatedAt))
+            .ToList();
+
+        var progress = await BuildProgressAsync(journey, linked, clientId, userId, ct);
+        return new(journey, steps, membership, linked, progress);
     }
 
     public async Task<HabitJourneyMember?> GetMembershipAsync(Guid journeyId, Guid clientId, Guid userId, CancellationToken ct = default)
@@ -63,6 +79,13 @@ public sealed class HabitJourneyRepository(SqlExecutor db) : IHabitJourneyReposi
             on conflict (journey_id, user_id) do update set status = 'Active', completed_at = null
             """, member, ct);
 
+    public Task LinkHabitAsync(Guid memberId, Guid journeyId, Guid stepId, Guid clientId, Guid userId, Guid habitId, string habitName, CancellationToken ct = default) =>
+        db.ExecuteAsync("""
+            insert into habitflow.habit_journey_member_habits(member_id, journey_id, step_id, client_id, user_id, habit_id, habit_name, status, created_at)
+            values(@memberId, @journeyId, @stepId, @clientId, @userId, @habitId, @habitName, 'Active', now())
+            on conflict (journey_id, user_id, step_id) do nothing
+            """, new { memberId, journeyId, stepId, clientId, userId, habitId, habitName }, ct);
+
     public Task LeaveAsync(Guid journeyId, Guid clientId, Guid userId, CancellationToken ct = default) =>
         db.ExecuteAsync("""
             update habitflow.habit_journey_members
@@ -78,6 +101,30 @@ public sealed class HabitJourneyRepository(SqlExecutor db) : IHabitJourneyReposi
         row.SuggestedHabitName, row.SuggestedFrequency, TimeOnly.TryParse(row.SuggestedReminderTime, out var time) ? time : null);
 
     private static string[] SplitTags(string? tags) => (tags ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+    private async Task<HabitJourneyProgress> BuildProgressAsync(HabitJourney journey, IReadOnlyList<HabitJourneyLinkedHabit> linked, Guid clientId, Guid userId, CancellationToken ct)
+    {
+        if (linked.Count == 0)
+            return new(0, 0, 0, 0, "Adesao ainda sem habitos confirmados.", true);
+
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var start = today.AddDays(-(Math.Max(1, journey.SuggestedDurationDays) - 1));
+        var completed = await db.QuerySingleOrDefaultAsync<int>("""
+            select count(*)::int
+            from habitflow.habit_completions c
+            where c.client_id = @clientId
+              and c.user_id = @userId
+              and c.habit_id = any(@habitIds)
+              and c.completed_date between @start and @today
+            """, new { clientId, userId, habitIds = linked.Select(x => x.HabitId).ToArray(), start, today }, ct);
+        var expected = Math.Max(1, linked.Count * Math.Min(journey.SuggestedDurationDays, Math.Max(1, today.DayNumber - start.DayNumber + 1)));
+        var percentage = Math.Round(Math.Min(100m, completed * 100m / expected), 1);
+        var insufficient = completed == 0 || (today.DayNumber - start.DayNumber) < 2;
+        var explanation = completed == 0
+            ? "Ainda nao ha registros reais nesse programa."
+            : $"{completed} atividades registradas nos habitos confirmados.";
+        return new(linked.Count, completed, expected, percentage, explanation, insufficient);
+    }
 
     private sealed class HabitJourneyRow
     {
@@ -121,5 +168,14 @@ public sealed class HabitJourneyRepository(SqlExecutor db) : IHabitJourneyReposi
         public decimal ProgressPercentage { get; init; }
         public DateTime JoinedAt { get; init; }
         public DateTime? CompletedAt { get; init; }
+    }
+
+    private sealed class HabitJourneyLinkedHabitRow
+    {
+        public Guid StepId { get; init; }
+        public Guid HabitId { get; init; }
+        public string HabitName { get; init; } = "";
+        public string Status { get; init; } = "";
+        public DateTime CreatedAt { get; init; }
     }
 }

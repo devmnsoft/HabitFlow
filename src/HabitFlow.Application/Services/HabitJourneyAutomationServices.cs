@@ -6,8 +6,12 @@ namespace HabitFlow.Application;
 
 public sealed class HabitJourneyService(
     IHabitJourneyRepository journeys,
+    IHabitRepository habits,
+    IHabitWeekDayRepository weekDays,
     PlanEntitlementService entitlements,
+    IUnitOfWork unitOfWork,
     AuditService audit,
+    UserTimeZoneService timeZone,
     ILogger<HabitJourneyService> logger)
 {
     public Task<IReadOnlyList<HabitJourney>> ListAsync(Guid clientId, CancellationToken ct = default) =>
@@ -20,12 +24,15 @@ public sealed class HabitJourneyService(
     {
         if (command.ClientId == Guid.Empty || command.UserId == Guid.Empty)
             return Result<HabitJourneyMember>.Failure("journey.tenant_required", "A conta e a pessoa sao obrigatorias.");
-        if (!command.Confirmed)
+        if (!command.Confirmed || command.HabitSelections.Count == 0)
             return Result<HabitJourneyMember>.Failure("journey.confirmation_required", "Confirme a adesao antes de criar a jornada.");
 
         var details = await journeys.GetDetailsAsync(command.JourneyId, command.ClientId, command.UserId, ct);
         if (details is null || !details.Journey.IsActive)
             return Result<HabitJourneyMember>.Failure("journey.not_found", "Jornada indisponivel.");
+        var selectedStepIds = command.HabitSelections.Select(x => x.StepId).ToHashSet();
+        if (selectedStepIds.Count != command.HabitSelections.Count || !selectedStepIds.IsSubsetOf(details.Steps.Select(x => x.Id).ToHashSet()))
+            return Result<HabitJourneyMember>.Failure("journey.steps_invalid", "Revise os habitos selecionados antes de confirmar.");
 
         var plan = await entitlements.GetEffectivePlanAsync(command.ClientId, ct);
         if (!HabitTemplateAccess.MeetsMinimumPlan(plan, details.Journey.MinimumPlan))
@@ -36,19 +43,35 @@ public sealed class HabitJourneyService(
         }
 
         var existing = details.Membership ?? await journeys.GetMembershipAsync(command.JourneyId, command.ClientId, command.UserId, ct);
-        if (existing is not null)
-            return Result<HabitJourneyMember>.Success(existing);
 
-        var member = new HabitJourneyMember(Guid.NewGuid(), command.JourneyId, command.ClientId, command.UserId, "Active", 0, DateTime.UtcNow, null);
+        var activeHabits = await habits.CountActiveAsync(command.ClientId, command.UserId, ct);
+        for (var i = 0; i < command.HabitSelections.Count; i++)
+            if (!await entitlements.CanCreateHabitAsync(command.UserId, activeHabits + i, ct))
+                return Result<HabitJourneyMember>.Failure("journey.habit_limit", "Seu plano nao possui espaco para todos os habitos selecionados.");
+
+        var member = existing ?? new HabitJourneyMember(Guid.NewGuid(), command.JourneyId, command.ClientId, command.UserId, "Active", 0, DateTime.UtcNow, null);
         try
         {
+            await unitOfWork.BeginTransactionAsync(ct);
             await journeys.JoinAsync(member, ct);
+            foreach (var selection in command.HabitSelections)
+            {
+                if (details.LinkedHabits.Any(x => x.StepId == selection.StepId)) continue;
+                var step = details.Steps.Single(x => x.Id == selection.StepId);
+                var habit = BuildHabit(command.ClientId, command.UserId, details.Journey, step, selection);
+                await habits.CreateAsync(habit, ct);
+                if (selection.FrequencyType == HabitFrequencyType.CustomWeekly)
+                    await weekDays.ReplaceAsync(habit.Id, selection.SelectedDays, ct);
+                await journeys.LinkHabitAsync(member.Id, command.JourneyId, selection.StepId, command.ClientId, command.UserId, habit.Id, habit.Name, ct);
+            }
             await audit.LogAsync("journey.joined", "Usuario aderiu a jornada guiada", AuditSeverity.Info, command.UserId,
-                metadata: new { command.ClientId, command.JourneyId, command.CorrelationId }, ct: ct);
+                metadata: new { command.ClientId, command.JourneyId, habits = command.HabitSelections.Count, command.CorrelationId }, ct: ct);
+            await unitOfWork.CommitAsync(ct);
             return Result<HabitJourneyMember>.Success(member);
         }
         catch (Exception ex)
         {
+            await unitOfWork.RollbackAsync(ct);
             logger.LogError(ex, "Erro ao aderir a jornada {JourneyId} para {UserId}", command.JourneyId, command.UserId);
             return Result<HabitJourneyMember>.Failure("journey.join_error", "Nao foi possivel aderir agora.");
         }
@@ -60,6 +83,17 @@ public sealed class HabitJourneyService(
         await audit.LogAsync("journey.left", "Usuario saiu da jornada sem apagar historico", AuditSeverity.Info, userId,
             metadata: new { clientId, journeyId, correlationId }, ct: ct);
         return Result.Success();
+    }
+
+    private Habit BuildHabit(Guid clientId, Guid userId, HabitJourney journey, HabitJourneyStep step, JoinHabitJourneyHabitSelection selection)
+    {
+        var now = DateTime.UtcNow;
+        var name = string.IsNullOrWhiteSpace(selection.HabitName) ? step.SuggestedHabitName : selection.HabitName.Trim();
+        if (name.Length > 120) name = name[..120];
+        return new Habit(Guid.NewGuid(), userId, name, "#2563EB", journey.Category, false, null, now, now,
+            selection.FrequencyType, selection.TargetPerWeek, selection.ReminderTime, $"Criado a partir do programa {journey.Name}.",
+            ClientId: clientId, StartDate: timeZone.Today(), TemplateIdempotencyKey: Guid.NewGuid(),
+            EndDate: timeZone.Today().AddDays(Math.Max(1, journey.SuggestedDurationDays) - 1));
     }
 }
 

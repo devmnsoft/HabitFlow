@@ -1,5 +1,16 @@
 @model HabitFlow.Web.Models.GoalFormViewModel
-@{var action=Model.GoalId is null?"/goals/create":$"/goals/{Model.GoalId}/edit";}
+@{
+  var action=Model.GoalId is null?"/goals/create":$"/goals/{Model.GoalId}/edit";
+  var typeHelp = new Dictionary<string, (string Label, string Unit, string Rule, string Mode)>
+  {
+    ["HabitCompletions"] = ("Conclusões dos hábitos conectados", "conclusões", "Soma cada conclusão real dos hábitos conectados durante o período da meta.", "Automática"),
+    ["ActiveDays"] = ("Dias com conclusão", "dias ativos", "Conta dias distintos com pelo menos uma conclusão dos hábitos conectados.", "Automática"),
+    ["StreakDays"] = ("Dias em sequência", "dias em sequência", "Usa a sequência canônica calculada pelo progresso diário.", "Automática"),
+    ["WeeklyCompletions"] = ("Conclusões na semana", "conclusões nesta semana", "Conta conclusões da semana ISO atual, de segunda a domingo.", "Automática"),
+    ["Custom"] = ("Valor personalizado", "unidades manuais", "Você atualiza o valor manualmente; hábitos conectados servem como contexto.", "Manual")
+  };
+  var selected = typeHelp.TryGetValue(Model.TargetType, out var help) ? help : typeHelp["HabitCompletions"];
+}
 <form method="post" action="@action" class="hf-card hf-goal-editor" data-hf-validate novalidate>
   @Html.AntiForgeryToken()
   <div asp-validation-summary="All" class="hf-form-error" role="alert" tabindex="-1"></div>
@@ -10,9 +21,9 @@
     <textarea class="form-control" asp-for="Description" maxlength="1000" rows="3"></textarea><span asp-validation-for="Description" class="hf-validation-message"></span>
   </fieldset>
   <fieldset><legend>2. Como medir</legend><div class="row g-3">
-    <div class="col-md-7"><label asp-for="TargetType">Indicador real <span class="visually-hidden">(obrigatório)</span></label><select class="form-select" asp-for="TargetType" required aria-required="true"><option value="HabitCompletions">Conclusões dos hábitos conectados</option><option value="ActiveDays">Dias com conclusão</option><option value="StreakDays">Dias em sequência</option><option value="WeeklyCompletions">Conclusões na semana</option><option value="Custom">Valor personalizado</option></select><span asp-validation-for="TargetType" class="hf-validation-message"></span></div>
-    <div class="col-md-5"><label asp-for="TargetValue">Meta <span class="visually-hidden">(obrigatório)</span></label><input class="form-control" asp-for="TargetValue" type="number" min="1" max="100000" required aria-required="true"><span asp-validation-for="TargetValue" class="hf-validation-message"></span></div>
-  </div></fieldset>
+    <div class="col-md-7"><label asp-for="TargetType">Indicador real <span class="visually-hidden">(obrigatório)</span></label><select class="form-select" asp-for="TargetType" required aria-required="true" aria-describedby="goal-target-help"><option value="HabitCompletions">Conclusões dos hábitos conectados</option><option value="ActiveDays">Dias com conclusão</option><option value="StreakDays">Dias em sequência</option><option value="WeeklyCompletions">Conclusões na semana</option><option value="Custom">Valor personalizado</option></select><span asp-validation-for="TargetType" class="hf-validation-message"></span></div>
+    <div class="col-md-5"><label asp-for="TargetValue">Meta em @selected.Unit <span class="visually-hidden">(obrigatório)</span></label><input class="form-control" asp-for="TargetValue" type="number" min="1" max="100000" required aria-required="true" aria-describedby="goal-target-help"><span asp-validation-for="TargetValue" class="hf-validation-message"></span></div>
+  </div><div id="goal-target-help" class="hf-goal-rule" data-goal-rule><strong>@selected.Mode:</strong> @selected.Rule</div></fieldset>
   <fieldset><legend>3. Horizonte</legend><div class="row g-3">
     <div class="col-md-6"><label asp-for="StartDate">Início <span class="visually-hidden">(obrigatório)</span></label><input class="form-control" asp-for="StartDate" type="date" required aria-required="true"><span asp-validation-for="StartDate" class="hf-validation-message"></span></div>
     <div class="col-md-6"><label asp-for="EndDate">Prazo opcional</label><input class="form-control" asp-for="EndDate" type="date"><span asp-validation-for="EndDate" class="hf-validation-message"></span></div>

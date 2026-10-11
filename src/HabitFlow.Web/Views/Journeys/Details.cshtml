@@ -1,10 +1,12 @@
 @model HabitFlow.Web.Models.JourneyDetailsViewModel
 @{
     var journey = Model.Details.Journey;
+    var membership = Model.Details.Membership;
+    var isActive = membership?.Status == "Active";
     ViewData["Title"] = journey.Name;
 }
 
-<section class="hf-page-shell">
+<section class="hf-page-shell hf-journey-page">
     <header class="hf-page-header">
         <div>
             <p class="hf-eyebrow">@journey.Category</p>
@@ -16,42 +18,114 @@
 
     <div class="hf-split">
         <article class="hf-panel">
-            <h2>Plano sugerido</h2>
+            <h2>Programa</h2>
             <dl class="hf-definition-list">
                 <dt>Objetivo</dt><dd>@journey.Goal</dd>
                 <dt>Duracao</dt><dd>@journey.SuggestedDurationDays dias</dd>
-                <dt>Frequencia</dt><dd>@journey.Frequency</dd>
+                <dt>Frequencia sugerida</dt><dd>@journey.Frequency</dd>
                 <dt>Plano minimo</dt><dd>@journey.MinimumPlan</dd>
+                <dt>Status</dt><dd>@(journey.IsActive ? "Publicado" : "Pausado")</dd>
             </dl>
-            @if (Model.Details.Membership?.Status == "Active")
+            <p class="text-muted">Aderir nao conclui o programa. Os habitos abaixo so serao criados apos sua confirmacao.</p>
+            @if (isActive)
             {
-                <form method="post" action="/journeys/@journey.Id/leave">
+                <form method="post" action="/journeys/@journey.Id/leave" data-confirm="Sair preserva seus registros pessoais e encerra apenas sua participacao.">
                     @Html.AntiForgeryToken()
-                    <button class="btn btn-outline-danger" type="submit">Sair da jornada</button>
-                </form>
-            }
-            else
-            {
-                <form method="post" action="/journeys/@journey.Id/join">
-                    @Html.AntiForgeryToken()
-                    <input type="hidden" name="confirmed" value="true" />
-                    <button class="btn btn-primary" type="submit">Aderir com confirmacao</button>
+                    <button class="btn btn-outline-danger" type="submit">Sair do programa</button>
                 </form>
             }
         </article>
 
         <article class="hf-panel">
-            <h2>Habitos sugeridos</h2>
-            <ol class="hf-step-list">
+            <h2>Acompanhamento</h2>
+            <div class="hf-progress-stack">
+                <div class="progress" aria-label="Progresso do programa">
+                    <div class="progress-bar" role="progressbar" style="width: @Model.Details.Progress.Percentage%" aria-valuenow="@Model.Details.Progress.Percentage" aria-valuemin="0" aria-valuemax="100">
+                        @Model.Details.Progress.Percentage%
+                    </div>
+                </div>
+                <p>@Model.Details.Progress.Explanation</p>
+                @if (Model.Details.Progress.HasInsufficientSample)
+                {
+                    <p class="hf-status-note">Amostra insuficiente para conclusoes. Continue registrando atividades para revisar o periodo.</p>
+                }
+                <dl class="hf-definition-list">
+                    <dt>Habitos confirmados</dt><dd>@Model.Details.Progress.ConfirmedHabits</dd>
+                    <dt>Atividades registradas</dt><dd>@Model.Details.Progress.CompletedActivities</dd>
+                    <dt>Conclusao do programa</dt><dd>Separada da adesao e das atividades diarias.</dd>
+                </dl>
+            </div>
+        </article>
+    </div>
+
+    @if (!isActive)
+    {
+        <form class="hf-panel hf-journey-confirm" method="post" action="/journeys/@journey.Id/join">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="confirmed" value="true" />
+            <div class="hf-section-heading">
+                <div>
+                    <p class="hf-eyebrow">Confirmacao</p>
+                    <h2>Personalize antes de aderir</h2>
+                </div>
+                <button class="btn btn-primary" type="submit">Confirmar adesao</button>
+            </div>
+            <ol class="hf-step-list hf-step-editor">
                 @foreach (var step in Model.Details.Steps)
                 {
+                    var key = step.Id.ToString("N");
                     <li>
-                        <strong>@step.Title</strong>
-                        <span>@step.Description</span>
-                        <small>@step.SuggestedHabitName - @step.SuggestedFrequency</small>
+                        <label class="hf-check-row">
+                            <input class="form-check-input" type="checkbox" name="selectedStepIds" value="@step.Id" checked />
+                            <span>
+                                <strong>@step.Title</strong>
+                                <small>@step.Description</small>
+                            </span>
+                        </label>
+                        <div class="hf-journey-fields">
+                            <label>
+                                <span>Habito</span>
+                                <input class="form-control" name="habitName_@key" value="@step.SuggestedHabitName" maxlength="120" autocomplete="off" />
+                            </label>
+                            <label>
+                                <span>Frequencia</span>
+                                <select class="form-select" name="frequency_@key">
+                                    <option value="Daily">Diario</option>
+                                    <option value="Weekdays">Dias uteis</option>
+                                    <option value="Weekends">Finais de semana</option>
+                                    <option value="CustomWeekly">Personalizada</option>
+                                </select>
+                            </label>
+                            <label>
+                                <span>Horario</span>
+                                <input class="form-control" type="time" name="reminder_@key" value="@(step.SuggestedReminderTime?.ToString("HH\\:mm"))" />
+                            </label>
+                            <fieldset class="hf-day-picker">
+                                <legend>Dias</legend>
+                                @foreach (var day in new[] { (0, "D"), (1, "S"), (2, "T"), (3, "Q"), (4, "Q"), (5, "S"), (6, "S") })
+                                {
+                                    <label><input type="checkbox" name="days_@key" value="@day.Item1" checked="@(day.Item1 is >= 1 and <= 5)" /> @day.Item2</label>
+                                }
+                            </fieldset>
+                        </div>
+                    </li>
+                }
+            </ol>
+        </form>
+    }
+    else
+    {
+        <article class="hf-panel">
+            <h2>Habitos associados</h2>
+            <ol class="hf-step-list">
+                @foreach (var habit in Model.Details.LinkedHabits)
+                {
+                    <li>
+                        <strong>@habit.HabitName</strong>
+                        <small>Status: @habit.Status</small>
                     </li>
                 }
             </ol>
         </article>
-    </div>
+    }
 </section>

@@ -162,7 +162,23 @@ public sealed class HabitsController(HabitQueryService queries, HabitEditorServi
     private Task<HabitEditorPageViewModel> EditorPageAsync(HabitEditorViewModel model, CancellationToken ct) => editor.PreparePageAsync(this.CurrentClientId(), this.CurrentUserId(), model, ct);
     private void AddEditorError(string code, string message)
     {
-        var field = code switch { "habit.custom_days_required" or "habit.weekday_invalid" => "SelectedDays", "habit.target_invalid" => "TargetPerWeek", "habit.frequency_invalid" => "FrequencyType", "habit.name" => "Name", "habit.color" => "Color", "habit.duration" => "EstimatedTimeMinutes", "habit.difficulty" => "Difficulty", "habit.objective_not_found" => "ObjectiveId", _ => string.Empty };
+        var field = code switch
+        {
+            "habit.custom_days_required" or "habit.weekday_invalid" => "SelectedDays",
+            "habit.target_invalid" => "TargetPerWeek",
+            "habit.frequency_invalid" => "FrequencyType",
+            "habit.name" => "Name",
+            "habit.color" => "Color",
+            "habit.duration" => "EstimatedTimeMinutes",
+            "habit.difficulty" => "Difficulty",
+            "habit.objective_not_found" => "ObjectiveId",
+            "habit.validity_range" => "EndDate",
+            "habit.retroactive_window" => "RetroactiveAdjustmentDays",
+            "habit.quantity_unit" or "habit.unit_invalid" => "TargetUnit",
+            "habit.quantity_positive" => "TargetQuantity",
+            "habit.minimum_quantity_positive" or "habit.minimum_quantity_too_high" => "MinimumVersionQuantity",
+            _ => string.Empty
+        };
         ModelState.AddModelError(field, message);
     }
     private static HabitEditorViewModel EmptyEditor() => new(null, "", "#10B981", null, "check-circle", HabitFlow.Domain.HabitFrequencyType.Daily, null, null, null, [], null, 10, null);
