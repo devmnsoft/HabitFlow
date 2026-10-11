@@ -17,6 +17,36 @@
         </div></article>
     </div>
 </section>
+<section class="hf-adaptive-routine" id="routine-experiments" aria-labelledby="routine-experiments-title">
+    <div><span class="hf-eyebrow">Experimento de rotina</span><h2 id="routine-experiments-title">Teste um ajuste pequeno antes de decidir.</h2><p>O rascunho guarda a configuração atual e compara períodos depois. Ele não cria check-ins, não promete causa e não muda seu histórico.</p></div>
+    <form method="post" asp-action="CreateExperiment" asp-route-id="@Model.Habit.Id" class="hf-experiment-form">
+        @Html.AntiForgeryToken()
+        @{
+            var today = DateOnly.FromDateTime(DateTime.Today);
+            var baselineStart = today.AddDays(-14);
+            var baselineEnd = today.AddDays(-8);
+            var testStart = today.AddDays(1);
+            var testEnd = today.AddDays(7);
+        }
+        <div class="hf-fields">
+            <div><label class="form-label" for="experimentName">Nome do teste</label><input id="experimentName" class="form-control" name="name" maxlength="120" value="Teste leve de @Model.Habit.Name" /></div>
+            <div><label class="form-label" for="adjustmentType">Ajuste</label><select id="adjustmentType" class="form-select" name="adjustmentType"><option value="ChangeTime">Trocar horário</option><option value="ReduceFrequency">Reduzir frequência</option><option value="UseMinimumVersion">Usar versão mínima</option><option value="AdjustEstimatedDuration">Ajustar duração estimada</option><option value="ModifyReminder">Modificar lembrete</option></select></div>
+            <div><label class="form-label" for="primaryIndicator">Indicador</label><select id="primaryIndicator" class="form-select" name="primaryIndicator"><option value="CompletionRate">Taxa de registro</option><option value="CompletionCount">Registros realizados</option><option value="MinimumVersionCount">Versões mínimas</option><option value="FullTargetCount">Alvos completos</option></select></div>
+        </div>
+        <div class="hf-fields">
+            <div><label class="form-label" for="baselineStart">Referência início</label><input id="baselineStart" class="form-control" type="date" name="baselineStart" value="@baselineStart.ToString("yyyy-MM-dd")" /></div>
+            <div><label class="form-label" for="baselineEnd">Referência fim</label><input id="baselineEnd" class="form-control" type="date" name="baselineEnd" value="@baselineEnd.ToString("yyyy-MM-dd")" /></div>
+            <div><label class="form-label" for="testStart">Teste início</label><input id="testStart" class="form-control" type="date" name="testStart" value="@testStart.ToString("yyyy-MM-dd")" /></div>
+            <div><label class="form-label" for="testEnd">Teste fim</label><input id="testEnd" class="form-control" type="date" name="testEnd" value="@testEnd.ToString("yyyy-MM-dd")" /></div>
+        </div>
+        <div class="hf-fields">
+            <div><label class="form-label" for="difficulty">Dificuldade observada</label><textarea id="difficulty" class="form-control" name="difficulty" rows="2" maxlength="500" placeholder="O que está dificultando manter este hábito?"></textarea></div>
+            <div><label class="form-label" for="proposedAdjustment">Ajuste proposto</label><textarea id="proposedAdjustment" class="form-control" name="proposedAdjustment" rows="2" maxlength="1000" placeholder="Ex.: testar versão mínima em dias corridos."></textarea></div>
+        </div>
+        <label class="form-label" for="reflection">Reflexão privada opcional</label><textarea id="reflection" class="form-control" name="reflection" rows="2" maxlength="1000"></textarea>
+        <div class="hf-adaptive-actions mt-3"><button class="btn btn-success" type="submit">Criar rascunho</button><a class="btn btn-outline-secondary" href="/weekly-review">Ver revisão semanal</a></div>
+    </form>
+</section>
 <partial name="Partials/_HabitLifecycleActions" model="Model.Habit" />
 @if (TempData["HabitCreated"] as string == "true") { <nav class="hf-post-create" aria-label="Próximos passos"><strong>Qual é o próximo passo?</strong><a href="/habits/@Model.Habit.Id/reminders" class="btn btn-outline-success">Adicionar lembrete</a><a href="/my-day" class="btn btn-success">Abrir Meu Dia</a><a asp-action="Create" class="btn btn-outline-secondary">Criar outro hábito</a><a href="/goals" class="btn btn-outline-secondary">Vincular a objetivo</a></nav> }
 @section Styles { <link rel="stylesheet" href="~/css/habits-v4.css" asp-append-version="true" /> }

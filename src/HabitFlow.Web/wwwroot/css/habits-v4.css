@@ -70,3 +70,6 @@
 .hf-date-fields .text-danger,.hf-adaptive-fields .text-danger{display:block;margin-top:.3rem}
 .hf-editor-preview dl div:last-child{border-bottom:0}
 @media(max-width:767px){.hf-editor-step{padding-left:1rem;padding-top:3.35rem}.hf-step-badge{top:1rem;left:1rem}.hf-choice-grid{grid-template-columns:1fr}}
+
+/* v6.28.4 routine experiments */
+.hf-experiment-form{display:grid;gap:1rem;margin-top:1rem}.hf-experiment-form textarea{resize:vertical}.hf-experiment-form .form-control,.hf-experiment-form .form-select{min-height:44px}.hf-experiment-form .hf-fields{grid-template-columns:repeat(3,minmax(0,1fr))}.hf-experiment-form .hf-fields:nth-of-type(2){grid-template-columns:repeat(4,minmax(0,1fr))}.hf-experiment-form .hf-fields:nth-of-type(3){grid-template-columns:repeat(2,minmax(0,1fr))}@media(max-width:900px){.hf-experiment-form .hf-fields,.hf-experiment-form .hf-fields:nth-of-type(2),.hf-experiment-form .hf-fields:nth-of-type(3){grid-template-columns:1fr 1fr}}@media(max-width:520px){.hf-experiment-form .hf-fields,.hf-experiment-form .hf-fields:nth-of-type(2),.hf-experiment-form .hf-fields:nth-of-type(3){grid-template-columns:1fr}.hf-experiment-form .hf-adaptive-actions,.hf-experiment-form .hf-adaptive-actions .btn{width:100%}}

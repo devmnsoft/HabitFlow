@@ -1,4 +1,5 @@
 using HabitFlow.Application;
+using HabitFlow.Domain;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,6 +10,7 @@ namespace HabitFlow.Web.Controllers;
 public sealed class HabitsController(HabitQueryService queries, HabitEditorService editor, HabitLifecycleService lifecycle,
     AdaptiveHabitService adaptive,
     CompleteHabitUseCase completeHabit, UndoHabitCompletionUseCase undoHabit, UserTimeZoneService timeZone,
+    RoutineExperimentService experiments,
     ILogger<HabitsController> logger) : Controller
 {
     [HttpGet("")]
@@ -109,6 +111,17 @@ public sealed class HabitsController(HabitQueryService queries, HabitEditorServi
         var result = await adaptive.AdjustDurationAsync(clientId, userId, User.Identity?.Name, id, minutes, ct);
         TempData[result.IsSuccess ? "Success" : "Error"] = result.IsSuccess
             ? $"Duração ajustada para {minutes} minutos. Seu histórico continua intacto." : result.Error.Message;
+        return RedirectToAction(nameof(Detail), new { id });
+    }
+
+    [HttpPost("{id:guid}/experiments"), ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateExperiment(Guid id, string name, string difficulty, string proposedAdjustment, RoutineExperimentAdjustmentType adjustmentType, RoutineExperimentIndicator primaryIndicator, DateOnly baselineStart, DateOnly baselineEnd, DateOnly testStart, DateOnly testEnd, string? reflection, CancellationToken ct)
+    {
+        if (!TryIdentity(out var clientId, out var userId)) return Forbid();
+        var result = await experiments.CreateDraftAsync(new(clientId, userId, id, name, difficulty, adjustmentType, proposedAdjustment, testStart, testEnd, baselineStart, baselineEnd, primaryIndicator, reflection), ct);
+        TempData[result.IsSuccess ? "Success" : "Error"] = result.IsSuccess
+            ? "Experimento criado como rascunho. Revise antes de iniciar; nenhum registro foi criado automaticamente."
+            : result.Error.Message;
         return RedirectToAction(nameof(Detail), new { id });
     }
 
