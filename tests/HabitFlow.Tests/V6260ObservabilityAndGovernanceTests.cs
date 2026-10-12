@@ -11,6 +11,22 @@ namespace HabitFlow.Tests;
 public class V6260ObservabilityAndGovernanceTests
 {
     [Fact]
+    public void V6260_Migration_Bridges_Legacy_SystemHealthHistory_Contract()
+    {
+        var hook = File.ReadAllText(RepositoryRootLocator.PathTo("scripts", "database", "compatibility-hooks", "101_system_health_history_contract.sql"));
+        var completeScript = File.ReadAllText(RepositoryRootLocator.PathTo("database", "script_completo.sql"));
+
+        Assert.Contains("add column if not exists component_name", hook, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("coalesce(component_name, check_name, 'system')", hook, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("coalesce(recorded_at, checked_at, now())", hook, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("add column if not exists consent_type", hook, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("coalesce(granted_at, recorded_at, now())", hook, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("ALTER TABLE habitflow.system_health_history ADD COLUMN IF NOT EXISTS component_name", completeScript, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("ALTER TABLE habitflow.consent_records ADD COLUMN IF NOT EXISTS consent_type", completeScript, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("ix_system_health_history_comp_date", completeScript, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public async Task HealthCheck_11Components_EvaluatesAllMinimalComponents()
     {
         var fakeRepo = new FakeSystemHealthRepository();

@@ -8,6 +8,20 @@ namespace HabitFlow.Tests;
 public sealed class V6250DataPortabilityTests
 {
     [Fact]
+    public void V6250_Migration_Uses_Current_Feature_Catalog_And_Plan_Features_Contracts()
+    {
+        var migration = File.ReadAllText(RepositoryRootLocator.PathTo("database", "migrations", "100_v6250_pwa_offline_integrations_api_webhooks_portability.sql"));
+        var completeScript = File.ReadAllText(RepositoryRootLocator.PathTo("database", "script_completo.sql"));
+
+        Assert.Contains("INSERT INTO habitflow.feature_catalog", migration);
+        Assert.Contains("INSERT INTO habitflow.plan_features (plan_id, feature_code, bool_value, int_value)", migration);
+        Assert.DoesNotContain("plan_feature_entitlements", migration);
+        Assert.DoesNotContain("plan_features (code, name", migration);
+        Assert.Contains("INSERT INTO habitflow.feature_catalog", completeScript);
+        Assert.Contains("INSERT INTO habitflow.plan_features (plan_id, feature_code, bool_value, int_value)", completeScript);
+    }
+
+    [Fact]
     public async Task ExportUserDataAsync_ProducesCompliantJsonAndCsv()
     {
         var clientId = Guid.NewGuid();

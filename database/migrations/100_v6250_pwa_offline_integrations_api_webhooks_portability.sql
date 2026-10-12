@@ -95,44 +95,55 @@ CREATE INDEX IF NOT EXISTS ix_ai_mobile_rec_client_user
     ON habitflow.ai_mobile_recommendations (client_id, user_id, recommendation_type, created_at DESC);
 
 -- Catalogo de novos recursos por plano para v6.25.0
-INSERT INTO habitflow.plan_features (code, name, value_type, default_bool_value, default_int_value, default_string_value)
+INSERT INTO habitflow.feature_catalog (code, name, value_type, category, implementation_status, is_marketable)
 VALUES
-    ('webhooks', 'Webhooks de Saída', 'boolean', false, null, null),
-    ('public_api', 'API Pública Rest', 'boolean', false, null, null),
-    ('data_portability', 'Portabilidade de Dados (Export/Import)', 'boolean', true, null, null),
-    ('push_notifications', 'Notificações Web Push', 'boolean', false, null, null),
-    ('advanced_offline', 'Modo Offline Avançado', 'boolean', false, null, null)
-ON CONFLICT (code) DO NOTHING;
+    ('webhooks', 'Webhooks de Saída', 'Boolean', 'Integrações', 'Implemented', true),
+    ('public_api', 'API Pública Rest', 'Boolean', 'Integrações', 'Implemented', true),
+    ('data_portability', 'Portabilidade de Dados (Export/Import)', 'Boolean', 'Privacidade', 'Implemented', true),
+    ('push_notifications', 'Notificações Web Push', 'Boolean', 'Notificações', 'Implemented', true),
+    ('advanced_offline', 'Modo Offline Avançado', 'Boolean', 'Mobile', 'Implemented', true)
+ON CONFLICT (code) DO UPDATE
+SET name = EXCLUDED.name,
+    value_type = EXCLUDED.value_type,
+    category = EXCLUDED.category,
+    implementation_status = EXCLUDED.implementation_status,
+    is_marketable = EXCLUDED.is_marketable;
 
 -- Configuracao de entitlements nos planos padrao
 -- Plano Pro/Ritmo
-INSERT INTO habitflow.plan_feature_entitlements (plan_code, feature_code, bool_value, int_value)
-VALUES
+INSERT INTO habitflow.plan_features (plan_id, feature_code, bool_value, int_value)
+SELECT p.id, v.feature_code, v.bool_value, v.int_value
+FROM (VALUES
     ('ritmo', 'webhooks', true, 2),
     ('ritmo', 'public_api', true, 3),
-    ('ritmo', 'data_portability', true, null),
-    ('ritmo', 'push_notifications', true, null),
-    ('ritmo', 'advanced_offline', true, null),
+    ('ritmo', 'data_portability', true, null::integer),
+    ('ritmo', 'push_notifications', true, null::integer),
+    ('ritmo', 'advanced_offline', true, null::integer),
     ('evolucao', 'webhooks', true, 10),
     ('evolucao', 'public_api', true, 10),
-    ('evolucao', 'data_portability', true, null),
-    ('evolucao', 'push_notifications', true, null),
-    ('evolucao', 'advanced_offline', true, null),
+    ('evolucao', 'data_portability', true, null::integer),
+    ('evolucao', 'push_notifications', true, null::integer),
+    ('evolucao', 'advanced_offline', true, null::integer),
     ('team', 'webhooks', true, 20),
     ('team', 'public_api', true, 20),
-    ('team', 'data_portability', true, null),
-    ('team', 'push_notifications', true, null),
-    ('team', 'advanced_offline', true, null),
+    ('team', 'data_portability', true, null::integer),
+    ('team', 'push_notifications', true, null::integer),
+    ('team', 'advanced_offline', true, null::integer),
     ('enterprise', 'webhooks', true, -1),
     ('enterprise', 'public_api', true, -1),
-    ('enterprise', 'data_portability', true, null),
-    ('enterprise', 'push_notifications', true, null),
-    ('enterprise', 'advanced_offline', true, null),
-    ('free', 'data_portability', true, null),
+    ('enterprise', 'data_portability', true, null::integer),
+    ('enterprise', 'push_notifications', true, null::integer),
+    ('enterprise', 'advanced_offline', true, null::integer),
+    ('free', 'data_portability', true, null::integer),
     ('free', 'webhooks', false, 0),
     ('free', 'public_api', false, 0),
-    ('free', 'push_notifications', false, null),
-    ('free', 'advanced_offline', false, null)
-ON CONFLICT (plan_code, feature_code) DO NOTHING;
+    ('free', 'push_notifications', false, null::integer),
+    ('free', 'advanced_offline', false, null::integer)
+) AS v(plan_code, feature_code, bool_value, int_value)
+JOIN habitflow.plans p ON p.code = v.plan_code
+ON CONFLICT (plan_id, feature_code) DO UPDATE
+SET bool_value = EXCLUDED.bool_value,
+    int_value = EXCLUDED.int_value,
+    updated_at = CURRENT_TIMESTAMP;
 
 COMMIT;
