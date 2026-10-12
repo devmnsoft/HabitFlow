@@ -13,10 +13,10 @@ public sealed class ClientRepository(SqlExecutor db) : IClientRepository
         (await db.QueryAsync<Client>($"""
             select {Columns}
             from habitflow.clients
-            where (@search is null or name ilike @like or email ilike @like or document ilike @like or document_normalized ilike @like)
-              and (@status is null or status = @status)
-              and (@plan is null or plan = @plan)
-              and (@clientId is null or id = @clientId)
+            where (@search::text is null or name ilike @like or email ilike @like or document ilike @like or document_normalized ilike @like)
+              and (@status::text is null or status = @status)
+              and (@plan::text is null or plan = @plan)
+              and (@clientId::uuid is null or id = @clientId)
             order by created_at desc
             offset @offset limit @pageSize
             """, new { search = string.IsNullOrWhiteSpace(search) ? null : search.Trim(), like = $"%{search?.Trim()}%", status = status?.ToString(), plan = plan?.ToString(), clientId, offset, pageSize }, ct)).ToList();
@@ -43,7 +43,7 @@ public sealed class ClientRepository(SqlExecutor db) : IClientRepository
         db.ExecuteAsync("insert into habitflow.tenant_commercial_status(client_id,previous_status,new_status,reason,changed_by) values(@clientId,@previousStatus,@newStatus,@reason,@changedBy)", new { clientId, previousStatus, newStatus, reason = string.IsNullOrWhiteSpace(reason) ? null : reason.Trim()[..Math.Min(240, reason.Trim().Length)], changedBy }, ct);
 
     public Task<bool> DocumentExistsAsync(string documentNormalized, Guid? ignoreClientId = null, CancellationToken ct = default) =>
-        db.QuerySingleOrDefaultAsync<bool>("select exists(select 1 from habitflow.clients where document_normalized=@documentNormalized and (@ignoreClientId is null or id <> @ignoreClientId))", new { documentNormalized, ignoreClientId }, ct);
+        db.QuerySingleOrDefaultAsync<bool>("select exists(select 1 from habitflow.clients where document_normalized=@documentNormalized and (@ignoreClientId::uuid is null or id <> @ignoreClientId))", new { documentNormalized, ignoreClientId }, ct);
 
     public Task<Client?> GetByDocumentAsync(string documentNormalized, CancellationToken ct = default) =>
         db.QuerySingleOrDefaultAsync<Client>($"select {Columns} from habitflow.clients where document_normalized = @documentNormalized", new { documentNormalized }, ct);
@@ -57,9 +57,9 @@ public sealed class ClientRepository(SqlExecutor db) : IClientRepository
             from habitflow.users
             where client_id = @clientId
               and role <> 'SuperAdmin'
-              and (@search is null or name ilike @like or email ilike @like)
-              and (@role is null or role = @role)
-              and (@accountStatus is null or account_status = @accountStatus)
+              and (@search::text is null or name ilike @like or email ilike @like)
+              and (@role::text is null or role = @role)
+              and (@accountStatus::text is null or account_status = @accountStatus)
             order by coalesce(client_joined_at,created_at) desc, id
             offset @offset limit @pageSize
             """, new { clientId, search = string.IsNullOrWhiteSpace(search) ? null : search.Trim(), like = $"%{search?.Trim()}%", role, accountStatus, offset, pageSize }, ct)).ToList();
@@ -69,9 +69,9 @@ public sealed class ClientRepository(SqlExecutor db) : IClientRepository
             select count(*)::int from habitflow.users
             where client_id = @clientId
               and role <> 'SuperAdmin'
-              and (@search is null or name ilike @like or email ilike @like)
-              and (@role is null or role = @role)
-              and (@accountStatus is null or account_status = @accountStatus)
+              and (@search::text is null or name ilike @like or email ilike @like)
+              and (@role::text is null or role = @role)
+              and (@accountStatus::text is null or account_status = @accountStatus)
             """, new { clientId, search = string.IsNullOrWhiteSpace(search) ? null : search.Trim(), like = $"%{search?.Trim()}%", role, accountStatus }, ct);
 
     public Task<ClientUserSummary?> GetUserByClientEmailAsync(Guid clientId, string normalizedEmail, CancellationToken ct = default) =>

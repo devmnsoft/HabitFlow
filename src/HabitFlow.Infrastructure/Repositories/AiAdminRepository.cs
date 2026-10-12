@@ -71,7 +71,7 @@ public sealed class AiAdminRepository(SqlExecutor db) : IAiAdminRepository
         (await db.QueryAsync<AiUsageEventRow>("""
             select id, client_id, user_id, provider, model, status, event_code, correlation_id, duration_ms, created_at
             from habitflow.ai_usage_events
-            where @clientId is null or client_id=@clientId
+            where @clientId::uuid is null or client_id=@clientId
             order by created_at desc limit @take
             """, new { clientId, take }, ct)).ToArray();
 
@@ -79,7 +79,7 @@ public sealed class AiAdminRepository(SqlExecutor db) : IAiAdminRepository
         (await db.QueryAsync<AiUsageEventRow>("""
             select id, client_id, user_id, provider, model, status, event_code, correlation_id, 0 as duration_ms, created_at
             from habitflow.ai_provider_events
-            where @clientId is null or client_id=@clientId
+            where @clientId::uuid is null or client_id=@clientId
             order by created_at desc limit @take
             """, new { clientId, take }, ct)).ToArray();
 
@@ -90,7 +90,7 @@ public sealed class AiAdminRepository(SqlExecutor db) : IAiAdminRepository
                    (count(*) filter (where event_code in ('ai.request.blocked_by_plan','ai.request.blocked_by_guardrail')))::int as blocked,
                    (count(*) filter (where event_code in ('ai.request.failed','ai.provider.unavailable','ai.provider.timeout')))::int as failed
             from habitflow.ai_usage_events
-            where {Day} and (@clientId is null or client_id=@clientId)
+            where {Day} and (@clientId::uuid is null or client_id=@clientId)
             group by client_id
             order by calls desc
             limit 50

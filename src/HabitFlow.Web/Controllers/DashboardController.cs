@@ -11,7 +11,8 @@ public class DashboardController(DashboardOverviewService dashboard, ILogger<Das
     {
         try
         {
-            if (!currentUser.ClientId.HasValue) return Forbid();
+            // SuperAdmin sem cliente vai para o painel global (evita Forbid → AccessDenied).
+            if (!currentUser.ClientId.HasValue) return currentUser.IsSuperAdmin ? RedirectToAction("Index", "SuperAdmin") : Forbid();
             if (currentUser.IsAdmin && currentUser.ClientId.HasValue)
             {
                 var state = await onboarding.GetOrCreateAsync(currentUser.ClientId.Value, ct);

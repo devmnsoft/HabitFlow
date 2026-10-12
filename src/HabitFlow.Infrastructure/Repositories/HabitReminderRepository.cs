@@ -28,7 +28,7 @@ public sealed class HabitReminderRepository(SqlExecutor db) : IHabitReminderRepo
 
     public async Task<IReadOnlyList<HabitReminder>> ListAsync(Guid clientId, Guid userId, Guid? habitId = null, CancellationToken ct = default)
     {
-        var rows = await db.QueryAsync<HabitReminderRow>(AppendToSelect("where r.client_id=@clientId and r.user_id=@userId and (@habitId is null or r.habit_id=@habitId) order by r.is_active desc,r.next_trigger_at nulls last"), new { clientId, userId, habitId }, ct);
+        var rows = await db.QueryAsync<HabitReminderRow>(AppendToSelect("where r.client_id=@clientId and r.user_id=@userId and (@habitId::uuid is null or r.habit_id=@habitId) order by r.is_active desc,r.next_trigger_at nulls last"), new { clientId, userId, habitId }, ct);
         return rows.Select(Map).ToList();
     }
 

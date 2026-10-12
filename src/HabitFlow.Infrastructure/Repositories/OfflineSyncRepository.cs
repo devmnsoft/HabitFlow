@@ -9,7 +9,7 @@ public sealed class OfflineSyncRepository(SqlExecutor db) : IOfflineSyncReposito
     public Task EnqueueAsync(OfflineSyncQueueItem item, CancellationToken ct = default) =>
         db.ExecuteAsync(
             "insert into habitflow.offline_sync_queue(id,client_id,user_id,action_type,entity_id,payload,status,error_message,conflict_details,client_created_at,synced_at,created_at) " +
-            "values(@Id,@ClientId,@UserId,@ActionType,@EntityId,cast(@PayloadJson as jsonb),@Status,@ErrorMessage,case when @ConflictDetailsJson is null then null else cast(@ConflictDetailsJson as jsonb) end,@ClientCreatedAt,@SyncedAt,@CreatedAt) " +
+            "values(@Id,@ClientId,@UserId,@ActionType,@EntityId,cast(@PayloadJson as jsonb),@Status,@ErrorMessage,case when @ConflictDetailsJson::text is null then null else cast(@ConflictDetailsJson as jsonb) end,@ClientCreatedAt,@SyncedAt,@CreatedAt) " +
             "on conflict(id) do update set status=excluded.status, error_message=excluded.error_message, conflict_details=excluded.conflict_details, synced_at=excluded.synced_at",
             item, ct);
 
@@ -26,7 +26,7 @@ public sealed class OfflineSyncRepository(SqlExecutor db) : IOfflineSyncReposito
 
     public Task UpdateStatusAsync(Guid clientId, Guid userId, Guid id, string status, string? errorMessage, string? conflictDetailsJson, DateTime? syncedAt, CancellationToken ct = default) =>
         db.ExecuteAsync(
-            "update habitflow.offline_sync_queue set status=@status, error_message=@errorMessage, conflict_details=(case when @conflictDetailsJson is null then null else cast(@conflictDetailsJson as jsonb) end), synced_at=@syncedAt where id=@id and client_id=@clientId and user_id=@userId",
+            "update habitflow.offline_sync_queue set status=@status, error_message=@errorMessage, conflict_details=(case when @conflictDetailsJson::text is null then null else cast(@conflictDetailsJson as jsonb) end), synced_at=@syncedAt where id=@id and client_id=@clientId and user_id=@userId",
             new { id, clientId, userId, status, errorMessage, conflictDetailsJson, syncedAt }, ct);
 
     public Task<int> CountPendingAsync(Guid clientId, Guid userId, CancellationToken ct = default) =>

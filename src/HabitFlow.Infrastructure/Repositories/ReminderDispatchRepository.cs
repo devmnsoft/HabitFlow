@@ -99,7 +99,7 @@ public sealed class ReminderDispatchRepository(DbConnectionFactory connections) 
         const string sql = """
             update habitflow.reminder_dispatches set status=@status,attempt_count=attempt_count+1,
                    error_code=@errorCode,last_error_at=@now,next_attempt_at=@nextAttempt,
-                   locked_by=null,locked_until=null,processed_at=case when @nextAttempt is null then @now else null end
+                   locked_by=null,locked_until=null,processed_at=case when @nextAttempt::timestamptz is null then @now else null end
              where id=@DispatchId and client_id=@ClientId and user_id=@UserId
                and habit_id=@HabitId and habit_reminder_id=@ReminderId;
             update habitflow.habit_reminders set locked_by=null,locked_until=null,

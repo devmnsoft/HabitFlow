@@ -1,2 +1,28 @@
-@{ ViewData["Title"] = "Acesso negado"; }
-<section class="premium-card"><h1>Acesso negado</h1><p>Você não tem permissão para acessar estes dados.</p><a href="/">Voltar ao início</a></section>
+@model string?
+@{
+    ViewData["Title"] = "Acesso negado";
+    var attempted = Model;
+    var attemptedLocal = !string.IsNullOrWhiteSpace(attempted) && Url.IsLocalUrl(attempted!);
+    var isSuperAdmin = User?.IsInRole("SuperAdmin") == true;
+    var hasClient = Guid.TryParse(User?.FindFirst("client_id")?.Value, out _);
+}
+<section class="premium-card">
+  <h1>Acesso negado</h1>
+  <p>Sua conta não tem permissão para acessar esta área. Se você acredita que isso é um erro, fale com o responsável pela sua conta ou com o suporte.</p>
+  @if (attemptedLocal)
+  {
+    <p>Tentou acessar <code>@attempted</code>.</p>
+  }
+  <div class="d-flex flex-wrap gap-2">
+    @if (isSuperAdmin)
+    {
+      <a class="btn btn-success" href="/superadmin">Abrir painel de administração</a>
+    }
+    @if (hasClient)
+    {
+      <a class="btn btn-success" href="/dashboard">Ir para o meu painel</a>
+    }
+    <a class="btn btn-outline-secondary" href="/">Voltar ao início</a>
+    <form asp-controller="Auth" asp-action="Logout" method="post" class="d-inline mb-0">@Html.AntiForgeryToken()<button type="submit" class="btn btn-outline-secondary">Encerrar sessão</button></form>
+  </div>
+</section>

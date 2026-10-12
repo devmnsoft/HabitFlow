@@ -11,6 +11,7 @@ public sealed class ClientOnboardingController(ProductActivationService activati
     [HttpGet("")]
     public async Task<IActionResult> Index(CancellationToken ct)
     {
+        if (currentUser.IsSuperAdmin) return RedirectToAction("Index", "SuperAdmin");
         if (!currentUser.ClientId.HasValue) return Forbid();
         return View("~/Views/Admin/Onboarding.cshtml", await activation.ChecklistAsync(currentUser.ClientId.Value, ct));
     }
@@ -19,6 +20,7 @@ public sealed class ClientOnboardingController(ProductActivationService activati
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Ignore(string stepCode, string reason, CancellationToken ct)
     {
+        if (currentUser.IsSuperAdmin) return RedirectToAction(nameof(Index));
         if (!currentUser.ClientId.HasValue) return Forbid();
         var result = await activation.IgnoreAsync(currentUser.ClientId.Value, currentUser.UserId, stepCode, reason, ct);
         TempData[result.IsSuccess ? "Success" : "Error"] = result.IsSuccess ? "Etapa ignorada com a justificativa informada." : result.Error.Message;
@@ -29,6 +31,7 @@ public sealed class ClientOnboardingController(ProductActivationService activati
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Progress(string stepCode, CancellationToken ct)
     {
+        if (currentUser.IsSuperAdmin) return RedirectToAction(nameof(Index));
         if (!currentUser.ClientId.HasValue) return Forbid();
         var result = await activation.MarkInProgressAsync(currentUser.ClientId.Value, currentUser.UserId, stepCode, ct);
         TempData[result.IsSuccess ? "Success" : "Error"] = result.IsSuccess ? "Etapa marcada como em andamento." : result.Error.Message;
@@ -39,6 +42,7 @@ public sealed class ClientOnboardingController(ProductActivationService activati
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Finish(CancellationToken ct)
     {
+        if (currentUser.IsSuperAdmin) return RedirectToAction(nameof(Index));
         if (!currentUser.ClientId.HasValue) return Forbid();
         var page = await activation.ChecklistAsync(currentUser.ClientId.Value, ct);
         if (!page.CanFinish)

@@ -25,7 +25,7 @@ public sealed class UserSessionRepository(SqlExecutor db) : IUserSessionReposito
         "update habitflow.user_sessions set revoked_at=coalesce(revoked_at,now()),revocation_reason=coalesce(revocation_reason,@reason) where id=@id and user_id=@userId", new { id, userId, reason }, ct);
 
     public Task RevokeAllAsync(Guid userId, Guid? exceptSessionId, string reason, CancellationToken ct = default) => db.ExecuteAsync(
-        "update habitflow.user_sessions set revoked_at=now(),revocation_reason=@reason where user_id=@userId and revoked_at is null and (@exceptSessionId is null or id<>@exceptSessionId)", new { userId, exceptSessionId, reason }, ct);
+        "update habitflow.user_sessions set revoked_at=now(),revocation_reason=@reason where user_id=@userId and revoked_at is null and (@exceptSessionId::uuid is null or id<>@exceptSessionId)", new { userId, exceptSessionId, reason }, ct);
 
     private static UserSession? Map(UserSessionRow? row) => row is null ? null : new(row.Id, row.UserId, row.ClientId, row.UserAgent, row.IpAddress, Utc(row.CreatedAt), Utc(row.LastActivityAt), Utc(row.ExpiresAt), row.RevokedAt is null ? null : Utc(row.RevokedAt.Value), row.RevocationReason);
     private static DateTime Utc(DateTime value) => value.Kind == DateTimeKind.Utc ? value : DateTime.SpecifyKind(value, DateTimeKind.Utc);

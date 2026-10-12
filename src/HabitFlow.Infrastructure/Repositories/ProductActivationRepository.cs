@@ -26,12 +26,12 @@ public sealed class ProductActivationRepository(SqlExecutor db) : IProductActiva
             exists(select 1 from habitflow.users u where u.client_id = c.id and u.last_activity_at >= now() - interval '15 days') as "Active15Days"
         from habitflow.clients c
         left join habitflow.client_onboarding o on o.client_id = c.id
-        where (@ClientId is null or c.id = @ClientId)
-          and (@Plan is null or c.plan = @Plan)
-          and (@Status is null or c.status = @Status)
-          and (@Name is null or c.name ilike @Name)
-          and (@From is null or c.created_at::date >= @From)
-          and (@To is null or c.created_at::date <= @To)
+        where (@ClientId::uuid is null or c.id = @ClientId)
+          and (@Plan::text is null or c.plan = @Plan)
+          and (@Status::text is null or c.status = @Status)
+          and (@Name::text is null or c.name ilike @Name)
+          and (@From::date is null or c.created_at::date >= @From)
+          and (@To::date is null or c.created_at::date <= @To)
         order by c.name
         limit 200
         """;

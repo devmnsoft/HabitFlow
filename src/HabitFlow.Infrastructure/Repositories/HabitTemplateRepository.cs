@@ -35,7 +35,7 @@ public sealed class HabitTemplateRepository(SqlExecutor db) : IHabitTemplateRepo
             values (
                 @Id, @ObjectiveId, @Name, @Description, @Category, @Frequency, '#16A34A', @Difficulty,
                 @Minutes, @Goal, 100, true, @MinimumPlan, @Audience, @Goal, @CreatedBy, @ClientId, now(),
-                'pt-BR', case when @ClientId is null then 'SuperAdmin' else 'Tenant' end, 'Published')
+                'pt-BR', case when @ClientId::uuid is null then 'SuperAdmin' else 'Tenant' end, 'Published')
             """, draft, ct);
 
     public async Task<HabitTemplate?> GetAsync(Guid id, CancellationToken ct = default)

@@ -47,6 +47,8 @@ public class AuthController(AuthService authService, ClientAccountRegistrationSe
             var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identity));
             if (user.MustChangePassword) return Redirect("/account/security/change-required-password");
+            // SuperAdmin não tem cliente: o destino pós-login é o painel global, nunca o dashboard de tenant.
+            if (user.Role == UserRole.SuperAdmin) return Redirect("/superadmin");
             if (Url.IsLocalUrl(dto.ReturnUrl)) return LocalRedirect(dto.ReturnUrl!);
             return RedirectToAction("Index", "Dashboard");
         }

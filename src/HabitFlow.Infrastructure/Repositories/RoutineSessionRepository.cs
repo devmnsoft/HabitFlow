@@ -54,9 +54,9 @@ public sealed class RoutineSessionRepository(SqlExecutor db) : IRoutineSessionRe
               from habitflow.routine_sessions s
               left join habitflow.routine_session_items i on i.session_id=s.id
              where s.client_id=@clientId and s.user_id=@userId
-               and (@from is null or s.local_date >= @from)
-               and (@to is null or s.local_date <= @to)
-               and (@status is null or s.status = @status)
+               and (@from::date is null or s.local_date >= @from)
+               and (@to::date is null or s.local_date <= @to)
+               and (@status::text is null or s.status = @status)
              group by s.id
              order by s.local_date desc, s.updated_at desc
              offset @offset limit @limit

@@ -87,7 +87,7 @@ public sealed class SuperAdminProvisioningRepository(SqlExecutor db, IUnitOfWork
                 await db.ExecuteAsync("""
                     update habitflow.users set name=@name,email=@email,role='SuperAdmin',account_status='Active',client_id=null,
                     password_hash=coalesce(@passwordHash,password_hash),
-                    must_change_password=case when @passwordHash is null then must_change_password else true end,
+                    must_change_password=case when @passwordHash::text is null then must_change_password else true end,
                     session_version=case when @passwordHash is null then session_version else session_version+1 end,updated_at=now()
                     where id=@id
                     """, new { id, name, email, passwordHash }, ct);
