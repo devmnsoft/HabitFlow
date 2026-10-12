@@ -1,6 +1,5 @@
 /* HabitFlow v6.20.0 - production UI hardening.
-   Final cascade layer for homologation: tokens, contrast, forms, overlays and mobile safety. */
-:root {
+   Final cascade layer for homologation: tokens, contrast, forms, overlays and mobile safety. */:root {
   --hf-prod-bg: #f6f8f7;
   --hf-prod-surface: #ffffff;
   --hf-prod-card: #ffffff;
@@ -363,4 +362,43 @@ th {
   .loading-skeleton {
     animation: none;
   }
+}
+
+/* HabitFlow v6.26.x - barra de contexto de administracao (SuperAdmin).
+   Fixa no topo do conteudo, sempre visivel, contraste AA sobre superficie clara.
+   O estado vem da URL: nenhum cookie/sessao, multi-aba segura. */
+.hf-admin-context {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .75rem 1.25rem;
+  padding: .55rem .9rem;
+  margin: 0 0 1rem;
+  background: var(--hf-prod-card, #ffffff);
+  border: 1px solid var(--hf-prod-border, #cbd8d2);
+  border-left: 4px solid var(--hf-prod-focus, #0a7a5a);
+  border-radius: .5rem;
+  color: var(--hf-prod-text, #12231d);
+  font-size: .875rem;
+  position: sticky;
+  top: 0;
+  z-index: 1020;
+}
+.hf-admin-context__label {
+  display: block;
+  font-size: .7rem;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--hf-prod-muted, #40534c);
+}
+.hf-admin-context__identity strong { font-size: .95rem; }
+.hf-admin-context__email { color: var(--hf-prod-muted, #40534c); margin-left: .35rem; }
+.hf-admin-context__current { flex: 1 1 auto; min-width: 12rem; }
+.hf-admin-context__return { display: inline-block; margin-left: .5rem; font-weight: 600; }
+.hf-admin-context__switch { min-width: 14rem; }
+.hf-admin-context__switch select { max-width: 22rem; }
+@media (max-width: 575.98px) {
+  .hf-admin-context { position: static; }
+  .hf-admin-context__switch { width: 100%; }
 }

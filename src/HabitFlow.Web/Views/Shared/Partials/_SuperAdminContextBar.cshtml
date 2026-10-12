@@ -1,0 +1,62 @@
+@using HabitFlow.Application
+@inject ClientService ClientService
+@{
+    // Barra de contexto de administração (§5). Aparece em todas as telas do painel
+    // SuperAdmin (/superadmin/*), inclusive na ficha do cliente (/superadmin/clients/{id}).
+    // O contexto vem 100% da URL (nenhum estado em cookie/sessão): cada aba mostra o
+    // próprio contexto (multi-tab safe) e não há impersonação silenciosa — o operador
+    // continua sendo o SuperAdmin logado; administrar um cliente é uma navegação
+    // explícita, validada no servidor (a ficha só abre para clientes existentes).
+    var path = Context.Request.Path.Value ?? string.Empty;
+    if (!path.StartsWith("/superadmin", StringComparison.OrdinalIgnoreCase))
+    {
+        return;
+    }
+    var routeId = Context.Request.RouteValues["id"]?.ToString();
+    var currentClientIdValue = Guid.TryParse(routeId, out var parsedClientId) ? parsedClientId : (Guid?)null;
+    var hasClientContext = currentClientIdValue.HasValue;
+    var operatorName = User.Identity?.Name ?? "SuperAdmin";
+    var operatorEmail = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value ?? string.Empty;
+    var clientsResult = await ClientService.SearchAsync(new ClientFilter { PageSize = 50 }, Context.RequestAborted);
+    var clients = clientsResult?.Value ?? Array.Empty<ClientListItemDto>();
+    string? currentClientName = null;
+    if (currentClientIdValue.HasValue)
+    {
+        currentClientName = clients.FirstOrDefault(x => x.Id == currentClientIdValue.Value)?.Name ?? currentClientIdValue.Value.ToString();
+    }
+}
+<div class="hf-admin-context" role="region" aria-label="Contexto de administração da plataforma" data-admin-context="@(currentClientIdValue.HasValue ? "client:" + currentClientIdValue.Value : "global")" data-multi-tab-safe="true">
+    <div class="hf-admin-context__identity">
+        <span class="hf-admin-context__label">Operador</span>
+        <strong>@operatorName</strong>
+        @if (!string.IsNullOrWhiteSpace(operatorEmail))
+        {
+            <span class="hf-admin-context__email">@operatorEmail</span>
+        }
+        <span class="badge text-bg-dark">SuperAdmin</span>
+    </div>
+    <div class="hf-admin-context__current" aria-live="polite">
+        <span class="hf-admin-context__label">Contexto atual</span>
+        @if (hasClientContext)
+        {
+            <strong>Administrando cliente: @currentClientName</strong>
+            <a class="hf-admin-context__return" href="/superadmin">← Voltar ao painel global</a>
+        }
+        else
+        {
+            <strong>Painel global da plataforma</strong>
+        }
+    </div>
+    <div class="hf-admin-context__switch">
+        <label class="hf-admin-context__label" for="hf-admin-context-client">Trocar contexto</label>
+        <select id="hf-admin-context-client" class="form-select form-select-sm" onchange="if (this.value) { window.location.href = this.value; }">
+            <option value="">Painel global</option>
+            @foreach (var client in clients)
+            {
+                var selected = currentClientIdValue.HasValue && client.Id == currentClientIdValue.Value;
+                <option value="/superadmin/clients/@client.Id" selected="@selected">@client.Name (@client.Plan)</option>
+            }
+        </select>
+        <noscript><a href="/superadmin/clients">Abrir lista de clientes</a></noscript>
+    </div>
+</div>
