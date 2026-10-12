@@ -4,6 +4,10 @@
     <div class="mx-auto" style="max-width:720px">
         <header class="mb-4"><span class="text-success fw-semibold">SEGURANÇA DA CONTA</span><h1 id="mfa-title" class="display-6 fw-bold">Autenticação em duas etapas</h1><p class="text-secondary">Proteja ações administrativas com um código temporário do seu aplicativo autenticador.</p></header>
         <section class="card border-0 shadow-sm rounded-4 p-4">
+        @if (TempData["Error"] is string tempError && tempError.Length > 0) { <div class="alert alert-danger" role="alert">@tempError</div> }
+        @if (ViewData.ModelState.ErrorCount > 0) {
+            <div class="alert alert-danger" role="alert">@string.Join(" ", ViewData.ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage))</div>
+        }
         @if (Model.RecoveryCodes is not null) {
             <div class="alert alert-warning" role="status"><strong>Salve estes códigos agora.</strong> Eles não serão exibidos novamente.</div>
             <ul class="row list-unstyled font-monospace" aria-label="Códigos de recuperação">@foreach (var code in Model.RecoveryCodes) { <li class="col-6 mb-2"><code>@code</code></li> }</ul>

@@ -3,6 +3,7 @@ using System.Security.Cryptography;
 using System.Text;
 using HabitFlow.Domain;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.Extensions.Logging;
 
 namespace HabitFlow.Application;
 
@@ -26,18 +27,20 @@ public sealed class TotpEnrollmentService(TotpSecretProtector protector, IUserMf
     }
 }
 
-public sealed class TotpValidationService(TimeProvider clock)
+public sealed class TotpValidationService(TimeProvider clock, ILogger<TotpValidationService> logger)
 {
     public bool TryValidate(byte[] secret, string code, out long timeStep)
     {
         timeStep = 0;
-        if (code.Length != 6 || !code.All(char.IsAsciiDigit)) return false;
+        if (code.Length != 6 || !code.All(char.IsAsciiDigit))
+        { logger.LogInformation("mfa.validation.rejected Reason=invalid-format"); return false; }
         var current = clock.GetUtcNow().ToUnixTimeSeconds() / 30;
         for (var candidate = current - 1; candidate <= current + 1; candidate++)
         {
             if (CryptographicOperations.FixedTimeEquals(Encoding.ASCII.GetBytes(Generate(secret, candidate)), Encoding.ASCII.GetBytes(code)))
-            { timeStep = candidate; return true; }
+            { logger.LogInformation("mfa.validation.accepted TimeStep={TimeStep}", candidate); timeStep = candidate; return true; }
         }
+        logger.LogInformation("mfa.validation.rejected Reason=code-mismatch CurrentTimeStep={CurrentTimeStep}", current);
         return false;
     }
 

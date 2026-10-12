@@ -17,7 +17,7 @@ public sealed class MfaController(IUserMfaRepository repository, IUserRepository
     public async Task<IActionResult> Index(CancellationToken ct)
     {
         var setting = await repository.GetAsync(this.CurrentUserId(), this.CurrentClientIdOrNull(), ct);
-        return View(new MfaSettingsViewModel(setting?.IsEnabled == true, setting?.EnabledAt));
+        return View("Index", new MfaSettingsViewModel(setting?.IsEnabled == true, setting?.EnabledAt));
     }
 
     [ValidateAntiForgeryToken, HttpPost("/account/security/mfa/start")]
@@ -35,7 +35,9 @@ public sealed class MfaController(IUserMfaRepository repository, IUserRepository
         if (!ModelState.IsValid) return await Index(ct);
         var userId = this.CurrentUserId(); var clientId = this.CurrentClientIdOrNull();
         var setting = await repository.GetAsync(userId, clientId, ct);
-        if (setting is null || setting.IsEnabled || !validator.TryValidate(protector.Unprotect(setting.ProtectedSecret), model.Code, out var step) ||
+        if (setting is null || setting.IsEnabled)
+        { TempData["Error"] = "Sessão de configuração não encontrada. Clique em Configurar autenticador e tente novamente."; return await Index(ct); }
+        if (!validator.TryValidate(protector.Unprotect(setting.ProtectedSecret), model.Code, out var step) ||
             !await repository.EnableAsync(userId, clientId, step, clock.GetUtcNow().UtcDateTime, ct))
         { ModelState.AddModelError(nameof(model.Code), "Código inválido ou expirado."); return await Index(ct); }
         var codes = await recoveryCodes.RegenerateAsync(userId, clientId, ct);

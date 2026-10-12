@@ -14,6 +14,9 @@ public static class AuthenticationConfig
         {
             options.LoginPath = "/login";
             options.LogoutPath = "/logout";
+            // Rota canônica da página legível de acesso negado (rota por atributo do AccountController).
+            // O default do cookie (/Account/AccessDenied) não corresponde ao template e resultava em 404.
+            options.AccessDeniedPath = "/account/access-denied";
             options.Cookie.HttpOnly = true;
             options.Cookie.SameSite = SameSiteMode.Lax;
             options.Cookie.SecurePolicy = environment.IsDevelopment() ? CookieSecurePolicy.SameAsRequest : CookieSecurePolicy.Always;
