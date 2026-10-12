@@ -20,6 +20,41 @@ public sealed class ProgramParticipationV6281Tests
     }
 
     [Fact]
+    public void Program_join_can_link_existing_habits_and_blocks_accidental_duplicates()
+    {
+        var domain = File.ReadAllText(Path.Combine(Root, "src", "HabitFlow.Domain", "Entities", "HabitJourney.cs"));
+        var service = File.ReadAllText(Path.Combine(Root, "src", "HabitFlow.Application", "Services", "HabitJourneyAutomationServices.cs"));
+        var controller = File.ReadAllText(Path.Combine(Root, "src", "HabitFlow.Web", "Controllers", "JourneysController.cs"));
+        var view = File.ReadAllText(Path.Combine(Root, "src", "HabitFlow.Web", "Views", "Journeys", "Details.cshtml"));
+
+        Assert.Contains("ExistingHabitId", domain);
+        Assert.Contains("DuplicateExisting", domain);
+        Assert.Contains("journey.existing_habit_invalid", service);
+        Assert.Contains("journey.equivalent_habit_found", service);
+        Assert.Contains("existingHabitId_", controller);
+        Assert.Contains("duplicateExisting_", controller);
+        Assert.Contains("Vincular existente", view);
+        Assert.Contains("Duplicar mesmo que já exista equivalente", view);
+    }
+
+    [Fact]
+    public void Program_catalog_supports_personalized_discovery_filters()
+    {
+        var service = File.ReadAllText(Path.Combine(Root, "src", "HabitFlow.Application", "Services", "HabitJourneyAutomationServices.cs"));
+        var controller = File.ReadAllText(Path.Combine(Root, "src", "HabitFlow.Web", "Controllers", "JourneysController.cs"));
+        var view = File.ReadAllText(Path.Combine(Root, "src", "HabitFlow.Web", "Views", "Journeys", "Index.cshtml"));
+        var css = File.ReadAllText(Path.Combine(Root, "src", "HabitFlow.Web", "wwwroot", "css", "site.css"));
+
+        Assert.Contains("JourneyCatalogQuery", service);
+        Assert.Contains("MaxDurationDays", service);
+        Assert.Contains("MeetsMinimumPlan(query.Plan", service);
+        Assert.Contains("[FromQuery] JourneyCatalogQuery query", controller);
+        Assert.Contains("hf-journey-filters", view);
+        Assert.Contains("Duração máxima", view);
+        Assert.Contains(".hf-journey-filters", css);
+    }
+
+    [Fact]
     public void Program_membership_links_created_habits_without_treating_join_as_completion()
     {
         var migration = File.ReadAllText(Path.Combine(Root, "database", "migrations", "104_program_participation_personalization.sql"));

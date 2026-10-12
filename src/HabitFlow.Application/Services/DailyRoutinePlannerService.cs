@@ -5,11 +5,14 @@ namespace HabitFlow.Application;
 
 public enum DailyRoutineItemStatus { Upcoming, Available, Completed, Excused, Moved, Missed }
 public sealed record DailyRoutineQuery(Guid ClientId, Guid UserId, DateOnly LocalDate);
-public sealed record DailyRoutineItem(Guid HabitId, string Name, string Color, string? Category, string? IconCode, Guid? ObjectiveId, TimeOnly? PreferredTime, int EstimatedMinutes, HabitFrequencyType Frequency, DailyRoutineItemStatus Status, int SortOrder, int Version, string NextAction);
+public sealed record DailyRoutineItem(Guid HabitId, string Name, string Color, string? Category, string? IconCode, Guid? ObjectiveId, TimeOnly? PreferredTime, int EstimatedMinutes, HabitFrequencyType Frequency, DailyRoutineItemStatus Status, int SortOrder, int Version, string NextAction, decimal? TargetQuantity = null, string? TargetUnit = null, string? MinimumVersionName = null, decimal? MinimumVersionQuantity = null);
 public sealed record DailyRoutinePlan(DateOnly LocalDate, IReadOnlyList<DailyRoutineItem> Items, int Scheduled, int Completed, int Percentage)
 {
     public int Pending => Scheduled - Completed;
 }
+public sealed record DailyAvailabilityInput(int? AvailableMinutes, TimeOnly? WindowStart, TimeOnly? WindowEnd, IReadOnlySet<Guid> PriorityHabitIds, bool PreferMinimumVersion, IReadOnlySet<Guid> KeepHabitIds);
+public sealed record DailyRoutineProposalItem(Guid HabitId, string Name, int? EstimatedMinutes, bool Included, bool UsesMinimumVersion, string Reason);
+public sealed record DailyRoutineProposal(DateOnly LocalDate, int? AvailableMinutes, int KnownEstimatedMinutes, bool ExceedsAvailability, IReadOnlyList<DailyRoutineProposalItem> Items, IReadOnlyList<string> Explanations, IReadOnlyList<string> MissingData, IReadOnlyList<string> Alternatives);
 
 public sealed class DailyRoutinePlannerService(IHabitRepository habits, IHabitWeekDayRepository weekDays, IHabitCompletionRepository completions, IHabitScheduleExceptionRepository exceptions, IDailyRoutineOverrideRepository overrides, EffectiveHabitScheduleService schedule, TimeProvider clock, UserTimeZoneService timeZone)
 {
@@ -40,7 +43,7 @@ public sealed class DailyRoutinePlannerService(IHabitRepository habits, IHabitWe
                 _ => DailyRoutineItemStatus.Available
             };
             var action = status switch { DailyRoutineItemStatus.Completed => "Desfazer", DailyRoutineItemStatus.Excused or DailyRoutineItemStatus.Moved => "Restaurar", _ => "Concluir" };
-            return new DailyRoutineItem(h.Id,h.Name,h.Color,h.Category,h.IconCode,h.ObjectiveId,preferred,h.EstimatedTimeMinutes ?? 10,h.FrequencyType,status,custom?.SortOrder ?? h.SortOrder,occurrence.ExceptionVersion > 0 ? occurrence.ExceptionVersion : custom?.Version ?? 0,action);
+            return new DailyRoutineItem(h.Id,h.Name,h.Color,h.Category,h.IconCode,h.ObjectiveId,preferred,h.EstimatedTimeMinutes ?? 0,h.FrequencyType,status,custom?.SortOrder ?? h.SortOrder,occurrence.ExceptionVersion > 0 ? occurrence.ExceptionVersion : custom?.Version ?? 0,action,h.TargetQuantity,h.TargetUnit,h.MinimumVersionName,h.MinimumVersionQuantity);
         }).OrderBy(x => x.Status == DailyRoutineItemStatus.Completed ? 1 : 0)
           .ThenBy(x => x.PreferredTime.HasValue ? 0 : 1).ThenBy(x => x.PreferredTime)
           .ThenBy(x => x.ObjectiveId.HasValue ? 0 : 1).ThenBy(x => x.EstimatedMinutes)
@@ -48,6 +51,51 @@ public sealed class DailyRoutinePlannerService(IHabitRepository habits, IHabitWe
         var done = items.Count(x => x.Status == DailyRoutineItemStatus.Completed);
         var scheduled = effective.EffectiveOccurrences.Count;
         return new(query.LocalDate,items,scheduled,done,scheduled == 0 ? 0 : (int)Math.Round(done * 100d / scheduled));
+    }
+
+    public DailyRoutineProposal Propose(DailyRoutinePlan plan, DailyAvailabilityInput availability)
+    {
+        var explanations = new List<string>();
+        var missing = new List<string>();
+        var alternatives = new List<string>();
+        var available = availability.AvailableMinutes is > 0 ? availability.AvailableMinutes : null;
+        var remaining = available;
+        var candidates = plan.Items.Where(x => x.Status is DailyRoutineItemStatus.Available or DailyRoutineItemStatus.Upcoming)
+            .OrderByDescending(x => availability.KeepHabitIds.Contains(x.HabitId))
+            .ThenByDescending(x => availability.PriorityHabitIds.Contains(x.HabitId))
+            .ThenBy(x => x.PreferredTime.HasValue ? 0 : 1)
+            .ThenBy(x => x.PreferredTime)
+            .ThenBy(x => x.SortOrder)
+            .ThenBy(x => x.Name)
+            .ToList();
+        if (available is null) missing.Add("Tempo disponível não informado; a proposta preserva a ordem do dia sem limitar duração.");
+        if (availability.WindowStart.HasValue != availability.WindowEnd.HasValue) missing.Add("Janela de horário incompleta; informe início e fim para ordenar por bloco.");
+        if (availability.WindowStart.HasValue && availability.WindowEnd.HasValue && availability.WindowEnd <= availability.WindowStart) missing.Add("Janela de horário inválida; a proposta ignorou esse intervalo.");
+
+        var items = new List<DailyRoutineProposalItem>();
+        foreach (var item in candidates)
+        {
+            var estimated = item.EstimatedMinutes > 0 ? item.EstimatedMinutes : (int?)null;
+            if (estimated is null) missing.Add($"{item.Name}: duração estimada ausente.");
+            var forced = availability.KeepHabitIds.Contains(item.HabitId);
+            var fits = remaining is null || estimated is null || estimated.Value <= remaining.Value;
+            var include = forced || fits;
+            if (include && remaining.HasValue && estimated.HasValue) remaining -= estimated.Value;
+            var usesMinimum = availability.PreferMinimumVersion && !string.IsNullOrWhiteSpace(item.MinimumVersionName);
+            var reason = include
+                ? forced ? "Mantido por escolha do usuário." : availability.PriorityHabitIds.Contains(item.HabitId) ? "Incluído por prioridade declarada." : "Incluído por caber na disponibilidade informada."
+                : "Ficou fora da sugestão principal por falta de tempo informado; o hábito continua previsto.";
+            if (!include) alternatives.Add($"{item.Name}: fazer a versão mínima, mover para outro horário ou manter para depois.");
+            items.Add(new(item.HabitId, item.Name, estimated, include, usesMinimum, reason));
+        }
+
+        var known = items.Where(x => x.Included && x.EstimatedMinutes.HasValue).Sum(x => x.EstimatedMinutes!.Value);
+        if (items.Any(x => x.Included && x.EstimatedMinutes is null)) explanations.Add("Há itens incluídos sem duração conhecida; nenhuma duração foi inventada.");
+        if (available.HasValue && known > available.Value) explanations.Add("A proposta excede o tempo disponível por itens mantidos explicitamente.");
+        if (availability.PreferMinimumVersion) explanations.Add("Quando disponível, a versão mínima foi sugerida como execução viável, sem contar como alvo completo.");
+        if (items.Count == 0) explanations.Add("Nenhum hábito autorizado pendente foi encontrado para hoje.");
+
+        return new(plan.LocalDate, available, known, available.HasValue && known > available.Value, items, explanations, missing.Distinct().ToList(), alternatives);
     }
 
     private static ProgressHabitRow ToProgressRow(Habit h) => new()

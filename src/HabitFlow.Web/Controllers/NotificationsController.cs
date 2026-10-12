@@ -57,7 +57,7 @@ public sealed class NotificationsController(NotificationService notifications, N
     }
 
     [ValidateAntiForgeryToken, EnableRateLimiting("notification-test"), HttpPost("notifications/push/test")]
-    public async Task<IActionResult> TestPush(CancellationToken ct) { var count=await push.SendSafeReminderAsync(this.CurrentClientId(),this.CurrentUserId(),ct); TempData[count>0?"Success":"Info"]=count>0?"Notificação de teste enviada.":"Nenhum dispositivo ativo recebeu o teste."; return RedirectToAction(nameof(Preferences)); }
+    public async Task<IActionResult> TestPush(CancellationToken ct) { var count=await push.SendSafeReminderAsync(this.CurrentClientId(),this.CurrentUserId(),ct:ct); TempData[count>0?"Success":"Info"]=count>0?"Notificação aceita pelo provedor para dispositivo ativo.":"Nenhum dispositivo ativo recebeu o teste."; return RedirectToAction(nameof(Preferences)); }
 
     private void SetActionFeedback(bool changed,string success){TempData[changed?"Success":"Error"]=changed?success:"Essa notificação não existe ou não está disponível para sua conta.";}
 }

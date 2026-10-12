@@ -107,6 +107,8 @@ public sealed class CalendarExportService(
             }
 
             AppendLine(output, $"SUMMARY:{Escape(item.Name)}");
+            AppendLine(output, "TRANSP:TRANSPARENT");
+            AppendLine(output, "X-HABITFLOW-COMPLETION:false");
             AppendLine(output, "END:VEVENT");
         }
 

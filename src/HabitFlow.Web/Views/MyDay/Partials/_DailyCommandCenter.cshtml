@@ -13,8 +13,33 @@
   <article class="daily-command__card daily-command__card--wide">
     <div><span class="daily-command__eyebrow">Próximas ações</span><h2>Um passo de cada vez</h2></div>
     @if (Model.NextActions.Count == 0) { <p>Nenhuma pendência ativa para hoje.</p> }
-    else { <ol class="daily-next">@foreach (var action in Model.NextActions) { <li><span style="--habit-color:@action.Color"></span><strong>@action.Name</strong><small>@action.EstimatedMinutes min</small></li> }</ol> }
+    else { <ol class="daily-next">@foreach (var action in Model.NextActions) { <li><span style="--habit-color:@action.Color"></span><strong>@action.Name</strong><small>@(action.EstimatedMinutes > 0 ? $"{action.EstimatedMinutes} min" : "sem duração")</small></li> }</ol> }
     <a class="btn btn-success" href="/habits/create">Criar novo hábito</a>
+  </article>
+  <article class="daily-command__card daily-command__card--wide">
+    <div><span class="daily-command__eyebrow">Rotina que cabe no dia</span><h2>Informe sua disponibilidade</h2></div>
+    <form class="daily-availability" method="get" action="/my-day">
+      <label>Tempo disponível <input type="number" name="availableMinutes" min="1" max="1440" placeholder="min" value="@Model.Proposal?.AvailableMinutes" /></label>
+      <label>Início <input type="time" name="windowStart" /></label>
+      <label>Fim <input type="time" name="windowEnd" /></label>
+      <label class="daily-check"><input type="checkbox" name="preferMinimumVersion" value="true" /> Preferir versão mínima</label>
+      <button class="btn btn-outline-success" type="submit">Gerar proposta</button>
+    </form>
+    @if (Model.Proposal is not null)
+    {
+      <div class="daily-proposal" aria-label="Proposta determinística de rotina">
+        <p><strong>@Model.Proposal.KnownEstimatedMinutes min conhecidos</strong>@(Model.Proposal.AvailableMinutes.HasValue ? $" de {Model.Proposal.AvailableMinutes} min disponíveis" : " sem limite de tempo informado").</p>
+        @if (Model.Proposal.ExceedsAvailability) { <p class="daily-proposal__alert">A proposta passa do tempo informado porque itens mantidos pelo usuário não foram removidos.</p> }
+        <ol class="daily-next">
+          @foreach (var item in Model.Proposal.Items.Where(x => x.Included))
+          {
+            <li><span></span><strong>@item.Name</strong><small>@(item.EstimatedMinutes.HasValue ? $"{item.EstimatedMinutes} min" : "sem duração")@(item.UsesMinimumVersion ? " · mínimo" : "")</small></li>
+          }
+        </ol>
+        @if (Model.Proposal.Alternatives.Count > 0) { <details><summary>Alternativas</summary><ul>@foreach (var text in Model.Proposal.Alternatives) { <li>@text</li> }</ul></details> }
+        @if (Model.Proposal.MissingData.Count > 0) { <details><summary>Dados ausentes</summary><ul>@foreach (var text in Model.Proposal.MissingData) { <li>@text</li> }</ul></details> }
+      </div>
+    }
   </article>
   <article class="daily-command__card daily-command__card--wide">
     <div class="daily-week__header"><div><span class="daily-command__eyebrow">Resumo semanal</span><h2>Seu ritmo nos últimos 7 dias</h2></div><a href="/progress/calendar">Abrir calendário</a></div>

@@ -46,7 +46,8 @@ public sealed class ReminderDispatchProcessor(
                 await repository.CompleteAsync(candidate, next, clock.GetUtcNow(), ct);
                 // Internal notification is committed by CompleteAsync first. Push is complementary and
                 // its provider/database failure must never cause the reminder dispatch to be retried.
-                try { await pushNotifications.SendSafeReminderAsync(candidate.ClientId, candidate.UserId, ct); }
+                try { await pushNotifications.SendSafeReminderAsync(candidate.ClientId, candidate.UserId,
+                    new(candidate.ReminderId, candidate.ScheduledFor, "BrowserPush"), ct); }
                 catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; }
                 catch (Exception pushError) { logger.LogWarning("Push delivery failed safely for dispatch {DispatchId}: {ErrorType}", candidate.DispatchId, pushError.GetType().Name); }
                 delivered++;

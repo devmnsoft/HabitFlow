@@ -215,6 +215,14 @@ public sealed class IntegrationsController(
         {
             return BadRequest(new { error = "Selecione um arquivo CSV válido para importar." });
         }
+        if (file.Length > 512 * 1024)
+        {
+            return BadRequest(new { error = "O arquivo CSV deve ter até 512 KB." });
+        }
+        if (!string.Equals(Path.GetExtension(file.FileName), ".csv", StringComparison.OrdinalIgnoreCase))
+        {
+            return BadRequest(new { error = "Envie um arquivo com extensão .csv." });
+        }
 
         using var stream = file.OpenReadStream();
         var simulation = await portability.SimulateHabitsCsvAsync(client, current.UserId, stream, ct);

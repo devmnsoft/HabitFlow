@@ -75,7 +75,7 @@ public sealed class ReminderDispatchRepository(DbConnectionFactory connections) 
                    locked_by=null,locked_until=null,updated_at=@Now
              where id=@ReminderId and client_id=@ClientId and user_id=@UserId and habit_id=@HabitId;
 
-            update habitflow.reminder_dispatches set status='Delivered',attempt_count=attempt_count+1,
+            update habitflow.reminder_dispatches set status='ProviderAccepted',attempt_count=attempt_count+1,
                    processed_at=@Now,locked_by=null,locked_until=null,error_code=null,last_error_at=null
              where id=@DispatchId and client_id=@ClientId and user_id=@UserId and habit_id=@HabitId
                and habit_reminder_id=@ReminderId;

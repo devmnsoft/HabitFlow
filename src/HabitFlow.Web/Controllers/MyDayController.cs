@@ -11,11 +11,16 @@ namespace HabitFlow.Web.Controllers;
 public sealed class MyDayController(DailyRoutinePlannerService planner,HabitScheduleExceptionService schedule,DailyRoutineActionService actions,CompleteHabitUseCase complete,UndoHabitCompletionUseCase undo,UserTimeZoneService timeZone, ILogger<MyDayController> logger) : Controller
 {
     [HttpGet("")]
-    public async Task<IActionResult> Index(CancellationToken ct)
+    public async Task<IActionResult> Index(int? availableMinutes, TimeOnly? windowStart, TimeOnly? windowEnd, bool preferMinimumVersion = false, [FromQuery] Guid[]? priorityHabitIds = null, [FromQuery] Guid[]? keepHabitIds = null, CancellationToken ct = default)
     {
         try
         {
-            var model = DailyRoutineViewModelMapper.From(await planner.BuildAsync(new(this.CurrentClientId(),this.CurrentUserId(),timeZone.Today()),ct));
+            var plan = await planner.BuildAsync(new(this.CurrentClientId(),this.CurrentUserId(),timeZone.Today()),ct);
+            DailyRoutineProposal? proposal = null;
+            if (availableMinutes.HasValue || windowStart.HasValue || windowEnd.HasValue || preferMinimumVersion || priorityHabitIds?.Length > 0 || keepHabitIds?.Length > 0)
+                proposal = planner.Propose(plan, new(availableMinutes, windowStart, windowEnd,
+                    (priorityHabitIds ?? []).ToHashSet(), preferMinimumVersion, (keepHabitIds ?? []).ToHashSet()));
+            var model = DailyRoutineViewModelMapper.From(plan, proposal);
             var greeting = timeZone.LocalNow().Hour switch { < 12 => "Bom dia", < 18 => "Boa tarde", _ => "Boa noite" };
             logger.LogInformation("daily_center.opened CorrelationId={CorrelationId}", HttpContext.TraceIdentifier);
             return View(model with { Greeting = greeting });

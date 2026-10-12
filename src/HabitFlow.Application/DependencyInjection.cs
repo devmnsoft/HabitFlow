@@ -119,6 +119,7 @@ public static class DependencyInjection
         services.AddScoped<HabitScheduleExceptionService>();
         services.AddScoped<DailyRoutineActionService>();
         services.AddScoped<WeeklyReviewService>();
+        services.AddScoped<RoutineExperimentService>();
         services.AddScoped<HabitInsightService>();
         services.AddSingleton<ReportDocumentExporter>();
         services.AddSingleton<RoutineRecommendationService>();

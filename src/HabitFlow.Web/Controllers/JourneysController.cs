@@ -8,17 +8,18 @@ namespace HabitFlow.Web.Controllers;
 
 [Authorize]
 [Route("journeys")]
-public sealed class JourneysController(HabitJourneyService journeys, IUserFacingErrorMapper errors) : Controller
+public sealed class JourneysController(HabitJourneyService journeys, HabitQueryService habitQueries, IUserFacingErrorMapper errors) : Controller
 {
     [HttpGet("")]
-    public async Task<IActionResult> Index(CancellationToken ct) =>
-        View(new JourneysIndexViewModel(await journeys.ListAsync(this.CurrentClientId(), ct)));
+    public async Task<IActionResult> Index([FromQuery] JourneyCatalogQuery query, CancellationToken ct) =>
+        View(new JourneysIndexViewModel(await journeys.ListAsync(this.CurrentClientId(), query, ct)));
 
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> Details(Guid id, CancellationToken ct)
     {
         var details = await journeys.DetailsAsync(id, this.CurrentClientId(), this.CurrentUserId(), ct);
-        return details is null ? NotFound() : View(new JourneyDetailsViewModel(details));
+        var existing = await habitQueries.SearchAsync(this.CurrentClientId(), this.CurrentUserId(), new HabitListQuery(PageSize: 200), ct);
+        return details is null ? NotFound() : View(new JourneyDetailsViewModel(details, existing.Items));
     }
 
     [HttpPost("{id:guid}/join"), ValidateAntiForgeryToken]
@@ -54,8 +55,10 @@ public sealed class JourneysController(HabitJourneyService journeys, IUserFacing
             var frequency = ParseFrequency(Request.Form[$"frequency_{key}"].ToString());
             var reminder = TimeOnly.TryParse(Request.Form[$"reminder_{key}"].ToString(), out var parsedReminder) ? parsedReminder : (TimeOnly?)null;
             var selectedDays = ParseDays(Request.Form[$"days_{key}"]);
+            var existingHabitId = Guid.TryParse(Request.Form[$"existingHabitId_{key}"].ToString(), out var parsedHabitId) ? parsedHabitId : (Guid?)null;
+            var duplicateExisting = Request.Form[$"duplicateExisting_{key}"].Any(value => value == "true");
             int? target = frequency == HabitFrequencyType.CustomWeekly ? selectedDays.Count : null;
-            return new JoinHabitJourneyHabitSelection(stepId, name, frequency, target, selectedDays, reminder);
+            return new JoinHabitJourneyHabitSelection(stepId, name, frequency, target, selectedDays, reminder, existingHabitId, duplicateExisting);
         }).ToList();
     }
 

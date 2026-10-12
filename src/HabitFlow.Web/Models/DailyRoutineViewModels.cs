@@ -14,13 +14,16 @@ public sealed record DailyRoutineViewModel(
     IReadOnlyList<RoutineHabitCardViewModel> NextActions,
     int Overdue,
     int CurrentStreak,
-    IReadOnlyList<DailyPulseViewModel> WeeklyPulse)
+    IReadOnlyList<DailyPulseViewModel> WeeklyPulse,
+    DailyRoutineProposalViewModel? Proposal = null)
 {
     public int Pending => Math.Max(0, Scheduled - Completed);
     public bool PlanLimitReached { get; init; }
 }
 
 public sealed record DailyPulseViewModel(string Label, int Percentage, bool IsToday);
+public sealed record DailyRoutineProposalViewModel(int? AvailableMinutes, int KnownEstimatedMinutes, bool ExceedsAvailability, IReadOnlyList<DailyRoutineProposalItemViewModel> Items, IReadOnlyList<string> Explanations, IReadOnlyList<string> MissingData, IReadOnlyList<string> Alternatives);
+public sealed record DailyRoutineProposalItemViewModel(Guid HabitId, string Name, int? EstimatedMinutes, bool Included, bool UsesMinimumVersion, string Reason);
 
 public sealed record RoutinePeriodGroupViewModel(
     string Key,
@@ -58,7 +61,7 @@ public static class DailyRoutineViewModelMapper
         ("moved", "Não programados hoje", "Estes passos já estão organizados para outro momento.", "calendar")
     ];
 
-    public static DailyRoutineViewModel From(DailyRoutinePlan plan)
+    public static DailyRoutineViewModel From(DailyRoutinePlan plan, DailyRoutineProposal? proposal = null)
     {
         var cards = plan.Items.Select(ToCard).ToList();
         var groups = Sections.Select(section => new RoutinePeriodGroupViewModel(
@@ -87,8 +90,13 @@ public static class DailyRoutineViewModelMapper
                 offset == 0))
             .ToList();
         return new(plan.LocalDate, plan.Scheduled, plan.Completed, plan.Percentage, groups, "Olá", motivation, focus,
-            nextActions, overdue, plan.Completed > 0 ? 1 : 0, pulse);
+            nextActions, overdue, plan.Completed > 0 ? 1 : 0, pulse, proposal is null ? null : ToProposal(proposal));
     }
+
+    private static DailyRoutineProposalViewModel ToProposal(DailyRoutineProposal proposal) =>
+        new(proposal.AvailableMinutes, proposal.KnownEstimatedMinutes, proposal.ExceedsAvailability,
+            proposal.Items.Select(x => new DailyRoutineProposalItemViewModel(x.HabitId, x.Name, x.EstimatedMinutes, x.Included, x.UsesMinimumVersion, x.Reason)).ToList(),
+            proposal.Explanations, proposal.MissingData, proposal.Alternatives);
 
     private static RoutineHabitCardViewModel ToCard(DailyRoutineItem item) => new(
         item.HabitId, item.Name, item.Color, item.Category ?? "Sem categoria", item.IconCode ?? "check",
