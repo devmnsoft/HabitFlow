@@ -40,12 +40,18 @@ public sealed class V6230SmartAutomationJourneyTests
     {
         var root = RepositoryRootLocator.Find();
         var migration = File.ReadAllText(Path.Combine(root, "database", "migrations", "098_v6230_smart_automation_journeys.sql"));
+        var hook = File.ReadAllText(Path.Combine(root, "scripts", "database", "compatibility-hooks", "098_security_audit_events_contract.sql"));
+        var completeScript = File.ReadAllText(Path.Combine(root, "database", "script_completo.sql"));
         Assert.Contains("CREATE TABLE IF NOT EXISTS habitflow.habit_journeys", migration, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("CREATE TABLE IF NOT EXISTS habitflow.habit_automations", migration, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("CREATE TABLE IF NOT EXISTS habitflow.habit_monthly_reviews", migration, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("CREATE TABLE IF NOT EXISTS habitflow.ai_usage_events", migration, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("CREATE TABLE IF NOT EXISTS habitflow.security_audit_events", migration, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("language varchar(10)", migration, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("add column if not exists created_at", hook, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("coalesce(created_at, occurred_at, now())", hook, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("ALTER TABLE habitflow.security_audit_events ADD COLUMN IF NOT EXISTS created_at", completeScript, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("ix_security_audit_events_lookup", completeScript, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]

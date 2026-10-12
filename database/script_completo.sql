@@ -3335,6 +3335,17 @@ CREATE TABLE IF NOT EXISTS habitflow.security_audit_events (
     CONSTRAINT ck_security_audit_severity CHECK (severity IN ('Info','Warning','Critical'))
 );
 
+ALTER TABLE habitflow.security_audit_events ADD COLUMN IF NOT EXISTS event_code varchar(80);
+ALTER TABLE habitflow.security_audit_events ADD COLUMN IF NOT EXISTS result varchar(30) NOT NULL DEFAULT 'Recorded';
+ALTER TABLE habitflow.security_audit_events ADD COLUMN IF NOT EXISTS metadata_json text NULL;
+ALTER TABLE habitflow.security_audit_events ADD COLUMN IF NOT EXISTS created_at timestamptz;
+UPDATE habitflow.security_audit_events
+   SET event_code = coalesce(event_code, event_type, 'security.event'),
+       created_at = coalesce(created_at, occurred_at, now())
+ WHERE event_code IS NULL OR created_at IS NULL;
+ALTER TABLE habitflow.security_audit_events ALTER COLUMN event_code SET NOT NULL;
+ALTER TABLE habitflow.security_audit_events ALTER COLUMN created_at SET DEFAULT now();
+ALTER TABLE habitflow.security_audit_events ALTER COLUMN created_at SET NOT NULL;
 CREATE INDEX IF NOT EXISTS ix_security_audit_events_lookup ON habitflow.security_audit_events(client_id, user_id, created_at DESC);
 
 -- Seed Jornadas Guiadas Oficiais
@@ -3583,43 +3594,54 @@ CREATE TABLE IF NOT EXISTS habitflow.ai_mobile_recommendations (
 CREATE INDEX IF NOT EXISTS ix_ai_mobile_rec_client_user
     ON habitflow.ai_mobile_recommendations (client_id, user_id, recommendation_type, created_at DESC);
 
-INSERT INTO habitflow.plan_features (code, name, value_type, default_bool_value, default_int_value, default_string_value)
+INSERT INTO habitflow.feature_catalog (code, name, value_type, category, implementation_status, is_marketable)
 VALUES
-    ('webhooks', 'Webhooks de Saída', 'boolean', false, null, null),
-    ('public_api', 'API Pública Rest', 'boolean', false, null, null),
-    ('data_portability', 'Portabilidade de Dados (Export/Import)', 'boolean', true, null, null),
-    ('push_notifications', 'Notificações Web Push', 'boolean', false, null, null),
-    ('advanced_offline', 'Modo Offline Avançado', 'boolean', false, null, null)
-ON CONFLICT (code) DO NOTHING;
+    ('webhooks', 'Webhooks de Saída', 'Boolean', 'Integrações', 'Implemented', true),
+    ('public_api', 'API Pública Rest', 'Boolean', 'Integrações', 'Implemented', true),
+    ('data_portability', 'Portabilidade de Dados (Export/Import)', 'Boolean', 'Privacidade', 'Implemented', true),
+    ('push_notifications', 'Notificações Web Push', 'Boolean', 'Notificações', 'Implemented', true),
+    ('advanced_offline', 'Modo Offline Avançado', 'Boolean', 'Mobile', 'Implemented', true)
+ON CONFLICT (code) DO UPDATE
+SET name = EXCLUDED.name,
+    value_type = EXCLUDED.value_type,
+    category = EXCLUDED.category,
+    implementation_status = EXCLUDED.implementation_status,
+    is_marketable = EXCLUDED.is_marketable;
 
-INSERT INTO habitflow.plan_feature_entitlements (plan_code, feature_code, bool_value, int_value)
-VALUES
+INSERT INTO habitflow.plan_features (plan_id, feature_code, bool_value, int_value)
+SELECT p.id, v.feature_code, v.bool_value, v.int_value
+FROM (VALUES
     ('ritmo', 'webhooks', true, 2),
     ('ritmo', 'public_api', true, 3),
-    ('ritmo', 'data_portability', true, null),
-    ('ritmo', 'push_notifications', true, null),
-    ('ritmo', 'advanced_offline', true, null),
+    ('ritmo', 'data_portability', true, null::integer),
+    ('ritmo', 'push_notifications', true, null::integer),
+    ('ritmo', 'advanced_offline', true, null::integer),
     ('evolucao', 'webhooks', true, 10),
     ('evolucao', 'public_api', true, 10),
-    ('evolucao', 'data_portability', true, null),
-    ('evolucao', 'push_notifications', true, null),
-    ('evolucao', 'advanced_offline', true, null),
+    ('evolucao', 'data_portability', true, null::integer),
+    ('evolucao', 'push_notifications', true, null::integer),
+    ('evolucao', 'advanced_offline', true, null::integer),
     ('team', 'webhooks', true, 20),
     ('team', 'public_api', true, 20),
-    ('team', 'data_portability', true, null),
-    ('team', 'push_notifications', true, null),
-    ('team', 'advanced_offline', true, null),
+    ('team', 'data_portability', true, null::integer),
+    ('team', 'push_notifications', true, null::integer),
+    ('team', 'advanced_offline', true, null::integer),
     ('enterprise', 'webhooks', true, -1),
     ('enterprise', 'public_api', true, -1),
-    ('enterprise', 'data_portability', true, null),
-    ('enterprise', 'push_notifications', true, null),
-    ('enterprise', 'advanced_offline', true, null),
-    ('free', 'data_portability', true, null),
+    ('enterprise', 'data_portability', true, null::integer),
+    ('enterprise', 'push_notifications', true, null::integer),
+    ('enterprise', 'advanced_offline', true, null::integer),
+    ('free', 'data_portability', true, null::integer),
     ('free', 'webhooks', false, 0),
     ('free', 'public_api', false, 0),
-    ('free', 'push_notifications', false, null),
-    ('free', 'advanced_offline', false, null)
-ON CONFLICT (plan_code, feature_code) DO NOTHING;
+    ('free', 'push_notifications', false, null::integer),
+    ('free', 'advanced_offline', false, null::integer)
+) AS v(plan_code, feature_code, bool_value, int_value)
+JOIN habitflow.plans p ON p.code = v.plan_code
+ON CONFLICT (plan_id, feature_code) DO UPDATE
+SET bool_value = EXCLUDED.bool_value,
+    int_value = EXCLUDED.int_value,
+    updated_at = CURRENT_TIMESTAMP;
 -- END include database/migrations/100_v6250_pwa_offline_integrations_api_webhooks_portability.sql
 
 -- START include database/migrations/101_v6260_production_observability_lgpd_backup_incidents_governance.sql
@@ -3644,6 +3666,18 @@ CREATE TABLE IF NOT EXISTS habitflow.system_health_history (
     recorded_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+ALTER TABLE habitflow.system_health_history ADD COLUMN IF NOT EXISTS component_name varchar(60);
+ALTER TABLE habitflow.system_health_history ADD COLUMN IF NOT EXISTS duration_ms integer NOT NULL DEFAULT 0;
+ALTER TABLE habitflow.system_health_history ADD COLUMN IF NOT EXISTS error_message text NULL;
+ALTER TABLE habitflow.system_health_history ADD COLUMN IF NOT EXISTS recorded_at timestamptz;
+UPDATE habitflow.system_health_history
+   SET component_name = coalesce(component_name, check_name, 'system'),
+       recorded_at = coalesce(recorded_at, checked_at, now()),
+       error_message = coalesce(error_message, message)
+ WHERE component_name IS NULL OR recorded_at IS NULL OR error_message IS NULL;
+ALTER TABLE habitflow.system_health_history ALTER COLUMN component_name SET NOT NULL;
+ALTER TABLE habitflow.system_health_history ALTER COLUMN recorded_at SET DEFAULT now();
+ALTER TABLE habitflow.system_health_history ALTER COLUMN recorded_at SET NOT NULL;
 CREATE INDEX IF NOT EXISTS ix_system_health_history_comp_date
     ON habitflow.system_health_history (component_name, recorded_at DESC);
 
@@ -3677,6 +3711,27 @@ CREATE TABLE IF NOT EXISTS habitflow.consent_records (
     revoked_at TIMESTAMPTZ NULL
 );
 
+ALTER TABLE habitflow.consent_records ADD COLUMN IF NOT EXISTS consent_type varchar(60);
+ALTER TABLE habitflow.consent_records ADD COLUMN IF NOT EXISTS policy_version varchar(30);
+ALTER TABLE habitflow.consent_records ADD COLUMN IF NOT EXISTS ip_address varchar(45) NULL;
+ALTER TABLE habitflow.consent_records ADD COLUMN IF NOT EXISTS user_agent text NULL;
+ALTER TABLE habitflow.consent_records ADD COLUMN IF NOT EXISTS granted_at timestamptz;
+ALTER TABLE habitflow.consent_records ADD COLUMN IF NOT EXISTS revoked_at timestamptz NULL;
+UPDATE habitflow.consent_records
+   SET consent_type = coalesce(
+           consent_type,
+           case
+             when purpose in ('TermsOfService', 'PrivacyPolicy', 'Marketing', 'Analytics', 'DataProcessing') then purpose
+             else 'DataProcessing'
+           end),
+       policy_version = coalesce(policy_version, document_version, '1.0'),
+       granted_at = coalesce(granted_at, recorded_at, now())
+ WHERE consent_type IS NULL OR policy_version IS NULL OR granted_at IS NULL;
+ALTER TABLE habitflow.consent_records ALTER COLUMN consent_type SET NOT NULL;
+ALTER TABLE habitflow.consent_records ALTER COLUMN policy_version SET DEFAULT '1.0';
+ALTER TABLE habitflow.consent_records ALTER COLUMN policy_version SET NOT NULL;
+ALTER TABLE habitflow.consent_records ALTER COLUMN granted_at SET DEFAULT now();
+ALTER TABLE habitflow.consent_records ALTER COLUMN granted_at SET NOT NULL;
 CREATE INDEX IF NOT EXISTS ix_consent_records_user
     ON habitflow.consent_records (user_id, consent_type, granted_at DESC);
 
