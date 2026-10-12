@@ -112,6 +112,42 @@ public sealed class NavigationService(INavigationAccessEvaluator? accessEvaluato
             IsEnabled: true),
 
         new(
+            Code: "monthly-review",
+            Label: "Mês",
+            Description: "Revise o ciclo e escolha o próximo passo",
+            Icon: "progress",
+            Url: "/monthly-review",
+            Context: NavigationContext.Personal,
+            RequiredPermission: null,
+            RequiredFeature: null,
+            SortOrder: 18,
+            IsEnabled: true),
+
+        new(
+            Code: "priorities",
+            Label: "Prioridades",
+            Description: "Defina o foco do período",
+            Icon: "target",
+            Url: "/priorities",
+            Context: NavigationContext.Personal,
+            RequiredPermission: null,
+            RequiredFeature: null,
+            SortOrder: 18,
+            IsEnabled: true),
+
+        new(
+            Code: "routine-sessions",
+            Label: "Sessões",
+            Description: "Inicie, pause e retome rotinas",
+            Icon: "dashboard",
+            Url: "/routine-sessions",
+            Context: NavigationContext.Personal,
+            RequiredPermission: null,
+            RequiredFeature: null,
+            SortOrder: 19,
+            IsEnabled: true),
+
+        new(
             Code: "habits",
             Label: "Hábitos",
             Description: "Cuide da sua rotina",

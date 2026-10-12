@@ -1,0 +1,62 @@
+@model PrioritiesViewModel
+@{ ViewData["Title"] = "Prioridades"; }
+<main class="container py-4">
+  <header class="mb-4">
+    <span class="text-success fw-semibold">Prioridades pessoais</span>
+    <h1>Escolha o foco do período</h1>
+    <p class="text-secondary">A ordem orienta o Meu Dia e as sugestões. Nenhuma meta ou hábito é criado, apagado ou alterado sem confirmação.</p>
+  </header>
+  <section class="row g-4">
+    <div class="col-lg-7">
+      <form method="post" action="/priorities/save" class="card border-0 shadow-sm">
+        @Html.AntiForgeryToken()
+        <div class="card-body">
+          <h2 class="h5">Objetivos ativos</h2>
+          @if (Model.ActiveGoals.Count == 0)
+          {
+            <p class="text-secondary">Você ainda não tem objetivos ativos para priorizar.</p>
+            <a class="btn btn-success" href="/goals/create">Criar objetivo</a>
+          }
+          else
+          {
+            <p class="text-secondary">Marque na ordem desejada. A lista salva até cinco prioridades.</p>
+            <div class="list-group mb-3">
+              @foreach (var goal in Model.ActiveGoals)
+              {
+                var selected = Model.Priorities.Any(x => x.Priority.GoalId == goal.Id);
+                <label class="list-group-item d-flex gap-3 align-items-start">
+                  <input class="form-check-input mt-1" type="checkbox" name="GoalIds" value="@goal.Id" checked="@selected" />
+                  <span><strong>@goal.Title</strong><small class="d-block text-secondary">@goal.CurrentValue/@goal.TargetValue · @goal.TargetType</small></span>
+                </label>
+              }
+            </div>
+            <label class="form-label">Disponibilidade semanal opcional
+              <input class="form-control" type="number" name="WeeklyAvailableMinutes" min="1" max="10080" value="@Model.Priorities.FirstOrDefault()?.Priority.WeeklyAvailableMinutes" />
+            </label>
+            <button class="btn btn-success" type="submit">Salvar prioridades</button>
+          }
+        </div>
+      </form>
+    </div>
+    <aside class="col-lg-5">
+      <div class="card border-0 bg-light">
+        <div class="card-body">
+          <h2 class="h5">Configuração atual</h2>
+          @if (Model.Priorities.Count == 0)
+          {
+            <p class="text-secondary">Nenhuma prioridade ativa. O Meu Dia usa apenas agenda, sessões e pendências canônicas.</p>
+          }
+          else
+          {
+            <ol class="mb-0">
+              @foreach (var item in Model.Priorities)
+              {
+                <li class="mb-2"><strong>@item.Goal.Title</strong><small class="d-block text-secondary">@item.LinkedHabits.Count hábito(s) vinculado(s) · versão @item.Priority.Version</small></li>
+              }
+            </ol>
+          }
+        </div>
+      </div>
+    </aside>
+  </section>
+</main>

@@ -54,7 +54,9 @@ public static class DependencyInjection
         services.AddScoped<IHabitScheduleExceptionRepository, HabitScheduleExceptionRepository>();
         services.AddScoped<IDailyRoutineOverrideRepository, DailyRoutineOverrideRepository>();
         services.AddScoped<IWeeklyReviewRepository, WeeklyReviewRepository>();
+        services.AddScoped<IPersonalPlanningRepository, PersonalPlanningRepository>();
         services.AddScoped<IRoutineExperimentRepository, RoutineExperimentRepository>();
+        services.AddScoped<IRoutineSessionRepository, RoutineSessionRepository>();
         services.AddScoped<IUserReportRepository, UserReportRepository>();
         services.AddScoped<IUserUiPreferenceRepository, UserUiPreferenceRepository>();
         services.AddScoped<IAuditRepository, AuditRepository>();

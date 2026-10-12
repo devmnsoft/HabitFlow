@@ -4,6 +4,10 @@
 - [ ] Migrar relatórios, CSV pt-BR e impressão para o snapshot canônico.
 - [ ] Executar build, PostgreSQL, testes funcionais, Playwright e publish com as ferramentas requeridas.
 - [ ] Registrar workflow, SHA e jobs antes de declarar CI verde.
+- [x] Criar primeira fatia funcional de sessões de rotina nomeadas com preparação por tempo, início, pausa, retomada, encerramento, histórico, idempotência e persistência multiaba/dispositivo.
+- [x] Criar primeira fatia funcional de prioridades pessoais, próximo passo determinístico e revisão mensal rascunhável/confirmável com métricas canônicas.
+- [ ] Homologar sessões de rotina com Playwright autenticado em 320, 375, 768 e 1440px e PostgreSQL descartável com cenários comportamentais completos.
+- [ ] Homologar revisão mensal/próximo passo com Playwright autenticado, dois tenants reais e runner canônico de migrations sem bloqueio de CRLF no Windows.
 
 ## v6.8.1
 - [ ] Executar a matriz PostgreSQL/WebApplicationFactory/Playwright em agente com .NET 10 e PostgreSQL.

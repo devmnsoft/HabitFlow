@@ -8,19 +8,21 @@ namespace HabitFlow.Web.Controllers;
 
 [Authorize]
 [Route("my-day")]
-public sealed class MyDayController(DailyRoutinePlannerService planner,HabitScheduleExceptionService schedule,DailyRoutineActionService actions,CompleteHabitUseCase complete,UndoHabitCompletionUseCase undo,UserTimeZoneService timeZone, ILogger<MyDayController> logger) : Controller
+public sealed class MyDayController(DailyRoutinePlannerService planner,HabitScheduleExceptionService schedule,DailyRoutineActionService actions,CompleteHabitUseCase complete,UndoHabitCompletionUseCase undo,NextStepService nextSteps,UserTimeZoneService timeZone, ILogger<MyDayController> logger) : Controller
 {
     [HttpGet("")]
     public async Task<IActionResult> Index(int? availableMinutes, TimeOnly? windowStart, TimeOnly? windowEnd, bool preferMinimumVersion = false, [FromQuery] Guid[]? priorityHabitIds = null, [FromQuery] Guid[]? keepHabitIds = null, CancellationToken ct = default)
     {
         try
         {
-            var plan = await planner.BuildAsync(new(this.CurrentClientId(),this.CurrentUserId(),timeZone.Today()),ct);
+            var today = timeZone.Today();
+            var plan = await planner.BuildAsync(new(this.CurrentClientId(),this.CurrentUserId(),today),ct);
             DailyRoutineProposal? proposal = null;
             if (availableMinutes.HasValue || windowStart.HasValue || windowEnd.HasValue || preferMinimumVersion || priorityHabitIds?.Length > 0 || keepHabitIds?.Length > 0)
                 proposal = planner.Propose(plan, new(availableMinutes, windowStart, windowEnd,
                     (priorityHabitIds ?? []).ToHashSet(), preferMinimumVersion, (keepHabitIds ?? []).ToHashSet()));
-            var model = DailyRoutineViewModelMapper.From(plan, proposal);
+            var suggestions = await nextSteps.BuildAsync(this.CurrentClientId(), this.CurrentUserId(), today, ct);
+            var model = DailyRoutineViewModelMapper.From(plan, proposal, suggestions);
             var greeting = timeZone.LocalNow().Hour switch { < 12 => "Bom dia", < 18 => "Boa tarde", _ => "Boa noite" };
             logger.LogInformation("daily_center.opened CorrelationId={CorrelationId}", HttpContext.TraceIdentifier);
             return View(model with { Greeting = greeting });
@@ -60,4 +62,8 @@ public sealed class MyDayController(DailyRoutinePlannerService planner,HabitSche
     [HttpPost("{habitId:guid}/reorder"),ValidateAntiForgeryToken]
     public async Task<IActionResult> Reorder(Guid habitId,int sortOrder,int version,CancellationToken ct)
     { var result=await actions.ReorderAsync(this.CurrentClientId(),this.CurrentUserId(),habitId,timeZone.Today(),sortOrder,version,ct); TempData[result.Succeeded?"Success":"Error"]=result.Message; return RedirectToAction(nameof(Index)); }
+
+    [HttpPost("next-step/dismiss"),ValidateAntiForgeryToken]
+    public async Task<IActionResult> DismissNextStep(string key,CancellationToken ct)
+    { await nextSteps.DismissAsync(this.CurrentClientId(),this.CurrentUserId(),key,timeZone.Today(),ct); TempData["Success"]="Sugestão dispensada apenas para hoje. A agenda continua preservada."; return RedirectToAction(nameof(Index)); }
 }
