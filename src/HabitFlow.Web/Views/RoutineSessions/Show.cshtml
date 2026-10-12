@@ -1,0 +1,82 @@
+@model HabitFlow.Web.Models.RoutineSessionDetailsViewModel
+@{
+    ViewData["Title"] = Model.Details.Session.Name;
+    string NewKey() => Guid.NewGuid().ToString("N");
+    var session = Model.Details.Session;
+}
+<main class="container py-4">
+  <div class="d-flex flex-wrap align-items-start justify-content-between gap-3 mb-4">
+    <div>
+      <h1 class="h3 mb-1">@session.Name</h1>
+      <p class="text-secondary mb-0">@Model.Message</p>
+      <p class="small text-secondary mt-1 mb-0">Status confirmado: @session.Status · versão @session.Version</p>
+    </div>
+    <a class="btn btn-outline-secondary" href="/routine-sessions">Preparar outra</a>
+  </div>
+
+  <div class="d-flex flex-wrap gap-2 mb-4" aria-label="Controles da sessão">
+    @if (session.Status == "Prepared")
+    {
+      <form method="post" action="/routine-sessions/@session.Id/start">@Html.AntiForgeryToken()<input type="hidden" name="IdempotencyKey" value="@NewKey()"><button class="btn btn-primary">Iniciar</button></form>
+    }
+    @if (session.Status == "InProgress")
+    {
+      <form method="post" action="/routine-sessions/@session.Id/pause">@Html.AntiForgeryToken()<input type="hidden" name="IdempotencyKey" value="@NewKey()"><button class="btn btn-outline-primary">Pausar</button></form>
+      <form method="post" action="/routine-sessions/@session.Id/close" class="d-flex gap-2 flex-wrap">@Html.AntiForgeryToken()<input type="hidden" name="IdempotencyKey" value="@NewKey()"><input class="form-control" name="Reflection" maxlength="1000" placeholder="Reflexão privada opcional"><button class="btn btn-success">Encerrar</button></form>
+    }
+    @if (session.Status == "Paused")
+    {
+      <form method="post" action="/routine-sessions/@session.Id/resume">@Html.AntiForgeryToken()<input type="hidden" name="IdempotencyKey" value="@NewKey()"><button class="btn btn-primary">Retomar</button></form>
+      <form method="post" action="/routine-sessions/@session.Id/close">@Html.AntiForgeryToken()<input type="hidden" name="IdempotencyKey" value="@NewKey()"><button class="btn btn-success">Encerrar parcialmente</button></form>
+    }
+    @if (session.Status is "Prepared" or "InProgress" or "Paused")
+    {
+      <form method="post" action="/routine-sessions/@session.Id/cancel">@Html.AntiForgeryToken()<input type="hidden" name="IdempotencyKey" value="@NewKey()"><button class="btn btn-outline-danger">Cancelar</button></form>
+    }
+  </div>
+
+  @if (!string.IsNullOrWhiteSpace(session.ClosureSummary))
+  {
+    <section class="alert alert-success" aria-label="Resumo da sessão">@session.ClosureSummary</section>
+  }
+
+  <div class="vstack gap-3">
+    @foreach (var item in Model.Details.Items)
+    {
+      <section class="border rounded-2 p-3" aria-labelledby="item-@item.Id">
+        <div class="d-flex flex-wrap justify-content-between gap-3">
+          <div>
+            <h2 id="item-@item.Id" class="h5 mb-1">@item.SortOrder. @item.HabitNameSnapshot</h2>
+            <p class="text-secondary mb-1">@item.HabitCategorySnapshot</p>
+            <p class="small mb-0">Status: @item.Status · estimativa: @(item.EstimatedMinutes?.ToString() ?? "desconhecida") min · tempo registrado: @(item.EffectiveMinutes?.ToString() ?? "não informado")</p>
+          </div>
+          @if (session.Status == "InProgress" && item.Status != "Completed" && item.Status != "Skipped")
+          {
+            <div class="d-flex flex-wrap gap-2 align-items-start">
+              <form method="post" action="/routine-sessions/@session.Id/items/@item.Id/minimum" class="d-flex flex-wrap gap-2">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="IdempotencyKey" value="@NewKey()">
+                <input class="form-control form-control-sm" name="Quantity" type="number" step="0.01" min="0" placeholder="Qtd.">
+                <input class="form-control form-control-sm" name="EffectiveMinutes" type="number" min="0" max="1440" placeholder="Min.">
+                <button class="btn btn-sm btn-outline-primary">Mínimo</button>
+              </form>
+              <form method="post" action="/routine-sessions/@session.Id/items/@item.Id/complete" class="d-flex flex-wrap gap-2">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="IdempotencyKey" value="@NewKey()">
+                <input class="form-control form-control-sm" name="Quantity" type="number" step="0.01" min="0" placeholder="Qtd.">
+                <input class="form-control form-control-sm" name="EffectiveMinutes" type="number" min="0" max="1440" placeholder="Min.">
+                <button class="btn btn-sm btn-primary">Alvo completo</button>
+              </form>
+              <form method="post" action="/routine-sessions/@session.Id/items/@item.Id/skip" class="d-flex flex-wrap gap-2">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="IdempotencyKey" value="@NewKey()">
+                <input class="form-control form-control-sm" name="Reason" maxlength="240" placeholder="Motivo opcional">
+                <button class="btn btn-sm btn-outline-secondary">Pular</button>
+              </form>
+            </div>
+          }
+        </div>
+      </section>
+    }
+  </div>
+</main>

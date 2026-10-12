@@ -9,6 +9,7 @@ This matrix keeps the product journey, navigation entry points, route ownership,
 | Public overview | `/` | Public | Visitors | None | Anonymous only content; no tenant data. |
 | Habit library discovery | `/habit-library` | Public and Personal | Visitors and signed-in users | Public templates are visible; activation still checks plan limits. | Template activation revalidates tenant, ownership, and entitlement server-side. |
 | Daily command center | `/my-day` | Personal | Signed-in users | None | User and client ids come from claims; no route-supplied tenant trust. |
+| Routine sessions | `/routine-sessions` | Personal | Signed-in users | None | Sessions are tenant/user scoped, have one active prepared/in-progress/paused session per user, and commands use idempotency keys. |
 | Today dashboard | `/dashboard` | Personal | Signed-in users | None | Lists only habits for the current user/client pair. |
 | Guided habit creation | `/habits/create` | Personal | Signed-in users | Active habit limit via `active_habits_limit`. | POST requires antiforgery, authenticated identity, entitlement check, normalized schedule, planning validation, and audit event. |
 | Habit editing | `/habits/{id}/edit` | Personal | Habit owner | Existing habit ownership. | Loader and saver require matching user/client ids; adaptive changes preserve completions and history. |

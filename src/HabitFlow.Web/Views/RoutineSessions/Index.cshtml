@@ -1,0 +1,94 @@
+@model HabitFlow.Web.Models.RoutineSessionPrepareViewModel
+@{
+    ViewData["Title"] = "Sessões de rotina";
+    var idempotency = Guid.NewGuid().ToString("N");
+}
+<main class="container py-4">
+  <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+    <div>
+      <h1 class="h3 mb-1">Sessões de rotina</h1>
+      <p class="text-secondary mb-0">Prepare uma sequência para hoje, continue em outro dispositivo e preserve o histórico confirmado pelo servidor.</p>
+    </div>
+    <a class="btn btn-outline-secondary" href="/routine-sessions/history">Histórico</a>
+  </div>
+
+  @if (Model.ActiveSession is not null)
+  {
+    <section class="alert alert-info d-flex flex-wrap justify-content-between align-items-center gap-3" aria-labelledby="active-session-title">
+      <div>
+        <h2 id="active-session-title" class="h6 mb-1">Sessão ativa encontrada</h2>
+        <p class="mb-0">@Model.ActiveSession.Session.Name · @Model.ActiveSession.Session.Status · @Model.ActiveSession.Items.Count item(ns)</p>
+      </div>
+      <a class="btn btn-primary" href="/routine-sessions/@Model.ActiveSession.Session.Id">Retomar</a>
+    </section>
+  }
+
+  <section class="mb-4" aria-labelledby="prepare-title">
+    <h2 id="prepare-title" class="h5">Preparar por tempo disponível</h2>
+    <form method="get" action="/routine-sessions" class="row g-3 align-items-end">
+      <div class="col-12 col-md-4">
+        <label class="form-label" for="availableMinutes">Tempo disponível</label>
+        <input class="form-control" id="availableMinutes" name="availableMinutes" type="number" min="1" max="1440" value="@Model.AvailableMinutes" placeholder="Ex.: 30">
+      </div>
+      <div class="col-12 col-md-auto">
+        <button class="btn btn-outline-primary" type="submit">Atualizar proposta</button>
+      </div>
+    </form>
+    <p class="text-secondary mt-3 mb-0">@Model.Proposal.Message</p>
+  </section>
+
+  <form method="post" action="/routine-sessions/prepare" class="vstack gap-3">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="IdempotencyKey" value="@idempotency">
+    <input type="hidden" name="AvailableMinutes" value="@Model.AvailableMinutes">
+    <div class="row g-3">
+      <div class="col-12 col-lg-6">
+        <label class="form-label" for="Name">Nome da sessão</label>
+        <input class="form-control" id="Name" name="Name" maxlength="140" value="@Model.Name" autocomplete="off">
+      </div>
+    </div>
+
+    @if (Model.Proposal.Items.Count == 0)
+    {
+      <div class="border rounded-2 p-4 text-center">
+        <h2 class="h5">Nenhum hábito ativo disponível</h2>
+        <p class="text-secondary mb-0">Crie ou reative hábitos para preparar uma sessão.</p>
+      </div>
+    }
+    else
+    {
+      <div class="table-responsive">
+        <table class="table align-middle">
+          <thead>
+            <tr>
+              <th scope="col">Usar</th>
+              <th scope="col">Hábito</th>
+              <th scope="col">Estimativa</th>
+              <th scope="col">Mínimo</th>
+              <th scope="col">Alvo</th>
+            </tr>
+          </thead>
+          <tbody>
+          @foreach (var item in Model.Proposal.Items)
+          {
+            <tr class="@(item.FitsAvailableTime ? "" : "table-light")">
+              <td><input class="form-check-input" type="checkbox" name="HabitIds" value="@item.HabitId" checked="@item.FitsAvailableTime"></td>
+              <td>
+                <strong>@item.Name</strong>
+                <div class="small text-secondary">@item.Category</div>
+              </td>
+              <td>@(item.EstimatedMinutes?.ToString() ?? "desconhecida")</td>
+              <td>@(item.MinimumQuantity.HasValue ? $"{item.MinimumName ?? "mínimo"} · {item.MinimumQuantity}" : "não definida")</td>
+              <td>@(item.TargetQuantity.HasValue ? $"{item.TargetQuantity} {item.TargetUnit}" : "registro simples")</td>
+            </tr>
+          }
+          </tbody>
+        </table>
+      </div>
+      <div class="d-flex flex-wrap gap-2">
+        <button class="btn btn-primary" type="submit">Preparar sessão</button>
+        <a class="btn btn-outline-secondary" href="/my-day">Voltar ao Meu Dia</a>
+      </div>
+    }
+  </form>
+</main>

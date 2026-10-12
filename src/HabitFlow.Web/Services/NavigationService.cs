@@ -112,6 +112,18 @@ public sealed class NavigationService(INavigationAccessEvaluator? accessEvaluato
             IsEnabled: true),
 
         new(
+            Code: "routine-sessions",
+            Label: "Sessões",
+            Description: "Inicie, pause e retome rotinas",
+            Icon: "dashboard",
+            Url: "/routine-sessions",
+            Context: NavigationContext.Personal,
+            RequiredPermission: null,
+            RequiredFeature: null,
+            SortOrder: 19,
+            IsEnabled: true),
+
+        new(
             Code: "habits",
             Label: "Hábitos",
             Description: "Cuide da sua rotina",

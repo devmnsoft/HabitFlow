@@ -120,6 +120,7 @@ public static class DependencyInjection
         services.AddScoped<DailyRoutineActionService>();
         services.AddScoped<WeeklyReviewService>();
         services.AddScoped<RoutineExperimentService>();
+        services.AddScoped<RoutineSessionService>();
         services.AddScoped<HabitInsightService>();
         services.AddSingleton<ReportDocumentExporter>();
         services.AddSingleton<RoutineRecommendationService>();

@@ -1,0 +1,48 @@
+@model HabitFlow.Web.Models.RoutineSessionHistoryViewModel
+@{ ViewData["Title"] = "Histórico de sessões"; }
+<main class="container py-4">
+  <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+    <div>
+      <h1 class="h3 mb-1">Histórico de sessões</h1>
+      <p class="text-secondary mb-0">Sessões canceladas permanecem visíveis e reflexões privadas não são exibidas nesta lista.</p>
+    </div>
+    <a class="btn btn-primary" href="/routine-sessions">Nova sessão</a>
+  </div>
+  <form method="get" class="row g-3 align-items-end mb-4">
+    <div class="col-12 col-md-3"><label class="form-label" for="from">De</label><input class="form-control" id="from" name="from" type="date" value="@Model.From?.ToString("yyyy-MM-dd")"></div>
+    <div class="col-12 col-md-3"><label class="form-label" for="to">Até</label><input class="form-control" id="to" name="to" type="date" value="@Model.To?.ToString("yyyy-MM-dd")"></div>
+    <div class="col-12 col-md-3"><label class="form-label" for="status">Status</label><select class="form-select" id="status" name="status"><option value="">Todos</option>@foreach(var s in new[]{"Prepared","InProgress","Paused","Closed","Canceled"}){<option value="@s" selected="@(Model.Status==s)">@s</option>}</select></div>
+    <div class="col-12 col-md-auto"><button class="btn btn-outline-primary">Filtrar</button></div>
+  </form>
+
+  @if (Model.Sessions.Count == 0)
+  {
+    <section class="border rounded-2 p-4 text-center">
+      <h2 class="h5">Nenhuma sessão no período</h2>
+      <p class="text-secondary mb-0">Quando você preparar sessões, os resumos aparecerão aqui.</p>
+    </section>
+  }
+  else
+  {
+    <div class="table-responsive">
+      <table class="table align-middle">
+        <thead><tr><th>Data</th><th>Sessão</th><th>Status</th><th>Realizados</th><th>Mínimos</th><th>Pendentes</th><th>Tempo</th><th></th></tr></thead>
+        <tbody>
+        @foreach (var s in Model.Sessions)
+        {
+          <tr>
+            <td>@s.LocalDate.ToString("dd/MM/yyyy")</td>
+            <td>@s.Name</td>
+            <td>@s.Status</td>
+            <td>@s.CompletedItems</td>
+            <td>@s.MinimumItems</td>
+            <td>@s.PendingItems</td>
+            <td>@(s.EffectiveMinutes?.ToString() ?? "não informado")</td>
+            <td><a class="btn btn-sm btn-outline-secondary" href="/routine-sessions/@s.Id">Resumo</a></td>
+          </tr>
+        }
+        </tbody>
+      </table>
+    </div>
+  }
+</main>
