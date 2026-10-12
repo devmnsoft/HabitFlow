@@ -1,3 +1,242 @@
-@model HabitFlow.Application.ClientDetailDto
-@{ var c = Model.Client; ViewData["Title"] = $"Cliente {c.Name}"; }
-<section class="py-4"><a href="/superadmin/clients">← Clientes</a><h1>@c.Name</h1><p class="text-muted">@c.PersonType · @c.DocumentType: @(c.DocumentRaw ?? c.DocumentNormalized)</p><div class="row g-3"><div class="col-md-4"><div class="card"><div class="card-body"><h2 class="h6">Plano</h2><p>@c.Plan</p><p>Assinatura: @c.SubscriptionStatus</p><p>Benefícios: @c.BenefitsStatus</p><p>Pagamento: @c.PaymentStatus</p></div></div></div><div class="col-md-8"><div class="card"><div class="card-body"><h2 class="h6">Ações sensíveis</h2><form id="block-paid-benefits" method="post" action="/superadmin/clients/@c.Id/block-paid-benefits" class="mb-2">@Html.AntiForgeryToken()<label>Motivo obrigatório</label><input name="reason" class="form-control" required /><button type="button" class="btn btn-warning mt-2" data-feedback-confirm data-form="block-paid-benefits" data-confirm-title="Bloquear benefícios pagos?" data-confirm-message="O cliente continuará com acesso ao plano gratuito, mas recursos Premium e Enterprise serão desativados até a regularização." data-confirm-label="Bloquear benefícios">Bloquear benefícios pagos</button></form><form method="post" action="/superadmin/clients/@c.Id/release-paid-benefits">@Html.AntiForgeryToken()<label>Motivo obrigatório</label><input name="reason" class="form-control" required /><button class="btn btn-success mt-2">Liberar benefícios pagos</button></form></div></div></div></div><h2 class="h5 mt-4">Usuários vinculados</h2><ul>@foreach(var u in Model.Users){<li>@u.Name (@u.Email) - @u.Role</li>}</ul></section>
+@model HabitFlow.Web.Models.ClientFichaViewModel
+@{
+    var c = Model.Client;
+    ViewData["Title"] = $"Ficha do cliente {c.Name}";
+    string Fmt(DateTime? value) => value?.ToLocalTime().ToString("g") ?? "—";
+    string FmtDate(DateOnly? value) => value?.ToString("d") ?? "—";
+    string Money(decimal value) => value.ToString("N2");
+}
+<section class="hf-activation premium-card py-4">
+    @if (TempData["Success"] is string okMsg) { <div class="alert alert-success" role="status">@okMsg</div> }
+    @if (TempData["Error"] is string errorMsg) { <div class="alert alert-danger" role="alert">@errorMsg</div> }
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
+        <div>
+            <p class="text-muted mb-1"><a href="/superadmin/clients">← Clientes</a> · Ficha consolidada</p>
+            <h1 class="h3 mb-1">@c.Name</h1>
+            <p class="text-muted mb-0">@c.PersonType · @c.DocumentType: @(c.DocumentRaw ?? c.DocumentNormalized) · cliente desde @c.CreatedAt.ToLocalTime().ToString("d")</p>
+        </div>
+        <div class="d-flex gap-2">
+            <span class="badge text-bg-primary">@c.Plan</span>
+            <span class="badge text-bg-secondary">@c.Status</span>
+            <span class="badge text-bg-info">@c.BenefitsStatus</span>
+        </div>
+    </div>
+
+    <nav class="hf-help mt-3" aria-label="Seções da ficha">
+        <strong>Ir para:</strong>
+        <a href="#cadastro">Cadastro</a> ·
+        <a href="#situacao">Situação</a> ·
+        <a href="#responsaveis">Responsáveis</a> ·
+        <a href="#usuarios">Usuários e perfis</a> ·
+        <a href="#onboarding">Onboarding</a> ·
+        <a href="#plano-limites">Plano e limites</a> ·
+        <a href="#assinatura">Assinatura</a> ·
+        <a href="#pagamentos">Pagamentos</a> ·
+        <a href="#suporte">Suporte</a> ·
+        <a href="#eventos">Eventos operacionais</a> ·
+        <a href="#acoes">Ações sensíveis</a>
+    </nav>
+
+    <h2 class="h5 mt-4" id="cadastro">1. Cadastro</h2>
+    <div class="table-responsive">
+        <table class="table table-sm">
+            <tbody>
+                <tr><th scope="row" style="width:220px">Razão social</th><td>@(c.LegalName ?? "—")</td><th scope="row" style="width:220px">Nome fantasia</th><td>@(c.TradeName ?? "—")</td></tr>
+                <tr><th scope="row">Documento</th><td>@(c.DocumentRaw ?? c.DocumentNormalized) (@c.DocumentType)</td><th scope="row">E-mail</th><td>@(c.Email ?? "—")</td></tr>
+                <tr><th scope="row">Telefone</th><td>@(c.Phone ?? "—")</td><th scope="row">Contato</th><td>@(c.ContactName ?? "—")</td></tr>
+                <tr><th scope="row">Endereço</th><td colspan="3">@{ var addressParts = new[] { c.AddressStreet, c.AddressNumber, c.AddressDistrict, c.AddressCity, c.AddressState, c.AddressZipcode }.Where(x => !string.IsNullOrWhiteSpace(x)).ToArray(); var addressText = addressParts.Length > 0 ? string.Join(", ", addressParts) : "—"; }@addressText</td></tr>
+                <tr><th scope="row">Observações</th><td colspan="3">@(c.Notes ?? "—")</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h2 class="h5 mt-4" id="situacao">2. Situação</h2>
+    <div class="table-responsive">
+        <table class="table table-sm">
+            <tbody>
+                <tr><th scope="row" style="width:220px">Status</th><td>@c.Status</td><th scope="row" style="width:220px">Ativo</th><td>@(c.IsActive ? "Sim" : "Não")</td></tr>
+                <tr><th scope="row">Assinatura</th><td>@c.SubscriptionStatus</td><th scope="row">Benefícios</th><td>@c.BenefitsStatus</td></tr>
+                <tr><th scope="row">Pagamento</th><td>@c.PaymentStatus</td><th scope="row">Último pagamento</th><td>@Fmt(c.LastPaymentAt)</td></tr>
+                <tr><th scope="row">Próximo vencimento</th><td>@FmtDate(c.NextDueDate)</td><th scope="row">Em atraso desde</th><td>@FmtDate(c.OverdueSince)</td></tr>
+                <tr><th scope="row">Carência até</th><td>@FmtDate(c.GracePeriodUntil)</td><th scope="row">Benefícios bloqueados em</th><td>@Fmt(c.BlockedPaidBenefitsAt)</td></tr>
+                <tr><th scope="row">Motivo do bloqueio de benefícios</th><td colspan="3">@(string.IsNullOrWhiteSpace(c.BlockedPaidBenefitsReason) ? "Nenhum" : c.BlockedPaidBenefitsReason)</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h2 class="h5 mt-4" id="responsaveis">3. Responsáveis</h2>
+    <div class="table-responsive">
+        <table class="table table-sm">
+            <tbody>
+                <tr><th scope="row" style="width:220px">Responsável financeiro</th><td>@(c.BillingResponsibleName ?? "—")</td><th scope="row" style="width:220px">E-mail financeiro</th><td>@(c.BillingEmail ?? "—")</td></tr>
+                <tr><th scope="row">Telefone financeiro</th><td>@(c.BillingPhone ?? "—")</td><th scope="row">Administradores ativos</th><td>@Model.Admins</td></tr>
+            </tbody>
+        </table>
+    </div>
+    @if (Model.HasSingleAdmin)
+    {
+        <p class="hf-help"><strong>Proteção do último responsável:</strong> este cliente possui apenas um administrador. Nenhuma ação desta tela remove contas; a remoção de administradores continua bloqueada quando restaria a conta sem responsável.</p>
+    }
+
+    <h2 class="h5 mt-4" id="usuarios">4. Usuários e perfis (@Model.Users.Count)</h2>
+    @if (Model.Users.Count == 0)
+    {
+        <div class="hf-empty">Nenhum usuário vinculado a este cliente.</div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-sm">
+                <thead><tr><th>Nome</th><th>E-mail</th><th>Perfil</th><th>Status</th><th>Criado em</th></tr></thead>
+                <tbody>
+                @foreach (var u in Model.Users)
+                {
+                    <tr><td>@u.Name</td><td>@u.Email</td><td>@u.Role</td><td>@u.AccountStatus</td><td>@u.CreatedAt.ToLocalTime().ToString("d")</td></tr>
+                }
+                </tbody>
+            </table>
+        </div>
+        <p class="text-muted">Senhas nunca são exibidas nesta tela.</p>
+    }
+
+    <h2 class="h5 mt-4" id="onboarding">5. Onboarding</h2>
+    <div class="table-responsive">
+        <table class="table table-sm">
+            <thead><tr><th>Usuário</th><th>Situação</th><th>Etapa atual</th><th>Concluído em</th><th>Última atividade</th></tr></thead>
+            <tbody>
+            @foreach (var o in Model.Onboarding)
+            {
+                <tr><td>@o.UserName</td><td>@o.Status</td><td>@(o.Status == OnboardingStatus.Completed ? "—" : o.CurrentStep.ToString())</td><td>@Fmt(o.CompletedAt)</td><td>@Fmt(o.LastActivityAt)</td></tr>
+            }
+            </tbody>
+        </table>
+    </div>
+
+    <h2 class="h5 mt-4" id="plano-limites">6. Plano e limites</h2>
+    <div class="table-responsive">
+        <table class="table table-sm">
+            <tbody>
+                <tr><th scope="row" style="width:220px">Plano</th><td>@c.Plan</td><th scope="row" style="width:220px">Limite de hábitos (Free)</th><td>@(Model.Entitlements?.FreeHabitLimit.ToString() ?? "—")</td></tr>
+                <tr><th scope="row">Relatórios avançados</th><td>@(Model.Entitlements is null ? "—" : Model.Entitlements.AdvancedReportsEnabled ? "Liberado" : "Indisponível no plano")</td><th scope="row">Biblioteca premium</th><td>@(Model.Entitlements is null ? "—" : Model.Entitlements.PremiumLibraryEnabled ? "Liberado" : "Indisponível no plano")</td></tr>
+                <tr><th scope="row">Usuários vinculados</th><td>@Model.Metrics.LinkedUsers</td><th scope="row">Hábitos ativos</th><td>@Model.Metrics.ActiveHabits</td></tr>
+                <tr><th scope="row">Hábitos concluídos (total)</th><td>@Model.Metrics.CompletedHabits</td><th scope="row"></th><td></td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h2 class="h5 mt-4" id="assinatura">7. Assinatura</h2>
+    @if (Model.Subscriptions.Count == 0)
+    {
+        <div class="hf-empty">Nenhuma assinatura registrada.</div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-sm">
+                <thead><tr><th>Plano</th><th>Status</th><th>Ciclo</th><th>Início</th><th>Fim</th><th>Trial até</th><th>Cancelada em</th></tr></thead>
+                <tbody>
+                @foreach (var s in Model.Subscriptions)
+                {
+                    <tr><td>@s.PlanCode</td><td>@s.Status</td><td>@s.BillingCycle</td><td>@Fmt(s.CurrentPeriodStart)</td><td>@Fmt(s.CurrentPeriodEnd)</td><td>@Fmt(s.TrialEndsAt)</td><td>@Fmt(s.CanceledAt)</td></tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    <h2 class="h5 mt-4" id="pagamentos">8. Pagamentos</h2>
+    @if (Model.Payments.Count == 0)
+    {
+        <div class="hf-empty">Nenhuma fatura registrada.</div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-sm">
+                <thead><tr><th>Fatura</th><th>Valor</th><th>Vencimento</th><th>Método</th><th>Status</th><th>Pago em</th><th>Referência</th></tr></thead>
+                <tbody>
+                @foreach (var p in Model.Payments)
+                {
+                    <tr><td>@(p.InvoiceNumber ?? p.Id.ToString())</td><td>@Money(p.Amount)</td><td>@p.DueDate.ToString("d")</td><td>@p.Method</td><td>@p.Status</td><td>@Fmt(p.PaidAt)</td><td>@(string.IsNullOrWhiteSpace(p.ProviderPaymentId) ? "—" : p.ProviderPaymentId)</td></tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    <h2 class="h5 mt-4" id="suporte">9. Suporte</h2>
+    @if (Model.Tickets.Count == 0)
+    {
+        <div class="hf-empty">Nenhum chamado registrado.</div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-sm">
+                <thead><tr><th>Protocolo</th><th>Assunto</th><th>Categoria</th><th>Prioridade</th><th>Status</th><th>Aberto em</th><th></th></tr></thead>
+                <tbody>
+                @foreach (var t in Model.Tickets)
+                {
+                    <tr><td>@t.Protocol</td><td>@t.Subject</td><td>@t.Category</td><td>@t.Priority</td><td>@t.Status</td><td>@t.CreatedAt.ToLocalTime().ToString("g")</td><td><a href="/superadmin/support/@t.Id">Abrir</a></td></tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    <h2 class="h5 mt-4" id="eventos">10. Eventos operacionais</h2>
+    @if (Model.Events.Count == 0)
+    {
+        <div class="hf-empty">Nenhum evento operacional registrado para este cliente.</div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-sm">
+                <thead><tr><th>Quando</th><th>Evento</th><th>Severidade</th><th>Status</th><th>Executor</th></tr></thead>
+                <tbody>
+                @foreach (var e in Model.Events)
+                {
+                    <tr><td>@e.OccurredAt.ToLocalTime().ToString("g")</td><td>@e.EventName</td><td>@e.Severity</td><td>@e.Status</td><td>@(e.ExecutorEmail ?? "—")</td></tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    <h2 class="h5 mt-4" id="acoes">11. Ações sensíveis (auditadas)</h2>
+    <div class="hf-help">Toda ação exige motivo obrigatório e confirmação. Nenhuma ação apaga dados do cliente: bloquear benefícios apenas restringe recursos pagos até a regularização.</div>
+
+    <form id="ficha-change-plan" method="post" action="/superadmin/clients/@c.Id/change-plan" class="mb-3">
+        @Html.AntiForgeryToken()
+        <label class="form-label" for="plan-code">Alterar plano (auditado)</label>
+        <select id="plan-code" name="planCode" class="form-select mb-2">
+            <option value="Free">Free</option>
+            <option value="Premium">Premium</option>
+            <option value="Enterprise">Enterprise</option>
+        </select>
+        <label class="form-label" for="plan-reason">Motivo obrigatório</label>
+        <input id="plan-reason" name="reason" class="form-control mb-2" maxlength="300" required />
+        <button type="button" class="btn btn-primary" data-feedback-confirm data-form="ficha-change-plan"
+                data-confirm-title="Alterar plano do cliente?" data-confirm-message="A alteração de plano é registrada na auditoria com o motivo informado e ajusta os benefícios do cliente."
+                data-confirm-label="Alterar plano">Alterar plano</button>
+    </form>
+
+    <form id="ficha-block-benefits" method="post" action="/superadmin/clients/@c.Id/block-paid-benefits" class="mb-3">
+        @Html.AntiForgeryToken()
+        <label class="form-label" for="block-reason">Bloquear benefícios pagos</label>
+        <input id="block-reason" name="reason" class="form-control mb-2" maxlength="300" required />
+        <button type="button" class="btn btn-warning" data-feedback-confirm data-form="ficha-block-benefits"
+                data-confirm-title="Bloquear benefícios pagos?" data-confirm-message="O cliente continuará com acesso ao plano gratuito, mas recursos Premium e Enterprise serão desativados até a regularização. Nenhum dado é removido."
+                data-confirm-label="Bloquear benefícios">Bloquear benefícios pagos</button>
+    </form>
+
+    <form id="ficha-release-benefits" method="post" action="/superadmin/clients/@c.Id/release-paid-benefits" class="mb-3">
+        @Html.AntiForgeryToken()
+        <label class="form-label" for="release-reason">Liberar benefícios pagos</label>
+        <input id="release-reason" name="reason" class="form-control mb-2" maxlength="300" required />
+        <button type="button" class="btn btn-success" data-feedback-confirm data-form="ficha-release-benefits"
+                data-confirm-title="Liberar benefícios pagos?" data-confirm-message="Os recursos pagos voltarão a ficar disponíveis para o cliente. A liberação é registrada na auditoria com o motivo informado."
+                data-confirm-label="Liberar benefícios">Liberar benefícios pagos</button>
+    </form>
+</section>

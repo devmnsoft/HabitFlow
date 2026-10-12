@@ -1,5 +1,6 @@
 using HabitFlow.Application;
 using HabitFlow.Domain;
+using HabitFlow.Web.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Text;
@@ -25,6 +26,7 @@ public sealed class SuperAdminController(
     LgpdGovernanceService lgpdGovernance,
     BackupAndReleaseGovernanceService backupAndRelease,
     IOperationalAuditRepository operationalAuditRepo,
+    IUserOnboardingProgressRepository progressRepo,
     ILogger<SuperAdminController> logger) : Controller
 {
     [HttpGet("")]
@@ -44,7 +46,47 @@ public sealed class SuperAdminController(
     public async Task<IActionResult> ClientDetails(Guid id, CancellationToken ct)
     {
         var result = await clients.GetByIdAsync(id, ct);
-        return result.IsFailure ? RedirectToAction(nameof(Clients)) : View("~/Views/SuperAdmin/Clients/Details.cshtml", result.Value);
+        if (result.IsFailure) return RedirectToAction(nameof(Clients));
+        var detail = result.Value;
+
+        // Ficha consolidada (§4): reúne em uma única página tudo que o operador precisa
+        // para administrar o cliente sem navegar por 10 telas diferentes.
+        var subscriptions = (await operations.ListSubscriptionsAsync(ct))
+            .Where(s => s.ClientId == id).ToList();
+        var payments = (await operations.ListPaymentsAsync(null, ct))
+            .Where(p => p.ClientId == id).ToList();
+        var tickets = (await supportService.ListAsync(id, this.CurrentUserId(), admin: true, ct))
+            .OrderByDescending(t => t.CreatedAt).Take(20).ToList();
+        var events = (await operationalAuditRepo.SearchAuditAsync(clientId: id, limit: 50, ct: ct))
+            .OrderByDescending(e => e.OccurredAt).ToList();
+
+        var onboarding = new List<ClientOnboardingSummary>();
+        foreach (var user in detail.Users)
+        {
+            var progress = await progressRepo.GetAsync(id, user.Id, ct);
+            onboarding.Add(new ClientOnboardingSummary(
+                user.Id,
+                user.Name,
+                progress?.Status ?? OnboardingStatus.NotStarted,
+                progress?.CurrentStep ?? OnboardingStep.Objective,
+                progress?.CompletedAt,
+                progress?.LastActivityAt ?? user.CreatedAt));
+        }
+
+        var entitlementsResult = await entitlements.GetClientEntitlementsAsync(id, ct);
+        var ficha = new ClientFichaViewModel
+        {
+            Client = detail.Client,
+            Users = detail.Users,
+            Metrics = detail.Metrics,
+            Entitlements = entitlementsResult.IsSuccess ? entitlementsResult.Value : null,
+            Subscriptions = subscriptions,
+            Payments = payments,
+            Tickets = tickets,
+            Events = events,
+            Onboarding = onboarding
+        };
+        return View("~/Views/SuperAdmin/Clients/Details.cshtml", ficha);
     }
 
     [HttpPost("clients/{id:guid}/block-paid-benefits")]
