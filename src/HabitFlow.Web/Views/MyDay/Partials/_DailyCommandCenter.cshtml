@@ -1,9 +1,30 @@
 @model DailyRoutineViewModel
 <section class="daily-command" aria-label="Resumo inteligente do dia">
   <article class="daily-command__card daily-command__card--insight">
-    <span class="daily-command__eyebrow">Sugestão inteligente</span>
-    <h2>@(Model.FocusHabitName is null ? "Prepare um pequeno avanço" : $"Comece por {Model.FocusHabitName}")</h2>
-    <p>@(Model.Pending == 0 ? "Seu planejamento está em dia. Aproveite para revisar a semana." : "Concluir a menor ação agora reduz a carga mental e cria ritmo para o restante do dia.")</p>
+    <span class="daily-command__eyebrow">Meu próximo passo</span>
+    @if (Model.NextSteps.Count == 0)
+    {
+      <h2>@(Model.FocusHabitName is null ? "Prepare um pequeno avanço" : $"Comece por {Model.FocusHabitName}")</h2>
+      <p>@(Model.Pending == 0 ? "Seu planejamento está em dia. Aproveite para revisar o período." : "Concluir a menor ação agora reduz a carga mental e cria ritmo para o restante do dia.")</p>
+    }
+    else
+    {
+      var step = Model.NextSteps[0];
+      <h2>@step.Title</h2>
+      <p>@step.Reason</p>
+      <div class="daily-step-actions">
+        <a class="btn btn-success" href="@step.DestinationUrl">@step.ActionLabel</a>
+        @if (step.CanDismiss)
+        {
+          <form method="post" action="/my-day/next-step/dismiss">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="key" value="@step.Key" />
+            <button class="btn btn-outline-success" type="submit">Dispensar</button>
+          </form>
+        }
+      </div>
+      <small>Origem: @step.Source. Dispensar não altera agenda, meta ou sessão.</small>
+    }
   </article>
   <article class="daily-command__card">
     <span class="daily-command__eyebrow">Sinais de hoje</span>

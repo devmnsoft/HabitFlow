@@ -15,6 +15,7 @@ public sealed record DailyRoutineViewModel(
     int Overdue,
     int CurrentStreak,
     IReadOnlyList<DailyPulseViewModel> WeeklyPulse,
+    IReadOnlyList<NextStepSuggestionViewModel> NextSteps,
     DailyRoutineProposalViewModel? Proposal = null)
 {
     public int Pending => Math.Max(0, Scheduled - Completed);
@@ -22,6 +23,7 @@ public sealed record DailyRoutineViewModel(
 }
 
 public sealed record DailyPulseViewModel(string Label, int Percentage, bool IsToday);
+public sealed record NextStepSuggestionViewModel(string Key, string Title, string Reason, string Source, string DestinationUrl, string ActionLabel, bool CanDismiss);
 public sealed record DailyRoutineProposalViewModel(int? AvailableMinutes, int KnownEstimatedMinutes, bool ExceedsAvailability, IReadOnlyList<DailyRoutineProposalItemViewModel> Items, IReadOnlyList<string> Explanations, IReadOnlyList<string> MissingData, IReadOnlyList<string> Alternatives);
 public sealed record DailyRoutineProposalItemViewModel(Guid HabitId, string Name, int? EstimatedMinutes, bool Included, bool UsesMinimumVersion, string Reason);
 
@@ -61,7 +63,7 @@ public static class DailyRoutineViewModelMapper
         ("moved", "Não programados hoje", "Estes passos já estão organizados para outro momento.", "calendar")
     ];
 
-    public static DailyRoutineViewModel From(DailyRoutinePlan plan, DailyRoutineProposal? proposal = null)
+    public static DailyRoutineViewModel From(DailyRoutinePlan plan, DailyRoutineProposal? proposal = null, IReadOnlyList<NextStepSuggestion>? nextSteps = null)
     {
         var cards = plan.Items.Select(ToCard).ToList();
         var groups = Sections.Select(section => new RoutinePeriodGroupViewModel(
@@ -90,7 +92,9 @@ public static class DailyRoutineViewModelMapper
                 offset == 0))
             .ToList();
         return new(plan.LocalDate, plan.Scheduled, plan.Completed, plan.Percentage, groups, "Olá", motivation, focus,
-            nextActions, overdue, plan.Completed > 0 ? 1 : 0, pulse, proposal is null ? null : ToProposal(proposal));
+            nextActions, overdue, plan.Completed > 0 ? 1 : 0, pulse,
+            (nextSteps ?? []).Select(x => new NextStepSuggestionViewModel(x.Key, x.Title, x.Reason, x.Source, x.DestinationUrl, x.ActionLabel, x.CanDismiss)).ToList(),
+            proposal is null ? null : ToProposal(proposal));
     }
 
     private static DailyRoutineProposalViewModel ToProposal(DailyRoutineProposal proposal) =>

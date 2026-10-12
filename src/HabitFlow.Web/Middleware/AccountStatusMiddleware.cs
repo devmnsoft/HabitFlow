@@ -6,7 +6,7 @@ namespace HabitFlow.Web.Middleware;
 public sealed class AccountStatusMiddleware(RequestDelegate next, ILogger<AccountStatusMiddleware> logger)
 {
     private static readonly string[] AllowedWhenRestricted = ["/logout", "/auth/logout", "/profile", "/support", "/health", "/css", "/js", "/lib"];
-    private static readonly string[] RestrictedAreas = ["/dashboard", "/my-day", "/routine-sessions", "/habits", "/progress", "/reports"];
+    private static readonly string[] RestrictedAreas = ["/dashboard", "/my-day", "/priorities", "/monthly-review", "/routine-sessions", "/habits", "/progress", "/reports"];
 
     public async Task InvokeAsync(HttpContext context)
     {

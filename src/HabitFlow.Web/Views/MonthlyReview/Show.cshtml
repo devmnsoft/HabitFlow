@@ -1,0 +1,57 @@
+@model MonthlyReviewViewModel
+@{ ViewData["Title"] = "Revisão mensal"; var r = Model.Result; }
+<main class="container py-4">
+  <header class="mb-4">
+    <span class="text-success fw-semibold">Revisão mensal explicável</span>
+    <h1>@r.PeriodStart.ToString("MMMM yyyy")</h1>
+    <p class="text-secondary">@r.Summary</p>
+    @if (r.IsCurrentMonth) { <div class="alert alert-warning">Este mês ainda está em andamento. Os denominadores usam apenas o período observado até hoje.</div> }
+  </header>
+  <section class="row g-3 mb-4" aria-label="Métricas do mês">
+    @foreach (var metric in r.Metrics)
+    {
+      <article class="col-md-3"><div class="border rounded p-3 h-100"><span class="text-secondary">@metric.Label</span><strong class="d-block fs-4">@metric.Value</strong><small>@metric.Explanation</small></div></article>
+    }
+  </section>
+  <section class="mb-4">
+    <h2 class="h4">Hábitos</h2>
+    @if (r.Habits.Count == 0) { <p class="text-secondary">Ausência de dados: não havia ocorrências suficientes para avaliar hábitos.</p> }
+    else
+    {
+      <div class="list-group">
+        @foreach (var habit in r.Habits.Take(8))
+        {
+          <div class="list-group-item"><div class="d-flex justify-content-between gap-3"><strong>@habit.Name</strong><span>@habit.Completed/@habit.Scheduled</span></div><small class="text-secondary">@habit.Insight Denominador: oportunidades previstas no período.</small></div>
+        }
+      </div>
+    }
+  </section>
+  <section class="mb-4">
+    <h2 class="h4">Propostas para o próximo ciclo</h2>
+    <p class="text-secondary">Escolher uma proposta registra a decisão. A aplicação em hábitos, horários ou experimentos continua manual e confirmável.</p>
+    <form method="post" action="/monthly-review/@r.PeriodStart.ToString("yyyy-MM")/draft" class="border rounded p-3">
+      @Html.AntiForgeryToken()
+      <input type="hidden" name="IdempotencyKey" value="@Model.Form.IdempotencyKey" />
+      <input type="hidden" name="Version" value="@Model.Form.Version" />
+      <label class="form-label w-100">Aprendizado privado
+        <textarea class="form-control" name="Reflection" rows="4">@Model.Form.Reflection</textarea>
+      </label>
+      <label class="form-label w-100">Próximo passo escolhido
+        <select class="form-select" name="SelectedNextStep">
+          <option value="">Escolher depois</option>
+          @foreach (var option in r.PlanOptions)
+          {
+            <option value="@option.Code" selected="@(Model.Form.SelectedNextStep == option.Code)">@option.Title - @option.Description</option>
+          }
+        </select>
+      </label>
+      <div class="d-flex flex-wrap gap-2">
+        <button class="btn btn-outline-success" type="submit">Salvar rascunho</button>
+        <button class="btn btn-success" formaction="/monthly-review/@r.PeriodStart.ToString("yyyy-MM")/complete" name="ConfirmedPlanCode" value="@(Model.Form.SelectedNextStep ?? "keep_routine")">Concluir revisão</button>
+      </div>
+    </form>
+  </section>
+  <section class="alert alert-light">
+    <strong>IA:</strong> @r.AiStatus Métricas oficiais são calculadas pelo HabitFlow, não pelo provedor externo.
+  </section>
+</main>
