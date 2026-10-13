@@ -1,6 +1,7 @@
 using HabitFlow.Application;
 using HabitFlow.Domain;
 using HabitFlow.Web.Models;
+using static HabitFlow.Application.HomologationProvisioningService;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Text;
@@ -27,6 +28,8 @@ public sealed class SuperAdminController(
     BackupAndReleaseGovernanceService backupAndRelease,
     IOperationalAuditRepository operationalAuditRepo,
     IUserOnboardingProgressRepository progressRepo,
+    HomologationProvisioningService homologationProvisioning,
+    IHostEnvironment hostEnvironment,
     ILogger<SuperAdminController> logger) : Controller
 {
     [HttpGet("")]
@@ -550,6 +553,47 @@ public sealed class SuperAdminController(
         var query = HomologationAccess.Scope("SuperAdmin", null, new HomologationQuery(from, to, tenant, plan, status, null));
         var report = await activation.ReportAsync(query, ct);
         return File(Encoding.UTF8.GetBytes(HomologationCsv.Write(report)), "text/csv", "habitflow-homologacao.csv");
+    }
+
+    [HttpGet("homologation/accounts")]
+    public async Task<IActionResult> HomologationAccounts(CancellationToken ct)
+    {
+        if (!hostEnvironment.IsDevelopment()) return NotFound();
+        return View("~/Views/SuperAdmin/HomologationAccounts.cshtml", new HomologationAccountsViewModel
+        {
+            Accounts = await homologationProvisioning.ListStatusAsync(ct),
+            JustProvisioned = Array.Empty<ProvisionedAccount>()
+        });
+    }
+
+    [HttpPost("homologation/provision")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ProvisionHomologationAccounts(CancellationToken ct)
+    {
+        if (!hostEnvironment.IsDevelopment()) return NotFound();
+        var accounts = await homologationProvisioning.ProvisionAllAsync(this.CurrentUserId(), User.Identity?.Name ?? "superadmin", ct);
+        TempData["Success"] = accounts.All(a => !a.Created)
+            ? "Contas de homologação já provisionadas. Nenhuma senha foi alterada (reexecução segura)."
+            : "Contas de homologação provisionadas. Guarde as senhas exibidas abaixo em local seguro — elas não serão mostradas novamente.";
+        return View("~/Views/SuperAdmin/HomologationAccounts.cshtml", new HomologationAccountsViewModel
+        {
+            Accounts = await homologationProvisioning.ListStatusAsync(ct),
+            JustProvisioned = accounts.Where(a => a.OneTimePassword is not null).ToList()
+        });
+    }
+
+    [HttpPost("homologation/accounts/reset-password")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ResetHomologationPassword(string email, CancellationToken ct)
+    {
+        if (!hostEnvironment.IsDevelopment()) return NotFound();
+        var account = await homologationProvisioning.ResetPasswordAsync(email, this.CurrentUserId(), User.Identity?.Name ?? "superadmin", ct);
+        TempData["Success"] = $"Senha da conta {account.Email} redefinida. Guarde a senha exibida abaixo em local seguro.";
+        return View("~/Views/SuperAdmin/HomologationAccounts.cshtml", new HomologationAccountsViewModel
+        {
+            Accounts = await homologationProvisioning.ListStatusAsync(ct),
+            JustProvisioned = new[] { account }
+        });
     }
 
     [HttpGet("export/clients")]

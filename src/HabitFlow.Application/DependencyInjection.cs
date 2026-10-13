@@ -214,6 +214,7 @@ public static class DependencyInjection
         services.AddScoped<CustomerHealthService>();
         services.AddScoped<SchemaMigrationStatusService>();
         services.AddScoped<SuperAdminOperationalService>();
+        services.AddScoped<HomologationProvisioningService>();
         services.AddScoped<OperationsCenterService>();
         services.AddScoped<OperationalIncidentService>();
         services.AddScoped<TenantHealthEvaluationService>();

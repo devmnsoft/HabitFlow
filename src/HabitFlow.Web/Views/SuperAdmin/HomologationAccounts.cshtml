@@ -1,0 +1,65 @@
+@model HabitFlow.Web.Models.HomologationAccountsViewModel
+@{ ViewData["Title"] = "Contas de homologação"; }
+<section class="hf-activation premium-card py-4">
+    <p class="text-muted mb-1"><a href="/superadmin/homologation">← Homologação</a> · Contas de teste por plano</p>
+    <h1 class="h3">Contas de homologação</h1>
+    <div class="hf-help">
+        <strong>Ambiente de desenvolvimento.</strong> Esta tela provisiona uma conta de teste por plano
+        (Free, Premium, Enterprise), cada uma isolada no seu cliente. A reexecução é segura:
+        contas existentes são mantidas sem alterar senha, onboarding ou assinatura.
+        As senhas geradas aparecem <strong>uma única vez</strong> abaixo — guarde-as em local
+        seguro. Elas nunca são gravadas em texto claro nem registradas em logs.
+    </div>
+
+    @if (TempData["Success"] is string okMsg) { <div class="alert alert-success" role="status">@okMsg</div> }
+    @if (TempData["Error"] is string errorMsg) { <div class="alert alert-danger" role="alert">@errorMsg</div> }
+
+    @if (Model.JustProvisioned.Count > 0)
+    {
+        <div class="alert alert-warning" role="alert">
+            <strong>Senhas geradas agora — exibição única.</strong>
+            <ul class="mb-0 font-monospace">
+            @foreach (var a in Model.JustProvisioned)
+            {
+                <li>@a.Email — senha: <code>@a.OneTimePassword</code> (@(a.Created ? "conta criada" : "senha redefinida"))</li>
+            }
+            </ul>
+        </div>
+    }
+
+    <h2 class="h5 mt-4">Estado atual</h2>
+    <div class="table-responsive">
+        <table class="table table-sm">
+            <thead><tr><th>E-mail</th><th>Plano</th><th>Cliente</th><th>Provisionada</th><th>Onboarding concluído</th><th>Assinatura</th><th>Trial até</th><th></th></tr></thead>
+            <tbody>
+            @foreach (var a in Model.Accounts)
+            {
+                <tr>
+                    <td class="font-monospace">@a.Email</td>
+                    <td>@a.Plan</td>
+                    <td>@(a.ClientId?.ToString() ?? "—")</td>
+                    <td>@(a.Exists ? "Sim" : "Não")</td>
+                    <td>@(a.OnboardingCompleted ? "Sim" : "Não")</td>
+                    <td>@a.SubscriptionStatus</td>
+                    <td>@(a.TrialEndsAt?.ToLocalTime().ToString("g") ?? "—")</td>
+                    <td>
+                        @if (a.Exists)
+                        {
+                            <form method="post" action="/superadmin/homologation/accounts/reset-password" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="email" value="@a.Email" />
+                                <button class="btn btn-sm btn-outline-warning" type="submit">Redefinir senha</button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+
+    <form method="post" action="/superadmin/homologation/provision" class="mt-3">
+        @Html.AntiForgeryToken()
+        <button class="btn btn-primary" type="submit">Provisionar contas de homologação</button>
+    </form>
+</section>
