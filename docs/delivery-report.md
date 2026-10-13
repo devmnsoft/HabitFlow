@@ -130,15 +130,19 @@ Consultar `hf/plan-matrix.md` para a matriz completa incluindo:
 dotnet test tests/HabitFlow.Tests/HabitFlow.Tests.csproj -c Release
 ```
 
-**Resultado:** ✅ **664/664 PASS**
+**Resultado:** ✅ **670/670 PASS**
 
 ### 5.2 Migrations
 
+Validação executada com o runner canônico `scripts/database/run-migrations.sh` + hooks de
+compatibilidade em PostgreSQL 18 (mesma versão/fluxo da CI — ver §11.5):
+
 | Cenário | Resultado |
 |---|---|
-| Clean install (109 migrations) | ✅ 109/109 |
-| Upgrade 0→60→109 | ✅ Zero erros |
-| Reaplicação | ✅ Zero erros |
+| Clean install (110 migrations, runner canônico) | ✅ 110/110 |
+| Reaplicação (rerun) | ✅ 110 applied / 0 pending |
+| Upgrade existente `--to-version 108` → 110 | ✅ 108 → 110, zero erros |
+| Paridade de schema runner × `script_completo.sql` | ✅ OK (assinatura estrita) |
 
 ### 5.3 Block A — Matriz de Aceitação (13/13 PASS)
 
@@ -325,6 +329,40 @@ f97b1a4 Corrige cadastro MFA (view Confirm inexistente), AccessDeniedPath do coo
   layout (landmarks duplicados, sinalizado pelo strict mode do Playwright) — herança do redesign
   v6.1x; a correção ampla (views + seletores CSS `main`) é trabalho separado.
 
+### 11.5 Instalação limpa, upgrade e paridade (runner canônico × script_completo)
+
+Executado em PostgreSQL 18 em container (mesma imagem/fluxo da CI `database-migrations-ci.yml`),
+com o repositório copiado e normalizado para LF (o working tree local usa CRLF por `autocrlf=true`;
+a CI no Linux usa LF). Evidência completa em `Temp/opencode/hf/ci-run.log`:
+
+| Passo | Resultado |
+|---|---|
+| Clean install (`run-migrations.sh`, banco novo) | ✅ 110/110 registradas |
+| Rerun idempotente | ✅ 110 `applied` / 0 `pending` |
+| Upgrade existente `--to-version 108` | ✅ registro = 108 |
+| Upgrade 108 → 110 (109 `runner`, 110 `self`) | ✅ registro = 110 |
+| Rerun pós-upgrade | ✅ registro = 110 (zero reexecução) |
+| Contrato de registro | ✅ 0 checksum/filename nulos; hooks 035/098/101 gravados |
+| Paridade de assinatura de schema × `script_completo.sql` | ✅ `PARITY OK` (comparação estrita) |
+| Asserções v6.28.2 no banco fresh | ✅ Ritmo `Monthly:10.00`/`Yearly:100.00`, limite 5 hábitos, `blocked` com 0 recursos true e `history_days_limit=30`, `clients.trial_ends_at` presente, free público "Grátis por 15 dias" |
+
+Notas de honestidade e correções feitas nesta validação:
+
+- **Hooks são parte do caminho canônico**: as migrations 098/101 indexam colunas que só existem
+  após os hooks `098_security_audit_events_contract`/`101_system_health_history_contract` (e o
+  `035_system_settings_contract`). Rodar os arquivos `.sql` crus com `psql` (sem o runner) falha
+  por design — o runner e o `script_completo` (que embute os reconciliamentos) são os dois caminhos
+  canônicos suportados, e ambos foram validados aqui.
+- **`scripts/qa/postgres-schema-signature.sql` estava quebrado em PostgreSQL 18**
+  (`text || "char"` ambíguo em `con.contype`): o `psql` sem `ON_ERROR_STOP` saía com código 0 e o
+  `diff` comparava duas saídas vazias — a paridade da CI passava de forma vacua. Corrigido com
+  cast explícito, `ON_ERROR_STOP=1` no workflow e exclusão das tabelas de livro-caixa do runner
+  (`schema_migrations`/`schema_compatibility_fixes`), que diferem entre os caminhos por construção.
+- **`database/script_completo.sql` agora inclui 109 e 110** (markers `BEGIN/END include`), fechando
+  o bundle que parava na 108.
+- O bundle roda limpo com asserções de dados do v6.28.2 via migração 110 embutida (o bundle não
+  é afetado pelos hooks, que só existem no runner).
+
 ---
 
-**Conclusão:** HabitFlow v6.28.1/v6.28.2 está implementado, testado e funcionalmente operacional (regras comerciais validadas de ponta a ponta — ver seção 11). Os bloqueios externos são reais e requerem credenciais de produção para homologação final.
+**Conclusão:** HabitFlow v6.28.1/v6.28.2 está implementado, testado e funcionalmente operacional (regras comerciais validadas de ponta a ponta — ver seção 11), com instalação limpa, upgrade incremental e paridade de schema entre os dois caminhos canônicos de instalação validados em PostgreSQL 18 (§11.5). Os bloqueios externos são reais e requerem credenciais de produção para homologação final.

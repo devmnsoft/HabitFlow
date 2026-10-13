@@ -1,4 +1,22 @@
-# v6.8.3-CanonicalProgress (parcial)
+# v6.28.2 - RegrasComerciaisTrialRitmoGestaoDeContas
+
+- Trial gratuito de 15 dias com gate por cliente: expirado sem assinatura ativa, o acesso cai no
+  plano interno `blocked` (recursos desativados, histórico de 30 dias) e a criação de hábitos/metas
+  é recusada com mensagem clara — dados existentes continuam visíveis e os check-ins seguem liberados.
+- Plano Ritmo a R$ 10,00/mês e R$ 100,00/ano com limite de 5 hábitos ativos (migration 110);
+  `/plans` canônico apresenta "Grátis por 15 dias" e a matriz real de recursos por plano.
+- SuperAdmin: dashboard de usuários com bloqueio/desbloqueio (revoga `session_version`, auditado),
+  troca de plano auditada e MFA TOTP; barra de contexto persistente validada em servidor.
+- Troca de plano pelo usuário: downgrade imediato para Gratuito com dados preservados; upgrade usa
+  checkout real e, sem pagamento configurado, exibe aviso honesto — nunca simula transação.
+- Migrações 109/110 e `database/script_completo.sql` sincronizado (includes 109/110); validação de
+  instalação limpa (110/110), upgrade 108→110 e rerun idempotente pelo runner canônico em
+  PostgreSQL 18, com paridade de assinatura de schema runner × script_completo.
+- Correções de UI/a11y: Escape/foco do drawer móvel (CSS offcanvas + `header-v4.js`) e CTA mailto
+  do card comercial; assinatura de schema corrigida para PG18 e CI de paridade estrita.
+- 670/670 testes de unidade; Playwright: 13/13 specs de planos e 151/0 no cluster de header.
+
+## v6.8.3-CanonicalProgress (parcial)
 
 - Snapshot de dia/período delega recorrência e sequência aos serviços canônicos e consulta por cliente/pessoa.
 - Contratos explícitos de snapshot e tipos canônicos de objetivo adicionados.

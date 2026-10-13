@@ -29,6 +29,6 @@ jobs:
         run: psql -X -v ON_ERROR_STOP=1 -d aggregate_ci -f database/script_completo.sql
       - name: Compare canonical and aggregate schemas
         run: |
-          psql -XAt -d fresh_ci -f scripts/qa/postgres-schema-signature.sql > /tmp/fresh
-          psql -XAt -d aggregate_ci -f scripts/qa/postgres-schema-signature.sql > /tmp/aggregate
+          psql -X -v ON_ERROR_STOP=1 -At -d fresh_ci -f scripts/qa/postgres-schema-signature.sql > /tmp/fresh
+          psql -X -v ON_ERROR_STOP=1 -At -d aggregate_ci -f scripts/qa/postgres-schema-signature.sql > /tmp/aggregate
           diff -u /tmp/fresh /tmp/aggregate
