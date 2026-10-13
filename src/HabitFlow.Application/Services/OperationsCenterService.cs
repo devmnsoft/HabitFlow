@@ -28,5 +28,11 @@ public sealed class OperationsCenterService(IOperationsCenterRepository reposito
         return new(checks.Any(x=>x.Status=="Falha"&&x.Severity=="Crítico")?"Degradado":"Operacional",typeof(OperationsCenterService).Assembly.GetName().Version?.ToString()??"dev",configuration["ASPNETCORE_ENVIRONMENT"]??Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")??"Production",checks);
         bool Has(string key)=>!string.IsNullOrWhiteSpace(configuration[key]);
     }
-    private static string Csv(string? value) => "\""+(value??"").Replace("\"","\"\"").Replace("\r"," ").Replace("\n"," ")+"\"";
+    // Prefixo ' em células que começam com =/+/-/@: neutraliza fórmulas ao abrir no Excel/Sheets.
+    private static string Csv(string? value)
+    {
+        var text = (value ?? "").Replace("\"", "\"\"").Replace("\r", " ").Replace("\n", " ");
+        if (text.Length > 0 && text[0] is '=' or '+' or '-' or '@') text = "'" + text;
+        return "\"" + text + "\"";
+    }
 }

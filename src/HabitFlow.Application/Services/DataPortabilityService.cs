@@ -342,8 +342,13 @@ public sealed class DataPortabilityService(
             : Result<int>.Success(imported + updated);
     }
 
-    private static string EscapeCsv(string? value) =>
-        (value ?? string.Empty).Replace("\"", "\"\"");
+    // Células prefixadas com ' quando começam com =/+/-/@: neutraliza fórmulas
+    // ao abrir o CSV no Excel/Sheets (mesmo padrão de SanitizeCsvCell).
+    private static string EscapeCsv(string? value)
+    {
+        var text = (value ?? string.Empty).Replace("\"", "\"\"");
+        return text.Length > 0 && text[0] is '=' or '+' or '-' or '@' ? "'" + text : text;
+    }
 
     private static ImportSimulationResult EmptySimulation(IReadOnlyList<string> errors) =>
         new(Guid.NewGuid(), 0, 0, errors.Count, errors, []);

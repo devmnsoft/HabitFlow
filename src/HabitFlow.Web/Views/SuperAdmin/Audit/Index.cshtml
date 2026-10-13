@@ -150,7 +150,7 @@
                                     <span class="badge bg-light text-dark border">@ev.Status</span>
                                 </td>
                                 <td style="padding: 0.75rem 1rem; text-align: right;">
-                                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="showPayloadModal('@ev.EventName', '@ev.CorrelationId', @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ev.PayloadJson)))">
+                                    <button type="button" class="btn btn-sm btn-outline-primary" data-event-name="@ev.EventName" data-corr-id="@ev.CorrelationId" data-payload="@ev.PayloadJson" onclick="showPayloadModal(this)">
                                         Ver Payload
                                     </button>
                                 </td>
@@ -184,7 +184,12 @@
 </div>
 
 <script>
-    function showPayloadModal(eventName, corrId, payload) {
+    // Valores via data-* (HTML-encoded pelo Razor) e textContent como sink: nenhum
+    // texto não confiável é interpretado como JS/HTML.
+    function showPayloadModal(btn) {
+        var eventName = btn.getAttribute('data-event-name') || '';
+        var corrId = btn.getAttribute('data-corr-id') || '';
+        var payload = btn.getAttribute('data-payload') || '';
         document.getElementById('modalPayloadTitle').textContent = 'Evento: ' + eventName;
         document.getElementById('modalPayloadCorr').textContent = 'Correlation ID: ' + corrId;
         try {
