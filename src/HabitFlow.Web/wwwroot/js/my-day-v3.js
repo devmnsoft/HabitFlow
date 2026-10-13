@@ -5,13 +5,14 @@
   const live = root.querySelector('[data-routine-status]');
   const announce = message => { if (live) live.textContent = message; };
 
+  // Guarda anti-duplo-submit: NÃO implementar aqui. O form-validation.js decora
+  // TODOS os formulários não-GET com data-hf-validate e já é o guarda único
+  // (dois guardas no mesmo submit se cancelam: o segundo vê a flag do primeiro
+  // e chama preventDefault, travando o botão sem enviar nada — foi o que travou
+  // todos os botões de ação do Meu Dia). Aqui fica só o anúncio de progresso.
   root.querySelectorAll('[data-routine-form], [data-routine-confirm-form]').forEach(form => {
-    form.addEventListener('submit', event => {
-      if (form.dataset.submitting === 'true') { event.preventDefault(); return; }
+    form.addEventListener('submit', () => {
       if (!form.checkValidity()) return;
-      form.dataset.submitting = 'true';
-      const button = form.querySelector('button[type="submit"]');
-      if (button) { button.disabled = true; button.setAttribute('aria-busy', 'true'); button.dataset.label = button.textContent; button.textContent = 'Salvando…'; }
       announce('Salvando sua alteração.');
     });
   });
