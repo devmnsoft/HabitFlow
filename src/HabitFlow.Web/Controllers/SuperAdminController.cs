@@ -43,7 +43,37 @@ public sealed class SuperAdminController(
     }
 
     [HttpGet("users")]
-    public IActionResult Users() => View("~/Views/SuperAdmin/Simple.cshtml", "Usuários da plataforma");
+    public async Task<IActionResult> Users([FromQuery] string? q, [FromQuery] string? status, CancellationToken ct)
+    {
+        var rows = await operations.ListUsersAsync(q, status, 0, 200, ct);
+        return View("~/Views/SuperAdmin/Users/Index.cshtml", rows);
+    }
+
+    [HttpPost("users/{id:guid}/block")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> BlockUser(Guid id, string reason, CancellationToken ct)
+    {
+        // Proteções: nunca bloquear a si mesmo (o SuperAdmin logado) e motivo obrigatório auditável.
+        if (id == this.CurrentUserId()) { TempData["Error"] = "Você não pode bloquear a própria conta SuperAdmin."; return RedirectToAction(nameof(Users)); }
+        if (!HasRequiredReason(reason)) { TempData["Error"] = "Informe um motivo com pelo menos 5 caracteres."; return RedirectToAction(nameof(Users)); }
+        var result = await operations.SetUserBlockedAsync(id, true, reason, User.Identity?.Name ?? "superadmin", ct);
+        TempData[result.IsSuccess ? "Success" : "Error"] = result.IsSuccess
+            ? "Usuário bloqueado. As sessões ativas foram encerradas e o acesso volta após o desbloqueio."
+            : result.Error.Message;
+        return RedirectToAction(nameof(Users));
+    }
+
+    [HttpPost("users/{id:guid}/unblock")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UnblockUser(Guid id, string reason, CancellationToken ct)
+    {
+        if (!HasRequiredReason(reason)) { TempData["Error"] = "Informe um motivo com pelo menos 5 caracteres."; return RedirectToAction(nameof(Users)); }
+        var result = await operations.SetUserBlockedAsync(id, false, reason, User.Identity?.Name ?? "superadmin", ct);
+        TempData[result.IsSuccess ? "Success" : "Error"] = result.IsSuccess
+            ? "Usuário desbloqueado. Ele pode entrar novamente normalmente."
+            : result.Error.Message;
+        return RedirectToAction(nameof(Users));
+    }
 
     [HttpGet("clients/{id:guid}")]
     public async Task<IActionResult> ClientDetails(Guid id, CancellationToken ct)

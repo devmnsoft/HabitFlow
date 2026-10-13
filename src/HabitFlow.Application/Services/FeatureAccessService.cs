@@ -24,6 +24,10 @@ public sealed class FeatureAccessService(PlanEntitlementService plans)
     public Task<int?> GetLimitAsync(Guid userId, string featureCode, CancellationToken ct = default) =>
         plans.GetIntegerFeatureAsync(userId, featureCode, ct);
 
+    /// <summary>Plano efetivo do usuário (free/ritmo/blocked...). Usado para mensagens específicas de bloqueio comercial.</summary>
+    public Task<string> GetEffectivePlanAsync(Guid userId, CancellationToken ct = default) =>
+        plans.GetEffectivePlanForUserAsync(userId, ct);
+
     public async Task<FeatureAccessViewModel> BuildLockedFeatureViewModelAsync(Guid userId, string featureCode, CancellationToken ct = default)
     {
         var result = await CheckFeatureAsync(userId, featureCode, ct);

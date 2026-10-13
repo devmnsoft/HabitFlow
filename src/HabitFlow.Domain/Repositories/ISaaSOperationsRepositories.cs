@@ -34,6 +34,8 @@ public interface ISuperAdminOperationalRepository
     Task<IReadOnlyList<SuperAdminAuditRow>> ListAuditAsync(CancellationToken ct = default);
     Task<RegistrationQualityReport> GetRegistrationQualityAsync(CancellationToken ct = default);
     Task ChangeClientPlanAsync(Guid clientId, string planCode, string reason, string actorEmail, CancellationToken ct = default);
+    Task<IReadOnlyList<SuperAdminUserRow>> ListUsersAsync(string? search, string? accountStatus, int offset, int pageSize, CancellationToken ct = default);
+    Task<bool> SetUserBlockedAsync(Guid userId, bool blocked, string reason, string actorEmail, CancellationToken ct = default);
     Task MarkInvoicePaidAsync(Guid invoiceId, string reason, string actorEmail, CancellationToken ct = default);
     Task MarkInvoiceOverdueAsync(Guid invoiceId, string reason, string actorEmail, CancellationToken ct = default);
     Task CancelSubscriptionAsync(Guid subscriptionId, string reason, string actorEmail, CancellationToken ct = default);

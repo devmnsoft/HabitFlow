@@ -249,7 +249,7 @@ f97b1a4 Corrige cadastro MFA (view Confirm inexistente), AccessDeniedPath do coo
 | Categoria | Status |
 |---|---|
 | **Implementado** | ✅ Todo o código, migrations, testes, documentação |
-| **Funcionalmente executado** | ✅ Block A 13/13, ficha 11/11, provisionamento 3 contas, 664/664 testes |
+| **Funcionalmente executado** | ✅ Block A 13/13, ficha 11/11, provisionamento 3 contas, 670/670 testes (v6.28.2) |
 | **Homologado externamente** | 🔴 Bloqueado (MercadoPago, IA, notificações — sem credenciais) |
 
 ---
@@ -264,4 +264,40 @@ f97b1a4 Corrige cadastro MFA (view Confirm inexistente), AccessDeniedPath do coo
 
 ---
 
-**Conclusão:** HabitFlow v6.28.1 está implementado, testado e funcionalmente operacional. Os bloqueios externos são reais e requerem credenciais de produção para homologação final.
+## 11. v6.28.2 — Regras Comerciais (trial 15 dias, Ritmo R$ 10, gestão de contas)
+
+### 11.1 Migração
+
+- `database/migrations/110_v6282_commercial_trial_gate_ritmo_r10.sql` — **aplicada** no PostgreSQL
+  nativo e registrada em `schema_migrations` (ids 109 e 110 registrados; 109 tinha sido aplicada
+  sem registro):
+  - `clients.trial_ends_at` + índice + backfill;
+  - `plan_prices` do ritmo → R$ 10,00/Mensal e R$ 100,00/Anual; `active_habits_limit` do ritmo → 5;
+  - plano interno `blocked` (46 `plan_features` zerados, histórico 30 dias);
+  - catálogo público do Free → "Grátis por 15 dias" (`is_public=true`).
+
+### 11.2 Validação funcional executada (aplicação real + PostgreSQL real)
+
+| Cenário | Resultado |
+|---|---|
+| `/plans` catálogo público | ✅ Ritmo Mensal R$ 10,00 / Anual R$ 100,00, cartão "Grátis por 15 dias", comparação "Ritmo mensal/anual", sem R$ 19,90 |
+| Trial ativo (`trial_ends_at` futuro) | ✅ Uso do plano mostra **Ritmo**, sem restrição |
+| Trial expirado | ✅ Uso mostra **"Acesso bloqueado (trial expirado)"** + motivo "período grátis de 15 dias terminou… R$ 10,00/mês"; criação de meta recusada com a mensagem (0 linhas gravadas); listagem continua 200 (continuidade) |
+| Limites por plano (medidores) | ✅ Ritmo: hábitos "1 de 5", metas "ilimitado"; Free: metas "1 de 1" |
+| Upgrade sem checkout configurado | ✅ Alerta honesto: "O pagamento online ainda não está disponível neste ambiente… recursos pagos ficam travados…" (nenhum pagamento simulado; DB inalterado) |
+| Downgrade para Free | ✅ Imediato: `free/free/Free/Free` + alerta "Plano alterado para Gratuito…" |
+| SuperAdmin troca de plano | ✅ `/superadmin/clients/{id}/change-plan` → `ritmo/Active/Premium` + audit `client.change_plan` |
+| Painel de usuários | ✅ `/superadmin/users` lista contas com busca/filtro, formulários com CSRF e motivo |
+| Bloqueio/desbloqueio | ✅ `user.block`: `account_status=Blocked`, `session_version` incrementado, audit; login do usuário bloqueado recusa; `user.unblock` restaura; ações `user.block,user.unblock` auditadas |
+| Guarda de auto-bloqueio | ✅ SuperAdmin não bloqueia a si mesmo (status segue `Active`, sem audit) |
+| Testes unitários | ✅ 670/670 (`dotnet test -c Release`), incluindo novos `CommercialRulesV6282Tests` |
+
+### 11.3 Lacunas externas (declaradas, não simuladas)
+
+- Checkout MercadoPago (`AccessToken` vazio) — upgrade self-service pára na mensagem honesta;
+  ativação real de plano pago é feita pelo SuperAdmin ou por `MarkInvoicePaidAsync`.
+- Homologação externa dos gateways/notificações/IA segue bloqueada por ausência de credenciais.
+
+---
+
+**Conclusão:** HabitFlow v6.28.1/v6.28.2 está implementado, testado e funcionalmente operacional (regras comerciais validadas de ponta a ponta — ver seção 11). Os bloqueios externos são reais e requerem credenciais de produção para homologação final.

@@ -8,7 +8,7 @@ test.describe('Planos v6.17.4', () => {
     await page.goto('/plans');
     await expect(page.getByRole('heading', { level: 1 })).toContainText('Escolha o plano');
     await expect(page.locator('#free')).toBeVisible();
-    await expect(page.locator('#ritmo-monthly')).toContainText('R$ 19,90/mês');
+    await expect(page.locator('#ritmo-monthly')).toContainText('R$ 10,00/mês');
     await expect(page.locator('#ritmo-yearly')).toContainText('R$ 199,00/ano');
     await expect(page.getByRole('heading', { name: 'Compare todos os recursos' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Perguntas frequentes' })).toBeVisible();

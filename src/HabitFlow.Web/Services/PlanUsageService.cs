@@ -65,6 +65,7 @@ public sealed class PlanUsageService(
         PlanCodes.Ritmo => "Ritmo",
         PlanCodes.Team => "Team",
         PlanCodes.Enterprise => "Enterprise",
+        PlanCodes.Blocked => "Acesso bloqueado (trial expirado)",
         _ => "Evolução"
     };
 }

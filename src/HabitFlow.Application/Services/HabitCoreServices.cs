@@ -173,6 +173,15 @@ public sealed class HabitEditorService(IHabitRepository habits, IHabitWeekDayRep
         if (input.Id.HasValue && current is null) return Result<Habit>.Failure("habit.not_found", "Hábito não encontrado.");
         if (current is null)
         {
+            // Bloqueio comercial (v6.28.2): trial de 15 dias expirado sem assinatura ativa.
+            var effectivePlan = await entitlements.GetEffectivePlanForUserAsync(user.Id, ct);
+            if (effectivePlan == PlanCodes.Blocked)
+            {
+                await audit.LogAsync("plan.trial_expired", "Tentativa de criar hábito com acesso bloqueado (trial expirado)", AuditSeverity.Warning,
+                    user.Id, user.Email, new { effectivePlan }, ct);
+                return Result<Habit>.Failure("plan.trial_expired",
+                    "Seu período grátis de 15 dias terminou. Assine o plano Ritmo por R$ 10,00/mês para reativar sua conta e continuar criando hábitos. Seus dados continuam preservados.");
+            }
             var count = await habits.CountActiveAsync(user.ClientId.Value, user.Id, ct);
             var limit = await entitlements.GetIntegerFeatureAsync(user.Id, PlanFeatureCodes.ActiveHabitsLimit, ct);
             if (limit is >= 0 && count >= limit)

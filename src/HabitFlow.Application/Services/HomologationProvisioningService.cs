@@ -186,7 +186,9 @@ public sealed class HomologationProvisioningService(
                 AddressDistrict: null, AddressCity: null, AddressState: null,
                 SubscriptionStatus: ClientSubscriptionStatus.Trial, BenefitsStatus: ClientBenefitsStatus.PremiumActive, PaymentStatus: ClientPaymentStatus.None,
                 LastPaymentAt: null, NextDueDate: null, OverdueSince: null, GracePeriodUntil: null,
-                BlockedPaidBenefitsAt: null, BlockedPaidBenefitsReason: null);
+                BlockedPaidBenefitsAt: null, BlockedPaidBenefitsReason: null,
+                // Fixture de homologação: trial longo para a conta de teste nunca cair em 'blocked' pelo gate de 15 dias.
+                TrialEndsAt: now.AddYears(50));
             await clients.CreateAsync(testClient, ct);
             return testClient;
         }

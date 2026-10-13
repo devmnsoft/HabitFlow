@@ -39,7 +39,8 @@ public sealed record Client(
     DateOnly? OverdueSince = null,
     DateOnly? GracePeriodUntil = null,
     DateTime? BlockedPaidBenefitsAt = null,
-    string? BlockedPaidBenefitsReason = null);
+    string? BlockedPaidBenefitsReason = null,
+    DateTime? TrialEndsAt = null);
 
 public sealed record ClientUserSummary(Guid Id, string Name, string Email, string Role, string AccountStatus, DateTime CreatedAt);
 public sealed record ClientMetrics(int LinkedUsers, int ActiveHabits, int CompletedHabits);

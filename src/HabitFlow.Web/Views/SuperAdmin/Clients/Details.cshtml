@@ -211,9 +211,11 @@
         @Html.AntiForgeryToken()
         <label class="form-label" for="plan-code">Alterar plano (auditado)</label>
         <select id="plan-code" name="planCode" class="form-select mb-2">
-            <option value="Free">Free</option>
-            <option value="Premium">Premium</option>
-            <option value="Enterprise">Enterprise</option>
+            <option value="free">Gratuito (free)</option>
+            <option value="ritmo">Ritmo — R$ 10,00/mês, até 5 hábitos</option>
+            <option value="evolucao">Evolução</option>
+            <option value="team">Team</option>
+            <option value="enterprise">Enterprise</option>
         </select>
         <label class="form-label" for="plan-reason">Motivo obrigatório</label>
         <input id="plan-reason" name="reason" class="form-control mb-2" maxlength="300" required />

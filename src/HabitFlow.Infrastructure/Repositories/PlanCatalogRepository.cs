@@ -6,9 +6,11 @@ namespace HabitFlow.Infrastructure;
 public sealed class PlanCatalogRepository(SqlExecutor db, ILogger<PlanCatalogRepository> logger) : IPlanCatalogRepository
 {
     private static readonly HashSet<string> KnownPlanCodes = new(StringComparer.OrdinalIgnoreCase)
-        { PlanCodes.Free, PlanCodes.Ritmo, PlanCodes.Evolucao, PlanCodes.Team, PlanCodes.Enterprise };
+        { PlanCodes.Free, PlanCodes.Ritmo, PlanCodes.Evolucao, PlanCodes.Team, PlanCodes.Enterprise, PlanCodes.Blocked };
+    // Valores persistidos pelo enum ClientBenefitsStatus (e o legado RestrictedByPayment da migração 032).
+    // Manter em sincronia com a coluna clients.benefits_status; valores desconhecidos derrubam o acesso para Free (fail-closed).
     private static readonly HashSet<string> KnownBenefitsStatuses = new(StringComparer.OrdinalIgnoreCase)
-        { "Free", "Active", "PastDue", "Blocked" };
+        { "Free", "PremiumActive", "PremiumBlocked", "EnterpriseActive", "EnterpriseBlocked", "Active", "PastDue", "Blocked", "RestrictedByPayment" };
     public async Task<IReadOnlyList<PublicPlan>> GetPublicCatalogAsync(CancellationToken ct = default)
     {
         var plans = (await db.QueryAsync<PlanRow>("""
@@ -53,10 +55,22 @@ public sealed class PlanCatalogRepository(SqlExecutor db, ILogger<PlanCatalogRep
             row = await db.QuerySingleOrDefaultAsync<ClientPlanAccessRow>("""
                 select id as "ClientId",
                        coalesce(contracted_plan_code, 'free') as "ContractedPlanCode",
-                       coalesce(effective_plan_code, 'free') as "EffectivePlanCode",
+                       -- Gate comercial v6.28.2: trial de 15 dias do cliente.
+                       --  * Trial ativo      -> plano efetivo 'ritmo' (todos os recursos do plano de entrada R$ 10).
+                       --  * Trial expirado   -> plano interno 'blocked' (features desligadas, limites 0) até assinar.
+                       --  * Demais cenários  -> plano efetivo persistido (benefícios bloqueados já reduzem a free).
+                       case
+                         when subscription_status = 'Trial' and coalesce(trial_ends_at, created_at + interval '15 days') > now() then 'ritmo'
+                         when subscription_status = 'Trial' then 'blocked'
+                         else coalesce(effective_plan_code, 'free')
+                       end as "EffectivePlanCode",
                        coalesce(benefits_status, 'Free') as "BenefitsStatus",
                        grace_period_until as "GracePeriodUntil",
-                       access_restriction_reason as "RestrictionReason"
+                       case
+                         when subscription_status = 'Trial' and coalesce(trial_ends_at, created_at + interval '15 days') <= now() then
+                           'Seu período grátis de 15 dias terminou. Assine o plano Ritmo por R$ 10,00/mês para reativar sua conta. Seus dados continuam preservados.'
+                         else access_restriction_reason
+                       end as "RestrictionReason"
                 from habitflow.clients
                 where id = @clientId
                 """, new { clientId }, ct);

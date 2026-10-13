@@ -4,7 +4,7 @@ namespace HabitFlow.Infrastructure;
 
 public sealed class ClientRepository(SqlExecutor db) : IClientRepository
 {
-    private const string Columns = "id, name, legal_name, document, email, phone, contact_name, plan, status, notes, is_active, created_at, updated_at, person_type, document_type, document_raw, document_normalized, trade_name, state_registration, municipal_registration, billing_email, billing_phone, billing_responsible_name, address_zipcode, address_street, address_number, address_complement, address_district, address_city, address_state, subscription_status, benefits_status, payment_status, last_payment_at, next_due_date, overdue_since, grace_period_until, blocked_paid_benefits_at, blocked_paid_benefits_reason";
+    private const string Columns = "id, name, legal_name, document, email, phone, contact_name, plan, status, notes, is_active, created_at, updated_at, person_type, document_type, document_raw, document_normalized, trade_name, state_registration, municipal_registration, billing_email, billing_phone, billing_responsible_name, address_zipcode, address_street, address_number, address_complement, address_district, address_city, address_state, subscription_status, benefits_status, payment_status, last_payment_at, next_due_date, overdue_since, grace_period_until, blocked_paid_benefits_at, blocked_paid_benefits_reason, trial_ends_at";
 
     public Task<Client?> GetByIdAsync(Guid id, CancellationToken ct = default) =>
         db.QuerySingleOrDefaultAsync<Client>($"select {Columns} from habitflow.clients where id = @id", new { id }, ct);
@@ -28,16 +28,16 @@ public sealed class ClientRepository(SqlExecutor db) : IClientRepository
     }
 
     public Task CreateAsync(Client c, CancellationToken ct = default) => db.ExecuteAsync("""
-        insert into habitflow.clients(id,name,legal_name,document,email,phone,contact_name,plan,status,notes,is_active,created_at,updated_at,person_type,document_type,document_raw,document_normalized,trade_name,state_registration,municipal_registration,billing_email,billing_phone,billing_responsible_name,address_zipcode,address_street,address_number,address_complement,address_district,address_city,address_state,subscription_status,benefits_status,payment_status,last_payment_at,next_due_date,overdue_since,grace_period_until,blocked_paid_benefits_at,blocked_paid_benefits_reason)
-        values(@Id,@Name,@LegalName,@Document,@Email,@Phone,@ContactName,@Plan,@Status,@Notes,@IsActive,@CreatedAt,@UpdatedAt,@PersonType,@DocumentType,@DocumentRaw,@DocumentNormalized,@TradeName,@StateRegistration,@MunicipalRegistration,@BillingEmail,@BillingPhone,@BillingResponsibleName,@AddressZipcode,@AddressStreet,@AddressNumber,@AddressComplement,@AddressDistrict,@AddressCity,@AddressState,@SubscriptionStatus,@BenefitsStatus,@PaymentStatus,@LastPaymentAt,@NextDueDate,@OverdueSince,@GracePeriodUntil,@BlockedPaidBenefitsAt,@BlockedPaidBenefitsReason)
-        """, new { c.Id, c.Name, c.LegalName, c.Document, c.Email, c.Phone, c.ContactName, Plan = DbEnum.Text(c.Plan), Status = DbEnum.Text(c.Status), c.Notes, c.IsActive, c.CreatedAt, c.UpdatedAt, PersonType = DbEnum.Text(c.PersonType), DocumentType = DbEnum.Text(c.DocumentType), c.DocumentRaw, c.DocumentNormalized, c.TradeName, c.StateRegistration, c.MunicipalRegistration, c.BillingEmail, c.BillingPhone, c.BillingResponsibleName, c.AddressZipcode, c.AddressStreet, c.AddressNumber, c.AddressComplement, c.AddressDistrict, c.AddressCity, c.AddressState, SubscriptionStatus = DbEnum.Text(c.SubscriptionStatus), BenefitsStatus = DbEnum.Text(c.BenefitsStatus), PaymentStatus = DbEnum.Text(c.PaymentStatus), c.LastPaymentAt, c.NextDueDate, c.OverdueSince, c.GracePeriodUntil, c.BlockedPaidBenefitsAt, c.BlockedPaidBenefitsReason }, ct);
+        insert into habitflow.clients(id,name,legal_name,document,email,phone,contact_name,plan,status,notes,is_active,created_at,updated_at,person_type,document_type,document_raw,document_normalized,trade_name,state_registration,municipal_registration,billing_email,billing_phone,billing_responsible_name,address_zipcode,address_street,address_number,address_complement,address_district,address_city,address_state,subscription_status,benefits_status,payment_status,last_payment_at,next_due_date,overdue_since,grace_period_until,blocked_paid_benefits_at,blocked_paid_benefits_reason,trial_ends_at)
+        values(@Id,@Name,@LegalName,@Document,@Email,@Phone,@ContactName,@Plan,@Status,@Notes,@IsActive,@CreatedAt,@UpdatedAt,@PersonType,@DocumentType,@DocumentRaw,@DocumentNormalized,@TradeName,@StateRegistration,@MunicipalRegistration,@BillingEmail,@BillingPhone,@BillingResponsibleName,@AddressZipcode,@AddressStreet,@AddressNumber,@AddressComplement,@AddressDistrict,@AddressCity,@AddressState,@SubscriptionStatus,@BenefitsStatus,@PaymentStatus,@LastPaymentAt,@NextDueDate,@OverdueSince,@GracePeriodUntil,@BlockedPaidBenefitsAt,@BlockedPaidBenefitsReason,@TrialEndsAt)
+        """, new { c.Id, c.Name, c.LegalName, c.Document, c.Email, c.Phone, c.ContactName, Plan = DbEnum.Text(c.Plan), Status = DbEnum.Text(c.Status), c.Notes, c.IsActive, c.CreatedAt, c.UpdatedAt, PersonType = DbEnum.Text(c.PersonType), DocumentType = DbEnum.Text(c.DocumentType), c.DocumentRaw, c.DocumentNormalized, c.TradeName, c.StateRegistration, c.MunicipalRegistration, c.BillingEmail, c.BillingPhone, c.BillingResponsibleName, c.AddressZipcode, c.AddressStreet, c.AddressNumber, c.AddressComplement, c.AddressDistrict, c.AddressCity, c.AddressState, SubscriptionStatus = DbEnum.Text(c.SubscriptionStatus), BenefitsStatus = DbEnum.Text(c.BenefitsStatus), PaymentStatus = DbEnum.Text(c.PaymentStatus), c.LastPaymentAt, c.NextDueDate, c.OverdueSince, c.GracePeriodUntil, c.BlockedPaidBenefitsAt, c.BlockedPaidBenefitsReason, c.TrialEndsAt }, ct);
 
     public Task UpdateAsync(Client c, CancellationToken ct = default) => db.ExecuteAsync("""
         update habitflow.clients
         set name=@Name, legal_name=@LegalName, document=@Document, email=@Email, phone=@Phone, contact_name=@ContactName,
-            plan=@Plan, status=@Status, notes=@Notes, is_active=@IsActive, updated_at=@UpdatedAt, person_type=@PersonType, document_type=@DocumentType, document_raw=@DocumentRaw, document_normalized=@DocumentNormalized, trade_name=@TradeName, billing_email=@BillingEmail, billing_phone=@BillingPhone, billing_responsible_name=@BillingResponsibleName, address_zipcode=@AddressZipcode, address_street=@AddressStreet, address_number=@AddressNumber, address_complement=@AddressComplement, address_district=@AddressDistrict, address_city=@AddressCity, address_state=@AddressState, subscription_status=@SubscriptionStatus, benefits_status=@BenefitsStatus, payment_status=@PaymentStatus, last_payment_at=@LastPaymentAt, next_due_date=@NextDueDate, overdue_since=@OverdueSince, grace_period_until=@GracePeriodUntil, blocked_paid_benefits_at=@BlockedPaidBenefitsAt, blocked_paid_benefits_reason=@BlockedPaidBenefitsReason
+            plan=@Plan, status=@Status, notes=@Notes, is_active=@IsActive, updated_at=@UpdatedAt, person_type=@PersonType, document_type=@DocumentType, document_raw=@DocumentRaw, document_normalized=@DocumentNormalized, trade_name=@TradeName, billing_email=@BillingEmail, billing_phone=@BillingPhone, billing_responsible_name=@BillingResponsibleName, address_zipcode=@AddressZipcode, address_street=@AddressStreet, address_number=@AddressNumber, address_complement=@AddressComplement, address_district=@AddressDistrict, address_city=@AddressCity, address_state=@AddressState, subscription_status=@SubscriptionStatus, benefits_status=@BenefitsStatus, payment_status=@PaymentStatus, last_payment_at=@LastPaymentAt, next_due_date=@NextDueDate, overdue_since=@OverdueSince, grace_period_until=@GracePeriodUntil, blocked_paid_benefits_at=@BlockedPaidBenefitsAt, blocked_paid_benefits_reason=@BlockedPaidBenefitsReason, trial_ends_at=@TrialEndsAt
         where id=@Id
-        """, new { c.Id, c.Name, c.LegalName, c.Document, c.Email, c.Phone, c.ContactName, Plan = DbEnum.Text(c.Plan), Status = DbEnum.Text(c.Status), c.Notes, c.IsActive, c.CreatedAt, c.UpdatedAt, PersonType = DbEnum.Text(c.PersonType), DocumentType = DbEnum.Text(c.DocumentType), c.DocumentRaw, c.DocumentNormalized, c.TradeName, c.StateRegistration, c.MunicipalRegistration, c.BillingEmail, c.BillingPhone, c.BillingResponsibleName, c.AddressZipcode, c.AddressStreet, c.AddressNumber, c.AddressComplement, c.AddressDistrict, c.AddressCity, c.AddressState, SubscriptionStatus = DbEnum.Text(c.SubscriptionStatus), BenefitsStatus = DbEnum.Text(c.BenefitsStatus), PaymentStatus = DbEnum.Text(c.PaymentStatus), c.LastPaymentAt, c.NextDueDate, c.OverdueSince, c.GracePeriodUntil, c.BlockedPaidBenefitsAt, c.BlockedPaidBenefitsReason }, ct);
+        """, new { c.Id, c.Name, c.LegalName, c.Document, c.Email, c.Phone, c.ContactName, Plan = DbEnum.Text(c.Plan), Status = DbEnum.Text(c.Status), c.Notes, c.IsActive, c.CreatedAt, c.UpdatedAt, PersonType = DbEnum.Text(c.PersonType), DocumentType = DbEnum.Text(c.DocumentType), c.DocumentRaw, c.DocumentNormalized, c.TradeName, c.StateRegistration, c.MunicipalRegistration, c.BillingEmail, c.BillingPhone, c.BillingResponsibleName, c.AddressZipcode, c.AddressStreet, c.AddressNumber, c.AddressComplement, c.AddressDistrict, c.AddressCity, c.AddressState, SubscriptionStatus = DbEnum.Text(c.SubscriptionStatus), BenefitsStatus = DbEnum.Text(c.BenefitsStatus), PaymentStatus = DbEnum.Text(c.PaymentStatus), c.LastPaymentAt, c.NextDueDate, c.OverdueSince, c.GracePeriodUntil, c.BlockedPaidBenefitsAt, c.BlockedPaidBenefitsReason, c.TrialEndsAt }, ct);
 
     public Task RecordCommercialStatusChangeAsync(Guid clientId, string previousStatus, string newStatus, string? reason, Guid? changedBy, CancellationToken ct = default) =>
         db.ExecuteAsync("insert into habitflow.tenant_commercial_status(client_id,previous_status,new_status,reason,changed_by) values(@clientId,@previousStatus,@newStatus,@reason,@changedBy)", new { clientId, previousStatus, newStatus, reason = string.IsNullOrWhiteSpace(reason) ? null : reason.Trim()[..Math.Min(240, reason.Trim().Length)], changedBy }, ct);
@@ -85,5 +85,29 @@ public sealed class ClientRepository(SqlExecutor db) : IClientRepository
     {
         var linked = await db.QuerySingleOrDefaultAsync<int>("select count(*) from habitflow.users where client_id = @clientId", new { clientId }, ct);
         return new ClientMetrics(linked, 0, 0);
+    }
+
+    public async Task<bool> ChangePlanAsync(Guid clientId, string planCode, string? reason, Guid? changedBy, CancellationToken ct = default)
+    {
+        var code = (planCode ?? string.Empty).Trim().ToLowerInvariant();
+        var updated = await db.ExecuteAsync("""
+            update habitflow.clients
+            set plan = case when @code in ('enterprise','evolucao') then 'Enterprise'
+                            when @code in ('ritmo','team') then 'Premium'
+                            else 'Free' end,
+                contracted_plan_code = @code,
+                effective_plan_code = @code,
+                subscription_status = case when @code = 'free' then 'Free' else 'Active' end,
+                benefits_status = case when @code in ('enterprise','evolucao') then 'EnterpriseActive'
+                                       when @code = 'free' then 'Free'
+                                       else 'PremiumActive' end,
+                access_restriction_reason = null,
+                trial_ends_at = null,
+                updated_at = now()
+            where id = @clientId
+            """, new { clientId, code }, ct) == 1;
+        if (updated)
+            await RecordCommercialStatusChangeAsync(clientId, "PlanChange", code, reason, changedBy, ct);
+        return updated;
     }
 }

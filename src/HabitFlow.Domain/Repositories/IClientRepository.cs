@@ -15,4 +15,7 @@ public interface IClientRepository
     Task<int> CountUsersAsync(Guid clientId, string? search, string? role, string? accountStatus, CancellationToken ct = default);
     Task<ClientUserSummary?> GetUserByClientEmailAsync(Guid clientId, string normalizedEmail, CancellationToken ct = default);
     Task<ClientMetrics> GetMetricsAsync(Guid clientId, CancellationToken ct = default);
+    /// <summary>Troca o plano do cliente (código do catálogo: free/ritmo/evolucao/team/enterprise).
+    /// Atualiza contracted_plan_code e effective_plan_code — os entitlements passam a seguir o novo plano.</summary>
+    Task<bool> ChangePlanAsync(Guid clientId, string planCode, string? reason, Guid? changedBy, CancellationToken ct = default);
 }

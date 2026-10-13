@@ -27,8 +27,8 @@ public sealed class PlansV6174Tests
         var comparison = Read("src/HabitFlow.Web/Views/Plans/Partials/_PlanComparisonTable.cshtml");
         var service = Read("src/HabitFlow.Web/Services/PlanLandingPageService.cs");
         Assert.Contains("_PlanComparisonTable", index);
-        Assert.Contains("Premium mensal", comparison);
-        Assert.Contains("Premium anual", comparison);
+        Assert.Contains("Ritmo mensal", comparison);
+        Assert.Contains("Ritmo anual", comparison);
         Assert.Contains("Posso começar grátis?", service);
         Assert.Contains("Em breve", service);
         Assert.Contains("Exportação PDF", service);

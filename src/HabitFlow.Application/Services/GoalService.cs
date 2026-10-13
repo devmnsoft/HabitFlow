@@ -7,6 +7,7 @@ public sealed class GoalService(IUserGoalRepository goals,FeatureAccessService a
  public Task<IReadOnlyList<UserGoal>> ListAsync(Guid clientId,Guid userId,CancellationToken ct=default)=>goals.ListAsync(clientId,userId,ct);
  public Task<UserGoal?> GetAsync(Guid id,Guid clientId,Guid userId,CancellationToken ct=default)=>goals.GetAsync(id,clientId,userId,ct);
  public async Task<Result<UserGoal>> CreateAsync(Guid clientId,Guid userId,string title,string? description,string targetType,int targetValue,DateOnly startDate,DateOnly? endDate,CancellationToken ct=default){
+  if(await access.GetEffectivePlanAsync(userId,ct)==PlanCodes.Blocked)return Result<UserGoal>.Failure("plan.trial_expired","Seu período grátis de 15 dias terminou. Assine o plano Ritmo por R$ 10,00/mês para reativar sua conta e continuar criando objetivos. Seus dados continuam preservados.");
   var limit=await access.GetLimitAsync(userId,PlanFeatureCodes.ActiveGoalsLimit,ct); var active=await goals.CountActiveAsync(clientId,userId,ct);
   if(limit is >=0 && active>=limit)return Result<UserGoal>.Failure("goal.limit","Seu limite de objetivos ativos foi alcançado. Os objetivos que você já criou continuam aqui.");
   if(!IsValid(title,targetType,targetValue,startDate,endDate))return Result<UserGoal>.Failure("goal.invalid","Revise o título, o período e a forma de acompanhamento.");

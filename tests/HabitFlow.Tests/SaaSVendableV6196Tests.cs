@@ -134,8 +134,8 @@ public sealed class SaaSVendableV6196Tests
         var comparison = Read("src", "HabitFlow.Web", "Views", "Plans", "Partials", "_PlanComparisonTable.cshtml");
         Assert.Contains("<th>Team</th>", comparison);
         Assert.Contains("<th>Enterprise</th>", comparison);
-        Assert.Contains("Premium mensal", comparison);
-        Assert.Contains("Premium anual", comparison);
+        Assert.Contains("Ritmo mensal", comparison);
+        Assert.Contains("Ritmo anual", comparison);
 
         var card = Read("src", "HabitFlow.Web", "Views", "Plans", "Partials", "_CommercialPlanCard.cshtml");
         Assert.Contains("/billing/checkout", card);

@@ -1,0 +1,67 @@
+@model IReadOnlyList<HabitFlow.Domain.SuperAdminUserRow>
+@{ ViewData["Title"] = "Usuários da plataforma"; }
+<section class="py-4">
+  <h1>Usuários da plataforma</h1>
+  <p class="text-muted">Gestão de contas de usuário: plano efetivo, situação de pagamento e bloqueio com auditoria. Contas SuperAdmin não aparecem e não podem ser bloqueadas por aqui.</p>
+
+  @if (TempData["Success"] is string success) { <div class="alert alert-success" role="status">@success</div> }
+  @if (TempData["Error"] is string error) { <div class="alert alert-danger" role="alert">@error</div> }
+
+  <form method="get" class="row g-2 mb-3" action="/superadmin/users">
+    <div class="col-auto"><input class="form-control" type="search" name="q" value="@Context.Request.Query["q"]" placeholder="Buscar por nome, e-mail ou cliente" aria-label="Buscar usuários" /></div>
+    <div class="col-auto">
+      <select class="form-select" name="status" aria-label="Situação da conta">
+        <option value="">Todas as situações</option>
+        <option value="Active" selected="@(Context.Request.Query["status"] == "Active")">Ativas</option>
+        <option value="Blocked" selected="@(Context.Request.Query["status"] == "Blocked")">Bloqueadas</option>
+        <option value="Suspended" selected="@(Context.Request.Query["status"] == "Suspended")">Suspensas</option>
+      </select>
+    </div>
+    <div class="col-auto"><button class="btn btn-outline-primary" type="submit">Filtrar</button></div>
+  </form>
+
+  <div class="table-responsive">
+    <table class="table table-sm align-middle">
+      <thead><tr>
+        <th>Nome</th><th>E-mail</th><th>Papel</th><th>Conta</th><th>Cliente</th><th>Plano efetivo</th>
+        <th>Assinatura</th><th>Pagamento</th><th>Próximo vencimento</th><th>Criado em</th><th>Ações</th>
+      </tr></thead>
+      <tbody>
+      @foreach (var u in Model)
+      {
+        <tr>
+          <td>@u.Name</td>
+          <td>@u.Email</td>
+          <td><span class="badge bg-secondary">@u.Role</span></td>
+          <td>
+            @if (u.AccountStatus == "Blocked") { <span class="badge bg-danger">Bloqueada</span> }
+            else if (u.AccountStatus == "Suspended") { <span class="badge bg-warning text-dark">Suspensa</span> }
+            else { <span class="badge bg-success">Ativa</span> }
+          </td>
+          <td>@(u.ClientId is null ? "—" : u.ClientName)</td>
+          <td>
+            @if (u.EffectivePlanCode == "blocked") { <span class="badge bg-dark">Bloqueado (trial expirado)</span> }
+            else { <span class="badge bg-primary">@u.EffectivePlanCode</span> }
+          </td>
+          <td>@u.SubscriptionStatus</td>
+          <td>@u.PaymentStatus</td>
+          <td>@(u.NextDueDate?.ToString("dd/MM/yyyy") ?? "—")</td>
+          <td>@u.CreatedAt.ToString("dd/MM/yyyy")</td>
+          <td style="min-width:340px">
+            @if (u.ClientId is not null)
+            {
+              <a class="btn btn-sm btn-outline-secondary" href="/superadmin/clients/@u.ClientId">Ficha</a>
+            }
+            <form method="post" action="/superadmin/users/@u.Id/@(u.AccountStatus == "Blocked" ? "unblock" : "block")" class="d-flex gap-1 mt-1" data-confirm data-confirm-title="@(u.AccountStatus == "Blocked" ? "Desbloquear usuário?" : "Bloquear usuário?")" data-confirm-message="@(u.AccountStatus == "Blocked" ? "A conta volta a poder entrar normalmente. A ação é auditada." : "O usuário perde o acesso imediatamente (sessões ativas encerradas). Nenhum dado é removido. A ação é auditada.")" data-confirm-label="@(u.AccountStatus == "Blocked" ? "Desbloquear" : "Bloquear")">
+              @Html.AntiForgeryToken()
+              <input name="reason" class="form-control form-control-sm" maxlength="300" required placeholder="Motivo (auditado)" aria-label="Motivo da ação" />
+              <button class="btn btn-sm @(u.AccountStatus == "Blocked" ? "btn-success" : "btn-outline-danger")" type="submit">@(u.AccountStatus == "Blocked" ? "Desbloquear" : "Bloquear")</button>
+            </form>
+          </td>
+        </tr>
+      }
+      @if (!Model.Any()) { <tr><td colspan="11" class="text-muted">Nenhum usuário encontrado.</td></tr> }
+      </tbody>
+    </table>
+  </div>
+</section>

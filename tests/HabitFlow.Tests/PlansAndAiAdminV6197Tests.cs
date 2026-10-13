@@ -23,8 +23,10 @@ public sealed class PlansAndAiAdminV6197Tests
         var plans = Read("src", "HabitFlow.Web", "Controllers", "PlansController.cs");
         var billing = Read("src", "HabitFlow.Web", "Views", "Billing", "Index.cshtml");
         var checkout = Read("src", "HabitFlow.Web", "Controllers", "BillingController.cs");
-        Assert.Contains("\"Premium\"", service);
-        Assert.Contains("\"Free\"", service);
+        // v6.28.2: os cards usam os nomes reais do catálogo (Ritmo / Grátis por 15 dias) em vez dos rótulos fixos.
+        Assert.Contains("PlanCodes.Ritmo", service);
+        Assert.Contains("PlanCodes.Free", service);
+        Assert.Contains("plan.PublicName", service);
         Assert.Contains("PlanCodes.Team", service);
         Assert.Contains("PlanCodes.Enterprise", service);
         Assert.Contains("comercial@mnsoft.com.br", service);

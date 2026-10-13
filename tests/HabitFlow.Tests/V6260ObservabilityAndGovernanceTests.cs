@@ -371,6 +371,9 @@ internal sealed class FakeSuperAdminOperationalRepo : ISuperAdminOperationalRepo
     public Task MarkInvoiceOverdueAsync(Guid invoiceId, string reason, string actorEmail, CancellationToken ct = default) => Task.CompletedTask;
     public Task CancelSubscriptionAsync(Guid subscriptionId, string reason, string actorEmail, CancellationToken ct = default) => Task.CompletedTask;
     public Task ReactivateSubscriptionAsync(Guid subscriptionId, string reason, string actorEmail, CancellationToken ct = default) => Task.CompletedTask;
+    public Task<IReadOnlyList<SuperAdminUserRow>> ListUsersAsync(string? search, string? accountStatus, int offset, int pageSize, CancellationToken ct = default) =>
+        Task.FromResult<IReadOnlyList<SuperAdminUserRow>>([]);
+    public Task<bool> SetUserBlockedAsync(Guid userId, bool blocked, string reason, string actorEmail, CancellationToken ct = default) => Task.FromResult(true);
     public Task<RegistrationQualityReport> GetRegistrationQualityAsync(CancellationToken ct = default) =>
         Task.FromResult(new RegistrationQualityReport(new RegistrationQualitySummary(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0), []));
 }

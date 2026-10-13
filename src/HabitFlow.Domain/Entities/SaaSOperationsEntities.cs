@@ -12,6 +12,7 @@ public sealed record SuperAdminPlanRow(string Code, string Name, decimal? PriceM
 public sealed record SuperAdminSubscriptionRow(Guid Id, Guid ClientId, string ClientName, string PlanCode, string Status, string? BillingCycle, DateTime? CurrentPeriodStart, DateTime? CurrentPeriodEnd, DateTime? TrialEndsAt, DateTime? CanceledAt, DateOnly? NextDueDate);
 public sealed record SuperAdminPaymentRow(Guid Id, Guid ClientId, string ClientName, string? InvoiceNumber, decimal Amount, DateOnly DueDate, string Method, string Status, DateTime? PaidAt, string? CheckoutUrl, string? ProviderPaymentId);
 public sealed record SuperAdminAuditRow(DateTime CreatedAt, string ActorEmail, string Action, string TargetType, Guid? TargetId, string? Reason, string? Metadata);
+public sealed record SuperAdminUserRow(Guid Id, string Name, string Email, string Role, string AccountStatus, Guid? ClientId, string ClientName, string SubscriptionStatus, string PaymentStatus, string EffectivePlanCode, DateTime CreatedAt, DateOnly? NextDueDate);
 public sealed record SchemaMigrationStatus(string Id, string Name, bool Applied, DateTime? AppliedAt);
 public sealed record SystemHealthStatus(bool DatabaseOk, IReadOnlyList<SchemaMigrationStatus> Migrations, IReadOnlyList<string> MissingTables, IReadOnlyList<string> MissingIndexes, IReadOnlyList<string> MissingConstraints, int PlansCount, int HabitTemplatesCount, bool MercadoPagoConfigured, string EnvironmentName, string ApplicationVersion, string Urls, bool DockerRequired);
 

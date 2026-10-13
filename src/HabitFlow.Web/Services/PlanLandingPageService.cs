@@ -31,8 +31,8 @@ public sealed class PlanLandingPageService(IPlanCatalogRepository repository)
     }
 
     public static PlanLandingPageViewModel BuildFallback() => new(
-        [new(PlanCodes.Ritmo, "Premium", "Para transformar intenção em consistência", "Experimente por 15 dias grátis todos os recursos de hábitos, metas e coach inteligente.", "15 dias grátis", true, "R$ 29,90/mês", "R$ 299,00/ano", "Economize cerca de 17%",
-            ["15 dias de teste grátis", "Hábitos e objetivos ilimitados", "Coach IA assistido", "Relatórios e exportações", "Privacidade sob seu controle"], "Começar 15 dias grátis", "/register", true)],
+        [new(PlanCodes.Ritmo, "Ritmo", "Para transformar intenção em consistência", "15 dias grátis com todos os recursos; depois R$ 10,00/mês com até 5 hábitos ativos.", "15 dias grátis", true, "R$ 10,00/mês", "R$ 100,00/ano", "Economize cerca de 17%",
+            ["15 dias de teste grátis", "Até 5 hábitos ativos", "Coach IA assistido", "Relatórios e exportações", "Privacidade sob seu controle"], "Começar 15 dias grátis", "/register", true)],
         [new("Mais clareza no dia", "Organize os próximos passos sem transformar sua rotina em pressão.", "calendar"),
          new("Evolução sem perder dados", "Seus dados não são apagados quando sua assinatura muda.", "shield")],
         [new("Avaliação", "15 dias grátis com recursos completos", "Mais limites e governança de time sob medida"),
@@ -48,9 +48,8 @@ public sealed class PlanLandingPageService(IPlanCatalogRepository repository)
             ? $"Economize cerca de {(1 - yearly.Amount / (monthly.Amount * 12)):P0}" : null;
         var free = plan.Code.Equals(PlanCodes.Free, StringComparison.OrdinalIgnoreCase);
         var benefits = plan.Features.Take(7).Select(DescribeFeature).Where(x => x is not null).Cast<string>().ToArray();
-        var name = plan.Code.Equals(PlanCodes.Ritmo, StringComparison.OrdinalIgnoreCase) ? "Premium"
-            : plan.Code.Equals(PlanCodes.Free, StringComparison.OrdinalIgnoreCase) ? "Free"
-            : plan.PublicName;
+        // Nome comercial real do catálogo: Ritmo (R$ 10/mês), Grátis por 15 dias, Team, Enterprise...
+        var name = plan.PublicName;
         return new(plan.Code, name, plan.AudienceText ?? (free ? "Para começar com o essencial" : "Para transformar intenção em consistência"),
             plan.Description ?? plan.Headline ?? "Uma rotina mais clara, no seu ritmo.", plan.BadgeText ?? (!free ? "Mais recomendado" : null),
             plan.IsFeatured || plan.Code.Equals(PlanCodes.Ritmo, StringComparison.OrdinalIgnoreCase),
@@ -103,7 +102,7 @@ public sealed class PlanLandingPageService(IPlanCatalogRepository repository)
 
     private static IReadOnlyList<PlanFaqItemViewModel> BuildFaq() => [
         new("Posso começar grátis?", "Sim! Novos usuários começam com 15 dias grátis de teste com acesso completo a hábitos, metas e coach inteligente, sem necessidade de cartão de crédito antecipado."),
-        new("O que muda no Premium?", "O Premium amplia limites e recursos implementados que aparecem na comparação. Mensal e anual têm os mesmos recursos."),
+        new("O que muda no Ritmo?", "O Ritmo (R$ 10,00/mês) amplia limites e recursos implementados que aparecem na comparação. Mensal e anual têm os mesmos recursos."),
         new("Meus hábitos somem se eu cancelar?", "Não. Seus hábitos e dados continuam preservados; após o período ou cancelamento, novos hábitos ficam restritos até a reativação de um plano."),
         new("Posso usar no celular?", "Sim. A interface é responsiva e o PWA pode ser instalado quando o navegador e o dispositivo oferecem suporte."),
         new("Relatórios e exportações estão inclusos?", "O resumo e a exportação CSV aparecem conforme o catálogo. PDF e recursos parciais não são vendidos como disponíveis."),

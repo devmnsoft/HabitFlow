@@ -7,6 +7,9 @@ public static class PlanCodes
     public const string Evolucao = "evolucao";
     public const string Team = "team";
     public const string Enterprise = "enterprise";
+    /// <summary>Plano interno aplicado quando o trial de 15 dias expira sem assinatura ativa.
+    /// Não é vendável nem público: todas as features ficam desligadas e os limites zerados.</summary>
+    public const string Blocked = "blocked";
 }
 
 public static class PlanFeatureCodes

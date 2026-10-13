@@ -107,4 +107,11 @@ public sealed class SuperAdminOperationalService(ISuperAdminOperationalRepositor
     public Task<Result> MarkInvoiceOverdueAsync(Guid id,string reason,string actor,CancellationToken ct=default)=>ExecuteAsync(c=>repo.MarkInvoiceOverdueAsync(id,reason,actor,c),ct);
     public Task<Result> CancelSubscriptionAsync(Guid id,string reason,string actor,CancellationToken ct=default)=>ExecuteAsync(c=>repo.CancelSubscriptionAsync(id,reason,actor,c),ct);
     public Task<Result> ReactivateSubscriptionAsync(Guid id,string reason,string actor,CancellationToken ct=default)=>ExecuteAsync(c=>repo.ReactivateSubscriptionAsync(id,reason,actor,c),ct);
+    public Task<IReadOnlyList<SuperAdminUserRow>> ListUsersAsync(string? search, string? accountStatus, int offset = 0, int pageSize = 200, CancellationToken ct = default) => repo.ListUsersAsync(search, accountStatus, offset, pageSize, ct);
+    public async Task<Result> SetUserBlockedAsync(Guid userId, bool blocked, string reason, string actor, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(reason) || reason.Trim().Length < 5)
+            return Result.Failure("superadmin.reason_required", "Informe um motivo com pelo menos 5 caracteres. A ação é auditada.");
+        return await ExecuteAsync(c => repo.SetUserBlockedAsync(userId, blocked, reason.Trim(), actor, c), ct);
+    }
 }
