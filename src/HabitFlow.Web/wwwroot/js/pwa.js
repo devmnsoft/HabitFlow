@@ -1,6 +1,10 @@
 (() => {
   if ('serviceWorker' in navigator) window.addEventListener('load', async () => {
     const registration = await navigator.serviceWorker.register('/service-worker.js');
+    // Recarrega SOMENTE quando o usuário aceitou uma atualização (skipWaiting).
+    // Sem isso, a primeira visita recarregava sozinha: controllerchange também
+    // dispara na instalação inicial, quando não havia controller anterior.
+    let updateAccepted = false;
     registration.addEventListener('updatefound', () => {
       const worker = registration.installing;
       worker?.addEventListener('statechange', async () => {
@@ -11,10 +15,10 @@
           confirmLabel: 'Atualizar agora',
           cancelLabel: 'Mais tarde'
         });
-        if (accepted) worker.postMessage({ type: 'SKIP_WAITING' });
+        if (accepted) { updateAccepted = true; worker.postMessage({ type: 'SKIP_WAITING' }); }
       });
     });
-    navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload());
+    navigator.serviceWorker.addEventListener('controllerchange', () => { if (updateAccepted) window.location.reload(); });
   });
   let prompt;
   const button = document.querySelector('[data-pwa-install]');

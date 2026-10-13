@@ -11,7 +11,7 @@ test.describe('Meu Dia v6.18.3', () => {
       await page.goto('/my-day');
       if (page.url().includes('/auth/login')) return;
       await expect(page.locator('[data-my-day]')).toBeVisible();
-      await expect(page.getByText('Sugestão inteligente')).toBeVisible();
+      await expect(page.getByText(new RegExp('meu pr\u00f3ximo passo','i'))).toBeVisible();
       await expect(page.getByRole('link', { name: 'Criar novo hábito' })).toBeVisible();
       await expect(page.locator('body')).not.toHaveCSS('overflow-x', 'scroll');
       expect(consoleErrors).toEqual([]);

@@ -72,6 +72,11 @@
   }));
 
   const drawer = document.getElementById('headerDrawer');
+  // O Offcanvas do Bootstrap 5.3 nao gerencia aria-hidden: sem isso, o menu
+  // aberto segue invisível para tecnologia assistiva (e para consultas por
+  // papel). Sincroniza o atributo com o estado real do painel.
+  drawer?.addEventListener('show.bs.offcanvas', () => drawer?.removeAttribute('aria-hidden'));
+  drawer?.addEventListener('hidden.bs.offcanvas', () => drawer?.setAttribute('aria-hidden', 'true'));
   drawer?.addEventListener('click', event => {
     if (!event.target.closest('a[href]') || !window.bootstrap?.Offcanvas) return;
     window.bootstrap.Offcanvas.getOrCreateInstance(drawer).hide();
