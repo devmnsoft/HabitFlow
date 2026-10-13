@@ -50,15 +50,20 @@ public sealed class SystemHealthRepository(SqlExecutor db) : ISystemHealthReposi
 
     public async Task RecordHistoryAsync(string componentName, string status, int durationMs, string? error, CancellationToken ct = default)
     {
+        // A tabela mantém as colunas das duas gerações de contrato (hook 101):
+        // check_name/severity/message/checked_at (NOT NULL) + component_name/recorded_at/error_message.
+        // O insert precisa preencher ambas, senão falha com 23502 em check_name.
         const string sql = """
             insert into habitflow.system_health_history (
-                id, component_name, status, duration_ms, error_message, recorded_at
+                id, component_name, status, duration_ms, error_message, recorded_at,
+                check_name, severity, message, checked_at
             ) values (
-                gen_random_uuid(), @componentName, @status, @durationMs, @error, now()
+                gen_random_uuid(), @componentName, @status, @durationMs, @error, now(),
+                @componentName, @severity, @message, now()
             );
             """;
 
-        await db.ExecuteAsync(sql, new { componentName, status, durationMs, error }, ct);
+        await db.ExecuteAsync(sql, new { componentName, status, durationMs, error, severity = "info", message = error ?? string.Empty }, ct);
     }
 
     public async Task<IReadOnlyList<SystemHealthStatusItem>> GetHealthHistoryAsync(string? componentName = null, int limit = 50, CancellationToken ct = default)

@@ -40,12 +40,12 @@ public sealed class BackupAndReleaseGovernanceService(
         {
             var initial = new BackupRecord(
                 Id: Guid.NewGuid(),
-                BackupType: "Logical (pg_dump)",
+                BackupType: "Full",
                 Status: "Completed",
                 FileName: "habitflow_homolog_baseline_v6260.dump",
                 SizeBytes: 4_194_304,
                 DurationMs: 850,
-                IntegrityStatus: "Verified",
+                IntegrityStatus: "Valid",
                 Sha256Hash: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
                 Notes: "Backup de referência gerado para homologação da release v6.26.0.",
                 VerifiedAt: DateTime.UtcNow,

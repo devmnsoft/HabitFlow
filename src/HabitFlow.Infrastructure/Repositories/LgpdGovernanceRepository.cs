@@ -8,10 +8,11 @@ public sealed class LgpdGovernanceRepository(SqlExecutor db) : ILgpdGovernanceRe
     {
         const string sql = """
             insert into habitflow.lgpd_requests (
-                id, client_id, user_id, request_type, status, reason, admin_notes,
-                processed_by_user_id, processed_at, created_at, updated_at
+                id, client_id, user_id, protocol, type, status, notes, rejection_reason,
+                handled_by, completed_at, created_at, updated_at
             ) values (
-                @Id, @ClientId, @UserId, @RequestType, @Status, @Reason, @AdminNotes,
+                @Id, @ClientId, @UserId, 'LGPD-' || to_char(now(), 'YYYYMMDDHH24MISS') || '-' || substring(md5(random()::text), 1, 6),
+                @RequestType, @Status, @Reason, @AdminNotes,
                 @ProcessedByUserId, @ProcessedAt, @CreatedAt, @UpdatedAt
             );
             """;
@@ -26,12 +27,12 @@ public sealed class LgpdGovernanceRepository(SqlExecutor db) : ILgpdGovernanceRe
                 id as "Id",
                 client_id as "ClientId",
                 user_id as "UserId",
-                request_type as "RequestType",
+                type as "RequestType",
                 status as "Status",
-                reason as "Reason",
-                admin_notes as "AdminNotes",
-                processed_by_user_id as "ProcessedByUserId",
-                processed_at as "ProcessedAt",
+                notes as "Reason",
+                rejection_reason as "AdminNotes",
+                handled_by as "ProcessedByUserId",
+                completed_at as "ProcessedAt",
                 created_at as "CreatedAt",
                 updated_at as "UpdatedAt"
             from habitflow.lgpd_requests
@@ -48,12 +49,12 @@ public sealed class LgpdGovernanceRepository(SqlExecutor db) : ILgpdGovernanceRe
                 id as "Id",
                 client_id as "ClientId",
                 user_id as "UserId",
-                request_type as "RequestType",
+                type as "RequestType",
                 status as "Status",
-                reason as "Reason",
-                admin_notes as "AdminNotes",
-                processed_by_user_id as "ProcessedByUserId",
-                processed_at as "ProcessedAt",
+                notes as "Reason",
+                rejection_reason as "AdminNotes",
+                handled_by as "ProcessedByUserId",
+                completed_at as "ProcessedAt",
                 created_at as "CreatedAt",
                 updated_at as "UpdatedAt"
             from habitflow.lgpd_requests
@@ -71,12 +72,12 @@ public sealed class LgpdGovernanceRepository(SqlExecutor db) : ILgpdGovernanceRe
                 id as "Id",
                 client_id as "ClientId",
                 user_id as "UserId",
-                request_type as "RequestType",
+                type as "RequestType",
                 status as "Status",
-                reason as "Reason",
-                admin_notes as "AdminNotes",
-                processed_by_user_id as "ProcessedByUserId",
-                processed_at as "ProcessedAt",
+                notes as "Reason",
+                rejection_reason as "AdminNotes",
+                handled_by as "ProcessedByUserId",
+                completed_at as "ProcessedAt",
                 created_at as "CreatedAt",
                 updated_at as "UpdatedAt"
             from habitflow.lgpd_requests
@@ -97,9 +98,9 @@ public sealed class LgpdGovernanceRepository(SqlExecutor db) : ILgpdGovernanceRe
         const string sql = """
             update habitflow.lgpd_requests set
                 status = @status,
-                admin_notes = @adminNotes,
-                processed_by_user_id = @processedByUserId,
-                processed_at = now(),
+                rejection_reason = @adminNotes,
+                handled_by = @processedByUserId,
+                completed_at = now(),
                 updated_at = now()
             where id = @requestId;
             """;

@@ -62,14 +62,18 @@ public sealed class SuperAdminOperationalRepository(SqlExecutor db) : ISuperAdmi
 
     public async Task<RegistrationQualityReport> GetRegistrationQualityAsync(CancellationToken ct = default)
     {
-        var summary = await db.QuerySingleOrDefaultAsync<RegistrationQualitySummary>(@"""
+        // NOTA: estes literais usam raw strings (""") SEM o prefixo @. Com @, o C#
+        // interpreta @""" como verbatim + aspa escapada, envolvendo todo o SQL em
+        // aspas duplas literais — o PostgreSQL recebia "..." como um identificador
+        // gigante e devolvia 42601 na posição 1.
+        var summary = await db.QuerySingleOrDefaultAsync<RegistrationQualitySummary>("""
             select
               count(*) filter (where c.created_at::date = current_date)::int today_registrations,
               count(*) filter (where date_trunc('month', c.created_at) = date_trunc('month', now()))::int month_registrations,
               count(*) filter (where c.person_type = 'NaturalPerson')::int natural_person_clients,
               count(*) filter (where c.person_type = 'LegalPerson')::int legal_person_clients,
               count(*) filter (where coalesce(c.document_normalized,'') = '')::int clients_without_document,
-              count(*) filter (where c.document_normalized is not null and c.document_normalized !~ '^[0-9]{11}$|^[0-9]{14}$')::int clients_with_invalid_document,
+              count(*) filter (where c.document_normalized is not null and length(c.document_normalized) not in (11,14))::int clients_with_invalid_document,
               count(*) filter (where not exists(select 1 from habitflow.users u where u.client_id = c.id and u.role = 'Admin'))::int clients_without_admin,
               (select count(*)::int from habitflow.users u where u.role <> 'SuperAdmin' and u.client_id is null)::int users_without_client,
               count(*) filter (where c.plan = 'Free')::int free_clients,
@@ -77,7 +81,7 @@ public sealed class SuperAdminOperationalRepository(SqlExecutor db) : ISuperAdmi
               count(*) filter (where c.benefits_status in ('Blocked','Suspended'))::int clients_with_blocked_benefits
             from habitflow.clients c
             """, null, ct) ?? new RegistrationQualitySummary(0,0,0,0,0,0,0,0,0,0,0);
-        var rows = (await db.QueryAsync<RegistrationQualityRow>(@"""
+        var rows = (await db.QueryAsync<RegistrationQualityRow>("""
             select c.created_at, c.id client_id, c.person_type, c.name, c.document, c.email, c.plan, c.benefits_status, c.payment_status,
                    (select u.email from habitflow.users u where u.client_id = c.id and u.role='Admin' order by u.created_at limit 1) admin_email
             from habitflow.clients c order by c.created_at desc limit 100
