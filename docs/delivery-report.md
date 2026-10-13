@@ -298,6 +298,33 @@ f97b1a4 Corrige cadastro MFA (view Confirm inexistente), AccessDeniedPath do coo
   ativação real de plano pago é feita pelo SuperAdmin ou por `MarkInvoicePaidAsync`.
 - Homologação externa dos gateways/notificações/IA segue bloqueada por ausência de credenciais.
 
+### 11.4 Correções de UI/a11y e validação Playwright
+
+- **Drawer mobile (bug real pré-existente)**: o menu mobile não fechava pelo Escape — o CSS
+  `design-system-v2.css` (`.offcanvas:not(.show){visibility:hidden}`) anulava a regra do Bootstrap
+  `.offcanvas.showing{visibility:visible}`, mantendo o painel invisível/não focável durante a
+  transição (o foco do Bootstrap nunca entrava e o Escape, tratado no elemento, nunca disparava).
+  Corrigido: escopo do CSS para `:not(.show):not(.showing):not(.hiding)` + `header-v4.js` com foco no
+  tick seguinte à abertura, devolução do foco ao botão ao fechar e fallback de Escape com foco fora.
+  **96 testes de header voltaram a passar** (suite sem auth: 259 → 360 aprovados; falhas 146 → 45).
+- **Card de plano (mailto)**: o CTA "Falar com a MNSOFT" renderizava código Razor cru
+  (`...%20@Uri.EscapeDataString(Model.Name)...`) no `href` — corrigido com interpolação explícita.
+- **Specs comerciais atualizados**: `plans-billing-cycle` (R$ 10,00/R$ 100,00 + asserção condicional
+  do CTA: login quando checkout habilitado, contato honesto quando `Payments:Enabled=false`) e
+  `plan-integrity-visual` (`#ritmo-monthly`, id real dos cards desde o redesign v6.17.4).
+- **Playwright** (com app real + PostgreSQL real): sem autenticação **360 aprovados / 45 falhas /
+  9 ignorados**; com autenticação (conta homolog.free) **716 aprovados / 270 falhas / 9 ignorados**.
+  Specs das áreas comerciais (`/plans`, billing, plan usage) passam.
+- **Falhas residuais são pré-existentes** (não causadas por esta entrega; causas verificadas):
+  specs desatualizados em relação a mudanças antigas (`data-header-context` ganhou o valor
+  `platform` no v6.2x; botão de fechar "Fechar menu Mais" quebra `getByRole('button', {name:'Mais'})`
+  não exato desde `349cbe8`; `.app-header-v2` não existe mais; specs CRUD exigem
+  `HABITFLOW_AUTH_STORAGE`; offline do PWA depende de cache do service worker) e flakes de carga
+  (`design-system`/`public-layout` passam quando executados isoladamente).
+- **Débito conhecido**: ~40 views declaram `<main>` próprio dentro do `<main id="conteudo">` do
+  layout (landmarks duplicados, sinalizado pelo strict mode do Playwright) — herança do redesign
+  v6.1x; a correção ampla (views + seletores CSS `main`) é trabalho separado.
+
 ---
 
 **Conclusão:** HabitFlow v6.28.1/v6.28.2 está implementado, testado e funcionalmente operacional (regras comerciais validadas de ponta a ponta — ver seção 11). Os bloqueios externos são reais e requerem credenciais de produção para homologação final.

@@ -9,10 +9,16 @@ test.describe('Planos v6.17.4', () => {
     await expect(page.getByRole('heading', { level: 1 })).toContainText('Escolha o plano');
     await expect(page.locator('#free')).toBeVisible();
     await expect(page.locator('#ritmo-monthly')).toContainText('R$ 10,00/mês');
-    await expect(page.locator('#ritmo-yearly')).toContainText('R$ 199,00/ano');
+    await expect(page.locator('#ritmo-yearly')).toContainText('R$ 100,00/ano');
     await expect(page.getByRole('heading', { name: 'Compare todos os recursos' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Perguntas frequentes' })).toBeVisible();
-    await expect(page.locator('#ritmo-monthly [data-plan-cta="ritmo"]')).toHaveAttribute('href', /\/login\?returnUrl=/);
+    const checkoutOff = await page.locator('[data-testid="checkout-unavailable"]').count() > 0;
+    if (checkoutOff) {
+      // Checkout desabilitado (Payments:Enabled=false / provider Manual): CTA honesto de contato comercial.
+      await expect(page.locator('#ritmo-monthly [data-plan-cta="contact"]')).toHaveAttribute('href', /^mailto:/);
+    } else {
+      await expect(page.locator('#ritmo-monthly [data-plan-cta="ritmo"]')).toHaveAttribute('href', /\/login\?returnUrl=/);
+    }
     await expect(page.locator('#free [data-plan-cta="free"]')).toHaveAttribute('href', '/register');
     expect(consoleErrors).toEqual([]); expect(pageErrors).toEqual([]);
   });

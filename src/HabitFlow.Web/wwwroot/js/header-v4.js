@@ -72,11 +72,35 @@
   }));
 
   const drawer = document.getElementById('headerDrawer');
+  const drawerTrigger = document.querySelector('[data-bs-target="#headerDrawer"]');
   // O Offcanvas do Bootstrap 5.3 nao gerencia aria-hidden: sem isso, o menu
   // aberto segue invisível para tecnologia assistiva (e para consultas por
   // papel). Sincroniza o atributo com o estado real do painel.
-  drawer?.addEventListener('show.bs.offcanvas', () => drawer?.removeAttribute('aria-hidden'));
-  drawer?.addEventListener('hidden.bs.offcanvas', () => drawer?.setAttribute('aria-hidden', 'true'));
+  // Foco: o Escape do Offcanvas e tratado no proprio elemento, mas o Bootstrap
+  // so foca o painel ao fim da transicao (focustrap). Se a tecla chega antes
+  // (classe 'showing' ja casada pelo /show/), o menu nao fecha. Leva o foco no
+  // proximo tick — quando a classe 'showing' ja torna o painel visivel — e
+  // devolve ao botao de origem ao fechar.
+  drawer?.addEventListener('show.bs.offcanvas', () => {
+    drawer.removeAttribute('aria-hidden');
+    setTimeout(() => drawer.focus(), 0);
+  });
+  let drawerHadFocus = false;
+  drawer?.addEventListener('focusin', () => { drawerHadFocus = true; });
+  drawer?.addEventListener('hidden.bs.offcanvas', () => {
+    drawer.setAttribute('aria-hidden', 'true');
+    if (drawerHadFocus && drawerTrigger instanceof HTMLElement) drawerTrigger.focus();
+    drawerHadFocus = false;
+  });
+  // Fallback: fecha pelo Escape mesmo com o foco fora do painel (ex.: no
+  // botao do menu). Com foco interno o Bootstrap ja trata; hide() do
+  // Offcanvas e idempotente.
+  document.addEventListener('keydown', event => {
+    if (event.key !== 'Escape' || !drawer || !window.bootstrap?.Offcanvas) return;
+    if (!drawer.classList.contains('show') && !drawer.classList.contains('showing')) return;
+    if (drawer.contains(document.activeElement)) return;
+    window.bootstrap.Offcanvas.getOrCreateInstance(drawer).hide();
+  });
   drawer?.addEventListener('click', event => {
     if (!event.target.closest('a[href]') || !window.bootstrap?.Offcanvas) return;
     window.bootstrap.Offcanvas.getOrCreateInstance(drawer).hide();
